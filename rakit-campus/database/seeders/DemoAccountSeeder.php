@@ -80,7 +80,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'email' => 'budi@polindra.ac.id',
                 'name' => 'Budi Santoso',
-                'nim' => '2201001',
+                'nim' => '2201091',
                 'dept' => 'Teknik Informatika',
                 'program' => 'Teknik Informatika',
                 'semester' => 5,
@@ -93,7 +93,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'email' => 'siti@polindra.ac.id',
                 'name' => 'Siti Rahma',
-                'nim' => '2201015',
+                'nim' => '2201092',
                 'dept' => 'Teknik Informatika',
                 'program' => 'Teknik Informatika',
                 'semester' => 5,
@@ -106,7 +106,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'email' => 'agus@polindra.ac.id',
                 'name' => 'Agus Prasetyo',
-                'nim' => '2202020',
+                'nim' => '2202093',
                 'dept' => 'Teknik Informatika',
                 'program' => 'Rekayasa Perangkat Lunak',
                 'semester' => 5,
@@ -119,7 +119,7 @@ class DemoAccountSeeder extends Seeder
             [
                 'email' => 'dewi@polindra.ac.id',
                 'name' => 'Dewi Lestari',
-                'nim' => '2301044',
+                'nim' => '2301094',
                 'dept' => 'Teknik Informatika',
                 'program' => 'Sistem Informasi Kota Cerdas',
                 'semester' => 3,
