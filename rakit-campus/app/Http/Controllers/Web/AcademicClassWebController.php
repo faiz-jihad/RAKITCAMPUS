@@ -163,22 +163,42 @@ class AcademicClassWebController extends Controller
         $studentsWithTeam = $studentsData->where('has_team', true)->count();
         $studentsWithoutTeam = $totalStudents - $studentsWithTeam;
 
-        // Peer Matchmaking for Student View
+        // Peer Matchmaking for Student View with strict anti-ketimpangan rule checking
         $peerMatches = collect();
         $myClassProject = null;
 
         if ($user) {
+            $myClassProject = $academicClass->projects->first(fn ($p) => $p->team?->hasMember($user));
             $userProfile = $user->profile()->with('skills')->first();
             if ($userProfile) {
                 $peerMatches = $this->matchingService->rankClassmatesForStudent(
                     $userProfile,
                     $academicClass->students,
-                    $classProjectUserIds
+                    $classProjectUserIds,
+                    $myClassProject?->team,
+                    $academicClass->target_team_size
                 );
             }
-
-            $myClassProject = $academicClass->projects->first(fn ($p) => $p->team?->hasMember($user));
         }
+
+        // Calculate class balance and anti-ketimpangan stats
+        $totalProjects = $academicClass->projects->count();
+        $balancedProjectsCount = 0;
+        foreach ($academicClass->projects as $p) {
+            if ($p->team && $p->team->members->count() >= 2) {
+                $pArchetypes = [];
+                foreach ($p->team->members as $tm) {
+                    if ($tm->user?->profile) {
+                        $pArchetypes = array_merge($pArchetypes, array_keys($this->matchingService->getStudentArchetypes($tm->user->profile)));
+                    }
+                }
+                $pArchetypes = array_unique($pArchetypes);
+                if (count($pArchetypes) >= 2) {
+                    $balancedProjectsCount++;
+                }
+            }
+        }
+        $classBalanceScore = $totalProjects > 0 ? (int) round(($balancedProjectsCount / $totalProjects) * 100) : 100;
 
         return Inertia::render('classes/show', [
             'academicClass' => [
@@ -194,6 +214,30 @@ class AcademicClassWebController extends Controller
                 'status' => $academicClass->status,
                 'lecturer' => $academicClass->lecturer,
                 'campus' => $academicClass->campus,
+            ],
+            'classRules' => [
+                'target_team_size' => $academicClass->target_team_size,
+                'max_same_role' => 2,
+                'balance_score' => $classBalanceScore,
+                'is_strict' => true,
+                'rules' => [
+                    [
+                        'title' => 'Batas Kuota Anggota Ketat & Terkunci',
+                        'desc' => "Maksimal {$academicClass->target_team_size} orang per kelompok. Begitu kuota tercapai, tim otomatis dikunci agar beban kerja setara.",
+                    ],
+                    [
+                        'title' => 'Wajib Diversitas Peran (Anti-Monopoli)',
+                        'desc' => 'Dilarang menumpuk keahlian sejenis (maks. 2 spesialis sejenis). Slot tim wajib diisi peran pelengkap (Backend, Frontend, UI/UX, atau QA).',
+                    ],
+                    [
+                        'title' => 'Sistem Anti-Clique (Anti Teman Satu Geng)',
+                        'desc' => 'Matchmaking memprioritaskan kecocokan sinergi teknis dan kebutuhan proyek nyata, bukan sekadar preferensi teman akrab.',
+                    ],
+                    [
+                        'title' => 'Hak Veto & Auto-Balance Dosen',
+                        'desc' => 'Dosen berhak melakukan rekonfigurasi atau auto-balancing ulang secara merata jika terdeteksi ketimpangan kemampuan antar kelompok.',
+                    ],
+                ],
             ],
             'students' => $studentsData->values(),
             'peerMatches' => $peerMatches,
@@ -367,33 +411,56 @@ class AcademicClassWebController extends Controller
     public function autoFormTeams(Request $request, int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::with(['students.profile.skills'])->findOrFail($id);
+        $academicClass = AcademicClass::with(['students.profile.skills', 'projects.team.members'])->findOrFail($id);
 
         if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
             abort(403);
         }
 
-        // Find students in this class who do not have a team yet
-        $classProjectUserIds = $academicClass->projects
-            ->flatMap(fn ($p) => $p->team?->members?->pluck('user_id') ?? collect())
-            ->unique()
-            ->all();
+        $resetAll = $request->boolean('reset_all');
 
-        $unassignedStudents = $academicClass->students
-            ->filter(fn ($s) => !in_array($s->id, $classProjectUserIds))
-            ->values();
+        if ($resetAll) {
+            // Dosen resets all teams in class to enforce fair redistribution across the whole cohort
+            DB::transaction(function () use ($academicClass) {
+                foreach ($academicClass->projects as $p) {
+                    if ($p->team) {
+                        $p->team->members()->delete();
+                        $p->team->delete();
+                    }
+                    $p->delete();
+                }
+            });
+            $academicClass->load('students.profile.skills');
+            $studentsToDistribute = $academicClass->students;
+        } else {
+            // Distribute only unassigned students
+            $classProjectUserIds = $academicClass->projects
+                ->flatMap(fn ($p) => $p->team?->members?->pluck('user_id') ?? collect())
+                ->unique()
+                ->all();
 
-        if ($unassignedStudents->isEmpty()) {
+            $studentsToDistribute = $academicClass->students
+                ->filter(fn ($s) => !in_array($s->id, $classProjectUserIds))
+                ->values();
+        }
+
+        if ($studentsToDistribute->isEmpty()) {
             return back()->with('info', 'Semua mahasiswa di kelas ini sudah memiliki kelompok proyek.');
         }
 
-        $teamSize = max(2, $academicClass->target_team_size);
-        $chunks = $unassignedStudents->chunk($teamSize);
+        $balancedGroups = $this->matchingService->distributeStudentsFairly(
+            $studentsToDistribute,
+            $academicClass->target_team_size
+        );
+
         $teamsCreated = 0;
 
-        DB::transaction(function () use ($chunks, $academicClass, &$teamsCreated) {
-            foreach ($chunks as $index => $group) {
-                $leader = $group->first();
+        DB::transaction(function () use ($balancedGroups, $academicClass, &$teamsCreated) {
+            foreach ($balancedGroups as $groupData) {
+                $members = $groupData['members'];
+                if ($members->isEmpty()) continue;
+
+                $leader = $members->first();
                 $groupNum = $academicClass->projects()->count() + 1;
                 $projectTitle = "Kelompok {$groupNum} — {$academicClass->name}";
 
@@ -403,7 +470,7 @@ class AcademicClassWebController extends Controller
                     'leader_id' => $leader->id,
                     'title' => $projectTitle,
                     'slug' => Str::slug($projectTitle) . '-' . Str::lower(Str::random(5)),
-                    'short_description' => "Proyek tim kelompok {$groupNum} untuk mata kuliah {$academicClass->name}.",
+                    'short_description' => "Proyek tim kelompok {$groupNum} untuk mata kuliah {$academicClass->name}. Komposisi disusun berimbang tanpa ketimpangan (Skor Sinergi: {$groupData['balance_score']}%).",
                     'category' => ProjectCategory::Academic,
                     'visibility' => Visibility::Campus,
                     'status' => ProjectStatus::InProgress,
@@ -417,16 +484,17 @@ class AcademicClassWebController extends Controller
                     'leader_id' => $leader->id,
                     'type' => TeamType::Project,
                     'name' => "Tim {$groupNum} ({$academicClass->code})",
-                    'description' => "Kelompok proyek {$academicClass->name}",
+                    'description' => "Kelompok proyek berimbang {$academicClass->name}",
                     'capacity' => $academicClass->target_team_size,
                 ]);
 
-                foreach ($group as $memberIndex => $member) {
+                foreach ($members as $mIdx => $member) {
+                    $assignedRole = $groupData['roles_map'][$member->id] ?? ($mIdx === 0 ? 'Ketua Kelompok & Lead' : 'Anggota Pengembang');
                     TeamMember::create([
                         'team_id' => $team->id,
                         'user_id' => $member->id,
-                        'permission' => $memberIndex === 0 ? TeamPermission::Leader : TeamPermission::Member,
-                        'role_name' => $memberIndex === 0 ? 'Ketua Kelompok' : 'Anggota Pengembang',
+                        'permission' => $mIdx === 0 ? TeamPermission::Leader : TeamPermission::Member,
+                        'role_name' => $assignedRole,
                         'joined_at' => now(),
                     ]);
                 }
@@ -435,7 +503,11 @@ class AcademicClassWebController extends Controller
             }
         });
 
-        return back()->with('success', "Smart Team Balancing berhasil membentuk {$teamsCreated} kelompok proyek baru secara merata!");
+        $message = $resetAll
+            ? "Anti-Clique Reset Berhasil: Seluruh mahasiswa kelas telah didistribusikan ulang ke dalam {$teamsCreated} kelompok berimbang!"
+            : "Smart Team Balancing Berhasil: Membentuk {$teamsCreated} kelompok proyek baru berimbang tanpa ketimpangan keahlian!";
+
+        return back()->with('success', $message);
     }
 
     public function inviteStudent(Request $request, int $id)
@@ -448,7 +520,7 @@ class AcademicClassWebController extends Controller
             'project_id' => ['required', 'integer', 'exists:projects,id'],
         ]);
 
-        $project = Project::with('team.members')->where('academic_class_id', $academicClass->id)->findOrFail($validated['project_id']);
+        $project = Project::with(['team.members.user.profile.skills'])->where('academic_class_id', $academicClass->id)->findOrFail($validated['project_id']);
 
         if (!$project->isLeader($user) && !$project->team?->hasMember($user)) {
             abort(403, 'Hanya anggota kelompok yang dapat mengundang rekan.');
@@ -456,26 +528,44 @@ class AcademicClassWebController extends Controller
 
         $team = $project->team;
         if (!$team) {
-            return back()->with('error', 'Kelompok tidak ditemukan.');
+            return back()->with('error', 'Kelompok proyek tidak ditemukan.');
         }
 
-        if ($team->members->count() >= $team->capacity) {
-            return back()->with('error', 'Kapasitas kelompok sudah penuh (' . $team->capacity . ' orang).');
+        $invitedUser = User::with('profile.skills')->findOrFail($validated['student_id']);
+
+        // 1. Check if student already in another team in this class
+        $alreadyInClassProject = Project::where('academic_class_id', $academicClass->id)
+            ->whereHas('team.members', fn ($q) => $q->where('user_id', $invitedUser->id))
+            ->exists();
+
+        if ($alreadyInClassProject) {
+            return back()->with('error', "Aturan Ketat Kelas: {$invitedUser->name} sudah terdaftar di kelompok proyek lain pada kelas ini.");
         }
 
-        $invitedUser = User::findOrFail($validated['student_id']);
-        if ($team->hasMember($invitedUser)) {
-            return back()->with('info', 'Mahasiswa tersebut sudah menjadi anggota kelompok ini.');
+        // 2. Validate Strict Capacity & Anti-Ketimpangan Diversity rules
+        $candidateProfile = $invitedUser->profile ?? \App\Models\StudentProfile::firstOrCreate(
+            ['user_id' => $invitedUser->id],
+            ['campus_id' => $academicClass->campus_id, 'slug' => 'student-' . $invitedUser->id]
+        );
+
+        $validation = $this->matchingService->validateTeamSynergyAndDiversity(
+            $team,
+            $candidateProfile,
+            $academicClass->target_team_size
+        );
+
+        if (!$validation['allowed']) {
+            return back()->with('error', $validation['message']);
         }
 
         TeamMember::create([
             'team_id' => $team->id,
             'user_id' => $invitedUser->id,
             'permission' => TeamPermission::Member,
-            'role_name' => 'Anggota (Matchmaking Kelas)',
+            'role_name' => 'Anggota (Matchmaking Terverifikasi)',
             'joined_at' => now(),
         ]);
 
-        return back()->with('success', "Berhasil menambahkan {$invitedUser->name} ke dalam kelompok {$team->name}!");
+        return back()->with('success', "Berhasil menambahkan {$invitedUser->name} ke dalam kelompok {$team->name}. {$validation['message']}");
     }
 }

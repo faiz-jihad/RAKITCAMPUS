@@ -326,13 +326,304 @@ class MatchingService
     }
 
     /**
+     * Categorize a student profile into skill archetypes.
+     * Archetypes: 'backend', 'frontend', 'design', 'analyst_qa'
+     *
+     * @return array<string>
+     */
+    public function getStudentArchetypes(StudentProfile $profile): array
+    {
+        $profile->loadMissing('skills');
+        $skillNames = $profile->skills->pluck('name')->map(fn ($n) => strtolower(trim($n)))->all();
+        $roles = collect($profile->preferred_roles ?? [])->map(fn ($r) => strtolower(trim($r)))->all();
+        $combined = array_merge($skillNames, $roles);
+
+        $backendKeywords = ['backend', 'api', 'laravel', 'php', 'node', 'express', 'python', 'django', 'fastapi', 'java', 'spring', 'go', 'golang', 'c++', 'c#', '.net', 'sql', 'mysql', 'postgresql', 'mongodb', 'docker', 'devops', 'cloud', 'redis', 'iot', 'embedded', 'database'];
+        $frontendKeywords = ['frontend', 'web', 'react', 'next.js', 'vue', 'angular', 'svelte', 'flutter', 'dart', 'react native', 'android', 'ios', 'swift', 'kotlin', 'tailwind', 'css', 'html', 'javascript', 'typescript', 'mobile'];
+        $designKeywords = ['ui', 'ux', 'ui/ux', 'design', 'figma', 'product design', 'wireframing', 'prototyping', 'user research', 'graphic'];
+        $analystKeywords = ['qa', 'quality assurance', 'testing', 'cypress', 'jest', 'analyst', 'system analyst', 'scrum', 'project management', 'data', 'data science', 'ai', 'machine learning'];
+
+        $archetypes = [];
+
+        foreach ($combined as $term) {
+            foreach ($backendKeywords as $kw) {
+                if (str_contains($term, $kw)) {
+                    $archetypes['backend'] = 'Backend / Database';
+                    break;
+                }
+            }
+            foreach ($frontendKeywords as $kw) {
+                if (str_contains($term, $kw)) {
+                    $archetypes['frontend'] = 'Frontend / Mobile';
+                    break;
+                }
+            }
+            foreach ($designKeywords as $kw) {
+                if (str_contains($term, $kw)) {
+                    $archetypes['design'] = 'UI/UX & Desain';
+                    break;
+                }
+            }
+            foreach ($analystKeywords as $kw) {
+                if (str_contains($term, $kw)) {
+                    $archetypes['analyst_qa'] = 'Analyst & QA';
+                    break;
+                }
+            }
+        }
+
+        if (empty($archetypes)) {
+            $archetypes['generalist'] = 'Pengembang Umum';
+        }
+
+        return $archetypes;
+    }
+
+    /**
+     * Validate whether adding a candidate to a team violates class anti-ketimpangan / anti-monopoly rules.
+     */
+    public function validateTeamSynergyAndDiversity(Team $team, StudentProfile $candidateProfile, int $targetCapacity = 4): array
+    {
+        $team->loadMissing(['members.user.profile.skills']);
+        $currentMemberCount = $team->members->count();
+
+        // 1. Hard Capacity Cap
+        if ($currentMemberCount >= $targetCapacity) {
+            return [
+                'allowed' => false,
+                'code' => 'TEAM_FULL',
+                'message' => "Kapasitas tim sudah terkunci penuh (maksimal {$targetCapacity} orang). Penambahan anggota ditolak untuk menjaga kesetaraan beban kerja kelas.",
+            ];
+        }
+
+        // 2. Already member
+        if ($team->members->contains('user_id', $candidateProfile->user_id)) {
+            return [
+                'allowed' => false,
+                'code' => 'ALREADY_MEMBER',
+                'message' => 'Mahasiswa ini sudah terdaftar sebagai anggota di kelompok ini.',
+            ];
+        }
+
+        // 3. Count archetypes already in team
+        $teamArchetypeCounts = [
+            'backend' => 0,
+            'frontend' => 0,
+            'design' => 0,
+            'analyst_qa' => 0,
+            'generalist' => 0,
+        ];
+
+        foreach ($team->members as $member) {
+            if ($member->user?->profile) {
+                $memberArchetypes = $this->getStudentArchetypes($member->user->profile);
+                foreach (array_keys($memberArchetypes) as $arch) {
+                    if (isset($teamArchetypeCounts[$arch])) {
+                        $teamArchetypeCounts[$arch]++;
+                    }
+                }
+            }
+        }
+
+        $candidateArchetypes = array_keys($this->getStudentArchetypes($candidateProfile));
+
+        // 4. Anti-Monopoly Skill Check:
+        // If team already has 2 members of archetype X, and candidate ONLY has archetype X and brings NO missing core skills:
+        // And if the team is missing Frontend or Backend entirely:
+        $missingCore = [];
+        if ($teamArchetypeCounts['backend'] === 0) $missingCore[] = 'Backend / Database';
+        if ($teamArchetypeCounts['frontend'] === 0) $missingCore[] = 'Frontend / Mobile';
+        if ($teamArchetypeCounts['design'] === 0) $missingCore[] = 'UI/UX & Desain';
+
+        $isStrictMonopoly = false;
+        $monopolyRoleName = '';
+
+        foreach (['backend', 'frontend', 'design'] as $roleKey) {
+            if ($teamArchetypeCounts[$roleKey] >= 2 && in_array($roleKey, $candidateArchetypes)) {
+                // Check if candidate brings any of the missing core roles
+                $bringsMissing = false;
+                if ($teamArchetypeCounts['backend'] === 0 && in_array('backend', $candidateArchetypes)) $bringsMissing = true;
+                if ($teamArchetypeCounts['frontend'] === 0 && in_array('frontend', $candidateArchetypes)) $bringsMissing = true;
+                if ($teamArchetypeCounts['design'] === 0 && in_array('design', $candidateArchetypes)) $bringsMissing = true;
+
+                if (!$bringsMissing && !empty($missingCore)) {
+                    $isStrictMonopoly = true;
+                    $monopolyRoleName = $roleKey === 'backend' ? 'Backend' : ($roleKey === 'frontend' ? 'Frontend/Mobile' : 'UI/UX');
+                    break;
+                }
+            }
+        }
+
+        if ($isStrictMonopoly) {
+            $missingStr = implode(' atau ', $missingCore);
+            return [
+                'allowed' => false,
+                'code' => 'ROLE_MONOPOLY',
+                'message' => "Aturan Anti-Ketimpangan: Tim Anda sudah memiliki 2 spesialis {$monopolyRoleName}. Untuk mencegah ketimpangan kelas, slot ini wajib diisi oleh rekan berkeahlian {$missingStr}!",
+            ];
+        }
+
+        // 5. Allowed - check if complementary bonus applies
+        $isComplementary = false;
+        $benefitedRoles = [];
+        foreach ($candidateArchetypes as $arch) {
+            if (isset($teamArchetypeCounts[$arch]) && $teamArchetypeCounts[$arch] === 0) {
+                $isComplementary = true;
+                $benefitedRoles[] = $arch === 'backend' ? 'Backend' : ($arch === 'frontend' ? 'Frontend/Mobile' : ($arch === 'design' ? 'UI/UX' : 'Analyst/QA'));
+            }
+        }
+
+        return [
+            'allowed' => true,
+            'code' => 'OK',
+            'is_complementary' => $isComplementary,
+            'message' => $isComplementary 
+                ? 'Sangat Direkomendasikan: Rekan ini melengkapi slot peran kosong tim (' . implode(', ', $benefitedRoles) . ').'
+                : 'Komposisi memenuhi standar diversitas tim kelas.',
+        ];
+    }
+
+    /**
+     * Distribute students across balanced teams using a multi-archetype fair allocation algorithm.
+     *
+     * @param Collection<User> $students
+     * @param int $targetTeamSize
+     * @return Collection<int, array{members: Collection<User>, balance_score: int, archetypes: array, roles_map: array}>
+     */
+    public function distributeStudentsFairly(Collection $students, int $targetTeamSize = 4): Collection
+    {
+        $targetTeamSize = max(2, min(10, $targetTeamSize));
+        $totalStudents = $students->count();
+        if ($totalStudents === 0) {
+            return collect();
+        }
+
+        $numGroups = max(1, (int) ceil($totalStudents / $targetTeamSize));
+
+        // Group students into archetype buckets
+        $bucketBackend = [];
+        $bucketFrontend = [];
+        $bucketDesign = [];
+        $bucketGeneral = [];
+
+        foreach ($students as $student) {
+            $profile = $student->profile ?? StudentProfile::firstOrCreate(
+                ['user_id' => $student->id],
+                ['campus_id' => $student->campusId() ?? 1, 'slug' => 'student-' . $student->id]
+            );
+            $archetypes = array_keys($this->getStudentArchetypes($profile));
+
+            if (in_array('backend', $archetypes)) {
+                $bucketBackend[] = $student;
+            } elseif (in_array('frontend', $archetypes)) {
+                $bucketFrontend[] = $student;
+            } elseif (in_array('design', $archetypes)) {
+                $bucketDesign[] = $student;
+            } else {
+                $bucketGeneral[] = $student;
+            }
+        }
+
+        // Initialize group slots
+        $groups = [];
+        for ($i = 0; $i < $numGroups; $i++) {
+            $groups[$i] = [
+                'members' => collect(),
+                'archetypes' => [],
+            ];
+        }
+
+        // Pass 1: Round-robin Backend anchors
+        $gIdx = 0;
+        foreach ($bucketBackend as $student) {
+            $groups[$gIdx % $numGroups]['members']->push($student);
+            $groups[$gIdx % $numGroups]['archetypes'][] = 'backend';
+            $gIdx++;
+        }
+
+        // Pass 2: Round-robin Frontend/Mobile in reverse order (to pair complementary opposites)
+        $gIdx = $numGroups - 1;
+        foreach ($bucketFrontend as $student) {
+            $targetGroup = ($gIdx >= 0) ? ($gIdx % $numGroups) : (abs($gIdx) % $numGroups);
+            $groups[$targetGroup]['members']->push($student);
+            $groups[$targetGroup]['archetypes'][] = 'frontend';
+            $gIdx--;
+        }
+
+        // Pass 3: Round-robin UI/UX Design & Product
+        $gIdx = 0;
+        foreach ($bucketDesign as $student) {
+            // Pick group with fewest members or missing design
+            usort($groups, fn ($a, $b) => $a['members']->count() <=> $b['members']->count());
+            $groups[0]['members']->push($student);
+            $groups[0]['archetypes'][] = 'design';
+        }
+
+        // Pass 4: Distribute Generalists / QA / Remaining students to equalize team sizes
+        foreach ($bucketGeneral as $student) {
+            usort($groups, fn ($a, $b) => $a['members']->count() <=> $b['members']->count());
+            $groups[0]['members']->push($student);
+            $groups[0]['archetypes'][] = 'generalist';
+        }
+
+        // Build result with balance scores and role assignments
+        return collect($groups)->map(function ($group, $index) use ($targetTeamSize) {
+            $members = $group['members'];
+            $archetypes = array_unique($group['archetypes']);
+
+            $hasBackend = in_array('backend', $archetypes);
+            $hasFrontend = in_array('frontend', $archetypes);
+            $hasDesign = in_array('design', $archetypes);
+
+            $balanceScore = 70;
+            if ($hasBackend && $hasFrontend && $hasDesign) {
+                $balanceScore = 98; // Complete triangle
+            } elseif ($hasBackend && $hasFrontend) {
+                $balanceScore = 90; // Solid tech duo
+            } elseif ($hasBackend || $hasFrontend) {
+                $balanceScore = 80;
+            }
+
+            // Assign roles
+            $roleTitles = [
+                'Ketua Kelompok & Lead Architect',
+                'Frontend & Mobile Specialist',
+                'Backend & Database Engineer',
+                'UI/UX & Quality Analyst',
+                'Generalist & Dokumentasi Proyek',
+            ];
+
+            $rolesMap = [];
+            foreach ($members as $mIdx => $m) {
+                $rolesMap[$m->id] = $roleTitles[$mIdx] ?? 'Anggota Pengembang';
+            }
+
+            return [
+                'index' => $index + 1,
+                'members' => $members,
+                'members_count' => $members->count(),
+                'target_capacity' => $targetTeamSize,
+                'balance_score' => $balanceScore,
+                'archetypes' => $archetypes,
+                'roles_map' => $rolesMap,
+            ];
+        });
+    }
+
+    /**
      * Rank all classmates for a student in an academic class.
      */
-    public function rankClassmatesForStudent(StudentProfile $me, Collection $classmates, array $classProjectUserIds = []): Collection
+    public function rankClassmatesForStudent(
+        StudentProfile $me, 
+        Collection $classmates, 
+        array $classProjectUserIds = [],
+        ?Team $myTeam = null,
+        int $targetCapacity = 4
+    ): Collection
     {
         return $classmates
             ->filter(fn ($studentUser) => $studentUser->id !== $me->user_id)
-            ->map(function ($studentUser) use ($me, $classProjectUserIds) {
+            ->map(function ($studentUser) use ($me, $classProjectUserIds, $myTeam, $targetCapacity) {
                 $peerProfile = $studentUser->profile ?? StudentProfile::firstOrCreate(
                     ['user_id' => $studentUser->id],
                     ['campus_id' => $me->campus_id, 'slug' => 'student-' . $studentUser->id]
@@ -341,6 +632,23 @@ class MatchingService
 
                 $hasTeam = in_array($studentUser->id, $classProjectUserIds);
                 $match = $this->matchStudentToStudent($me, $peerProfile, $hasTeam);
+
+                // Anti-ketimpangan synergy validation against current student team
+                $canInvite = true;
+                $inviteBlockReason = null;
+                $fillsTeamNeed = null;
+
+                if ($myTeam) {
+                    $validation = $this->validateTeamSynergyAndDiversity($myTeam, $peerProfile, $targetCapacity);
+                    $canInvite = $validation['allowed'];
+                    $inviteBlockReason = $validation['allowed'] ? null : $validation['message'];
+                    if ($validation['is_complementary'] ?? false) {
+                        $fillsTeamNeed = $validation['message'];
+                    }
+                } elseif ($hasTeam) {
+                    $canInvite = false;
+                    $inviteBlockReason = 'Sudah bergabung di kelompok lain pada kelas ini.';
+                }
 
                 return [
                     'student' => [
@@ -363,6 +671,9 @@ class MatchingService
                     'shared_skills' => $match['shared_skills'],
                     'complementary_skills' => $match['complementary_skills'],
                     'explanation' => $match['explanation'],
+                    'can_invite' => $canInvite,
+                    'invite_block_reason' => $inviteBlockReason,
+                    'fills_team_need' => $fillsTeamNeed,
                 ];
             })
             ->sortByDesc('match_score')
