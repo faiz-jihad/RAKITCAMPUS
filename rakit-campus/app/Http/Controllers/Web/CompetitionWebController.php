@@ -58,19 +58,25 @@ class CompetitionWebController extends Controller
             'participations.project:id,title,slug',
         ])->findOrFail($id);
 
-        $this->authorize('view', $competition);
+        if ($user) {
+            $this->authorize('view', $competition);
+        } else {
+            if ($competition->moderation_status !== 'visible') {
+                abort(404);
+            }
+        }
 
-        $isBookmarked = Bookmark::where('user_id', $user->id)
+        $isBookmarked = $user ? Bookmark::where('user_id', $user->id)
             ->where('bookmarkable_type', Competition::class)
             ->where('bookmarkable_id', $competition->id)
-            ->exists();
+            ->exists() : false;
 
-        $myParticipation = $competition->participations
-            ->first(fn ($p) => $p->team?->hasMember($user));
+        $myParticipation = $user ? $competition->participations
+            ->first(fn ($p) => $p->team?->hasMember($user)) : null;
 
-        $myLedProjects = Project::where('leader_id', $user->id)
+        $myLedProjects = $user ? Project::where('leader_id', $user->id)
             ->with('team')
-            ->get(['id', 'title', 'category', 'status']);
+            ->get(['id', 'title', 'category', 'status']) : collect();
 
         return Inertia::render('competitions/show', [
             'competition' => $competition,

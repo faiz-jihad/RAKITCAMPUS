@@ -4,13 +4,32 @@ import { UserInfo } from '@/components/user-info';
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { type SharedData } from '@/types';
-import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { ChevronsUpDown, LogIn } from 'lucide-react';
 
 export function NavUser() {
     const { auth } = usePage<SharedData>().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
+
+    if (!auth?.user) {
+        return (
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        size="lg"
+                        className="bg-[#5448EE] hover:bg-[#4336D9] text-white font-medium justify-center rounded-xl shadow-sm transition"
+                    >
+                        <Link href="/login" className="flex items-center gap-2">
+                            <LogIn className="size-4" />
+                            <span>Masuk / Daftar</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
+        );
+    }
 
     return (
         <SidebarMenu>

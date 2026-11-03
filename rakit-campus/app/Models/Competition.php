@@ -79,8 +79,13 @@ class Competition extends Model
     }
 
     /** Global competitions are visible everywhere; campus ones only to that campus (and admins). */
-    public function scopeVisibleTo(Builder $query, User $user): Builder
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
+        if (! $user) {
+            return $query->where('competitions.moderation_status', 'visible')
+                ->where('competitions.scope', CompetitionScope::Global->value);
+        }
+
         if ($user->isPlatformAdmin()) {
             return $query;
         }

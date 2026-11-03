@@ -16,20 +16,18 @@ Route::get('/', function () {
 
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
+// Public Discovery Hubs (Open for browsing, enriched when authenticated)
+Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
+Route::get('/projects/{id}', [ProjectWebController::class, 'show'])->name('projects.show')->whereNumber('id');
+Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
+Route::get('/competitions/{id}', [CompetitionWebController::class, 'show'])->name('competitions.show')->whereNumber('id');
+Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
 
-    // Project Hub
-    Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
+    // Project Actions
     Route::get('/projects/create', [ProjectWebController::class, 'create'])->name('projects.create');
-    Route::get('/projects/{id}', [ProjectWebController::class, 'show'])->name('projects.show');
-
-    // Competition Hub
-    Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
-    Route::get('/competitions/{id}', [CompetitionWebController::class, 'show'])->name('competitions.show');
-
-    // Smart Team Matching
-    Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');

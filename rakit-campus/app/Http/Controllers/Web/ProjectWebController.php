@@ -60,14 +60,20 @@ class ProjectWebController extends Controller
             'participations.competition:id,name,slug',
         ])->findOrFail($id);
 
-        $this->authorize('view', $project);
+        if ($user) {
+            $this->authorize('view', $project);
+        } else {
+            if ($project->status === ProjectStatus::Draft || $project->visibility !== Visibility::Public || $project->moderation_status !== 'visible') {
+                abort(404);
+            }
+        }
 
-        $isBookmarked = Bookmark::where('user_id', $user->id)
+        $isBookmarked = $user ? Bookmark::where('user_id', $user->id)
             ->where('bookmarkable_type', Project::class)
             ->where('bookmarkable_id', $project->id)
-            ->exists();
+            ->exists() : false;
 
-        $isLeader = $project->isLeader($user);
+        $isLeader = $user ? $project->isLeader($user) : false;
         $applications = [];
         if ($isLeader && $project->team?->recruitment) {
             $applications = RecruitmentApplication::where('recruitment_id', $project->team->recruitment->id)
@@ -80,8 +86,8 @@ class ProjectWebController extends Controller
             'project' => $project,
             'isBookmarked' => $isBookmarked,
             'isLeader' => $isLeader,
-            'isMember' => $project->team?->hasMember($user) ?? false,
-            'canEdit' => $user->can('update', $project),
+            'isMember' => $user ? ($project->team?->hasMember($user) ?? false) : false,
+            'canEdit' => $user ? $user->can('update', $project) : false,
             'applications' => $applications,
         ]);
     }

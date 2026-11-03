@@ -86,8 +86,14 @@ class Project extends Model
      *  - everything in their campus, if they administer it; everything, if platform admin.
      * Hidden (moderated) projects and other people's drafts are excluded for ordinary users.
      */
-    public function scopeVisibleTo(Builder $query, User $user): Builder
+    public function scopeVisibleTo(Builder $query, ?User $user): Builder
     {
+        if (! $user) {
+            return $query->where('projects.moderation_status', 'visible')
+                ->where('projects.status', '!=', ProjectStatus::Draft->value)
+                ->where('projects.visibility', Visibility::Public->value);
+        }
+
         if ($user->isPlatformAdmin()) {
             return $query;
         }
@@ -113,8 +119,8 @@ class Project extends Model
         });
     }
 
-    public function isLeader(User $user): bool
+    public function isLeader(?User $user): bool
     {
-        return $this->leader_id === $user->id;
+        return $user && $this->leader_id === $user->id;
     }
 }
