@@ -80,6 +80,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/teams/{id}/kanban', [TeamWorkspaceController::class, 'kanban']);
         Route::post('/teams/{id}/tasks', [TeamWorkspaceController::class, 'storeTask']);
         Route::patch('/tasks/{id}', [TeamWorkspaceController::class, 'updateTask']);
+        Route::delete('/tasks/{id}', [TeamWorkspaceController::class, 'deleteTask']);
         Route::post('/tasks/{id}/comments', [TeamWorkspaceController::class, 'addComment']);
         Route::get('/teams/{id}/milestones', [TeamWorkspaceController::class, 'milestones']);
         Route::post('/teams/{id}/milestones', [TeamWorkspaceController::class, 'storeMilestone']);

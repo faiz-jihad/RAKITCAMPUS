@@ -118,6 +118,53 @@ export default function ProjectShow({
         }
     };
 
+    const handleCompleteProject = async () => {
+        if (!confirm('Tandai proyek ini sebagai selesai? Seluruh anggota tim akan menerima pencapaian portofolio terverifikasi.')) return;
+        try {
+            const res = await fetch(`/api/v1/projects/${project.id}/complete`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+            });
+            const json = await res.json();
+            if (res.ok) {
+                alert('Proyek berhasil diselesaikan! Sertifikat pencapaian otomatis masuk ke portofolio tim.');
+                window.location.reload();
+            } else {
+                alert(json.message || 'Gagal menyelesaikan proyek.');
+            }
+        } catch {
+            alert('Terjadi kesalahan.');
+        }
+    };
+
+    const handleToggleRecruitment = async (newStatus: 'open' | 'closed') => {
+        if (!project.team?.id) return;
+        try {
+            const res = await fetch(`/api/v1/teams/${project.team.id}/recruitment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: JSON.stringify({ status: newStatus }),
+            });
+            const json = await res.json();
+            if (res.ok) {
+                alert(`Rekrutmen proyek berhasil di-${newStatus === 'open' ? 'buka' : 'tutup'}.`);
+                window.location.reload();
+            } else {
+                alert(json.message || 'Gagal mengubah status rekrutmen.');
+            }
+        } catch {
+            alert('Terjadi kesalahan.');
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${project.title} — RAKIT Campus`} />
@@ -179,15 +226,26 @@ export default function ProjectShow({
                         </div>
 
                         {/* Action Buttons */}
-                        {isMember && (
-                            <Link
-                                href={`/workspace/${project.team?.id}`}
-                                className="ml-auto inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-xs shadow-sm transition"
-                            >
-                                <FolderKanban className="size-3.5" />
-                                Buka Workspace Tim
-                            </Link>
-                        )}
+                        <div className="ml-auto flex flex-wrap items-center gap-2">
+                            {isLeader && project.status !== 'completed' && (
+                                <button
+                                    onClick={handleCompleteProject}
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium text-xs shadow-xs transition"
+                                >
+                                    <CheckCircle2 className="size-3.5" />
+                                    Tandai Proyek Selesai
+                                </button>
+                            )}
+                            {isMember && (
+                                <Link
+                                    href={`/workspace/${project.team?.id}`}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-xs shadow-sm transition"
+                                >
+                                    <FolderKanban className="size-3.5" />
+                                    Buka Workspace Tim
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
 
@@ -303,9 +361,26 @@ export default function ProjectShow({
                                         <h3 className="text-sm font-bold text-neutral-900">Open Recruitment Tim</h3>
                                         <p className="text-xs text-neutral-500 mt-0.5">{project.team.recruitment.title}</p>
                                     </div>
-                                    <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
-                                        {project.team.recruitment.status.toUpperCase()}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200">
+                                            {project.team.recruitment.status.toUpperCase()}
+                                        </span>
+                                        {isLeader && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleToggleRecruitment(
+                                                        project.team.recruitment.status === 'open' ? 'closed' : 'open'
+                                                    )
+                                                }
+                                                className="text-xs text-blue-600 hover:text-blue-800 underline font-medium"
+                                            >
+                                                {project.team.recruitment.status === 'open'
+                                                    ? 'Tutup Rekrutmen'
+                                                    : 'Buka Rekrutmen'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-col gap-3 mt-4">

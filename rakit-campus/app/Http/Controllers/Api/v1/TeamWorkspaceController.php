@@ -173,6 +173,27 @@ class TeamWorkspaceController extends Controller
         ]);
     }
 
+    public function deleteTask(Request $request, int $taskId): JsonResponse
+    {
+        $user = $request->user();
+        $task = Task::with('team')->findOrFail($taskId);
+        $this->authorize('view', $task->team);
+
+        $task->delete();
+
+        ActivityLog::log(
+            $task->campus_id,
+            $task->team_id,
+            $user->id,
+            'task_deleted',
+            $task
+        );
+
+        return response()->json([
+            'message' => 'Tugas berhasil dihapus.',
+        ]);
+    }
+
     public function addComment(Request $request, int $taskId): JsonResponse
     {
         $user = $request->user();

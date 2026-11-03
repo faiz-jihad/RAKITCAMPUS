@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Web;
 
 use App\Enums\CompetitionCategory;
-use App\Enums\CompetitionScope;
 use App\Enums\CompetitionStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Bookmark;
 use App\Models\Competition;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -68,10 +68,15 @@ class CompetitionWebController extends Controller
         $myParticipation = $competition->participations
             ->first(fn ($p) => $p->team?->hasMember($user));
 
+        $myLedProjects = Project::where('leader_id', $user->id)
+            ->with('team')
+            ->get(['id', 'title', 'category', 'status']);
+
         return Inertia::render('competitions/show', [
             'competition' => $competition,
             'isBookmarked' => $isBookmarked,
             'myParticipation' => $myParticipation,
+            'myLedProjects' => $myLedProjects,
         ]);
     }
 }
