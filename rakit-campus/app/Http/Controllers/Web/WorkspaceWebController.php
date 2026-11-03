@@ -193,10 +193,14 @@ class WorkspaceWebController extends Controller
             'status' => ['required', 'string'],
         ]);
 
+        $user = $request->user();
+        $campusId = $team->campus_id ?? $team->project?->campus_id ?? $user->campusId() ?? 1;
         $maxPos = Task::where('team_id', $team->id)->where('status', $validated['status'])->max('position') ?? 0;
 
         $task = Task::create([
+            'campus_id' => $campusId,
             'team_id' => $team->id,
+            'created_by' => $user->id,
             'title' => $validated['title'],
             'description' => $validated['description'] ?? null,
             'priority' => $validated['priority'],
