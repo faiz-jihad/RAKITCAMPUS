@@ -21,7 +21,7 @@ class WorkspaceWebController extends Controller
               ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id));
         })->with([
             'project:id,title,slug,status,category,progress,short_description',
-            'participations.competition:id,name,slug,status,theme',
+            'participations.competition:id,name,slug,status,category',
             'members.user:id,name,email',
             'milestones',
             'tasks:id,team_id,status,title,priority',
