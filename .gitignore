@@ -1,0 +1,36 @@
+# Dependencies
+/rakit-campus/vendor/
+/rakit-campus/node_modules/
+/mobile/.dart_tool/
+/mobile/.idea/
+/mobile/build/
+/mobile/.flutter-plugins-dependencies
+
+# Environment & local credentials
+/rakit-campus/.env
+/rakit-campus/.env.backup
+/rakit-campus/.env.production
+/rakit-campus/.local/
+/rakit-campus/.tmp/
+
+# Caches and logs
+/rakit-campus/bootstrap/cache/*.php
+!/rakit-campus/bootstrap/cache/.gitignore
+/rakit-campus/storage/framework/cache/data/*
+/rakit-campus/storage/framework/sessions/*
+/rakit-campus/storage/framework/views/*
+/rakit-campus/storage/logs/*
+/rakit-campus/.phpunit.cache
+/rakit-campus/.phpunit.result.cache
+
+# Public assets & uploaded files
+/rakit-campus/public/storage
+/rakit-campus/storage/app/public/uploads/*
+!/rakit-campus/storage/app/public/uploads/**/.gitignore
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log

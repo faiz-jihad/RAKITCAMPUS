@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\CompetitionOutcome;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CompetitionResult extends Model
+{
+    protected $fillable = ['outcome', 'rank', 'notes', 'evidence_url'];
+
+    protected function casts(): array
+    {
+        return ['outcome' => CompetitionOutcome::class];
+    }
+
+    public function participation(): BelongsTo
+    {
+        return $this->belongsTo(CompetitionParticipation::class, 'participation_id');
+    }
+}
