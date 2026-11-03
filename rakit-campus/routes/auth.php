@@ -40,7 +40,7 @@ Route::middleware('guest')->group(function () {
     Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])
         ->name('auth.google.callback');
 
-    Route::post('auth/google/demo', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'demoGoogleLogin'])
+    Route::match(['get', 'post'], 'auth/google/demo', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'demoGoogleLogin'])
         ->name('auth.google.demo');
 });
 
