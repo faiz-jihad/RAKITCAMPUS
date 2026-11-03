@@ -149,7 +149,7 @@ class AcademicClassWebController extends Controller
                     'role_name' => $userProject->team?->members?->firstWhere('user_id', $s->id)?->role_name ?? 'Anggota',
                 ] : null,
                 'skills' => $s->profile?->skills?->pluck('name')->take(4)->all() ?? [],
-                'enrolled_at' => $s->pivot?->enrolled_at?->format('d M Y') ?? 'Baru saja',
+                'enrolled_at' => $s->pivot?->enrolled_at ? \Carbon\Carbon::parse($s->pivot->enrolled_at)->format('d M Y') : 'Baru saja',
             ];
         });
 
@@ -199,7 +199,7 @@ class AcademicClassWebController extends Controller
                 'type' => $g->type,
                 'lecturer_name' => $g->lecturer?->name ?? 'Dosen Pengampu',
                 'project_title' => $g->project?->title,
-                'created_at' => $g->created_at->format('d M Y, H:i'),
+                'created_at' => $g->created_at ? \Carbon\Carbon::parse($g->created_at)->format('d M Y, H:i') : '',
             ]),
             'stats' => [
                 'total_students' => $totalStudents,
