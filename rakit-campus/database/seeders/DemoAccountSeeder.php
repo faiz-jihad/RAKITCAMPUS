@@ -173,10 +173,7 @@ class DemoAccountSeeder extends Seeder
             );
 
             foreach ($studentData['skills'] as $skillName => $prof) {
-                $skill = Skill::firstOrCreate(
-                    ['name' => $skillName],
-                    ['category' => 'technical', 'is_verified' => true]
-                );
+                $skill = Skill::resolve($skillName);
                 $profile->skills()->syncWithoutDetaching([$skill->id => ['proficiency' => $prof]]);
             }
 
@@ -205,7 +202,7 @@ class DemoAccountSeeder extends Seeder
 
         // Attach Project Skills
         foreach (['IoT', 'Flutter', 'Laravel', 'Python'] as $sName) {
-            $s = Skill::firstOrCreate(['name' => $sName], ['category' => 'technical', 'is_verified' => true]);
+            $s = Skill::resolve($sName);
             $project->skills()->syncWithoutDetaching([$s->id => ['min_proficiency' => 3, 'is_mandatory' => true]]);
         }
 
