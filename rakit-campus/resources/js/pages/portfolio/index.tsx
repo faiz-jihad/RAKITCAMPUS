@@ -55,6 +55,7 @@ export default function PortfolioIndex({
         try {
             const res = await fetch('/api/v1/portfolio/items', {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -86,6 +87,7 @@ export default function PortfolioIndex({
         try {
             const res = await fetch(`/api/v1/portfolio/items/${id}`, {
                 method: 'DELETE',
+                credentials: 'same-origin',
                 headers: {
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',

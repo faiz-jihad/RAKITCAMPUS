@@ -92,4 +92,9 @@ class Team extends Model
     {
         return max(0, $this->capacity - $this->members()->count());
     }
+
+    public function isFull(): bool
+    {
+        return $this->members()->count() >= $this->capacity;
+    }
 }

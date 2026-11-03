@@ -26,14 +26,23 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function AdminIndex({ stats, pendingVerifications: initialPending, recentProjects }: Props) {
     const [pending, setPending] = useState(initialPending);
 
+    const getXsrfToken = () => {
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) return decodeURIComponent(match[1]);
+        const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+        return meta?.content || '';
+    };
+
     const handleVerify = async (membershipId: number, status: 'verified' | 'rejected') => {
         try {
             const res = await fetch(`/api/v1/admin/students/${membershipId}/verify`, {
                 method: 'PATCH',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: JSON.stringify({ status }),
             });

@@ -57,6 +57,7 @@ export default function CompetitionShow({
         try {
             const res = await fetch(`/api/v1/competitions/${competition.id}/bookmark`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',
@@ -91,6 +92,7 @@ export default function CompetitionShow({
         try {
             const res = await fetch(`/api/v1/competitions/${competition.id}/participate`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json',

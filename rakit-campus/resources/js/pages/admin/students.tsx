@@ -66,6 +66,13 @@ export default function AdminStudents({ students, filters }: Props) {
         router.get('/admin/students', { search: search || undefined, status: newStatus || undefined }, { preserveState: true });
     };
 
+    const getXsrfToken = () => {
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) return decodeURIComponent(match[1]);
+        const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+        return meta?.content || '';
+    };
+
     const handleVerify = async (membershipId: number, newStatus: 'verified' | 'rejected') => {
         if (!confirm(`Apakah Anda yakin ingin mengubah status menjadi ${newStatus}?`)) return;
 
@@ -73,10 +80,12 @@ export default function AdminStudents({ students, filters }: Props) {
         try {
             const res = await fetch(`/api/v1/admin/students/${membershipId}/verify`, {
                 method: 'PATCH',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                    'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: JSON.stringify({ status: newStatus }),
             });

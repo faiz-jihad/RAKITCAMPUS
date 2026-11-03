@@ -35,6 +35,11 @@ Route::middleware(['auth'])->group(function () {
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');
     Route::get('/workspace/{teamId}', [WorkspaceWebController::class, 'show'])->name('workspace.show');
+    Route::post('/workspace/{teamId}/orchestrate-roadmap', [WorkspaceWebController::class, 'orchestrateRoadmap'])->name('workspace.orchestrate-roadmap');
+    Route::post('/workspace/{teamId}/tasks', [WorkspaceWebController::class, 'storeTask'])->name('workspace.tasks.store');
+    Route::patch('/workspace/{teamId}/tasks/{taskId}', [WorkspaceWebController::class, 'updateTask'])->name('workspace.tasks.update');
+    Route::delete('/workspace/{teamId}/tasks/{taskId}', [WorkspaceWebController::class, 'deleteTask'])->name('workspace.tasks.delete');
+    Route::post('/workspace/{teamId}/evaluation', [WorkspaceWebController::class, 'saveEvaluation'])->name('workspace.evaluation.save');
 
     // Portfolio
     Route::get('/portfolio', [PortfolioWebController::class, 'index'])->name('portfolio.index');
