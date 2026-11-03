@@ -247,4 +247,125 @@ class MatchingService
 
         return $ranked->sortByDesc('score')->take($limit)->values();
     }
+
+    /**
+     * Compute matchmaking score and synergy between two student classmates.
+     */
+    public function matchStudentToStudent(StudentProfile $me, StudentProfile $peer, bool $peerHasTeam = false): array
+    {
+        $me->loadMissing(['skills', 'user']);
+        $peer->loadMissing(['skills', 'user']);
+
+        $mySkillMap = $me->skills->keyBy('name');
+        $peerSkillMap = $peer->skills->keyBy('name');
+
+        $sharedSkills = [];
+        $complementarySkills = [];
+
+        foreach ($peerSkillMap as $name => $skill) {
+            if ($mySkillMap->has($name)) {
+                $sharedSkills[] = $name;
+            } else {
+                $complementarySkills[] = $name;
+            }
+        }
+
+        // 1. Skill Score (Max 50 points): Balance between complementary expansion & shared foundation
+        $compCount = count($complementarySkills);
+        $sharedCount = count($sharedSkills);
+        $skillScore = min(50, ($compCount * 12) + ($sharedCount * 8));
+        if ($skillScore === 0) {
+            $skillScore = 20; // baseline for classmates
+        }
+
+        // 2. Role Synergy (Max 25 points)
+        $myRoles = collect($me->preferred_roles ?? []);
+        $peerRoles = collect($peer->preferred_roles ?? []);
+        $roleOverlap = $myRoles->intersect($peerRoles)->count();
+        $roleDiff = $peerRoles->diff($myRoles)->count();
+
+        $roleScore = 15;
+        if ($roleDiff > 0 && ($myRoles->isNotEmpty() || $peerRoles->isNotEmpty())) {
+            $roleScore = 25; // Great balance of different roles
+        }
+
+        // 3. Availability Compatibility (Max 15 points)
+        $myHours = $me->availability_hours ?? 10;
+        $peerHours = $peer->availability_hours ?? 10;
+        $hourDiff = abs($myHours - $peerHours);
+        $availScore = max(5, 15 - (int) ($hourDiff / 3));
+
+        // 4. Status synergy (Max 10 points): prioritized if peer still has no team
+        $statusScore = !$peerHasTeam ? 10 : 5;
+
+        $totalScore = min(99, max(55, $skillScore + $roleScore + $availScore + $statusScore));
+
+        // Explanation text
+        if (!empty($complementarySkills)) {
+            $explanation = "Rekan ini melengkapi keahlian tim kamu di bidang " . implode(', ', array_slice($complementarySkills, 0, 3)) . ".";
+        } elseif (!empty($sharedSkills)) {
+            $explanation = "Memiliki keahlian yang serupa (" . implode(', ', array_slice($sharedSkills, 0, 2)) . ") sehingga mudah berkoordinasi secara teknis.";
+        } else {
+            $explanation = "Rekan satu kelas yang aktif dan siap berkolaborasi.";
+        }
+
+        $matchGrade = 'Cocok';
+        if ($totalScore >= 90) {
+            $matchGrade = 'Sangat Cocok';
+        } elseif ($totalScore >= 78) {
+            $matchGrade = 'Kombinasi Ideal';
+        }
+
+        return [
+            'score' => $totalScore,
+            'grade' => $matchGrade,
+            'shared_skills' => $sharedSkills,
+            'complementary_skills' => $complementarySkills,
+            'explanation' => $explanation,
+        ];
+    }
+
+    /**
+     * Rank all classmates for a student in an academic class.
+     */
+    public function rankClassmatesForStudent(StudentProfile $me, Collection $classmates, array $classProjectUserIds = []): Collection
+    {
+        return $classmates
+            ->filter(fn ($studentUser) => $studentUser->id !== $me->user_id)
+            ->map(function ($studentUser) use ($me, $classProjectUserIds) {
+                $peerProfile = $studentUser->profile ?? StudentProfile::firstOrCreate(
+                    ['user_id' => $studentUser->id],
+                    ['campus_id' => $me->campus_id, 'slug' => 'student-' . $studentUser->id]
+                );
+                $peerProfile->loadMissing('skills');
+
+                $hasTeam = in_array($studentUser->id, $classProjectUserIds);
+                $match = $this->matchStudentToStudent($me, $peerProfile, $hasTeam);
+
+                return [
+                    'student' => [
+                        'id' => $studentUser->id,
+                        'name' => $studentUser->name,
+                        'email' => $studentUser->email,
+                        'avatar' => $studentUser->avatar,
+                        'student_number' => $studentUser->pivot?->student_number ?? 'NIM-' . $studentUser->id,
+                        'study_program' => $peerProfile->study_program ?? 'Teknik Informatika',
+                        'semester' => $peerProfile->semester ?? 4,
+                        'has_team' => $hasTeam,
+                        'availability_hours' => $peerProfile->availability_hours ?? 15,
+                        'skills' => $peerProfile->skills->map(fn ($s) => [
+                            'name' => $s->name,
+                            'proficiency' => $s->pivot->proficiency ?? 3,
+                        ])->all(),
+                    ],
+                    'match_score' => $match['score'],
+                    'match_grade' => $match['grade'],
+                    'shared_skills' => $match['shared_skills'],
+                    'complementary_skills' => $match['complementary_skills'],
+                    'explanation' => $match['explanation'],
+                ];
+            })
+            ->sortByDesc('match_score')
+            ->values();
+    }
 }

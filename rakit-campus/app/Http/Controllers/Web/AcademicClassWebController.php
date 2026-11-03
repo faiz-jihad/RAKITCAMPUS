@@ -17,6 +17,7 @@ use App\Models\Project;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,6 +26,10 @@ use Inertia\Response;
 
 class AcademicClassWebController extends Controller
 {
+    public function __construct(
+        protected MatchingService $matchingService
+    ) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -158,6 +163,23 @@ class AcademicClassWebController extends Controller
         $studentsWithTeam = $studentsData->where('has_team', true)->count();
         $studentsWithoutTeam = $totalStudents - $studentsWithTeam;
 
+        // Peer Matchmaking for Student View
+        $peerMatches = collect();
+        $myClassProject = null;
+
+        if ($user) {
+            $userProfile = $user->profile()->with('skills')->first();
+            if ($userProfile) {
+                $peerMatches = $this->matchingService->rankClassmatesForStudent(
+                    $userProfile,
+                    $academicClass->students,
+                    $classProjectUserIds
+                );
+            }
+
+            $myClassProject = $academicClass->projects->first(fn ($p) => $p->team?->hasMember($user));
+        }
+
         return Inertia::render('classes/show', [
             'academicClass' => [
                 'id' => $academicClass->id,
@@ -174,6 +196,15 @@ class AcademicClassWebController extends Controller
                 'campus' => $academicClass->campus,
             ],
             'students' => $studentsData->values(),
+            'peerMatches' => $peerMatches,
+            'myClassProject' => $myClassProject ? [
+                'id' => $myClassProject->id,
+                'title' => $myClassProject->title,
+                'is_leader' => $myClassProject->isLeader($user),
+                'team_id' => $myClassProject->team?->id,
+                'members_count' => $myClassProject->team?->members?->count() ?? 1,
+                'capacity' => $myClassProject->team?->capacity ?? $academicClass->target_team_size,
+            ] : null,
             'projects' => $academicClass->projects->map(fn ($p) => [
                 'id' => $p->id,
                 'title' => $p->title,
@@ -405,5 +436,46 @@ class AcademicClassWebController extends Controller
         });
 
         return back()->with('success', "Smart Team Balancing berhasil membentuk {$teamsCreated} kelompok proyek baru secara merata!");
+    }
+
+    public function inviteStudent(Request $request, int $id)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        $validated = $request->validate([
+            'student_id' => ['required', 'integer', 'exists:users,id'],
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
+        ]);
+
+        $project = Project::with('team.members')->where('academic_class_id', $academicClass->id)->findOrFail($validated['project_id']);
+
+        if (!$project->isLeader($user) && !$project->team?->hasMember($user)) {
+            abort(403, 'Hanya anggota kelompok yang dapat mengundang rekan.');
+        }
+
+        $team = $project->team;
+        if (!$team) {
+            return back()->with('error', 'Kelompok tidak ditemukan.');
+        }
+
+        if ($team->members->count() >= $team->capacity) {
+            return back()->with('error', 'Kapasitas kelompok sudah penuh (' . $team->capacity . ' orang).');
+        }
+
+        $invitedUser = User::findOrFail($validated['student_id']);
+        if ($team->hasMember($invitedUser)) {
+            return back()->with('info', 'Mahasiswa tersebut sudah menjadi anggota kelompok ini.');
+        }
+
+        TeamMember::create([
+            'team_id' => $team->id,
+            'user_id' => $invitedUser->id,
+            'permission' => TeamPermission::Member,
+            'role_name' => 'Anggota (Matchmaking Kelas)',
+            'joined_at' => now(),
+        ]);
+
+        return back()->with('success', "Berhasil menambahkan {$invitedUser->name} ke dalam kelompok {$team->name}!");
     }
 }

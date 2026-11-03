@@ -25,12 +25,14 @@ Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('c
 Route::get('/competitions/{id}', [CompetitionWebController::class, 'show'])->name('competitions.show')->whereNumber('id');
 Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
 
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
 
     // Project Actions
     Route::get('/projects/create', [ProjectWebController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectWebController::class, 'store'])->name('projects.store');
+    Route::post('/projects/{id}/apply', [ProjectWebController::class, 'apply'])->name('projects.apply');
+    Route::post('/projects/{id}/applications/{appId}/respond', [ProjectWebController::class, 'respondApplication'])->name('projects.applications.respond');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');
@@ -53,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/classes/{id}/students/{studentId}', [AcademicClassWebController::class, 'removeStudent'])->name('classes.students.remove');
     Route::post('/classes/{id}/guidance', [AcademicClassWebController::class, 'addGuidance'])->name('classes.guidance.store');
     Route::post('/classes/{id}/auto-form-teams', [AcademicClassWebController::class, 'autoFormTeams'])->name('classes.auto-form-teams');
+    Route::post('/classes/{id}/invite-student', [AcademicClassWebController::class, 'inviteStudent'])->name('classes.invite-student');
 
     // Quick Role Switcher for Testing (Mahasiswa <-> Dosen)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {

@@ -79,11 +79,9 @@ export default function ProjectShow({
 
     const handleApply = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!project.team?.recruitment?.id) return;
-
         setSubmitting(true);
         try {
-            const res = await fetch(`/api/v1/recruitments/${project.team.recruitment.id}/apply`, {
+            const res = await fetch(`/projects/${project.id}/apply`, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -93,18 +91,18 @@ export default function ProjectShow({
                     'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: JSON.stringify({
-                    recruitment_role_id: applyingRole?.id,
+                    recruitment_role_id: applyingRole?.id || null,
                     message: applyMessage,
                 }),
             });
 
-            const json = await res.json();
             if (res.ok) {
-                alert('Lamaran Anda berhasil dikirim! Ketua tim akan meninjau profil dan keahlian Anda.');
+                alert('Lamaran kamu berhasil dikirim ke ketua tim!');
                 setApplyingRole(null);
                 setApplyMessage('');
                 window.location.reload();
             } else {
+                const json = await res.json().catch(() => ({}));
                 alert(json.message || 'Gagal mengirimkan lamaran.');
             }
         } catch {
@@ -117,7 +115,7 @@ export default function ProjectShow({
     const handleDecideApplication = async (appId: number, action: 'accept' | 'reject') => {
         setDecidingId(appId);
         try {
-            const res = await fetch(`/api/v1/applications/${appId}/decide`, {
+            const res = await fetch(`/projects/${project.id}/applications/${appId}/respond`, {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
@@ -129,19 +127,17 @@ export default function ProjectShow({
                 body: JSON.stringify({ action }),
             });
 
-            const json = await res.json();
             if (res.ok) {
                 setApplications((prev: any[]) =>
                     prev.map((a: any) =>
                         a.id === appId ? { ...a, status: action === 'accept' ? 'accepted' : 'rejected' } : a
                     )
                 );
-                alert(json.message || `Aplikasi berhasil di-${action === 'accept' ? 'terima' : 'tolak'}.`);
-                if (action === 'accept') {
-                    window.location.reload();
-                }
+                alert(`Lamaran berhasil di-${action === 'accept' ? 'terima' : 'tolak'}.`);
+                window.location.reload();
             } else {
-                alert(json.message || 'Gagal memproses aplikasi.');
+                const json = await res.json().catch(() => ({}));
+                alert(json.message || 'Gagal memproses lamaran.');
             }
         } catch {
             alert('Terjadi kesalahan jaringan.');
@@ -287,25 +283,43 @@ export default function ProjectShow({
                         </div>
 
                         {/* Action buttons row */}
-                        <div className="flex flex-wrap items-center justify-end gap-3 mt-6 pt-4 border-t border-neutral-100">
-                            {isLeader && project.status !== 'completed' && (
-                                <button
-                                    onClick={handleCompleteProject}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-xs shadow-xs transition"
-                                >
-                                    <CheckCircle2 className="size-3.5" />
-                                    <span>Tandai Proyek Selesai</span>
-                                </button>
-                            )}
-                            {isMember && (
-                                <Link
-                                    href={`/workspace/${project.team?.id}`}
-                                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#5448EE] hover:bg-[#4336D9] text-white rounded-full font-bold text-xs shadow-md shadow-[#5448EE]/20 transition"
-                                >
-                                    <FolderKanban className="size-3.5" />
-                                    <span>Buka Papan Kanban Tim</span>
-                                </Link>
-                            )}
+                        <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-neutral-100">
+                            {project.academic_class ? (
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-medium">
+                                    <GraduationCap className="size-3.5 text-purple-700" />
+                                    <span>Tugas Mata Kuliah: <strong>{project.academic_class.name}</strong></span>
+                                </div>
+                            ) : <div />}
+
+                            <div className="flex items-center gap-3">
+                                {isLeader && project.status !== 'completed' && (
+                                    <button
+                                        onClick={handleCompleteProject}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-xs shadow-xs transition"
+                                    >
+                                        <CheckCircle2 className="size-3.5" />
+                                        <span>Tandai Proyek Selesai</span>
+                                    </button>
+                                )}
+                                {!isMember && (
+                                    <button
+                                        onClick={() => setApplyingRole(project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' })}
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full font-bold text-xs shadow-md shadow-indigo-500/20 transition active:scale-95"
+                                    >
+                                        <Send className="size-3.5" />
+                                        <span>Lamar Posisi / Gabung Tim</span>
+                                    </button>
+                                )}
+                                {isMember && (
+                                    <Link
+                                        href={`/workspace/${project.team?.id}`}
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-bold text-xs shadow-md transition"
+                                    >
+                                        <FolderKanban className="size-3.5" />
+                                        <span>Buka Ruang Kerja Tim</span>
+                                    </Link>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -356,8 +370,8 @@ export default function ProjectShow({
                                             >
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div>
-                                                        <span className="text-xs font-bold text-neutral-900">{app.applicant?.name}</span>
-                                                        <span className="text-[11px] text-neutral-500 ml-2">({app.applicant?.email})</span>
+                                                        <span className="text-xs font-bold text-neutral-900">{app.user?.name || app.applicant?.name || 'Mahasiswa'}</span>
+                                                        <span className="text-[11px] text-neutral-500 ml-2">({app.user?.email || app.applicant?.email})</span>
                                                         <div className="text-[11px] text-[#5448EE] font-semibold mt-0.5">
                                                             Melamar Posisi: {app.role?.name || 'Anggota Tim'}
                                                         </div>
@@ -379,7 +393,7 @@ export default function ProjectShow({
                                                     </div>
                                                 )}
 
-                                                {app.status === 'submitted' && (
+                                                {(app.status === 'pending' || app.status === 'submitted') && (
                                                     <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-neutral-200">
                                                         <button
                                                             onClick={() => handleDecideApplication(app.id, 'reject')}

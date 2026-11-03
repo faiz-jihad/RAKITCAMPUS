@@ -2,21 +2,26 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\ApplicationStatus;
 use App\Enums\ProjectCategory;
 use App\Enums\ProjectStatus;
+use App\Enums\RecruitmentStatus;
 use App\Enums\SkillType;
 use App\Enums\TeamPermission;
 use App\Enums\TeamType;
 use App\Enums\Visibility;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Application;
 use App\Models\Bookmark;
 use App\Models\Campus;
 use App\Models\Project;
-use App\Models\RecruitmentApplication;
+use App\Models\Recruitment;
+use App\Models\RecruitmentRole;
 use App\Models\Skill;
 use App\Models\Team;
 use App\Models\TeamMember;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -64,6 +69,7 @@ class ProjectWebController extends Controller
         $user = $request->user();
         $project = Project::with([
             'leader:id,name,email',
+            'academicClass.lecturer:id,name,email',
             'campus:id,name,slug',
             'skills',
             'team.members.user:id,name',
@@ -87,8 +93,8 @@ class ProjectWebController extends Controller
         $isLeader = $user ? $project->isLeader($user) : false;
         $applications = [];
         if ($isLeader && $project->team?->recruitment) {
-            $applications = RecruitmentApplication::where('recruitment_id', $project->team->recruitment->id)
-                ->with(['applicant:id,name,email', 'role:id,name'])
+            $applications = Application::where('recruitment_id', $project->team->recruitment->id)
+                ->with(['user:id,name,email', 'role:id,name'])
                 ->latest()
                 ->get();
         }
@@ -192,6 +198,36 @@ class ProjectWebController extends Controller
                 'joined_at' => now(),
             ]);
 
+            // Create default recruitment & open roles for the team
+            $recruitment = Recruitment::create([
+                'campus_id' => $activeCampusId,
+                'team_id' => $team->id,
+                'title' => 'Rekrutmen Terbuka ' . $project->title,
+                'description' => 'Rekrutmen anggota tim untuk proyek ' . $project->title,
+                'status' => RecruitmentStatus::Open,
+            ]);
+
+            if (!empty($validated['required_skills'])) {
+                foreach (array_slice($validated['required_skills'], 0, 3) as $req) {
+                    RecruitmentRole::create([
+                        'recruitment_id' => $recruitment->id,
+                        'name' => $req['name'] . ' Specialist',
+                        'slots' => 1,
+                    ]);
+                }
+            } else {
+                RecruitmentRole::create([
+                    'recruitment_id' => $recruitment->id,
+                    'name' => 'Frontend / UI Developer',
+                    'slots' => 1,
+                ]);
+                RecruitmentRole::create([
+                    'recruitment_id' => $recruitment->id,
+                    'name' => 'Backend Developer',
+                    'slots' => 1,
+                ]);
+            }
+
             // Attach required skills
             if (!empty($validated['required_skills'])) {
                 $skillData = [];
@@ -221,5 +257,121 @@ class ProjectWebController extends Controller
         }
 
         return redirect()->route('projects.show', $project->id);
+    }
+
+    public function apply(Request $request, int $id)
+    {
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $project = Project::with(['team.recruitment.roles'])->findOrFail($id);
+        $team = $project->team;
+
+        if (!$team) {
+            return back()->with('error', 'Tim proyek belum diinisialisasi.');
+        }
+
+        if ($team->hasMember($user)) {
+            return back()->with('info', 'Kamu sudah bergabung dalam tim proyek ini.');
+        }
+
+        if ($team->members()->count() >= $team->capacity) {
+            return back()->with('error', 'Kapasitas tim proyek ini sudah penuh.');
+        }
+
+        // Ensure recruitment exists
+        $recruitment = $team->recruitment;
+        if (!$recruitment) {
+            $recruitment = Recruitment::create([
+                'campus_id' => $project->campus_id,
+                'team_id' => $team->id,
+                'title' => 'Rekrutmen Terbuka ' . $project->title,
+                'status' => RecruitmentStatus::Open,
+            ]);
+
+            RecruitmentRole::create([
+                'recruitment_id' => $recruitment->id,
+                'name' => 'Anggota Tim Pengembang',
+                'slots' => max(1, $team->capacity - $team->members()->count()),
+            ]);
+            $recruitment->load('roles');
+        }
+
+        // Check if already applied
+        $existing = Application::where('recruitment_id', $recruitment->id)
+            ->where('user_id', $user->id)
+            ->whereIn('status', [ApplicationStatus::Pending->value, ApplicationStatus::UnderReview->value])
+            ->first();
+
+        if ($existing) {
+            return back()->with('info', 'Lamaran kamu sedang ditinjau oleh ketua tim.');
+        }
+
+        $validated = $request->validate([
+            'recruitment_role_id' => ['nullable', 'integer'],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $roleId = $validated['recruitment_role_id'] ?? $recruitment->roles->first()?->id;
+
+        Application::create([
+            'recruitment_id' => $recruitment->id,
+            'recruitment_role_id' => $roleId,
+            'user_id' => $user->id,
+            'message' => $validated['message'] ?? 'Saya tertarik untuk berkolaborasi dan berkontribusi dalam proyek ini.',
+            'status' => ApplicationStatus::Pending,
+        ]);
+
+        return back()->with('success', 'Lamaran kamu berhasil dikirim ke ketua tim!');
+    }
+
+    public function respondApplication(Request $request, int $id, int $applicationId)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members'])->findOrFail($id);
+
+        if (!$project->isLeader($user) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya ketua tim yang dapat memproses lamaran.');
+        }
+
+        $application = Application::with(['user', 'role'])->findOrFail($applicationId);
+        $action = $request->input('action', 'accept'); // 'accept' or 'reject'
+
+        if ($action === 'accept') {
+            $team = $project->team;
+            if ($team->members->count() >= $team->capacity) {
+                return back()->with('error', 'Kapasitas tim sudah penuh.');
+            }
+
+            if (!$team->hasMember($application->user)) {
+                TeamMember::create([
+                    'team_id' => $team->id,
+                    'user_id' => $application->user_id,
+                    'permission' => TeamPermission::Member,
+                    'role_name' => $application->role?->name ?? 'Anggota Tim',
+                    'joined_at' => now(),
+                ]);
+            }
+
+            $application->update([
+                'status' => ApplicationStatus::Accepted,
+                'decided_by' => $user->id,
+                'decided_at' => now(),
+                'decision_note' => 'Diterima oleh ketua tim.',
+            ]);
+
+            return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim!");
+        } else {
+            $application->update([
+                'status' => ApplicationStatus::Rejected,
+                'decided_by' => $user->id,
+                'decided_at' => now(),
+                'decision_note' => $request->input('note', 'Mohon maaf, posisi saat ini belum sesuai.'),
+            ]);
+
+            return back()->with('info', 'Lamaran telah ditolak.');
+        }
     }
 }

@@ -39,9 +39,19 @@ class ProfileController extends Controller
 
         $allSkills = Skill::orderBy('name')->get(['id', 'name', 'type']);
 
+        $isStudent = !$user->isLecturer() && !$user->isPlatformAdmin();
+        $hasNim = $membership && filled($membership->student_number) && !str_starts_with($membership->student_number, 'REG-');
+        $hasDepartment = $profile && filled($profile->department);
+        $hasStudyProgram = $profile && filled($profile->study_program);
+        $hasSkills = $profile && $profile->skills->count() >= 2;
+        $hasAvailability = $profile && filled($profile->availability_hours);
+
+        $isMandatory = $isStudent && (!$hasNim || !$hasDepartment || !$hasStudyProgram || !$hasSkills || !$hasAvailability);
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
+            'isMandatory' => $isMandatory || $request->boolean('mandatory'),
             'profile' => $profile ? [
                 'id' => $profile->id,
                 'department' => $profile->department,
@@ -88,8 +98,13 @@ class ProfileController extends Controller
             }
             $user->save();
 
-            // Update Student Profile
+            // Update Student Profile & NIM
             $membership = $user->activeMembership();
+            if ($membership && !empty($validated['student_number'])) {
+                $membership->student_number = trim($validated['student_number']);
+                $membership->save();
+            }
+
             $profile = $user->profile()->first();
             if (!$profile && $membership) {
                 $profile = StudentProfile::create([
@@ -140,6 +155,10 @@ class ProfileController extends Controller
                 }
             }
         });
+
+        if ($request->boolean('redirect_to_dashboard')) {
+            return redirect()->route('dashboard')->with('success', 'Profil mahasiswa berhasil disimpan! Sekarang kamu bisa bergabung ke kelas kuliah dan mulai mencari rekan tim.');
+        }
 
         return to_route('profile.edit')->with('status', 'Profil dan keahlian berhasil diperbarui.');
     }

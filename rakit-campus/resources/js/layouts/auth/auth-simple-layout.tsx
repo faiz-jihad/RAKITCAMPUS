@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { Sparkles } from 'lucide-react';
 
 interface AuthLayoutProps {
     children: React.ReactNode;
@@ -10,43 +9,57 @@ interface AuthLayoutProps {
 
 export default function AuthSimpleLayout({ children, title, description }: AuthLayoutProps) {
     return (
-        <div className="relative min-h-svh flex flex-col items-center justify-center p-4 sm:p-6 bg-gradient-to-b from-[#EAE6FF] via-[#F6F4FE] to-white overflow-hidden selection:bg-[#5448EE] selection:text-white">
-            {/* Ambient ethereal orbs */}
-            <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-gradient-to-r from-violet-300/30 via-indigo-200/40 to-purple-300/30 blur-3xl rounded-full pointer-events-none -z-10" />
-            <div className="absolute -top-20 -left-20 w-80 h-80 bg-white/70 blur-3xl rounded-full pointer-events-none -z-10" />
-            <div className="absolute top-40 -right-20 w-80 h-80 bg-white/70 blur-3xl rounded-full pointer-events-none -z-10" />
+        <div className="relative min-h-svh flex flex-col items-center justify-center p-4 sm:p-6 bg-slate-50/60 selection:bg-blue-600 selection:text-white">
+            {/* Subtle architectural background grid */}
+            <div
+                className="absolute inset-0 pointer-events-none opacity-[0.35] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)]"
+                style={{
+                    backgroundImage: `radial-gradient(circle at 1px 1px, #cbd5e1 1px, transparent 0)`,
+                    backgroundSize: '24px 24px',
+                }}
+            />
 
-            <div className="w-full max-w-md">
-                {/* Floating Glass Card */}
-                <div className="bg-white/95 backdrop-blur-xl border border-white/90 rounded-3xl p-6 sm:p-8 shadow-[0_25px_80px_rgba(84,72,238,0.12)]">
-                    {/* Header: Logo & Title */}
-                    <div className="flex flex-col items-center text-center mb-6">
-                        <Link href="/" className="flex items-center gap-2 mb-3 group">
-                            <div className="size-10 rounded-2xl bg-[#5448EE] flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
-                                <Sparkles className="size-5 fill-white/20" />
-                            </div>
-                            <span className="text-xl font-extrabold tracking-tight text-neutral-900">
-                                RAKIT<span className="text-[#5448EE]">Campus</span>
-                            </span>
-                        </Link>
-
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-neutral-900">
-                            {title}
-                        </h1>
-                        {description && (
-                            <p className="text-xs text-neutral-500 mt-1 max-w-xs">
-                                {description}
-                            </p>
-                        )}
+            <div className="relative w-full max-w-md">
+                {/* Brand Logo & Campus Badge */}
+                <div className="flex flex-col items-center text-center mb-6">
+                    <Link href="/" className="inline-block transition-transform hover:scale-[1.02] mb-3">
+                        <img
+                            src="/images/rakit-logo.png"
+                            alt="RAKIT Campus"
+                            className="h-10 sm:h-11 w-auto object-contain mx-auto"
+                        />
+                    </Link>
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] font-medium text-slate-600">
+                        <span className="size-1.5 rounded-full bg-blue-600" />
+                        Politeknik Negeri Indramayu
                     </div>
+                </div>
+
+                {/* Main Auth Card */}
+                <div className="bg-white border border-slate-200/90 rounded-2xl p-6 sm:p-8 shadow-xs">
+                    {(title || description) && (
+                        <div className="mb-6 text-center">
+                            {title && (
+                                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                                    {title}
+                                </h1>
+                            )}
+                            {description && (
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                                    {description}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {children}
                 </div>
 
                 {/* Footer copyright */}
-                <p className="text-center text-[11px] text-neutral-400 mt-6">
-                    &copy; {new Date().getFullYear()} RAKIT Campus • Politeknik Negeri Indramayu
-                </p>
+                <div className="text-center text-[11px] text-slate-400 mt-6 space-y-1">
+                    <p>&copy; {new Date().getFullYear()} RAKIT Campus • Hak Cipta Dilindungi</p>
+                    <p className="text-[10px] text-slate-400">Portal Kolaborasi Proyek & Komunitas Mahasiswa</p>
+                </div>
             </div>
         </div>
     );

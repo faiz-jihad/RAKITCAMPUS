@@ -200,7 +200,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                 className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-bold shadow-md shadow-[#5448EE]/20 transition"
                             >
                                 <Plus className="size-3.5" />
-                                <span>Inisiasi Proyek Baru</span>
+                                <span>Buat Proyek Baru</span>
                             </Link>
                         </div>
                     ) : (

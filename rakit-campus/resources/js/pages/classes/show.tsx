@@ -84,6 +84,22 @@ interface Props {
         campus?: { id: number; name: string };
     };
     students: Student[];
+    peerMatches?: Array<{
+        student: Student;
+        match_score: number;
+        match_grade: string;
+        shared_skills: string[];
+        complementary_skills: string[];
+        explanation: string;
+    }>;
+    myClassProject?: {
+        id: number;
+        title: string;
+        is_leader: boolean;
+        team_id: number;
+        members_count: number;
+        capacity: number;
+    } | null;
     projects: ProjectItem[];
     guidances: Guidance[];
     stats: {
@@ -95,7 +111,16 @@ interface Props {
     isLecturer: boolean;
 }
 
-export default function ClassShow({ academicClass, students = [], projects = [], guidances = [], stats, isLecturer = false }: Props) {
+export default function ClassShow({
+    academicClass,
+    students = [],
+    peerMatches = [],
+    myClassProject = null,
+    projects = [],
+    guidances = [],
+    stats,
+    isLecturer = false,
+}: Props) {
     const [tab, setTab] = useState<'students' | 'projects' | 'smart_group' | 'guidances'>('students');
     const [studentFilter, setStudentFilter] = useState<'all' | 'without_team' | 'with_team'>('all');
     const [searchStudent, setSearchStudent] = useState('');
@@ -103,6 +128,7 @@ export default function ClassShow({ academicClass, students = [], projects = [],
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
     const [showGuidanceModal, setShowGuidanceModal] = useState(false);
     const [selectedProjectForGuidance, setSelectedProjectForGuidance] = useState<number | null>(null);
+    const [invitingId, setInvitingId] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Kelas Kuliah', href: '/classes' },
@@ -142,6 +168,22 @@ export default function ClassShow({ academicClass, students = [], projects = [],
         if (confirm(`Yakin ingin mengeluarkan ${studentName} dari kelas ini?`)) {
             router.delete(`/classes/${academicClass.id}/students/${studentId}`);
         }
+    };
+
+    const handleInviteStudent = (studentId: number) => {
+        if (!myClassProject?.id) return;
+        setInvitingId(studentId);
+        router.post(
+            `/classes/${academicClass.id}/invite-student`,
+            {
+                student_id: studentId,
+                project_id: myClassProject.id,
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => setInvitingId(null),
+            }
+        );
     };
 
     const handleAddGuidance = (e: React.FormEvent) => {
@@ -359,22 +401,20 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                                 <span>Kelompok Proyek ({projects.length})</span>
                             </button>
 
-                            {isLecturer && (
-                                <button
-                                    onClick={() => setTab('smart_group')}
-                                    className={`px-4 py-2.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
-                                        tab === 'smart_group'
-                                            ? 'bg-[#5448EE] text-white shadow-md shadow-[#5448EE]/20'
-                                            : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
-                                    }`}
-                                >
-                                    <Sparkles className="size-3.5 text-amber-500" />
-                                    <span>Smart Team Balancing</span>
-                                    {stats.students_without_team > 0 && (
-                                        <span className="ml-1 size-2 rounded-full bg-amber-500 animate-pulse" />
-                                    )}
-                                </button>
-                            )}
+                            <button
+                                onClick={() => setTab('smart_group')}
+                                className={`px-4 py-2.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${
+                                    tab === 'smart_group'
+                                        ? 'bg-[#5448EE] text-white shadow-md shadow-[#5448EE]/20'
+                                        : 'bg-white text-neutral-600 hover:bg-neutral-100 border border-neutral-200/80'
+                                }`}
+                            >
+                                <Sparkles className="size-3.5 text-amber-500" />
+                                <span>{isLecturer ? 'Smart Team Balancing' : `Matchmaking Rekan Sekelas (${peerMatches.length})`}</span>
+                                {stats.students_without_team > 0 && (
+                                    <span className="ml-1 size-2 rounded-full bg-amber-500 animate-pulse" />
+                                )}
+                            </button>
 
                             <button
                                 onClick={() => setTab('guidances')}
@@ -683,77 +723,249 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                         </div>
                     )}
 
-                    {/* TAB 3: SMART TEAM BALANCING (FITUR UNGGULAN DOSEN) */}
-                    {tab === 'smart_group' && isLecturer && (
-                        <div className="flex flex-col gap-6">
-                            <div className="rounded-3xl bg-gradient-to-r from-[#5448EE] via-[#6355F4] to-[#7B68EE] p-8 text-white shadow-xl shadow-[#5448EE]/20 relative overflow-hidden">
-                                <div className="max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold mb-3">
-                                        <Sparkles className="size-3.5 text-amber-300" />
-                                        <span>Algoritma Pemerataan Tim Mahasiswa Otomatis</span>
-                                    </div>
-                                    <h2 className="text-2xl font-bold">
-                                        Smart Team Balancing untuk Kelas {academicClass.name}
-                                    </h2>
-                                    <p className="text-xs sm:text-sm text-purple-100 mt-2 leading-relaxed">
-                                        Fitur ini secara cerdas menganalisis profil keahlian teknis dan minat seluruh mahasiswa yang belum memiliki kelompok di kelas ini, lalu mengelompokkan mereka ke dalam tim proyek berimbang (target kapasitas: {academicClass.target_team_size} orang per kelompok) agar seluruh mahasiswa terakomodasi.
-                                    </p>
+                    {/* TAB 3: SMART TEAM BALANCING & MATCHMAKING */}
+                    {tab === 'smart_group' && (
+                        isLecturer ? (
+                            /* DOSEN VIEW: SMART TEAM BALANCING */
+                            <div className="flex flex-col gap-6">
+                                <div className="rounded-3xl bg-gradient-to-r from-[#5448EE] via-[#6355F4] to-[#7B68EE] p-8 text-white shadow-xl shadow-[#5448EE]/20 relative overflow-hidden">
+                                    <div className="max-w-2xl">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold mb-3">
+                                            <Sparkles className="size-3.5 text-amber-300" />
+                                            <span>Algoritma Pemerataan Tim Mahasiswa Otomatis</span>
+                                        </div>
+                                        <h2 className="text-2xl font-bold">
+                                            Smart Team Balancing untuk Kelas {academicClass.name}
+                                        </h2>
+                                        <p className="text-xs sm:text-sm text-purple-100 mt-2 leading-relaxed">
+                                            Fitur ini secara cerdas menganalisis profil keahlian teknis dan minat seluruh mahasiswa yang belum memiliki kelompok di kelas ini, lalu mengelompokkan mereka ke dalam tim proyek berimbang (target kapasitas: {academicClass.target_team_size} orang per kelompok) agar seluruh mahasiswa terakomodasi.
+                                        </p>
 
-                                    <div className="mt-6 flex flex-wrap items-center gap-4">
-                                        <button
-                                            onClick={handleAutoFormTeams}
-                                            disabled={stats.students_without_team === 0}
-                                            className="px-6 py-3 rounded-full bg-white text-[#5448EE] hover:bg-neutral-100 text-xs sm:text-sm font-bold shadow-lg transition disabled:opacity-50 flex items-center gap-2"
-                                        >
-                                            <Zap className="size-4 text-amber-500" />
-                                            <span>Bentuk {Math.ceil(stats.students_without_team / academicClass.target_team_size)} Kelompok Baru Otomatis</span>
-                                        </button>
+                                        <div className="mt-6 flex flex-wrap items-center gap-4">
+                                            <button
+                                                onClick={handleAutoFormTeams}
+                                                disabled={stats.students_without_team === 0}
+                                                className="px-6 py-3 rounded-full bg-white text-[#5448EE] hover:bg-neutral-100 text-xs sm:text-sm font-bold shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+                                            >
+                                                <Zap className="size-4 text-amber-500" />
+                                                <span>Bentuk {Math.ceil(stats.students_without_team / academicClass.target_team_size)} Kelompok Baru Otomatis</span>
+                                            </button>
 
-                                        <span className="text-xs text-purple-200">
-                                            {stats.students_without_team} mahasiswa siap dikelompokkan
-                                        </span>
+                                            <span className="text-xs text-purple-200">
+                                                {stats.students_without_team} mahasiswa siap dikelompokkan
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            {/* Unassigned Students List */}
-                            <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-xs">
-                                <h3 className="text-sm font-bold text-neutral-900 mb-1">
-                                    Daftar Mahasiswa yang Menunggu Kelompok ({stats.students_without_team} Mahasiswa)
-                                </h3>
-                                <p className="text-xs text-neutral-500 mb-4">
-                                    Mahasiswa ini belum terdaftar di proyek tim manapun di kelas ini:
-                                </p>
+                                {/* Unassigned Students List */}
+                                <div className="bg-white rounded-3xl border border-neutral-200/80 p-6 shadow-xs">
+                                    <h3 className="text-sm font-bold text-neutral-900 mb-1">
+                                        Daftar Mahasiswa yang Menunggu Kelompok ({stats.students_without_team} Mahasiswa)
+                                    </h3>
+                                    <p className="text-xs text-neutral-500 mb-4">
+                                        Mahasiswa ini belum terdaftar di proyek tim manapun di kelas ini:
+                                    </p>
 
-                                {stats.students_without_team === 0 ? (
-                                    <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-xs text-emerald-800 font-bold flex items-center justify-center gap-2">
-                                        <CheckCircle2 className="size-4 text-emerald-600" />
-                                        <span>Seluruh {stats.total_students} mahasiswa di kelas ini telah terdistribusi ke dalam kelompok proyek.</span>
-                                    </div>
-                                ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                        {students.filter((s) => !s.has_team).map((st) => (
-                                            <div key={st.id} className="p-3.5 rounded-2xl border border-neutral-200 bg-neutral-50 flex items-center gap-3">
-                                                <div className="size-9 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-bold text-xs text-neutral-700">
-                                                    {st.name.charAt(0)}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <h5 className="text-xs font-bold text-neutral-900 truncate">{st.name}</h5>
-                                                    <p className="text-[11px] text-neutral-500 font-mono">{st.student_number}</p>
-                                                    <div className="flex flex-wrap gap-1 mt-1">
-                                                        {st.skills.slice(0, 2).map((sk, idx) => (
-                                                            <span key={idx} className="text-[9px] bg-white px-1.5 py-0.5 rounded border border-neutral-200 font-medium">
-                                                                {sk}
-                                                            </span>
-                                                        ))}
+                                    {stats.students_without_team === 0 ? (
+                                        <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-xs text-emerald-800 font-bold flex items-center justify-center gap-2">
+                                            <CheckCircle2 className="size-4 text-emerald-600" />
+                                            <span>Seluruh {stats.total_students} mahasiswa di kelas ini telah terdistribusi ke dalam kelompok proyek.</span>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {students.filter((s) => !s.has_team).map((st) => (
+                                                <div key={st.id} className="p-3.5 rounded-2xl border border-neutral-200 bg-neutral-50 flex items-center gap-3">
+                                                    <div className="size-9 rounded-full bg-white border border-neutral-200 flex items-center justify-center font-bold text-xs text-neutral-700">
+                                                        {st.name.charAt(0)}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h5 className="text-xs font-bold text-neutral-900 truncate">{st.name}</h5>
+                                                        <p className="text-[11px] text-neutral-500 font-mono">{st.student_number}</p>
+                                                        <div className="flex flex-wrap gap-1 mt-1">
+                                                            {st.skills.slice(0, 2).map((sk, idx) => (
+                                                                <span key={idx} className="text-[9px] bg-white px-1.5 py-0.5 rounded border border-neutral-200 font-medium">
+                                                                    {sk}
+                                                                </span>
+                                                            ))}
+                                                        </div>
                                                     </div>
                                                 </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            /* MAHASISWA VIEW: CLASSROOM PEER MATCHMAKING */
+                            <div className="flex flex-col gap-6">
+                                {/* Matchmaking Hero Banner */}
+                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
+                                    <div className="max-w-2xl">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold mb-3 border border-[#5448EE]/20">
+                                            <Sparkles className="size-3.5" />
+                                            <span>Rekomendasi Rekan Sekelas Berdasarkan Kecocokan Skill</span>
+                                        </div>
+                                        <h2 className="text-xl sm:text-2xl font-extrabold text-[#0E121B] tracking-tight">
+                                            Matchmaking Rekan Sekelas — {academicClass.name}
+                                        </h2>
+                                        <p className="text-xs sm:text-sm text-neutral-600 mt-2 leading-relaxed">
+                                            Temukan rekan satu kelas dengan keahlian yang saling melengkapi (Frontend, Backend, UI/UX, Mobile) agar kelompok tugas kamu seimbang, solid, dan siap mencapai nilai terbaik!
+                                        </p>
+                                    </div>
+
+                                    {/* Status Kelompok Card */}
+                                    <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#5448EE]/20 text-xs shrink-0 max-w-xs w-full">
+                                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">
+                                            Status Kelompok Kamu:
+                                        </span>
+                                        {myClassProject ? (
+                                            <div className="mt-1">
+                                                <span className="font-bold text-[#5448EE] block truncate">{myClassProject.title}</span>
+                                                <span className="text-[11px] text-neutral-500">
+                                                    {myClassProject.members_count} / {myClassProject.capacity} Anggota
+                                                </span>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            <div className="mt-1">
+                                                <span className="font-bold text-amber-700 block">Belum Punya Kelompok</span>
+                                                <span className="text-[11px] text-neutral-500">
+                                                    Pilih rekan terbaik di bawah dan ajak buat kelompok bersama.
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Peer Match Cards Grid */}
+                                {peerMatches.length === 0 ? (
+                                    <div className="rounded-3xl bg-white border border-neutral-200/80 p-12 text-center text-xs text-neutral-500 shadow-xs">
+                                        Belum ada data teman sekelas untuk dilakukan matchmaking. Ajak rekan sekelas kamu bergabung dengan kode: <strong>{academicClass.join_code}</strong>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        {peerMatches.map((item, idx) => {
+                                            const peer = item.student;
+                                            return (
+                                                <div
+                                                    key={peer.id || idx}
+                                                    className="rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-5 shadow-xs hover:shadow-md transition flex flex-col justify-between gap-4 relative overflow-hidden"
+                                                >
+                                                    <div>
+                                                        {/* Top row: Avatar + Name + Score Badge */}
+                                                        <div className="flex items-start justify-between gap-2 mb-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="size-11 rounded-2xl bg-[#EEEDFD] text-[#5448EE] font-bold text-sm flex items-center justify-center border border-[#5448EE]/20 shrink-0">
+                                                                    {peer.name.charAt(0).toUpperCase()}
+                                                                </div>
+                                                                <div>
+                                                                    <h4 className="text-xs font-bold text-[#0E121B] leading-tight">
+                                                                        {peer.name}
+                                                                    </h4>
+                                                                    <p className="text-[11px] text-neutral-500 mt-0.5 font-mono">
+                                                                        {peer.student_number}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="text-right shrink-0">
+                                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                                    <Zap className="size-3 text-emerald-600" />
+                                                                    <span>{item.match_score}%</span>
+                                                                </span>
+                                                                <span className="block text-[10px] text-neutral-500 font-semibold mt-0.5">
+                                                                    {item.match_grade}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Team Status Badge */}
+                                                        <div className="mb-3">
+                                                            <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border ${
+                                                                peer.has_team
+                                                                    ? 'bg-neutral-100 text-neutral-600 border-neutral-200'
+                                                                    : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                            }`}>
+                                                                {peer.has_team ? 'Sudah Ada Tim' : 'Belum Ada Kelompok (Siap Gabung)'}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Complementary Skills Highlight */}
+                                                        {item.complementary_skills && item.complementary_skills.length > 0 && (
+                                                            <div className="mb-2.5">
+                                                                <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-1">
+                                                                    Keahlian Pelengkap:
+                                                                </span>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {item.complementary_skills.map((cSkill, sIdx) => (
+                                                                        <span
+                                                                            key={sIdx}
+                                                                            className="text-[10px] font-bold bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20 px-2 py-0.5 rounded-md"
+                                                                        >
+                                                                            + {cSkill}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Shared Skills */}
+                                                        {item.shared_skills && item.shared_skills.length > 0 && (
+                                                            <div className="mb-3">
+                                                                <span className="text-[10px] font-medium text-neutral-400 block mb-1">
+                                                                    Keahlian Bersama:
+                                                                </span>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {item.shared_skills.map((sSkill, sIdx) => (
+                                                                        <span
+                                                                            key={sIdx}
+                                                                            className="text-[10px] bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md"
+                                                                        >
+                                                                            {sSkill}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            </div>
+                                                        )}
+
+                                                        {/* Explanation Box */}
+                                                        <p className="text-[11px] text-neutral-600 bg-neutral-50 p-2.5 rounded-xl border border-neutral-100 leading-relaxed">
+                                                            {item.explanation}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Card Actions */}
+                                                    <div className="pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
+                                                        <span className="text-[11px] text-neutral-400">
+                                                            {peer.availability_hours ? `${peer.availability_hours} jam/minggu` : 'Waktu fleksibel'}
+                                                        </span>
+
+                                                        {myClassProject ? (
+                                                            <button
+                                                                onClick={() => handleInviteStudent(peer.id)}
+                                                                disabled={invitingId === peer.id || peer.has_team || myClassProject.members_count >= myClassProject.capacity}
+                                                                className="px-3.5 py-1.5 rounded-full bg-[#5448EE] hover:bg-[#4336D6] text-white text-xs font-bold transition disabled:opacity-40 flex items-center gap-1.5"
+                                                            >
+                                                                <UserPlus className="size-3" />
+                                                                <span>{invitingId === peer.id ? 'Mengundang...' : peer.has_team ? 'Sudah Ada Tim' : 'Undang ke Kelompok'}</span>
+                                                            </button>
+                                                        ) : (
+                                                            <Link
+                                                                href={`/projects/create?academic_class_id=${academicClass.id}`}
+                                                                className="px-3.5 py-1.5 rounded-full bg-neutral-900 hover:bg-[#5448EE] text-white text-xs font-bold transition flex items-center gap-1.5"
+                                                            >
+                                                                <Plus className="size-3" />
+                                                                <span>Ajak Bikin Proyek</span>
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        )
                     )}
 
                     {/* TAB 4: CATATAN BIMBINGAN & PENGUMUMAN */}

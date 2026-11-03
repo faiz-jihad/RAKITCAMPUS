@@ -34,6 +34,7 @@ import SettingsLayout from '@/layouts/settings/layout';
 interface Props {
     mustVerifyEmail: boolean;
     status?: string;
+    isMandatory?: boolean;
     profile: {
         id: number;
         department: string | null;
@@ -82,6 +83,7 @@ const popularSkillSuggestions = [
 export default function Profile({
     mustVerifyEmail,
     status,
+    isMandatory = false,
     profile,
     allSkills = [],
     campus,
@@ -94,23 +96,27 @@ export default function Profile({
     const [newInterest, setNewInterest] = useState('');
     const [newRole, setNewRole] = useState('');
 
+    const initialNim = nim && !nim.startsWith('REG-') ? nim : '';
+
     const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
         name: auth.user.name,
         email: auth.user.email,
-        department: profile?.department || 'Teknik Informatika',
-        study_program: profile?.study_program || 'Teknik Informatika',
-        semester: profile?.semester || 5,
+        student_number: initialNim,
+        department: profile?.department || '',
+        study_program: profile?.study_program || '',
+        semester: profile?.semester || 4,
         bio: profile?.bio || '',
         github_url: profile?.github_url || '',
         linkedin_url: profile?.linkedin_url || '',
         portfolio_url: profile?.portfolio_url || '',
         interests: profile?.interests || ['Mobile App', 'IoT', 'Smart Agriculture'],
         preferred_roles: profile?.preferred_roles || ['Project Leader', 'IoT Engineer'],
-        availability_hours: profile?.availability_hours || 20,
+        availability_hours: profile?.availability_hours || 15,
         availability_note: profile?.availability_note || 'Tersedia sore hari dan akhir pekan',
         portfolio_public: profile?.portfolio_public ?? true,
         open_to_invites: profile?.open_to_invites ?? true,
         skills: profile?.skills || [],
+        redirect_to_dashboard: isMandatory,
     });
 
     const handleAddSkill = (skillNameToAdd?: string, prof?: number) => {
@@ -191,6 +197,39 @@ export default function Profile({
 
             <SettingsLayout>
                 <div className="flex flex-col gap-6 w-full">
+                    {/* Onboarding Notice for Incomplete Profile */}
+                    {isMandatory && (
+                        <div className="rounded-3xl bg-amber-50/90 border border-amber-300/80 p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-amber-950">
+                            <div className="flex items-start gap-3.5">
+                                <div className="p-2.5 rounded-2xl bg-amber-200/70 text-amber-900 shrink-0 mt-0.5">
+                                    <Sparkles className="size-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-sm font-bold text-amber-950">
+                                            Langkah Awal: Lengkapi Data Profil Mahasiswa
+                                        </h3>
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200 text-amber-900 uppercase">
+                                            Wajib
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-amber-800 mt-1 leading-relaxed max-w-2xl">
+                                        Selamat datang di RAKIT Campus! Agar kamu bisa bergabung ke kelas perkuliahan dan mendapatkan rekomendasi rekan tim yang keahliannya paling nyambung (matchmaking), silakan isi <strong>NIM</strong>, <strong>Program Studi</strong>, <strong>Ketersediaan Waktu</strong>, dan minimal <strong>2 Keahlian Teknis</strong> di bawah ini.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    document.getElementById('nim-input')?.focus();
+                                }}
+                                className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shrink-0 transition"
+                            >
+                                Mulai Isi Sekarang
+                            </button>
+                        </div>
+                    )}
+
                     {/* 1. Hero Identity & Profile Completion Bento Banner */}
                     <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
                         <div className="flex items-start sm:items-center gap-4">
@@ -313,39 +352,27 @@ export default function Profile({
                                         </h3>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div className="space-y-1.5">
-                                            <Label className="text-xs font-semibold text-neutral-700">
-                                                Jurusan / Departemen
+                                            <Label htmlFor="nim-input" className="text-xs font-semibold text-neutral-700 flex items-center justify-between">
+                                                <span>Nomor Induk Mahasiswa (NIM) <span className="text-rose-500">*</span></span>
+                                                {(!data.student_number || data.student_number.startsWith('REG-')) && (
+                                                    <span className="text-[10px] text-amber-600 font-bold">Wajib diisi</span>
+                                                )}
                                             </Label>
                                             <Input
-                                                value={data.department}
-                                                onChange={(e) => setData('department', e.target.value)}
-                                                placeholder="Teknik Informatika"
+                                                id="nim-input"
+                                                value={data.student_number}
+                                                onChange={(e) => setData('student_number', e.target.value)}
+                                                placeholder="Contoh: 2201001"
+                                                required
                                                 className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
                                             />
                                         </div>
 
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-semibold text-neutral-700">
-                                                Program Studi
-                                            </Label>
-                                            <select
-                                                value={data.study_program}
-                                                onChange={(e) => setData('study_program', e.target.value)}
-                                                className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none"
-                                            >
-                                                <option value="Teknik Informatika">D4 Teknik Informatika</option>
-                                                <option value="Rekayasa Perangkat Lunak">D4 Rekayasa Perangkat Lunak</option>
-                                                <option value="Sistem Informasi Kota Cerdas">D4 Sistem Informasi Kota Cerdas</option>
-                                                <option value="Teknik Mesin">D3 Teknik Mesin</option>
-                                                <option value="Teknik Pendingin">D3 Teknik Pendingin</option>
-                                            </select>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs font-semibold text-neutral-700">
-                                                Semester
+                                                Semester Berjalan <span className="text-rose-500">*</span>
                                             </Label>
                                             <Input
                                                 type="number"
@@ -353,8 +380,41 @@ export default function Profile({
                                                 max={14}
                                                 value={data.semester}
                                                 onChange={(e) => setData('semester', parseInt(e.target.value, 10))}
+                                                required
                                                 className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
                                             />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-semibold text-neutral-700">
+                                                Jurusan / Departemen <span className="text-rose-500">*</span>
+                                            </Label>
+                                            <Input
+                                                value={data.department}
+                                                onChange={(e) => setData('department', e.target.value)}
+                                                placeholder="Contoh: Teknik Informatika"
+                                                required
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-semibold text-neutral-700">
+                                                Program Studi <span className="text-rose-500">*</span>
+                                            </Label>
+                                            <select
+                                                value={data.study_program}
+                                                onChange={(e) => setData('study_program', e.target.value)}
+                                                required
+                                                className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none"
+                                            >
+                                                <option value="">-- Pilih Program Studi --</option>
+                                                <option value="Teknik Informatika">D4 Teknik Informatika</option>
+                                                <option value="Rekayasa Perangkat Lunak">D4 Rekayasa Perangkat Lunak</option>
+                                                <option value="Sistem Informasi Kota Cerdas">D4 Sistem Informasi Kota Cerdas</option>
+                                                <option value="Teknik Mesin">D3 Teknik Mesin</option>
+                                                <option value="Teknik Pendingin">D3 Teknik Pendingin</option>
+                                            </select>
                                         </div>
                                     </div>
 
