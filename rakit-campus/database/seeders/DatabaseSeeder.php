@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             SkillSeeder::class,
             CampusSeeder::class,
             DemoAccountSeeder::class,
+            AcademicClassSeeder::class,
         ]);
 
         if (app()->environment('local', 'testing')) {

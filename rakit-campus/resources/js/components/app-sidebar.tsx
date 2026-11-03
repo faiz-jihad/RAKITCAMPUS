@@ -3,19 +3,25 @@ import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/react';
-import { Award, FolderKanban, Kanban, LayoutGrid, ShieldCheck, Sparkles, Trophy, Users } from 'lucide-react';
+import { Link, router, usePage } from '@inertiajs/react';
+import { Award, FolderKanban, GraduationCap, Kanban, LayoutGrid, Repeat, ShieldCheck, Sparkles, Trophy, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
     const { auth } = usePage().props as any;
     const isCampusAdmin = auth?.user?.campus?.role === 'campus_admin' || auth?.user?.is_platform_admin;
+    const isLecturer = auth?.user?.is_lecturer || auth?.user?.campus?.role === 'lecturer' || auth?.user?.role === 'lecturer';
 
     const mainNavItems: NavItem[] = [
         {
-            title: 'Dashboard',
+            title: isLecturer ? 'Dashboard Dosen' : 'Dashboard',
             url: '/dashboard',
             icon: LayoutGrid,
+        },
+        {
+            title: isLecturer ? 'Manajemen Kelas' : 'Kelas Kuliah',
+            url: '/classes',
+            icon: GraduationCap,
         },
         {
             title: 'Project Hub',
@@ -52,6 +58,10 @@ export function AppSidebar() {
         });
     }
 
+    const switchRole = (targetRole: 'lecturer' | 'student') => {
+        router.post('/switch-role', { role: targetRole });
+    };
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -68,6 +78,32 @@ export function AppSidebar() {
 
             <SidebarContent>
                 <NavMain items={mainNavItems} />
+
+                {/* Role Switcher Pill for Testing / Demonstration */}
+                {auth?.user && (
+                    <div className="px-4 py-3 mx-2 my-2 rounded-2xl bg-[#EEEDFD]/70 border border-[#5448EE]/20 text-xs">
+                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-[#5448EE]">
+                                Mode Akun Aktif:
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#5448EE] text-white">
+                                {isLecturer ? '👨‍🏫 Dosen' : '🎓 Mahasiswa'}
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-neutral-600 mb-2 leading-tight">
+                            {isLecturer
+                                ? 'Anda memiliki akses penuh untuk mengelola kelas & kelompok proyek mahasiswa.'
+                                : 'Anda terdaftar sebagai mahasiswa aktif kelas & pencari kolaborasi tim.'}
+                        </p>
+                        <button
+                            onClick={() => switchRole(isLecturer ? 'student' : 'lecturer')}
+                            className="w-full py-1.5 px-2.5 rounded-xl bg-white hover:bg-neutral-50 text-[#5448EE] font-bold text-[11px] border border-[#5448EE]/30 shadow-xs flex items-center justify-center gap-1.5 transition"
+                        >
+                            <Repeat className="size-3" />
+                            <span>Ganti ke Mode {isLecturer ? 'Mahasiswa' : 'Dosen'}</span>
+                        </button>
+                    </div>
+                )}
             </SidebarContent>
 
             <SidebarFooter>

@@ -5,6 +5,7 @@ namespace App\Enums;
 enum CampusRole: string
 {
     case Student = 'student';
+    case Lecturer = 'lecturer';
     case CampusAdmin = 'campus_admin';
 
     /** @return list<string> */
@@ -15,7 +16,10 @@ enum CampusRole: string
 
     public function label(): string
     {
-        return ucwords(str_replace('_', ' ', $this->value));
+        return match ($this) {
+            self::Student => 'Mahasiswa',
+            self::Lecturer => 'Dosen / Pengajar',
+            self::CampusAdmin => 'Administrator Kampus',
+        };
     }
 }
-

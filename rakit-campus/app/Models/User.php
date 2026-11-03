@@ -122,4 +122,45 @@ class User extends Authenticatable implements MustVerifyEmail
             ->where('role', CampusRole::CampusAdmin->value)
             ->exists();
     }
+
+    public function isLecturer(?int $campusId = null): bool
+    {
+        $query = $this->memberships()
+            ->where('status', MembershipStatus::Active->value)
+            ->where('role', CampusRole::Lecturer->value);
+
+        if ($campusId !== null) {
+            $query->where('campus_id', $campusId);
+        }
+
+        return $query->exists();
+    }
+
+    public function isStudent(?int $campusId = null): bool
+    {
+        $query = $this->memberships()
+            ->where('status', MembershipStatus::Active->value)
+            ->where('role', CampusRole::Student->value);
+
+        if ($campusId !== null) {
+            $query->where('campus_id', $campusId);
+        }
+
+        return $query->exists();
+    }
+
+    public function taughtClasses(): HasMany
+    {
+        return $this->hasMany(\App\Models\AcademicClass::class, 'lecturer_id');
+    }
+
+    public function enrolledClasses(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            \App\Models\AcademicClass::class,
+            'academic_class_students',
+            'user_id',
+            'academic_class_id'
+        )->withPivot(['student_number', 'status', 'enrolled_at'])->withTimestamps();
+    }
 }

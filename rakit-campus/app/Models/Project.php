@@ -20,11 +20,11 @@ class Project extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'campus_id', 'leader_id', 'slug', 'status', 'progress',
+        'campus_id', 'academic_class_id', 'leader_id', 'slug', 'status', 'progress',
         'title', 'short_description', 'description', 'category',
         'problem_statement', 'objectives', 'proposed_solution',
         'tech_stack', 'visibility', 'starts_on', 'target_completion_on',
-        'completed_at', 'moderation_status',
+        'completed_at', 'moderation_status', 'lecturer_notes', 'lecturer_evaluation',
     ];
 
     protected function casts(): array
@@ -39,6 +39,11 @@ class Project extends Model
             'completed_at' => 'datetime',
             'progress' => 'integer',
         ];
+    }
+
+    public function academicClass(): BelongsTo
+    {
+        return $this->belongsTo(AcademicClass::class);
     }
 
     public function campus(): BelongsTo

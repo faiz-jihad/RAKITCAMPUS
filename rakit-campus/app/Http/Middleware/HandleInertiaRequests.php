@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'is_platform_admin' => $user->isPlatformAdmin(),
+                    'is_lecturer' => $user->isLecturer(),
+                    'role' => $membership?->role?->value ?? ($user->isPlatformAdmin() ? 'platform_admin' : 'student'),
                     'campus' => ($membership && $membership->campus) ? [
                         'id' => $membership->campus->id,
                         'name' => $membership->campus->name,

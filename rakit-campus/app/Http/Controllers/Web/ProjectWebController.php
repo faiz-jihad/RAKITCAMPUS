@@ -103,11 +103,15 @@ class ProjectWebController extends Controller
         ]);
     }
 
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        $user = $request->user();
+        $enrolledClasses = $user ? $user->enrolledClasses()->get(['academic_classes.id', 'academic_classes.name', 'academic_classes.code']) : collect();
+
         return Inertia::render('projects/create', [
             'categories' => ProjectCategory::values(),
             'visibilities' => Visibility::values(),
+            'enrolledClasses' => $enrolledClasses,
         ]);
     }
 
@@ -126,6 +130,7 @@ class ProjectWebController extends Controller
             ?? Campus::value('id');
 
         $validated = $request->validate([
+            'academic_class_id' => ['nullable', 'integer', 'exists:academic_classes,id'],
             'title' => ['required', 'string', 'max:255'],
             'short_description' => ['required', 'string', 'max:300'],
             'description' => ['nullable', 'string'],
@@ -149,6 +154,7 @@ class ProjectWebController extends Controller
 
             $project = Project::create([
                 'campus_id' => $activeCampusId,
+                'academic_class_id' => $validated['academic_class_id'] ?? null,
                 'leader_id' => $user->id,
                 'title' => $validated['title'],
                 'slug' => $slug,

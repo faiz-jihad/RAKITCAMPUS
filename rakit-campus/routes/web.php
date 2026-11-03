@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\CampusRole;
+use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
@@ -36,6 +38,27 @@ Route::middleware(['auth'])->group(function () {
 
     // Portfolio
     Route::get('/portfolio', [PortfolioWebController::class, 'index'])->name('portfolio.index');
+
+    // Academic Classes (Kelas Kuliah & Bimbingan Dosen)
+    Route::get('/classes', [AcademicClassWebController::class, 'index'])->name('classes.index');
+    Route::post('/classes', [AcademicClassWebController::class, 'store'])->name('classes.store');
+    Route::get('/classes/{id}', [AcademicClassWebController::class, 'show'])->name('classes.show')->whereNumber('id');
+    Route::post('/classes/join', [AcademicClassWebController::class, 'join'])->name('classes.join');
+    Route::post('/classes/{id}/students', [AcademicClassWebController::class, 'addStudent'])->name('classes.students.add');
+    Route::delete('/classes/{id}/students/{studentId}', [AcademicClassWebController::class, 'removeStudent'])->name('classes.students.remove');
+    Route::post('/classes/{id}/guidance', [AcademicClassWebController::class, 'addGuidance'])->name('classes.guidance.store');
+    Route::post('/classes/{id}/auto-form-teams', [AcademicClassWebController::class, 'autoFormTeams'])->name('classes.auto-form-teams');
+
+    // Quick Role Switcher for Testing (Mahasiswa <-> Dosen)
+    Route::post('/switch-role', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        $targetRole = $request->input('role', 'lecturer');
+        $membership = $user->activeMembership();
+        if ($membership) {
+            $membership->update(['role' => $targetRole === 'lecturer' ? CampusRole::Lecturer->value : CampusRole::Student->value]);
+        }
+        return back()->with('success', 'Peran akun berhasil diubah menjadi: ' . ($targetRole === 'lecturer' ? 'Dosen' : 'Mahasiswa'));
+    })->name('role.switch');
 
     // Campus / Platform Admin
     Route::prefix('admin')->group(function () {

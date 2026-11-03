@@ -7,6 +7,7 @@ import { FormEventHandler, useState } from 'react';
 interface Props {
     categories: string[];
     visibilities: string[];
+    enrolledClasses?: { id: number; name: string; code: string }[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -14,11 +15,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Inisiasi Proyek Baru', href: '/projects/create' },
 ];
 
-export default function ProjectCreate({ categories = [], visibilities = [] }: Props) {
+export default function ProjectCreate({ categories = [], visibilities = [], enrolledClasses = [] }: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     const { data, setData } = useForm({
+        academic_class_id: '' as string | number,
         title: '',
         short_description: '',
         description: '',
@@ -72,6 +74,7 @@ export default function ProjectCreate({ categories = [], visibilities = [] }: Pr
                     'X-XSRF-TOKEN': getXsrfToken(),
                 },
                 body: JSON.stringify({
+                    academic_class_id: data.academic_class_id || null,
                     title: data.title,
                     short_description: data.short_description,
                     description: data.description,
@@ -163,6 +166,30 @@ export default function ProjectCreate({ categories = [], visibilities = [] }: Pr
                         )}
 
                         <form onSubmit={submit} className="flex flex-col gap-6">
+                            {/* Kelas Perkuliahan (Jika Terdaftar) */}
+                            {enrolledClasses && enrolledClasses.length > 0 && (
+                                <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#5448EE]/20">
+                                    <label className="block text-xs font-bold text-[#5448EE] mb-1">
+                                        🏫 Kaitkan ke Kelas Perkuliahan / Bimbingan Dosen (Opsional)
+                                    </label>
+                                    <select
+                                        value={data.academic_class_id}
+                                        onChange={(e) => setData('academic_class_id', e.target.value)}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                    >
+                                        <option value="">Proyek Independen (Bukan Tugas Kelas)</option>
+                                        {enrolledClasses.map((cls) => (
+                                            <option key={cls.id} value={cls.id}>
+                                                {cls.name} ({cls.code})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="text-[11px] text-neutral-500 mt-1 block">
+                                        Proyek ini akan otomatis muncul pada dashboard dosen pengampu kelas untuk pemantauan dan bimbingan.
+                                    </span>
+                                </div>
+                            )}
+
                             {/* Judul Proyek */}
                             <div>
                                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
