@@ -195,7 +195,7 @@ class DemoAccountSeeder extends Seeder
                 'problem_statement' => "Pengelolaan sampah di area kampus Politeknik Negeri Indramayu masih dilakukan secara manual dan periodik tanpa sensor deteksi kepenuhan tempat sampah.\n\nHal ini kerap menimbulkan keterlambatan pengangkutan dan penumpukan sampah di titik-titik ramai.",
                 'proposed_solution' => "Mengembangkan perangkat sensor ultrasonik terhubung mikrokontroler ESP32 dengan transmisi data LoRaWAN.\n\nDashboard web dan mobile akan memberikan peringatan real-time saat volume melebihi kapasitas 80%.",
                 'tech_stack' => ['IoT', 'ESP32', 'LoRaWAN', 'Laravel', 'Flutter', 'PostgreSQL'],
-                'target_completion_date' => now()->addMonths(3),
+                'target_completion_on' => now()->addMonths(3),
                 'progress' => 45,
             ]
         );
@@ -203,7 +203,7 @@ class DemoAccountSeeder extends Seeder
         // Attach Project Skills
         foreach (['IoT', 'Flutter', 'Laravel', 'Python'] as $sName) {
             $s = Skill::resolve($sName);
-            $project->skills()->syncWithoutDetaching([$s->id => ['min_proficiency' => 3, 'is_mandatory' => true]]);
+            $project->skills()->syncWithoutDetaching([$s->id => ['min_proficiency' => 3]]);
         }
 
         // Create Team for Project
