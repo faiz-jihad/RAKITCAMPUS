@@ -52,12 +52,12 @@ class HandleInertiaRequests extends Middleware
                     'name' => $user->name,
                     'email' => $user->email,
                     'is_platform_admin' => $user->isPlatformAdmin(),
-                    'campus' => $membership ? [
+                    'campus' => ($membership && $membership->campus) ? [
                         'id' => $membership->campus->id,
                         'name' => $membership->campus->name,
                         'slug' => $membership->campus->slug,
-                        'role' => $membership->role->value,
-                        'verification_status' => $membership->verification_status->value,
+                        'role' => $membership->role?->value ?? 'student',
+                        'verification_status' => $membership->verification_status?->value ?? 'verified',
                     ] : null,
                 ] : null,
             ],

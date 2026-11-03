@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\CampusRole;
+use App\Enums\MembershipStatus;
 use App\Enums\TaskStatus;
+use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Campus;
+use App\Models\CampusMembership;
 use App\Models\Competition;
+use App\Models\StudentProfile;
 use App\Models\Task;
 use App\Models\Team;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,7 +30,36 @@ class DashboardWebController extends Controller
     {
         $user = $request->user();
         $membership = $user->activeMembership();
+        if (!$membership) {
+            $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
+            if ($campus) {
+                $membership = CampusMembership::firstOrCreate(
+                    ['campus_id' => $campus->id, 'user_id' => $user->id],
+                    [
+                        'role' => CampusRole::Student,
+                        'status' => MembershipStatus::Active,
+                        'verification_status' => VerificationStatus::Verified,
+                        'student_number' => 'USR-' . substr(abs(crc32($user->email)), 0, 7),
+                        'verified_at' => now(),
+                    ]
+                );
+            }
+        }
+        $membership?->loadMissing('campus');
+
         $profile = $user->profile()->with(['skills', 'campus'])->first();
+        if (!$profile) {
+            $campusId = $membership?->campus_id ?? Campus::where('slug', 'polindra')->value('id') ?? Campus::value('id');
+            $profile = StudentProfile::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'campus_id' => $campusId,
+                    'slug' => Str::slug($user->name) . '-' . Str::random(4),
+                    'headline' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Kampus'),
+                ]
+            );
+            $profile->loadMissing(['skills', 'campus']);
+        }
 
         // 1. User's Teams & Workspaces
         $myTeams = Team::where(function ($q) use ($user) {
