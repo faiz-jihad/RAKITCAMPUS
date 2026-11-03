@@ -187,10 +187,10 @@ class WorkspaceWebController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'priority' => ['required', 'string'],
+            'priority' => ['required', Rule::enum(TaskPriority::class)],
             'assignee_id' => ['nullable', 'exists:users,id'],
             'milestone_id' => ['nullable', 'exists:milestones,id'],
-            'status' => ['required', 'string'],
+            'status' => ['required', Rule::enum(TaskStatus::class)],
         ]);
 
         $user = $request->user();
@@ -239,8 +239,8 @@ class WorkspaceWebController extends Controller
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'status' => ['sometimes', 'string'],
-            'priority' => ['sometimes', 'string'],
+            'status' => ['sometimes', Rule::enum(TaskStatus::class)],
+            'priority' => ['sometimes', Rule::enum(TaskPriority::class)],
             'assignee_id' => ['nullable', 'exists:users,id'],
             'milestone_id' => ['nullable', 'exists:milestones,id'],
             'due_on' => ['nullable', 'date'],
