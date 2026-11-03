@@ -188,7 +188,7 @@ class DemoAccountSeeder extends Seeder
                 'campus_id' => $polindra->id,
                 'leader_id' => $leader->id,
                 'slug' => 'smart-waste-management-iot-polindra',
-                'category' => ProjectCategory::CompetitionPreparation,
+                'category' => ProjectCategory::Startup,
                 'status' => ProjectStatus::Recruiting,
                 'visibility' => Visibility::Public,
                 'short_description' => 'Sistem monitoring volume tempat sampah pintar berbasis IoT LoRaWAN untuk efisiensi kebersihan kampus Polindra.',
