@@ -15,6 +15,8 @@ import {
     Sparkles,
     UserCheck,
     Users,
+    FolderKanban,
+    X,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -327,9 +329,15 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                             </p>
 
                                             <div className="flex items-center gap-4 mt-4 pt-4 border-t border-neutral-100 text-xs text-neutral-600">
-                                                <span>👥 {cls.students_count} Teman Sekelas</span>
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <Users className="size-3.5 text-neutral-400" />
+                                                    <span>{cls.students_count} Teman Sekelas</span>
+                                                </span>
                                                 <span>•</span>
-                                                <span>📁 {cls.projects_count} Proyek Tim</span>
+                                                <span className="inline-flex items-center gap-1.5">
+                                                    <FolderKanban className="size-3.5 text-neutral-400" />
+                                                    <span>{cls.projects_count} Proyek Tim</span>
+                                                </span>
                                             </div>
                                         </div>
 
@@ -366,9 +374,9 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                             </div>
                             <button
                                 onClick={() => setShowCreateModal(false)}
-                                className="size-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center font-bold text-sm"
+                                className="size-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center font-bold text-sm transition"
                             >
-                                ✕
+                                <X className="size-4" />
                             </button>
                         </div>
 

@@ -1,8 +1,10 @@
 import AppLayout from '@/layouts/app-layout';
+import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
     ArrowRight,
+    Award,
     CheckCircle2,
     Clock,
     FolderKanban,
@@ -61,9 +63,12 @@ export default function WorkspaceIndex({ teams }: Props) {
                     {/* Teams Grid */}
                     {teams.length === 0 ? (
                         <div className="p-12 text-center bg-white rounded-3xl border border-neutral-200/80 shadow-sm max-w-2xl mx-auto w-full">
-                            <div className="size-14 rounded-2xl bg-[#EEEDFD] text-[#5448EE] flex items-center justify-center mx-auto mb-4">
-                                <Kanban className="size-7" />
-                            </div>
+                            <Premium3dIcon
+                                icon={Kanban}
+                                variant="purple"
+                                size="lg"
+                                className="mx-auto mb-4"
+                            />
                             <h3 className="text-base font-bold text-neutral-900">Anda Belum Memiliki Tim Aktif</h3>
                             <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1.5 mb-6 leading-relaxed">
                                 Bergabunglah dengan proyek yang sedang membuka rekrutmen anggota, ikuti kompetisi mahasiswa, atau inisiasi proyek baru bersama rekan kampus Anda.
@@ -101,8 +106,9 @@ export default function WorkspaceIndex({ teams }: Props) {
                                             </span>
 
                                             {t.is_leader && (
-                                                <span className="text-[10px] bg-purple-50 text-[#5448EE] border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
-                                                    👑 Leader
+                                                <span className="inline-flex items-center gap-1 text-[10px] bg-purple-50 text-[#5448EE] border border-purple-200 px-2.5 py-0.5 rounded-full font-bold">
+                                                    <Award className="size-3" />
+                                                    <span>Leader</span>
                                                 </span>
                                             )}
                                         </div>

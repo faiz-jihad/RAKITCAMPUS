@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Briefcase, CheckCircle2, Layers, Sparkles, Users, Wrench } from 'lucide-react';
+import { ArrowLeft, Briefcase, CheckCircle2, GraduationCap, Layers, Sparkles, Users, Wrench, X } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
 interface Props {
@@ -158,9 +158,9 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 <span>{errorMessage}</span>
                                 <button
                                     onClick={() => setErrorMessage(null)}
-                                    className="text-rose-600 hover:text-rose-900 font-bold"
+                                    className="text-rose-600 hover:text-rose-900 transition"
                                 >
-                                    ✕
+                                    <X className="size-4" />
                                 </button>
                             </div>
                         )}
@@ -169,8 +169,9 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             {/* Kelas Perkuliahan (Jika Terdaftar) */}
                             {enrolledClasses && enrolledClasses.length > 0 && (
                                 <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#5448EE]/20">
-                                    <label className="block text-xs font-bold text-[#5448EE] mb-1">
-                                        🏫 Kaitkan ke Kelas Perkuliahan / Bimbingan Dosen (Opsional)
+                                    <label className="block text-xs font-bold text-[#5448EE] mb-1.5 flex items-center gap-1.5">
+                                        <GraduationCap className="size-4 text-[#5448EE]" />
+                                        <span>Kaitkan ke Kelas Perkuliahan / Bimbingan Dosen (Opsional)</span>
                                     </label>
                                     <select
                                         value={data.academic_class_id}

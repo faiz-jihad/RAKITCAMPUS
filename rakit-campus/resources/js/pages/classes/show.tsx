@@ -24,7 +24,9 @@ import {
     UserPlus,
     Users,
     Zap,
+    X,
 } from 'lucide-react';
+import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { useState } from 'react';
 
 interface Student {
@@ -215,10 +217,16 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                                 {academicClass.description || 'Ruang kelas perkuliahan dan manajemen kelompok proyek mata kuliah.'}
                             </p>
 
-                            <div className="flex items-center gap-3 mt-4 text-xs text-neutral-500">
-                                <span>👨‍🏫 Dosen Pengampu: <strong className="text-neutral-800">{academicClass.lecturer?.name || 'Dosen'}</strong></span>
+                            <div className="flex flex-wrap items-center gap-3 mt-4 text-xs text-neutral-500">
+                                <span className="inline-flex items-center gap-1.5">
+                                    <GraduationCap className="size-3.5 text-neutral-400" />
+                                    <span>Dosen Pengampu: <strong className="text-neutral-800">{academicClass.lecturer?.name || 'Dosen'}</strong></span>
+                                </span>
                                 <span>•</span>
-                                <span>👥 Kapasitas Tim: <strong>{academicClass.target_team_size} Mahasiswa/Kelompok</strong></span>
+                                <span className="inline-flex items-center gap-1.5">
+                                    <Users className="size-3.5 text-neutral-400" />
+                                    <span>Kapasitas Tim: <strong>{academicClass.target_team_size} Mahasiswa/Kelompok</strong></span>
+                                </span>
                             </div>
                         </div>
 
@@ -251,52 +259,72 @@ export default function ClassShow({ academicClass, students = [], projects = [],
 
                     {/* Bento Statistics Cards */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs">
+                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs relative">
+                            <Premium3dIcon
+                                icon={Users}
+                                variant="purple"
+                                size="sm"
+                                className="absolute top-5 right-5"
+                            />
                             <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
                                 Total Mahasiswa Terdaftar
                             </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-[#0E121B] flex items-center justify-between">
-                                <span>{stats.total_students}</span>
-                                <Users className="size-6 text-[#5448EE]/30" />
+                            <div className="text-2xl sm:text-3xl font-extrabold text-[#0E121B] mt-2">
+                                {stats.total_students}
                             </div>
                             <span className="text-[11px] text-neutral-500 mt-1 block">
                                 Di kelas {academicClass.code}
                             </span>
                         </div>
 
-                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs">
+                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs relative">
+                            <Premium3dIcon
+                                icon={UserCheck}
+                                variant="emerald"
+                                size="sm"
+                                className="absolute top-5 right-5"
+                            />
                             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 block mb-1">
                                 Sudah Memiliki Tim
                             </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 flex items-center justify-between">
-                                <span>{stats.students_with_team}</span>
-                                <UserCheck className="size-6 text-emerald-500/30" />
+                            <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 mt-2">
+                                {stats.students_with_team}
                             </div>
                             <span className="text-[11px] text-emerald-600 font-medium mt-1 block">
                                 Aktif berkolaborasi
                             </span>
                         </div>
 
-                        <div className={`rounded-2xl border p-5 shadow-xs ${stats.students_without_team > 0 ? 'bg-amber-50/70 border-amber-200' : 'bg-white border-neutral-200/80'}`}>
+                        <div className={`rounded-2xl border p-5 shadow-xs relative ${stats.students_without_team > 0 ? 'bg-amber-50/70 border-amber-200' : 'bg-white border-neutral-200/80'}`}>
+                            <Premium3dIcon
+                                icon={AlertCircle}
+                                variant="amber"
+                                size="sm"
+                                className="absolute top-5 right-5"
+                            />
                             <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
                                 Belum Memiliki Kelompok
                             </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-amber-800 flex items-center justify-between">
-                                <span>{stats.students_without_team}</span>
-                                <AlertCircle className="size-6 text-amber-500/50" />
+                            <div className="text-2xl sm:text-3xl font-extrabold text-amber-800 mt-2">
+                                {stats.students_without_team}
                             </div>
                             <span className="text-[11px] text-amber-700 mt-1 block">
-                                {stats.students_without_team > 0 ? 'Perlu pemerataan tim' : 'Semua sudah punya tim! 🎉'}
+                                {stats.students_without_team > 0 ? 'Perlu pemerataan tim' : 'Seluruh mahasiswa telah memiliki tim'}
                             </span>
                         </div>
 
-                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs">
+                        <div className="rounded-2xl bg-white border border-neutral-200/80 p-5 shadow-xs relative">
+                            <Premium3dIcon
+                                icon={FolderKanban}
+                                variant="indigo"
+                                size="sm"
+                                className="absolute top-5 right-5"
+                            />
                             <span className="text-[11px] font-bold uppercase tracking-wider text-[#5448EE] block mb-1">
                                 Kelompok Proyek Kelas
                             </span>
-                            <div className="text-2xl sm:text-3xl font-extrabold text-[#5448EE] flex items-center justify-between">
-                                <span>{stats.total_projects}</span>
-                                <FolderKanban className="size-6 text-[#5448EE]/30" />
+                            <div className="text-2xl sm:text-3xl font-extrabold text-[#5448EE] mt-2">
+                                {stats.total_projects}
                             </div>
                             <span className="text-[11px] text-neutral-500 mt-1 block">
                                 Tim pengerjaan aktif
@@ -470,12 +498,19 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                                                     </div>
 
                                                     {/* Status Badge */}
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                                                         st.has_team
                                                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                                             : 'bg-amber-50 text-amber-700 border-amber-200'
                                                     }`}>
-                                                        {st.has_team ? '✓ Sudah Ada Tim' : 'Belum Ada Tim'}
+                                                        {st.has_team ? (
+                                                            <>
+                                                                <CheckCircle2 className="size-3 text-emerald-600" />
+                                                                <span>Sudah Ada Tim</span>
+                                                            </>
+                                                        ) : (
+                                                            <span>Belum Ada Tim</span>
+                                                        )}
                                                     </span>
                                                 </div>
 
@@ -691,8 +726,9 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                                 </p>
 
                                 {stats.students_without_team === 0 ? (
-                                    <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-xs text-emerald-800 font-bold">
-                                        ✓ Luar biasa! Seluruh {stats.total_students} mahasiswa di kelas ini telah terdistribusi ke dalam kelompok proyek.
+                                    <div className="p-6 rounded-2xl bg-emerald-50 border border-emerald-200 text-center text-xs text-emerald-800 font-bold flex items-center justify-center gap-2">
+                                        <CheckCircle2 className="size-4 text-emerald-600" />
+                                        <span>Seluruh {stats.total_students} mahasiswa di kelas ini telah terdistribusi ke dalam kelompok proyek.</span>
                                     </div>
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -781,9 +817,9 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                             </div>
                             <button
                                 onClick={() => setShowAddStudentModal(false)}
-                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold"
+                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold transition"
                             >
-                                ✕
+                                <X className="size-4" />
                             </button>
                         </div>
 
@@ -841,9 +877,9 @@ export default function ClassShow({ academicClass, students = [], projects = [],
                             </div>
                             <button
                                 onClick={() => setShowGuidanceModal(false)}
-                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold"
+                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold transition"
                             >
-                                ✕
+                                <X className="size-4" />
                             </button>
                         </div>
 

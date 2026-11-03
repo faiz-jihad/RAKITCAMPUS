@@ -7,6 +7,7 @@ import {
     Award,
     Briefcase,
     Calendar,
+    Check,
     CheckCircle2,
     Clock,
     Compass,
@@ -377,9 +378,10 @@ export default function MatchingIndex({
                                                         {item.matched_skills.map((skill, sIdx) => (
                                                             <span
                                                                 key={sIdx}
-                                                                className="text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-md"
+                                                                className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-0.5 rounded-full"
                                                             >
-                                                                ✓ {skill}
+                                                                <Check className="size-2.5 text-emerald-600" />
+                                                                <span>{skill}</span>
                                                             </span>
                                                         ))}
                                                     </div>

@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -129,7 +130,7 @@ export default function Dashboard({
                             </div>
 
                             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                                Halo, {user.name} 👋
+                                Halo, {user.name}
                             </h1>
                             <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 max-w-2xl leading-relaxed">
                                 {isLecturer
@@ -226,9 +227,12 @@ export default function Dashboard({
                                 href="/classes"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <ArrowUpRight className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={GraduationCap}
+                                    variant="purple"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Kelas Perkuliahan
                                 </span>
@@ -245,9 +249,12 @@ export default function Dashboard({
                                 href="/classes"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <Users className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={Users}
+                                    variant="emerald"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Mahasiswa Terdaftar
                                 </span>
@@ -264,9 +271,12 @@ export default function Dashboard({
                                 href="/classes"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <FolderKanban className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={FolderKanban}
+                                    variant="indigo"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Kelompok Proyek
                                 </span>
@@ -283,9 +293,12 @@ export default function Dashboard({
                                 href="/classes"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-indigo-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <Wand2 className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={Wand2}
+                                    variant="cyan"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Smart Balancing
                                 </span>
@@ -304,9 +317,12 @@ export default function Dashboard({
                                 href="/workspace"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <ArrowUpRight className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={Kanban}
+                                    variant="purple"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Tim & Workspace
                                 </span>
@@ -323,9 +339,12 @@ export default function Dashboard({
                                 href="/classes"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <GraduationCap className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={GraduationCap}
+                                    variant="indigo"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Kelas Kuliah Saya
                                 </span>
@@ -342,9 +361,12 @@ export default function Dashboard({
                                 href="/matching"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <ArrowUpRight className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={Sparkles}
+                                    variant="cyan"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Peluang Match AI
                                 </span>
@@ -361,9 +383,12 @@ export default function Dashboard({
                                 href="/competitions"
                                 className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                             >
-                                <div className="size-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
-                                    <Trophy className="size-4" />
-                                </div>
+                                <Premium3dIcon
+                                    icon={Trophy}
+                                    variant="amber"
+                                    size="md"
+                                    className="absolute top-5 right-5 group-hover:scale-110 transition-transform"
+                                />
                                 <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
                                     Kompetisi Terbuka
                                 </span>

@@ -17,6 +17,7 @@ import {
     Sparkles,
     UserCheck,
     Users,
+    X,
     XCircle,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -574,9 +575,9 @@ export default function ProjectShow({
                             </div>
                             <button
                                 onClick={() => setApplyingRole(null)}
-                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold"
+                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold transition"
                             >
-                                ✕
+                                <X className="size-4" />
                             </button>
                         </div>
 

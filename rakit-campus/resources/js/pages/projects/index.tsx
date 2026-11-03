@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -212,11 +213,18 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                         className="rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-6 shadow-sm hover:shadow-xl hover:shadow-[#5448EE]/10 transition-all duration-300 flex flex-col justify-between gap-5 group"
                                     >
                                         <div>
-                                            {/* Badges row */}
+                                            {/* Badges row with 3D Icon */}
                                             <div className="flex items-start justify-between gap-2 mb-3">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
-                                                    {proj.category.replace('_', ' ')}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <Premium3dIcon
+                                                        icon={FolderKanban}
+                                                        variant="purple"
+                                                        size="sm"
+                                                    />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                                                        {proj.category.replace('_', ' ')}
+                                                    </span>
+                                                </div>
                                                 <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusBadge(proj.status)}`}>
                                                     {proj.status.replace('_', ' ')}
                                                 </span>

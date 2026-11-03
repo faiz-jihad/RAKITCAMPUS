@@ -86,8 +86,18 @@ export function AppSidebar() {
                             <span className="text-[10px] font-bold uppercase tracking-wider text-[#5448EE]">
                                 Mode Akun Aktif:
                             </span>
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#5448EE] text-white">
-                                {isLecturer ? '👨‍🏫 Dosen' : '🎓 Mahasiswa'}
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#5448EE] text-white">
+                                {isLecturer ? (
+                                    <>
+                                        <GraduationCap className="size-3" />
+                                        <span>Dosen</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <User className="size-3" />
+                                        <span>Mahasiswa</span>
+                                    </>
+                                )}
                             </span>
                         </div>
                         <p className="text-[11px] text-neutral-600 mb-2 leading-tight">

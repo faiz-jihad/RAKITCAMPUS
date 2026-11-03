@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -182,13 +183,20 @@ export default function CompetitionIndex({ competitions, filters, categories = [
                                         className="rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-6 shadow-sm hover:shadow-xl hover:shadow-[#5448EE]/10 transition-all duration-300 flex flex-col justify-between gap-5 group"
                                     >
                                         <div>
-                                            {/* Badges row */}
+                                            {/* Badges row with 3D Icon */}
                                             <div className="flex items-start justify-between gap-2 mb-3">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
-                                                    {comp.category?.replace('_', ' ') || 'Kompetisi'}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <Premium3dIcon
+                                                        icon={Trophy}
+                                                        variant={comp.scope === 'global' ? 'amber' : 'purple'}
+                                                        size="sm"
+                                                    />
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                                                        {comp.category?.replace('_', ' ') || 'Kompetisi'}
+                                                    </span>
+                                                </div>
                                                 {comp.verification_status === 'verified' && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
                                                         <ShieldCheck className="size-3" />
                                                         <span>Terverifikasi</span>
                                                     </span>
