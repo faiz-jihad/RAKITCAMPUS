@@ -54,7 +54,7 @@ class RegisteredUserController extends Controller
 
             // Auto-assign campus from email domain or fallback
             $emailDomain = substr(strrchr($request->email, "@"), 1);
-            $campus = Campus::where('domain', $emailDomain)->first()
+            $campus = Campus::where('email_domain', $emailDomain)->first()
                 ?? Campus::where('slug', 'polindra')->first()
                 ?? Campus::first();
 

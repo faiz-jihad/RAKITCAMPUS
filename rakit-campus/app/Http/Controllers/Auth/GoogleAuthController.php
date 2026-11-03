@@ -80,7 +80,7 @@ class GoogleAuthController extends Controller
 
             // 2. Resolve Campus by email domain or default to first active campus
             $emailDomain = substr(strrchr($email, "@"), 1);
-            $campus = Campus::where('domain', $emailDomain)->first()
+            $campus = Campus::where('email_domain', $emailDomain)->first()
                 ?? Campus::where('slug', 'polindra')->first()
                 ?? Campus::first();
 
