@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Project Actions
     Route::get('/projects/create', [ProjectWebController::class, 'create'])->name('projects.create');
+    Route::post('/projects', [ProjectWebController::class, 'store'])->name('projects.store');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');

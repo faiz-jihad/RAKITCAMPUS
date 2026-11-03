@@ -31,8 +31,8 @@ Route::prefix('v1')->group(function () {
     Route::get('/students/{identifier}', [ProfileController::class, 'publicProfile']);
     Route::get('/portfolio/public/{slug}', [PortfolioController::class, 'publicPortfolio']);
 
-    // Authenticated Endpoints (Sanctum)
-    Route::middleware('auth:sanctum')->group(function () {
+    // Authenticated Endpoints (Sanctum + Web Session)
+    Route::middleware(['auth:sanctum,web'])->group(function () {
 
         // Session & Current User
         Route::get('/auth/me', [AuthController::class, 'me']);
