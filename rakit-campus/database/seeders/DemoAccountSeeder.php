@@ -244,10 +244,11 @@ class DemoAccountSeeder extends Seeder
         $recruitment = Recruitment::updateOrCreate(
             ['team_id' => $team->id],
             [
+                'campus_id' => $polindra->id,
                 'title' => 'Open Recruitment Tim Inovasi Smart Waste Polindra',
                 'description' => 'Mencari rekan tim berbakat di bidang Backend Architecture dan Frontend Dashboard.',
                 'status' => RecruitmentStatus::Open,
-                'deadline' => now()->addWeeks(3),
+                'closes_at' => now()->addWeeks(3),
             ]
         );
 
@@ -255,7 +256,6 @@ class DemoAccountSeeder extends Seeder
             ['recruitment_id' => $recruitment->id, 'name' => 'Backend Engineer'],
             [
                 'slots' => 1,
-                'filled_slots' => 0,
                 'requirements' => 'Menguasai Laravel/PHP, PostgreSQL, dan REST API integration.',
             ]
         );
@@ -264,7 +264,6 @@ class DemoAccountSeeder extends Seeder
             ['recruitment_id' => $recruitment->id, 'name' => 'Frontend Dashboard Specialist'],
             [
                 'slots' => 1,
-                'filled_slots' => 0,
                 'requirements' => 'Menguasai React/TypeScript, Tailwind CSS, dan visualisasi chart.',
             ]
         );
@@ -317,6 +316,8 @@ class DemoAccountSeeder extends Seeder
             Task::updateOrCreate(
                 ['team_id' => $team->id, 'title' => $td['title']],
                 [
+                    'campus_id' => $polindra->id,
+                    'created_by' => $leader->id,
                     'description' => $td['description'],
                     'status' => $td['status'],
                     'priority' => $td['priority'],
