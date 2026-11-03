@@ -45,12 +45,10 @@ export default function Welcome() {
                 <header className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-6 pb-4">
                     <div className="flex items-center justify-between">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2.5 group">
-                            <div className="size-9 rounded-xl bg-[#5448EE] flex items-center justify-center text-white shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform">
-                                <Sparkles className="size-5 fill-white/20" />
-                            </div>
-                            <span className="text-xl font-extrabold tracking-tight text-neutral-900">
-                                RAKIT<span className="text-[#5448EE]">Campus</span>
+                        <Link href="/" className="flex items-center gap-2 group">
+                            <img src="/images/rakit-logo.png" alt="RAKIT" className="h-7 w-auto object-contain" />
+                            <span className="text-[11px] font-bold text-[#5448EE] uppercase px-2 py-0.5 rounded-full bg-[#EEEDFD] border border-[#5448EE]/20 tracking-wider">
+                                Campus
                             </span>
                         </Link>
 
@@ -857,9 +855,7 @@ export default function Welcome() {
             <footer className="border-t border-neutral-200 py-12 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2.5">
-                        <div className="size-7 rounded-lg bg-[#5448EE] flex items-center justify-center text-white">
-                            <Sparkles className="size-4 fill-white/20" />
-                        </div>
+                        <img src="/images/rakit-mark.png" alt="RAKIT" className="h-6 w-auto object-contain" />
                         <span className="text-sm font-bold text-neutral-900">
                             RAKIT Campus • Politeknik Negeri Indramayu
                         </span>

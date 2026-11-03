@@ -63,8 +63,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function Dashboard({
-    user,
-    stats,
+    user = {} as any,
+    stats = {} as any,
     myTeams = [],
     myTasks = [],
     recommendedProjects = [],
@@ -74,7 +74,7 @@ export default function Dashboard({
     taughtClasses = [],
     enrolledClasses = [],
 }: Props) {
-    const isLecturer = user.role === 'lecturer' || user.is_lecturer;
+    const isLecturer = user?.role === 'lecturer' || user?.is_lecturer;
 
     const priorityColors: Record<string, string> = {
         urgent: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -119,10 +119,10 @@ export default function Dashboard({
                                 )}
 
                                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-neutral-200 border border-white/15">
-                                    {user.campus}
+                                    {user?.campus || 'Politeknik Negeri Indramayu'}
                                 </span>
 
-                                {!isLecturer && user.nim && (
+                                {!isLecturer && user?.nim && (
                                     <span className="px-3 py-1 rounded-full text-xs font-mono bg-white/10 text-neutral-300">
                                         NIM: {user.nim}
                                     </span>
@@ -130,16 +130,16 @@ export default function Dashboard({
                             </div>
 
                             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                                Halo, {user.name}
+                                Halo, {user?.name || 'Mahasiswa'}
                             </h1>
                             <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 max-w-2xl leading-relaxed">
                                 {isLecturer
                                     ? 'Kelola daftar mahasiswa per kelas perkuliahan, monitor kelompok tugas besar/capstone, dan lakukan Smart Team Balancing otomatis.'
-                                    : `${user.major} • Bangun tim kolaborasi mahasiswa, selesaikan tugas Kanban, dan raih prestasi nyata di kompetisi kampus.`}
+                                    : `${user?.major || 'Teknik Informatika'} • Bangun tim kolaborasi mahasiswa, selesaikan tugas Kanban, dan raih prestasi nyata di kompetisi kampus.`}
                             </p>
 
                             {/* Skills or Lecturer tag */}
-                            {!isLecturer && user.skills && user.skills.length > 0 && (
+                            {!isLecturer && user?.skills && user.skills.length > 0 && (
                                 <div className="flex flex-wrap items-center gap-1.5 mt-4">
                                     <span className="text-xs text-neutral-400">Keahlian Anda:</span>
                                     {user.skills.slice(0, 5).map((s: any) => (
@@ -620,7 +620,7 @@ export default function Dashboard({
                                             <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
                                                 <div className="flex items-center gap-2">
                                                     <Users className="size-3.5 text-neutral-400" />
-                                                    <span>{team.members.map((m: any) => m.name).join(', ')}</span>
+                                                    <span>{team.members ? team.members.map((m: any) => m.name).join(', ') : 'Belum ada anggota'}</span>
                                                 </div>
                                             </div>
                                         </div>
