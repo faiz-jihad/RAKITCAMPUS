@@ -122,12 +122,41 @@ class DashboardWebController extends Controller
             ->take(6)
             ->get();
 
-        // 6. Summary metrics
+        // 6. Lecturer & Class Management Data
+        $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
+        $taughtClasses = $isLecturer
+            ? $user->taughtClasses()->withCount(['students', 'projects'])->latest()->get()->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'code' => $c->code,
+                'join_code' => $c->join_code,
+                'academic_year' => $c->academic_year,
+                'semester' => $c->semester,
+                'students_count' => $c->students_count,
+                'projects_count' => $c->projects_count,
+            ])
+            : collect();
+
+        $enrolledClasses = $user->enrolledClasses()->withCount(['students', 'projects'])->latest()->get()->map(fn ($c) => [
+            'id' => $c->id,
+            'name' => $c->name,
+            'code' => $c->code,
+            'academic_year' => $c->academic_year,
+            'semester' => $c->semester,
+            'students_count' => $c->students_count,
+            'projects_count' => $c->projects_count,
+        ]);
+
+        // 7. Summary metrics
         $stats = [
             'my_teams_count' => $myTeams->count(),
             'pending_tasks_count' => $myTasks->count(),
             'recommended_matches_count' => $recommendedProjects->count(),
             'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
+            'taught_classes_count' => $taughtClasses->count(),
+            'total_students_count' => $taughtClasses->sum('students_count'),
+            'total_guided_projects_count' => $taughtClasses->sum('projects_count'),
+            'enrolled_classes_count' => $enrolledClasses->count(),
         ];
 
         return Inertia::render('dashboard', [
@@ -135,7 +164,8 @@ class DashboardWebController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $membership?->role?->value ?? 'student',
+                'role' => $membership?->role?->value ?? ($isLecturer ? 'lecturer' : 'student'),
+                'is_lecturer' => $isLecturer,
                 'campus' => $membership?->campus?->name ?? 'Politeknik Negeri Indramayu',
                 'major' => $profile?->major ?? 'Teknik Informatika',
                 'nim' => $profile?->nim,
@@ -149,6 +179,8 @@ class DashboardWebController extends Controller
             'upcomingCompetitions' => $upcomingCompetitions,
             'recentActivities' => $recentActivities,
             'profileCompletion' => $profile?->completion() ?? ['percent' => 85, 'missing' => []],
+            'taughtClasses' => $taughtClasses,
+            'enrolledClasses' => $enrolledClasses,
         ]);
     }
 }
