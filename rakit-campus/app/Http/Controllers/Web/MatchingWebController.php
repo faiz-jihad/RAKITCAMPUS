@@ -84,7 +84,7 @@ class MatchingWebController extends Controller
                 [
                     'campus_id' => $campusId,
                     'slug' => Str::slug($user->name) . '-' . Str::random(4),
-                    'headline' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Politeknik Negeri Indramayu'),
+                    'bio' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Politeknik Negeri Indramayu'),
                 ]
             );
             $profile->loadMissing(['skills', 'experiences', 'campus']);

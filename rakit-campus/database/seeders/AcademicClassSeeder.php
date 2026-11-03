@@ -115,7 +115,7 @@ class AcademicClassSeeder extends Seeder
                 [
                     'campus_id' => $campus->id,
                     'slug' => Str::slug($st['name']) . '-' . Str::random(4),
-                    'headline' => 'Mahasiswa ' . $st['prodi'],
+                    'bio' => 'Mahasiswa aktif ' . $st['prodi'],
                     'study_program' => $st['prodi'],
                     'department' => 'Teknik Informatika',
                     'semester' => 4,
