@@ -13,6 +13,46 @@ use Inertia\Response;
 
 class WorkspaceWebController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $user = $request->user();
+        $teams = Team::where(function ($q) use ($user) {
+            $q->where('leader_id', $user->id)
+              ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id));
+        })->with([
+            'project:id,title,slug,status,category,progress,short_description',
+            'participations.competition:id,name,slug,status,theme',
+            'members.user:id,name,email',
+            'milestones',
+            'tasks:id,team_id,status,title,priority',
+        ])->latest()->get()->map(function ($team) use ($user) {
+            $totalTasks = $team->tasks->count();
+            $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
+            return [
+                'id' => $team->id,
+                'name' => $team->name,
+                'description' => $team->description,
+                'type' => $team->type?->value ?? 'project',
+                'is_leader' => $team->leader_id === $user->id || $team->isLeader($user),
+                'project' => $team->project,
+                'competition' => $team->participations->first()?->competition,
+                'members' => $team->members->map(fn ($m) => [
+                    'id' => $m->user_id,
+                    'name' => $m->user->name,
+                    'role' => $m->role_name ?? ($m->permission === 'leader' ? 'Leader' : 'Anggota'),
+                ]),
+                'total_tasks' => $totalTasks,
+                'done_tasks' => $doneTasks,
+                'progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($team->project?->progress ?? 0),
+                'active_tasks' => $team->tasks->whereIn('status', [TaskStatus::Todo, TaskStatus::InProgress, TaskStatus::InReview])->values(),
+            ];
+        });
+
+        return Inertia::render('workspace/index', [
+            'teams' => $teams,
+        ]);
+    }
+
     public function show(Request $request, int $teamId): Response
     {
         $user = $request->user();

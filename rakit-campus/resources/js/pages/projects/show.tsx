@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Bookmark, CheckCircle2, FolderKanban, Users, Send, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Bookmark, CheckCircle2, FolderKanban, Users, Send, ExternalLink, UserCheck, XCircle, Check } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -10,13 +10,23 @@ interface Props {
     isLeader: boolean;
     isMember: boolean;
     canEdit: boolean;
+    applications?: any[];
 }
 
-export default function ProjectShow({ project, isBookmarked: initialBookmarked, isLeader, isMember, canEdit }: Props) {
+export default function ProjectShow({
+    project,
+    isBookmarked: initialBookmarked,
+    isLeader,
+    isMember,
+    canEdit,
+    applications: initialApplications = [],
+}: Props) {
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
+    const [applications, setApplications] = useState(initialApplications);
     const [applyingRole, setApplyingRole] = useState<any>(null);
     const [applyMessage, setApplyMessage] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [decidingId, setDecidingId] = useState<number | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Project Hub', href: '/projects' },
@@ -71,6 +81,40 @@ export default function ProjectShow({ project, isBookmarked: initialBookmarked, 
             alert('Terjadi kesalahan.');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleDecideApplication = async (appId: number, action: 'accept' | 'reject') => {
+        setDecidingId(appId);
+        try {
+            const res = await fetch(`/api/v1/applications/${appId}/decide`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '',
+                },
+                body: JSON.stringify({ action }),
+            });
+
+            const json = await res.json();
+            if (res.ok) {
+                setApplications((prev: any[]) =>
+                    prev.map((a: any) =>
+                        a.id === appId ? { ...a, status: action === 'accept' ? 'accepted' : 'rejected' } : a
+                    )
+                );
+                alert(json.message || `Aplikasi berhasil di-${action === 'accept' ? 'terima' : 'tolak'}.`);
+                if (action === 'accept') {
+                    window.location.reload();
+                }
+            } else {
+                alert(json.message || 'Gagal memproses aplikasi.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setDecidingId(null);
         }
     };
 
@@ -150,6 +194,78 @@ export default function ProjectShow({ project, isBookmarked: initialBookmarked, 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Main Content Details */}
                     <div className="lg:col-span-2 flex flex-col gap-6">
+                        {/* Leader Management: Incoming Applications */}
+                        {isLeader && applications.length > 0 && (
+                            <div className="bg-white border-2 border-blue-100 rounded-xl p-5 shadow-xs">
+                                <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-100">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                                            <UserCheck className="size-4 text-blue-600" />
+                                            Aplikasi Pelamar Calon Anggota ({applications.length})
+                                        </h3>
+                                        <p className="text-xs text-neutral-500 mt-0.5">
+                                            Tinjau pesan dan profil pelamar yang ingin bergabung dalam tim proyek Anda.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    {applications.map((app: any) => (
+                                        <div
+                                            key={app.id}
+                                            className="p-4 border border-neutral-200 rounded-lg bg-neutral-50/70 flex flex-col gap-2"
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div>
+                                                    <span className="text-xs font-bold text-neutral-900">{app.applicant?.name}</span>
+                                                    <span className="text-[11px] text-neutral-500 ml-2">({app.applicant?.email})</span>
+                                                    <div className="text-[11px] text-blue-700 font-medium mt-0.5">
+                                                        Melamar Posisi: <span className="font-bold">{app.role?.name || 'Anggota Tim'}</span>
+                                                    </div>
+                                                </div>
+                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase ${
+                                                    app.status === 'accepted'
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : app.status === 'rejected'
+                                                        ? 'bg-red-50 text-red-700 border-red-200'
+                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                }`}>
+                                                    {app.status}
+                                                </span>
+                                            </div>
+
+                                            {app.message && (
+                                                <div className="text-xs text-neutral-700 bg-white p-2.5 rounded border border-neutral-200 mt-1 italic">
+                                                    "{app.message}"
+                                                </div>
+                                            )}
+
+                                            {app.status === 'submitted' && (
+                                                <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-neutral-200">
+                                                    <button
+                                                        onClick={() => handleDecideApplication(app.id, 'reject')}
+                                                        disabled={decidingId === app.id}
+                                                        className="inline-flex items-center gap-1 px-3 py-1 bg-white hover:bg-red-50 text-red-600 border border-neutral-200 rounded-md text-xs font-medium transition disabled:opacity-50"
+                                                    >
+                                                        <XCircle className="size-3" />
+                                                        Tolak
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDecideApplication(app.id, 'accept')}
+                                                        disabled={decidingId === app.id}
+                                                        className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md text-xs font-medium transition disabled:opacity-50"
+                                                    >
+                                                        <Check className="size-3" />
+                                                        Terima Menjadi Anggota
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
                         {project.problem_statement && (
                             <div className="bg-white border border-neutral-200 rounded-xl p-5">
                                 <h3 className="text-sm font-bold text-neutral-900 mb-2">Permasalahan yang Diselesaikan</h3>

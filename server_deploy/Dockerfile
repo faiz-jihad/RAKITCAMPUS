@@ -1,27 +1,18 @@
 FROM php:8.4-fpm-alpine
 
-# Install system dependencies
-RUN apk add --no-cache \
-    git \
-    curl \
-    libpng-dev \
-    libxml2-dev \
-    zip \
-    unzip \
-    oniguruma-dev \
-    libzip-dev \
-    nodejs \
-    npm
+# Install extension installer
+COPY --from=mlocati/php-extension-installer:latest /usr/bin/install-php-extensions /usr/local/bin/
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo pdo_mysql mbstring exif pcntl bcmath gd zip
+# Install PHP extensions fast
+RUN install-php-extensions pdo_mysql mbstring zip bcmath exif pcntl gd
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Install tools, nodejs, npm, git
+RUN apk add --no-cache git curl nodejs npm bash
 
-# Set working directory
+# Install composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
 WORKDIR /var/www
 
-# Expose port 9000 and start php-fpm server
 EXPOSE 9000
 CMD ["php-fpm"]

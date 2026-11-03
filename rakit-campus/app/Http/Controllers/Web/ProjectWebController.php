@@ -8,6 +8,7 @@ use App\Enums\Visibility;
 use App\Http\Controllers\Controller;
 use App\Models\Bookmark;
 use App\Models\Project;
+use App\Models\RecruitmentApplication;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -66,12 +67,22 @@ class ProjectWebController extends Controller
             ->where('bookmarkable_id', $project->id)
             ->exists();
 
+        $isLeader = $project->isLeader($user);
+        $applications = [];
+        if ($isLeader && $project->team?->recruitment) {
+            $applications = RecruitmentApplication::where('recruitment_id', $project->team->recruitment->id)
+                ->with(['applicant:id,name,email', 'role:id,name'])
+                ->latest()
+                ->get();
+        }
+
         return Inertia::render('projects/show', [
             'project' => $project,
             'isBookmarked' => $isBookmarked,
-            'isLeader' => $project->isLeader($user),
+            'isLeader' => $isLeader,
             'isMember' => $project->team?->hasMember($user) ?? false,
             'canEdit' => $user->can('update', $project),
+            'applications' => $applications,
         ]);
     }
 

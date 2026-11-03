@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
+use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\MatchingWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
 use App\Http\Controllers\Web\ProjectWebController;
@@ -16,9 +17,7 @@ Route::get('/', function () {
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
 
     // Project Hub
     Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
@@ -33,6 +32,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
 
     // Team Workspace
+    Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');
     Route::get('/workspace/{teamId}', [WorkspaceWebController::class, 'show'])->name('workspace.show');
 
     // Portfolio

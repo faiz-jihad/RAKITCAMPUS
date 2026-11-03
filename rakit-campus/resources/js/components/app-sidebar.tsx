@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Award, FolderKanban, LayoutGrid, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { Award, FolderKanban, Kanban, LayoutGrid, ShieldCheck, Sparkles, Trophy, Users } from 'lucide-react';
 import AppLogo from './app-logo';
 
 export function AppSidebar() {
@@ -28,9 +28,14 @@ export function AppSidebar() {
             icon: Trophy,
         },
         {
+            title: 'Workspace Tim',
+            url: '/workspace',
+            icon: Kanban,
+        },
+        {
             title: 'Smart Matching',
             url: '/matching',
-            icon: Users,
+            icon: Sparkles,
         },
         {
             title: 'Portfolio & Prestasi',
