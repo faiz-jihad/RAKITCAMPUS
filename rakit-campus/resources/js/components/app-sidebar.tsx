@@ -19,32 +19,32 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: isLecturer ? 'Manajemen Kelas' : 'Kelas Kuliah',
+            title: isLecturer ? 'Kelola Kelas' : 'Kelas Kuliah',
             url: '/classes',
             icon: GraduationCap,
         },
         {
-            title: 'Project Hub',
+            title: 'Cari Proyek',
             url: '/projects',
             icon: FolderKanban,
         },
         {
-            title: 'Competition Hub',
+            title: 'Lomba & Kompetisi',
             url: '/competitions',
             icon: Trophy,
         },
         {
-            title: 'Workspace Tim',
+            title: 'Ruang Kerja Tim',
             url: '/workspace',
             icon: Kanban,
         },
         {
-            title: 'Smart Matching',
+            title: 'Cari Teman Tim',
             url: '/matching',
             icon: Sparkles,
         },
         {
-            title: 'Portfolio & Prestasi',
+            title: 'Portofolio Saya',
             url: '/portfolio',
             icon: Award,
         },
@@ -52,7 +52,7 @@ export function AppSidebar() {
 
     if (isCampusAdmin) {
         mainNavItems.push({
-            title: 'Campus Admin',
+            title: 'Admin Kampus',
             url: '/admin',
             icon: ShieldCheck,
         });
@@ -102,15 +102,15 @@ export function AppSidebar() {
                         </div>
                         <p className="text-[11px] text-neutral-600 mb-2 leading-tight">
                             {isLecturer
-                                ? 'Anda memiliki akses penuh untuk mengelola kelas & kelompok proyek mahasiswa.'
-                                : 'Anda terdaftar sebagai mahasiswa aktif kelas & pencari kolaborasi tim.'}
+                                ? 'Kamu punya akses penuh untuk kelola kelas, bagi kelompok, dan beri nilai mahasiswa.'
+                                : 'Kamu login sebagai mahasiswa. Bisa gabung kelas kuliah, cari teman tim, dan bikin proyek.'}
                         </p>
                         <button
                             onClick={() => switchRole(isLecturer ? 'student' : 'lecturer')}
                             className="w-full py-1.5 px-2.5 rounded-xl bg-white hover:bg-neutral-50 text-[#5448EE] font-bold text-[11px] border border-[#5448EE]/30 shadow-xs flex items-center justify-center gap-1.5 transition"
                         >
                             <Repeat className="size-3" />
-                            <span>Ganti ke Mode {isLecturer ? 'Mahasiswa' : 'Dosen'}</span>
+                            <span>Ganti ke Akun {isLecturer ? 'Mahasiswa' : 'Dosen'}</span>
                         </button>
                     </div>
                 )}

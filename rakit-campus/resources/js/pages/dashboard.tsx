@@ -160,14 +160,14 @@ export default function Dashboard({
                                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
                                     >
                                         <GraduationCap className="size-3.5" />
-                                        <span>Manajemen Kelas</span>
+                                        <span>Kelola Kelas</span>
                                     </Link>
                                     <Link
                                         href="/projects/create"
                                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition"
                                     >
                                         <Plus className="size-3.5" />
-                                        <span>Buat Proyek</span>
+                                        <span>Buat Proyek Baru</span>
                                     </Link>
                                 </>
                             ) : (
@@ -177,14 +177,14 @@ export default function Dashboard({
                                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
                                     >
                                         <Plus className="size-3.5" />
-                                        <span>Inisiasi Proyek</span>
+                                        <span>Buat Proyek Baru</span>
                                     </Link>
                                     <Link
                                         href="/matching"
                                         className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 rounded-lg text-xs font-semibold transition"
                                     >
                                         <Search className="size-3.5" />
-                                        <span>Cari Rekan & Tim</span>
+                                        <span>Cari Teman & Tim</span>
                                     </Link>
                                 </>
                             )}
@@ -199,15 +199,15 @@ export default function Dashboard({
                                     {profileCompletion.percent}%
                                 </div>
                                 <div>
-                                    <span className="font-semibold text-slate-900">Kelengkapan profil Anda belum 100%.</span>
-                                    <span className="text-slate-600 ml-1">Lengkapi data keahlian dan tautan portofolio untuk hasil matching yang lebih akurat.</span>
+                                    <span className="font-semibold text-slate-900">Profil kamu belum lengkap nih ({profileCompletion.percent}%).</span>
+                                    <span className="text-slate-600 ml-1">Yuk isi keahlian dan link portofolio biar makin gampang dapet tim yang pas!</span>
                                 </div>
                             </div>
                             <Link
                                 href="/settings/profile"
-                                className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold shrink-0 transition"
+                                className="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-semibold shrink-0 transition"
                             >
-                                Lengkapi Sekarang
+                                Lengkapi Profil
                             </Link>
                         </div>
                     )}
@@ -221,7 +221,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Kelas Perkuliahan</span>
+                                        <span className="text-xs font-medium text-slate-500">Kelas Bimbingan</span>
                                         <div className="p-2 rounded-lg bg-purple-50 text-purple-700">
                                             <GraduationCap className="size-4" />
                                         </div>
@@ -249,7 +249,7 @@ export default function Dashboard({
                                         {stats.total_students_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Terdaftar di seluruh kelas</span>
+                                        <span>Mahasiswa di semua kelas</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -268,7 +268,7 @@ export default function Dashboard({
                                         {stats.total_guided_projects_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Dalam bimbingan & evaluasi</span>
+                                        <span>Sedang aktif dibimbing</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -278,7 +278,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Smart Balancing</span>
+                                        <span className="text-xs font-medium text-slate-500">Bagi Tim Otomatis</span>
                                         <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700">
                                             <Wand2 className="size-4" />
                                         </div>
@@ -287,7 +287,7 @@ export default function Dashboard({
                                         Auto Group
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Bagi tim otomatis per kelas</span>
+                                        <span>Bagi anggota kelompok rata</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -299,7 +299,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Tim Kolaborasi</span>
+                                        <span className="text-xs font-medium text-slate-500">Kelompok Saya</span>
                                         <div className="p-2 rounded-lg bg-indigo-50 text-indigo-700">
                                             <Kanban className="size-4" />
                                         </div>
@@ -308,7 +308,7 @@ export default function Dashboard({
                                         {stats.my_teams_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Papan kerja Kanban aktif</span>
+                                        <span>Kelompok proyek yang diikuti</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -318,7 +318,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Tugas Menunggu</span>
+                                        <span className="text-xs font-medium text-slate-500">Tugas Kamu</span>
                                         <div className="p-2 rounded-lg bg-amber-50 text-amber-700">
                                             <Clock className="size-4" />
                                         </div>
@@ -327,7 +327,7 @@ export default function Dashboard({
                                         {stats.pending_tasks_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Tugas ditugaskan ke Anda</span>
+                                        <span>Belum selesai dikerjakan</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -337,7 +337,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Peluang Match AI</span>
+                                        <span className="text-xs font-medium text-slate-500">Rekomendasi Proyek</span>
                                         <div className="p-2 rounded-lg bg-emerald-50 text-emerald-700">
                                             <FolderKanban className="size-4" />
                                         </div>
@@ -346,7 +346,7 @@ export default function Dashboard({
                                         {stats.recommended_matches_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Proyek cocok keahlian</span>
+                                        <span>Cocok dengan keahlian kamu</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -356,7 +356,7 @@ export default function Dashboard({
                                     className="bg-white border border-slate-200 rounded-xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition group"
                                 >
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-medium text-slate-500">Kompetisi Terbuka</span>
+                                        <span className="text-xs font-medium text-slate-500">Lomba & Kompetisi</span>
                                         <div className="p-2 rounded-lg bg-purple-50 text-purple-700">
                                             <Trophy className="size-4" />
                                         </div>
@@ -365,7 +365,7 @@ export default function Dashboard({
                                         {stats.upcoming_competitions_count ?? 0}
                                     </div>
                                     <div className="text-xs text-slate-500 mt-1 flex items-center justify-between">
-                                        <span>Pendaftaran lomba aktif</span>
+                                        <span>Lomba yang bisa kamu ikuti</span>
                                         <ArrowRight className="size-3 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
                                 </Link>
@@ -386,9 +386,9 @@ export default function Dashboard({
                                         <div>
                                             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                                 <GraduationCap className="size-4 text-slate-700" />
-                                                <span>Kelas Perkuliahan Anda</span>
+                                                <span>Daftar Kelas yang Diampu</span>
                                             </h2>
-                                            <p className="text-xs text-slate-500 mt-0.5">Daftar kelas aktif dengan kode pendaftaran dan kelompok tugas.</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">Daftar kelas aktif semester ini beserta kode gabung dan kelompok mahasiswa.</p>
                                         </div>
                                         <Link href="/classes" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                             Lihat Semua &rarr;
@@ -397,7 +397,7 @@ export default function Dashboard({
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                                         {taughtClasses.map((cls: any) => (
-                                            <div
+                                             <div
                                                 key={cls.id}
                                                 className="p-4 border border-slate-200 rounded-xl hover:border-slate-300 transition flex flex-col justify-between bg-slate-50/40"
                                             >
@@ -407,7 +407,7 @@ export default function Dashboard({
                                                             {cls.code}
                                                         </span>
                                                         <span className="text-xs text-slate-500">
-                                                            Kode: <strong className="font-mono text-slate-900">{cls.join_code}</strong>
+                                                            Kode Gabung: <strong className="font-mono text-slate-900">{cls.join_code}</strong>
                                                         </span>
                                                     </div>
                                                     <h3 className="text-sm font-semibold text-slate-900">{cls.name}</h3>
@@ -418,7 +418,7 @@ export default function Dashboard({
 
                                                 <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
                                                     <div className="text-slate-600">
-                                                        <strong>{cls.students_count}</strong> Mhs • <strong>{cls.projects_count}</strong> Tim
+                                                        <strong>{cls.students_count}</strong> Mahasiswa • <strong>{cls.projects_count}</strong> Kelompok
                                                     </div>
                                                     <Link
                                                         href={`/classes/${cls.id}`}
@@ -439,9 +439,9 @@ export default function Dashboard({
                                     <div>
                                         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                             <Kanban className="size-4 text-slate-700" />
-                                            <span>Tim Kolaborasi & Workspace</span>
+                                            <span>Kelompok & Ruang Kerja Tim</span>
                                         </h2>
-                                        <p className="text-xs text-slate-500 mt-0.5">Progres penyelesaian milestone dan pengerjaan tugas tim.</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">Pantau progres pengerjaan tugas dan roadmap kelompok kamu.</p>
                                     </div>
                                     <Link href="/workspace" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                         Semua Tim &rarr;
@@ -451,22 +451,22 @@ export default function Dashboard({
                                 {myTeams.length === 0 ? (
                                     <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                                         <FolderKanban className="size-8 text-slate-400 mx-auto mb-2" />
-                                        <h3 className="text-xs font-semibold text-slate-800">Belum memiliki tim proyek</h3>
+                                        <h3 className="text-xs font-semibold text-slate-800">Kamu belum punya kelompok proyek</h3>
                                         <p className="text-xs text-slate-500 mt-1 mb-4 max-w-sm mx-auto">
-                                            Lamar lowongan posisi pada proyek yang tersedia atau buat proyek mandiri.
+                                            Gabung ke proyek yang lagi buka lowongan anggota atau bikin proyek baru bareng teman kamu.
                                         </p>
                                         <div className="flex justify-center gap-2">
                                             <Link
                                                 href="/projects"
                                                 className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
                                             >
-                                                Jelajahi Proyek
+                                                Cari Proyek
                                             </Link>
                                             <Link
                                                 href="/projects/create"
                                                 className="px-3.5 py-1.5 border border-slate-300 hover:bg-white text-slate-700 rounded-lg text-xs font-semibold transition"
                                             >
-                                                Buat Proyek
+                                                Buat Proyek Baru
                                             </Link>
                                         </div>
                                     </div>
@@ -484,7 +484,7 @@ export default function Dashboard({
                                                                 <h3 className="text-sm font-bold text-slate-900">{team.name}</h3>
                                                                 {team.is_leader && (
                                                                     <span className="text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 px-1.5 py-0.2 rounded">
-                                                                        Leader
+                                                                        Ketua
                                                                     </span>
                                                                 )}
                                                             </div>
@@ -502,7 +502,7 @@ export default function Dashboard({
                                                     {/* Progress bar */}
                                                     <div className="mt-3">
                                                         <div className="flex justify-between text-xs text-slate-500 mb-1">
-                                                            <span>Progress Tugas</span>
+                                                            <span>Progres Tugas</span>
                                                             <span className="font-semibold text-slate-800">
                                                                 {team.done_tasks} / {team.total_tasks} ({team.progress_percent}%)
                                                             </span>
@@ -527,7 +527,7 @@ export default function Dashboard({
                                                         href={`/workspace/${team.id}`}
                                                         className="font-semibold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
                                                     >
-                                                        <span>Workspace</span>
+                                                        <span>Buka Ruang Kerja</span>
                                                         <ArrowRight className="size-3" />
                                                     </Link>
                                                 </div>
@@ -544,9 +544,9 @@ export default function Dashboard({
                                         <div>
                                             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                                 <GraduationCap className="size-4 text-slate-700" />
-                                                <span>Kelas Perkuliahan Anda</span>
+                                                <span>Kelas Kuliah Semester Ini</span>
                                             </h2>
-                                            <p className="text-xs text-slate-500 mt-0.5">Daftar kelas kuliah yang Anda ikuti semester ini.</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">Daftar kelas kuliah yang sedang kamu ikuti semester ini.</p>
                                         </div>
                                         <Link href="/classes" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                             Semua Kelas &rarr;
@@ -566,7 +566,7 @@ export default function Dashboard({
                                                     <div>
                                                         <h3 className="text-xs font-bold text-slate-900">{cls.name}</h3>
                                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                                            {cls.students_count} Rekan Mahasiswa • {cls.projects_count} Kelompok Tugas
+                                                            {cls.students_count} Teman Sekelas • {cls.projects_count} Kelompok Tugas
                                                         </p>
                                                     </div>
                                                 </div>
@@ -575,7 +575,7 @@ export default function Dashboard({
                                                     href={`/classes/${cls.id}`}
                                                     className="px-3 py-1 text-xs font-semibold text-slate-700 hover:text-indigo-600 border border-slate-200 rounded-lg hover:border-slate-300 transition"
                                                 >
-                                                    Detail &rarr;
+                                                    Lihat Kelas &rarr;
                                                 </Link>
                                             </div>
                                         ))}
@@ -589,18 +589,18 @@ export default function Dashboard({
                                     <div>
                                         <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                             <CheckCircle2 className="size-4 text-emerald-600" />
-                                            <span>Tugas Kanban Anda</span>
+                                            <span>Tugas yang Harus Kamu Kerjakan</span>
                                         </h2>
-                                        <p className="text-xs text-slate-500 mt-0.5">Tanggung jawab tugas yang sedang aktif di seluruh proyek Anda.</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">Daftar tugas aktif kamu di berbagai kelompok proyek.</p>
                                     </div>
                                 </div>
 
                                 {myTasks.length === 0 ? (
                                     <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
                                         <CheckCircle2 className="size-6 text-slate-400 mx-auto mb-1.5" />
-                                        <p className="text-xs font-semibold text-slate-700">Tidak ada tugas tertunda</p>
+                                        <p className="text-xs font-semibold text-slate-700">Semua tugas beres!</p>
                                         <p className="text-xs text-slate-500 mt-0.5">
-                                            Seluruh tugas Anda sudah selesai atau belum ada tugas yang didelegasikan kepada Anda.
+                                            Belum ada tugas baru yang ditugaskan ke kamu. Santai dulu atau cek ruang kerja tim kamu.
                                         </p>
                                     </div>
                                 ) : (
@@ -661,9 +661,9 @@ export default function Dashboard({
                                     <div>
                                         <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                             <Search className="size-3.5 text-indigo-600" />
-                                            <span>Rekomendasi Proyek</span>
+                                            <span>Proyek yang Cocok Buat Kamu</span>
                                         </h3>
-                                        <p className="text-[11px] text-slate-500">Kecocokan keahlian profil Anda</p>
+                                        <p className="text-[11px] text-slate-500">Disesuaikan dengan keahlian profil kamu</p>
                                     </div>
                                     <Link href="/matching" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                         Semua &rarr;
@@ -672,7 +672,7 @@ export default function Dashboard({
 
                                 {recommendedProjects.length === 0 ? (
                                     <p className="text-xs text-slate-500 py-3 text-center">
-                                        Belum ada rekomendasi proyek baru.
+                                        Belum ada rekomendasi proyek baru saat ini.
                                     </p>
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
@@ -686,7 +686,7 @@ export default function Dashboard({
                                                         {rec.project?.title || rec.title}
                                                     </span>
                                                     <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-                                                        {rec.match_score}% Match
+                                                        {rec.match_score}% Cocok
                                                     </span>
                                                 </div>
                                                 <p className="text-[11px] text-slate-600 line-clamp-2">
@@ -697,7 +697,7 @@ export default function Dashboard({
                                                         href={`/projects/${rec.project?.id || rec.project_id || rec.id}`}
                                                         className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition"
                                                     >
-                                                        Lihat Detail &rarr;
+                                                        Lihat Proyek &rarr;
                                                     </Link>
                                                 </div>
                                             </div>
@@ -712,9 +712,9 @@ export default function Dashboard({
                                     <div>
                                         <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                             <Trophy className="size-3.5 text-amber-600" />
-                                            <span>Kompetisi Terbuka</span>
+                                            <span>Lomba & Kompetisi Kampus</span>
                                         </h3>
-                                        <p className="text-[11px] text-slate-500">Peluang prestasi mahasiswa</p>
+                                        <p className="text-[11px] text-slate-500">Asah bakat dan raih prestasi bareng tim</p>
                                     </div>
                                     <Link href="/competitions" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                         Semua &rarr;
@@ -723,7 +723,7 @@ export default function Dashboard({
 
                                 {upcomingCompetitions.length === 0 ? (
                                     <p className="text-xs text-slate-500 py-3 text-center">
-                                        Tidak ada kompetisi aktif.
+                                        Belum ada jadwal kompetisi baru.
                                     </p>
                                 ) : (
                                     <div className="flex flex-col gap-2.5">
@@ -752,7 +752,7 @@ export default function Dashboard({
                                                         href={`/competitions/${comp.id}`}
                                                         className="font-semibold text-indigo-600 hover:text-indigo-800 transition"
                                                     >
-                                                        Daftar Tim &rarr;
+                                                        Lihat Detail Lomba &rarr;
                                                     </Link>
                                                 </div>
                                             </div>
@@ -767,9 +767,9 @@ export default function Dashboard({
                                     <div className="pb-3 border-b border-slate-100 mb-3.5">
                                         <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                                             <Activity className="size-3.5 text-slate-500" />
-                                            <span>Aktivitas Terkini</span>
+                                            <span>Kabar Terbaru Tim</span>
                                         </h3>
-                                        <p className="text-[11px] text-slate-500">Pembaruan dari tim yang Anda ikuti</p>
+                                        <p className="text-[11px] text-slate-500">Aktivitas terbaru dari teman-teman sekelompok kamu</p>
                                     </div>
 
                                     <div className="flex flex-col gap-3">
@@ -787,7 +787,6 @@ export default function Dashboard({
                                     </div>
                                 </div>
                             )}
-
                         </div>
                     </div>
 

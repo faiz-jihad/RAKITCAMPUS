@@ -53,7 +53,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Competition Hub', href: '/competitions' },
+    { title: 'Lomba & Kompetisi', href: '/competitions' },
 ];
 
 export default function CompetitionIndex({ competitions, filters, categories = [], statuses = [] }: Props) {
@@ -86,13 +86,13 @@ export default function CompetitionIndex({ competitions, filters, categories = [
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold tracking-wide mb-3 border border-[#5448EE]/20 shadow-2xs">
                                 <Trophy className="size-3.5 text-amber-500" />
-                                <span>Pusat Kompetisi Ilmiah, Hackathon, & Capstone Mahasiswa</span>
+                                <span>Lomba, Hackathon & Prestasi Kampus</span>
                             </div>
                             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0E121B]">
-                                Competition Hub
+                                Lomba & Kompetisi
                             </h1>
                             <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                                Temukan kompetisi bergengsi tingkat nasional dan internasional (Gemastik, PKM, KMHE, Hackathon). Bentuk tim mahasiswa lintas-program studi dan raih reputasi portofolio terbaik.
+                                Temukan kompetisi seru tingkat kampus hingga nasional (Gemastik, PKM, Hackathon). Ajak teman lintas-jurusan, bentuk tim hebat, dan borong piala prestasinya!
                             </p>
                         </div>
                     </div>

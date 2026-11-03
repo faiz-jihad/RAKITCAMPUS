@@ -57,7 +57,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Project Hub', href: '/projects' },
+    { title: 'Cari Proyek', href: '/projects' },
 ];
 
 export default function ProjectIndex({ projects, filters, categories = [], statuses = [] }: Props) {
@@ -103,13 +103,13 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold tracking-wide mb-3 border border-[#5448EE]/20 shadow-2xs">
                                 <Compass className="size-3.5" />
-                                <span>Pusat Inisiasi & Rekrutmen Terbuka Antar-Mahasiswa</span>
+                                <span>Kolaborasi & Proyek Mahasiswa</span>
                             </div>
                             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0E121B]">
-                                Project Hub
+                                Cari Proyek
                             </h1>
                             <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                                Jelajahi ragam proyek riset, tugas capstone perkuliahan, dan startup mahasiswa. Gabung dengan tim yang sedang merekrut atau inisiasi proyek impian Anda sendiri.
+                                Temukan ide proyek seru, tugas kuliah, atau tim riset dan startup kampus. Kamu bisa gabung ke tim yang lagi cari anggota atau mulai proyek kamu sendiri!
                             </p>
                         </div>
 
@@ -120,7 +120,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#5448EE]/20 hover:shadow-lg transition"
                             >
                                 <Plus className="size-4" />
-                                <span>Inisiasi Proyek Baru</span>
+                                <span>Buat Proyek Baru</span>
                             </Link>
                         </div>
                     </div>

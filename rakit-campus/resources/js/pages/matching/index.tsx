@@ -92,7 +92,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Beranda', href: '/' },
-    { title: 'Smart Team Matching', href: '/matching' },
+    { title: 'Cari Teman Tim', href: '/matching' },
 ];
 
 export default function MatchingIndex({
@@ -128,7 +128,7 @@ export default function MatchingIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Smart Team Matching — Rekomendasi Tim & Proyek Berbasis AI" />
+            <Head title="Cari Teman Tim & Rekomendasi Proyek — RAKIT Campus" />
 
             {/* Atmosphere background container */}
             <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-20">
@@ -142,13 +142,13 @@ export default function MatchingIndex({
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EEEDFD] border border-[#5448EE]/20 text-[#5448EE] text-xs font-semibold tracking-wide mb-4 shadow-sm">
                                 <Sparkles className="size-3.5" />
-                                <span>Algoritma Multikriteria & Pencocokan Profil Kampus</span>
+                                <span>Rekomendasi Cerdas Sesuai Keahlian</span>
                             </div>
                             <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0E121B] leading-tight">
-                                Smart Team Matching
+                                Cari Teman Tim
                             </h1>
                             <p className="text-sm sm:text-base text-neutral-600 mt-2.5 leading-relaxed">
-                                Temukan proyek inovasi, tim kompetisi, dan rekan kolaborator ideal berdasarkan keselarasan keahlian teknis, preferensi peran, ketersediaan jam kerja, dan minat nyata Anda.
+                                Temukan proyek seru, tim lomba, atau teman kelompok yang paling pas dengan keahlian dan waktu luang kamu. Nggak perlu bingung lagi cari rekan sefrekuensi!
                             </p>
                         </div>
 
@@ -159,14 +159,14 @@ export default function MatchingIndex({
                                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-semibold shadow-sm transition"
                             >
                                 <Compass className="size-4 text-[#5448EE]" />
-                                <span>Eksplor Semua Proyek</span>
+                                <span>Lihat Semua Proyek</span>
                             </Link>
                             <Link
                                 href="/competitions"
                                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-semibold shadow-sm transition"
                             >
                                 <Award className="size-4 text-amber-500" />
-                                <span>Kompetisi Terbuka</span>
+                                <span>Lomba & Kompetisi</span>
                             </Link>
                         </div>
                     </div>
@@ -182,13 +182,13 @@ export default function MatchingIndex({
                                 <div className="max-w-2xl">
                                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-white mb-3">
                                         <Zap className="size-3.5 text-amber-300" />
-                                        <span>Mode Tamu • Pratinjau Rekomendasi Terbuka</span>
+                                        <span>Mode Tamu • Rekomendasi Terbuka</span>
                                     </div>
                                     <h2 className="text-xl sm:text-2xl font-bold leading-snug">
-                                        Masuk untuk Melihat Skor Kecocokan Personal Anda
+                                        Masuk untuk Melihat Proyek yang Paling Pas Buat Kamu
                                     </h2>
                                     <p className="text-xs sm:text-sm text-purple-100 mt-2 leading-relaxed">
-                                        Saat ini Anda melihat daftar proyek publik unggulan. Masuk atau daftar akun mahasiswa terverifikasi untuk mengaktifkan perhitungan skor kecocokan otomatis sesuai skill matrix, peran favorit, dan jadwal Anda.
+                                        Saat ini kamu melihat daftar proyek rekomendasi umum. Yuk login dengan akun mahasiswa kamu biar sistem bisa menghitung skor kecocokan otomatis sesuai skill dan minat kamu.
                                     </p>
                                 </div>
 

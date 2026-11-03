@@ -11,8 +11,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Project Hub', href: '/projects' },
-    { title: 'Inisiasi Proyek Baru', href: '/projects/create' },
+    { title: 'Cari Proyek', href: '/projects' },
+    { title: 'Buat Proyek Baru', href: '/projects/create' },
 ];
 
 export default function ProjectCreate({ categories = [], visibilities = [], enrolledClasses = [] }: Props) {
@@ -118,10 +118,10 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Inisiasi Proyek Baru — RAKIT Campus" />
+            <Head title="Buat Proyek Baru — RAKIT Campus" />
 
             <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24">
-                {/* Ethereal background radial glow */}
+                {/* Background glow */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[300px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
@@ -132,7 +132,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#5448EE] hover:border-[#5448EE]/30 shadow-sm transition"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Kembali ke Project Hub</span>
+                            <span>Kembali ke Cari Proyek</span>
                         </Link>
                     </div>
 
@@ -142,13 +142,13 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                         <div className="border-b border-neutral-100 pb-6 mb-8">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold mb-3 border border-[#5448EE]/20">
                                 <Sparkles className="size-3.5" />
-                                <span>Inisiasi Kolaborasi & Rekrutmen Terbuka</span>
+                                <span>Buka Ide Proyek & Rekrut Teman Tim</span>
                             </div>
                             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0E121B]">
-                                Inisiasi Proyek Baru
+                                Buat Proyek Baru
                             </h1>
                             <p className="text-xs sm:text-sm text-neutral-500 mt-2 leading-relaxed">
-                                Lengkapi informasi proyek secara terstruktur. Sistem AI Smart Matching akan merekomendasikan proyek Anda kepada mahasiswa dengan keahlian yang relevan.
+                                Tuliskan ide proyek atau tugas kuliah kamu di sini. Sistem akan bantu pasangkan dengan mahasiswa yang keahliannya paling nyambung!
                             </p>
                         </div>
 
@@ -171,14 +171,14 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#5448EE]/20">
                                     <label className="block text-xs font-bold text-[#5448EE] mb-1.5 flex items-center gap-1.5">
                                         <GraduationCap className="size-4 text-[#5448EE]" />
-                                        <span>Kaitkan ke Kelas Perkuliahan / Bimbingan Dosen (Opsional)</span>
+                                        <span>Kaitkan ke Kelas Kuliah (Opsional)</span>
                                     </label>
                                     <select
                                         value={data.academic_class_id}
                                         onChange={(e) => setData('academic_class_id', e.target.value)}
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
                                     >
-                                        <option value="">Proyek Independen (Bukan Tugas Kelas)</option>
+                                        <option value="">Proyek Mandiri (Bukan Tugas Kelas)</option>
                                         {enrolledClasses.map((cls) => (
                                             <option key={cls.id} value={cls.id}>
                                                 {cls.name} ({cls.code})
@@ -186,7 +186,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                         ))}
                                     </select>
                                     <span className="text-[11px] text-neutral-500 mt-1 block">
-                                        Proyek ini akan otomatis muncul pada dashboard dosen pengampu kelas untuk pemantauan dan bimbingan.
+                                        Kalau dikaitkan ke kelas, proyek ini bakal otomatis muncul di dashboard dosen pengampu untuk bimbingan dan penilaian.
                                     </span>
                                 </div>
                             )}
@@ -200,7 +200,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     type="text"
                                     value={data.title}
                                     onChange={(e) => setData('title', e.target.value)}
-                                    placeholder="Contoh: AgriTani — Sistem IoT & AI Monitoring Pertanian Mangga"
+                                    placeholder="Contoh: AgriTani — Sistem IoT & AI Monitoring Kebun Mangga"
                                     required
                                     className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
                                 />
@@ -209,12 +209,12 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             {/* Ringkasan Singkat */}
                             <div>
                                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                    Ringkasan Singkat (Short Description) <span className="text-rose-500">*</span>
+                                    Ringkasan Singkat <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
                                     value={data.short_description}
                                     onChange={(e) => setData('short_description', e.target.value)}
-                                    placeholder="Jelaskan dalam 1-2 kalimat fokus utama dan hasil akhir yang ingin dicapai tim..."
+                                    placeholder="Jelaskan dalam 1-2 kalimat apa yang mau dibuat tim kamu dan apa manfaatnya..."
                                     required
                                     rows={2}
                                     className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
@@ -242,7 +242,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
 
                                 <div>
                                     <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                        Kapasitas Tim (Orang)
+                                        Kapasitas Tim (Jumlah Anggota)
                                     </label>
                                     <input
                                         type="number"
@@ -256,7 +256,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
 
                                 <div>
                                     <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                        Visibilitas
+                                        Visibilitas Proyek
                                     </label>
                                     <select
                                         value={data.visibility}
@@ -264,8 +264,8 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
                                     >
                                         <option value="campus">Hanya Kampus Saya</option>
-                                        <option value="public">Publik (Antar-Kampus)</option>
-                                        <option value="private">Privat (Undangan)</option>
+                                        <option value="public">Publik (Bisa Antar-Kampus)</option>
+                                        <option value="private">Privat (Hanya Undangan)</option>
                                     </select>
                                 </div>
                             </div>
@@ -273,7 +273,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             {/* Teknologi yang digunakan */}
                             <div>
                                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                    Teknologi yang Digunakan (Pisahkan dengan koma)
+                                    Teknologi & Tools yang Dipakai (Pisahkan dengan koma)
                                 </label>
                                 <div className="relative">
                                     <input
@@ -292,7 +292,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             {/* Kebutuhan Keahlian */}
                             <div>
                                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                    Kebutuhan Keahlian (Format: NamaSkill: Level 1-5, pisahkan koma)
+                                    Keahlian yang Dibutuhkan (Format: NamaSkill: Level 1-5, pisahkan koma)
                                 </label>
                                 <input
                                     type="text"
@@ -306,13 +306,13 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             {/* Deskripsi Lengkap */}
                             <div>
                                 <label className="block text-xs font-bold text-neutral-800 mb-1.5">
-                                    Deskripsi Lengkap & Latar Belakang
+                                    Deskripsi Lengkap & Rencana Pengerjaan
                                 </label>
                                 <textarea
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={4}
-                                    placeholder="Tuliskan latar belakang masalah, target luaran, metodologi kerja, dan peran yang Anda cari..."
+                                    placeholder="Ceritakan latar belakang ide, target hasil yang ingin dicapai tim, dan peran apa aja yang lagi kamu cari..."
                                     className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
                                 />
                             </div>
@@ -336,7 +336,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                             <span>Menyimpan Proyek...</span>
                                         </>
                                     ) : (
-                                        <span>Buat & Buka Rekrutmen</span>
+                                        <span>Simpan & Buka Lowongan Anggota</span>
                                     )}
                                 </button>
                             </div>

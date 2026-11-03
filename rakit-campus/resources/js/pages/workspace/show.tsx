@@ -94,8 +94,8 @@ export default function WorkspaceShow({
     const [activeView, setActiveView] = useState<'board' | 'list'>('board');
 
     const breadcrumbs: BreadcrumbItem[] = [
-        { title: 'Project Hub', href: '/projects' },
-        { title: 'Workspace Tim', href: '/workspace' },
+        { title: 'Cari Proyek', href: '/projects' },
+        { title: 'Ruang Kerja Tim', href: '/workspace' },
         { title: team.name, href: `/workspace/${team.id}` },
     ];
 
@@ -403,7 +403,7 @@ export default function WorkspaceShow({
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#5448EE] shadow-xs transition"
                             >
                                 <ArrowLeft className="size-3.5" />
-                                <span>Workspace Tim</span>
+                                <span>Ruang Kerja Tim</span>
                             </Link>
 
                             <div className="flex items-center gap-2">
@@ -473,10 +473,10 @@ export default function WorkspaceShow({
                                         <Premium3dIcon icon={GraduationCap} variant="purple" size="md" />
                                         <div>
                                             <h2 className="text-base sm:text-lg font-extrabold tracking-tight">
-                                                Panel Evaluasi, Penilaian & Perbaikan Dosen
+                                                Evaluasi & Catatan Penilaian Dosen
                                             </h2>
                                             <p className="text-xs text-neutral-300 mt-0.5">
-                                                Tinjau progres Kanban tim mahasiswa, berikan grade nilai, dan tulis instruksi revisi yang harus dikerjakan.
+                                                Tinjau progres tugas tim mahasiswa, berikan nilai, dan tulis catatan perbaikan jika ada hal yang perlu direvisi.
                                             </p>
                                         </div>
                                     </div>
@@ -504,14 +504,14 @@ export default function WorkspaceShow({
                                                 type="text"
                                                 value={evalGrade}
                                                 onChange={(e) => setEvalGrade(e.target.value)}
-                                                placeholder="Contoh: 88/100 (A) atau Revisi Milestone 2"
+                                                placeholder="Contoh: 88/100 (A) atau Revisi Tahap 2"
                                                 required
                                                 className="w-full px-3.5 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#8E84FC]"
                                             />
                                         </div>
 
                                         <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-[11px] text-neutral-300 leading-relaxed">
-                                            Penilaian dan catatan arahan ini akan otomatis tersinkronisasi ke rekap bimbingan kelas dan tampil mencolok pada mahasiswa.
+                                            Nilai dan catatan arahan ini akan langsung tampil di dashboard mahasiswa dan rekap bimbingan kelas.
                                         </div>
                                     </div>
 
@@ -519,13 +519,13 @@ export default function WorkspaceShow({
                                     <div className="md:col-span-8 flex flex-col gap-3">
                                         <div>
                                             <label className="block text-xs font-bold text-neutral-200 mb-1.5">
-                                                Catatan Arahan & Saran Perbaikan (Feedback) *
+                                                Catatan Arahan & Saran Perbaikan *
                                             </label>
                                             <textarea
                                                 value={evalNotes}
                                                 onChange={(e) => setEvalNotes(e.target.value)}
                                                 rows={3}
-                                                placeholder="Tuliskan arahan perbaikan teknis, saran arsitektur, atau tugas yang wajib direvisi oleh mahasiswa..."
+                                                placeholder="Tuliskan arahan perbaikan teknis, saran solusi, atau tugas yang wajib direvisi oleh mahasiswa..."
                                                 required
                                                 className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#8E84FC] leading-relaxed"
                                             />
@@ -535,7 +535,7 @@ export default function WorkspaceShow({
                                             {evalSavedMsg ? (
                                                 <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
                                                     <CheckCircle2 className="size-4" />
-                                                    Nilai & catatan perbaikan berhasil diterbitkan!
+                                                    Nilai dan catatan perbaikan berhasil disimpan!
                                                 </span>
                                             ) : (
                                                 <span className="text-[11px] text-neutral-400">
@@ -549,7 +549,7 @@ export default function WorkspaceShow({
                                                 className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/30 transition active:scale-95 disabled:opacity-50"
                                             >
                                                 <Save className="size-3.5" />
-                                                <span>{savingEval ? 'Menyimpan...' : 'Simpan Nilai & Arahan Dosen'}</span>
+                                                <span>{savingEval ? 'Menyimpan...' : 'Simpan Nilai & Catatan'}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -565,7 +565,7 @@ export default function WorkspaceShow({
                                         <Premium3dIcon icon={GraduationCap} variant="purple" size="sm" />
                                         <div>
                                             <h3 className="text-xs font-bold text-neutral-900">
-                                                Evaluasi & Catatan Perbaikan Dosen Pengampu
+                                                Catatan & Nilai dari Dosen Pengampu
                                             </h3>
                                             <p className="text-[11px] text-neutral-500">
                                                 Dosen: {project.academicClass?.lecturer?.name || 'Dosen Pembimbing'}
@@ -582,7 +582,7 @@ export default function WorkspaceShow({
                                 </div>
 
                                 <div className="mt-3.5 p-4 rounded-2xl bg-white border border-purple-100 text-xs text-neutral-700 leading-relaxed whitespace-pre-line">
-                                    <strong className="block text-neutral-900 mb-1">Arahan & Tindak Lanjut:</strong>
+                                    <strong className="block text-neutral-900 mb-1">Catatan Arahan & Tindak Lanjut:</strong>
                                     {project.lecturer_notes}
                                 </div>
                             </div>
@@ -597,14 +597,14 @@ export default function WorkspaceShow({
                                 <div>
                                     <div className="flex items-center gap-2">
                                         <h2 className="text-base font-extrabold text-[#0E121B]">
-                                            AI Sprint Roadmap & Schedule
+                                            Roadmap & Jadwal Pengerjaan Tim
                                         </h2>
                                         <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
-                                            Trello-Like Timeline
+                                            Jadwal Bertahap
                                         </span>
                                     </div>
                                     <p className="text-xs text-neutral-500 mt-0.5">
-                                        Target sprint bertahap dan delegasi tugas otomatis sesuai kompetensi keahlian masing-masing anggota.
+                                        Target pengerjaan bertahap dan pembagian tugas otomatis sesuai keahlian tiap anggota tim.
                                     </p>
                                 </div>
                             </div>
@@ -615,7 +615,7 @@ export default function WorkspaceShow({
                                 className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#181135] to-[#2E205E] hover:from-neutral-900 hover:to-neutral-800 text-white rounded-full text-xs font-bold shadow-md shadow-indigo-950/20 transition active:scale-95 disabled:opacity-50 shrink-0"
                             >
                                 <Wand2 className="size-3.5 text-[#8E84FC]" />
-                                <span>{orchestrating ? 'AI Sedang Menyusun Roadmap...' : 'Jalankan AI Agent: Susun Roadmap & Task'}</span>
+                                <span>{orchestrating ? 'Lagi nyusun roadmap & bagi tugas...' : 'Bagi Tugas & Roadmap Otomatis (AI)'}</span>
                             </button>
                         </div>
 
@@ -624,9 +624,9 @@ export default function WorkspaceShow({
                             {milestones.length === 0 ? (
                                 <div className="col-span-full py-8 px-4 text-center border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
                                     <Calendar className="size-8 text-neutral-400 mx-auto mb-2" />
-                                    <p className="text-xs font-bold text-neutral-700">Belum ada Sprint Roadmap terdaftar</p>
+                                    <p className="text-xs font-bold text-neutral-700">Belum ada roadmap pengerjaan</p>
                                     <p className="text-[11px] text-neutral-500 mt-0.5 max-w-sm mx-auto mb-3">
-                                        Gunakan tombol AI Agent di atas untuk menyusun 4 sprint roadmap dan delegasi tugas Kanban secara otomatis.
+                                        Klik tombol "Bagi Tugas & Roadmap Otomatis" di atas untuk membuat 4 tahap pengerjaan dan membagi tugas ke anggota tim.
                                     </p>
                                 </div>
                             ) : (
