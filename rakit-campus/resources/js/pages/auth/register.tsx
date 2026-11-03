@@ -4,7 +4,6 @@ import { FormEventHandler } from 'react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
@@ -32,12 +31,18 @@ export default function Register() {
     };
 
     return (
-        <AuthLayout title="Create an account" description="Enter your details below to create your account">
-            <Head title="Register" />
-            <form className="flex flex-col gap-6" onSubmit={submit}>
-                <div className="grid gap-6">
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Name</Label>
+        <AuthLayout
+            title="Daftar Akun Mahasiswa"
+            description="Bergabunglah dengan RAKIT Campus untuk menemukan proyek, membentuk tim, dan meraih prestasi kompetisi."
+        >
+            <Head title="Daftar — RAKIT Campus" />
+
+            <form className="flex flex-col gap-4" onSubmit={submit}>
+                <div className="grid gap-3.5 text-left">
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="name" className="text-xs font-semibold text-neutral-700">
+                            Nama Lengkap
+                        </Label>
                         <Input
                             id="name"
                             type="text"
@@ -48,13 +53,16 @@ export default function Register() {
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             disabled={processing}
-                            placeholder="Full name"
+                            placeholder="Contoh: Budi Santoso"
+                            className="rounded-xl border-neutral-200 text-xs py-2.5 focus-visible:ring-[#5448EE] focus-visible:border-[#5448EE]"
                         />
-                        <InputError message={errors.name} className="mt-2" />
+                        <InputError message={errors.name} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="email">Email address</Label>
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="email" className="text-xs font-semibold text-neutral-700">
+                            Email Kampus
+                        </Label>
                         <Input
                             id="email"
                             type="email"
@@ -64,13 +72,16 @@ export default function Register() {
                             value={data.email}
                             onChange={(e) => setData('email', e.target.value)}
                             disabled={processing}
-                            placeholder="email@example.com"
+                            placeholder="nama@polindra.ac.id"
+                            className="rounded-xl border-neutral-200 text-xs py-2.5 focus-visible:ring-[#5448EE] focus-visible:border-[#5448EE]"
                         />
                         <InputError message={errors.email} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password">Password</Label>
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="password" className="text-xs font-semibold text-neutral-700">
+                            Kata Sandi
+                        </Label>
                         <Input
                             id="password"
                             type="password"
@@ -80,13 +91,16 @@ export default function Register() {
                             value={data.password}
                             onChange={(e) => setData('password', e.target.value)}
                             disabled={processing}
-                            placeholder="Password"
+                            placeholder="Minimal 8 karakter"
+                            className="rounded-xl border-neutral-200 text-xs py-2.5 focus-visible:ring-[#5448EE] focus-visible:border-[#5448EE]"
                         />
                         <InputError message={errors.password} />
                     </div>
 
-                    <div className="grid gap-2">
-                        <Label htmlFor="password_confirmation">Confirm password</Label>
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="password_confirmation" className="text-xs font-semibold text-neutral-700">
+                            Konfirmasi Kata Sandi
+                        </Label>
                         <Input
                             id="password_confirmation"
                             type="password"
@@ -96,21 +110,27 @@ export default function Register() {
                             value={data.password_confirmation}
                             onChange={(e) => setData('password_confirmation', e.target.value)}
                             disabled={processing}
-                            placeholder="Confirm password"
+                            placeholder="Ulangi kata sandi"
+                            className="rounded-xl border-neutral-200 text-xs py-2.5 focus-visible:ring-[#5448EE] focus-visible:border-[#5448EE]"
                         />
                         <InputError message={errors.password_confirmation} />
                     </div>
 
-                    <Button type="submit" className="mt-2 w-full" tabIndex={5} disabled={processing}>
+                    <button
+                        type="submit"
+                        disabled={processing}
+                        tabIndex={5}
+                        className="mt-2 w-full bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full py-3 text-xs sm:text-sm font-semibold shadow-md shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
                         {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                        Create account
-                    </Button>
+                        Daftar Sekarang
+                    </button>
                 </div>
 
-                <div className="text-muted-foreground text-center text-sm">
-                    Already have an account?{' '}
-                    <TextLink href={route('login')} tabIndex={6}>
-                        Log in
+                <div className="text-neutral-500 text-center text-xs mt-2">
+                    Sudah memiliki akun?{' '}
+                    <TextLink href={route('login')} className="font-semibold text-[#5448EE] hover:underline" tabIndex={6}>
+                        Masuk di sini
                     </TextLink>
                 </div>
             </form>

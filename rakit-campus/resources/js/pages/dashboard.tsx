@@ -4,6 +4,7 @@ import { Head, Link } from '@inertiajs/react';
 import {
     Activity,
     ArrowRight,
+    ArrowUpRight,
     Award,
     Calendar,
     CheckCircle2,
@@ -11,6 +12,7 @@ import {
     FolderKanban,
     Kanban,
     Plus,
+    Search,
     ShieldCheck,
     Sparkles,
     Trophy,
@@ -69,71 +71,76 @@ export default function Dashboard({
 
     const statusLabels: Record<string, string> = {
         todo: 'To Do',
-        in_progress: 'Sedang Dikerjakan',
-        in_review: 'Dalam Review',
-        completed: 'Selesai',
+        in_progress: 'In Process',
+        in_review: 'In Review',
+        completed: 'Completed',
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard — RAKIT Campus" />
 
-            <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
-                {/* Hero / Student Banner */}
-                <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-lg relative overflow-hidden">
-                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
+            {/* Atmosphere top glow */}
+            <div className="relative flex flex-col gap-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full selection:bg-[#5448EE] selection:text-white">
+                <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#EAE6FF]/40 via-[#F6F4FE]/20 to-transparent pointer-events-none -z-10" />
+
+                {/* 1. Hero Student Identity Banner (Sleek TaskGo Dark Indigo Card) */}
+                <div className="bg-gradient-to-r from-[#181135] via-[#231752] to-[#181135] rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#5448EE]/20 blur-3xl pointer-events-none" />
+                    
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                    <ShieldCheck className="size-3" />
+                            {/* Status Pills */}
+                            <div className="flex flex-wrap items-center gap-2 mb-3">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                    <ShieldCheck className="size-3.5" />
                                     Mahasiswa Terverifikasi
                                 </span>
-                                <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-white/10 text-neutral-200 border border-white/15">
+                                <span className="px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-neutral-200 border border-white/15">
                                     {user.campus}
                                 </span>
                                 {user.nim && (
-                                    <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-white/10 text-neutral-300">
+                                    <span className="px-3 py-1 rounded-full text-xs font-mono bg-white/10 text-neutral-300">
                                         NIM: {user.nim}
                                     </span>
                                 )}
                             </div>
 
-                            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                                 Halo, {user.name} 👋
                             </h1>
-                            <p className="text-sm text-neutral-300 mt-1.5 max-w-2xl leading-relaxed">
-                                {user.major} • Bangun tim kolaborasi, selesaikan tugas kanban, dan raih prestasi kompetisi nyata di kampus.
+                            <p className="text-xs sm:text-sm text-neutral-300 mt-1.5 max-w-2xl leading-relaxed">
+                                {user.major} • Bangun tim kolaborasi mahasiswa, selesaikan tugas Kanban, dan raih prestasi nyata di kompetisi kampus.
                             </p>
 
-                            {/* Skills pill */}
+                            {/* Skills Tag Pills */}
                             {user.skills && user.skills.length > 0 && (
-                                <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                                <div className="flex flex-wrap items-center gap-1.5 mt-4">
                                     <span className="text-xs text-neutral-400">Keahlian Anda:</span>
-                                    {user.skills.slice(0, 4).map((s: any) => (
-                                        <span key={s.id} className="text-[11px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-200 font-medium">
+                                    {user.skills.slice(0, 5).map((s: any) => (
+                                        <span key={s.id} className="text-[11px] px-2.5 py-0.5 rounded-full bg-white/10 border border-white/15 text-neutral-200 font-medium">
                                             {s.name}
                                         </span>
                                     ))}
-                                    {user.skills.length > 4 && (
-                                        <span className="text-[11px] text-neutral-400">+{user.skills.length - 4} lainnya</span>
+                                    {user.skills.length > 5 && (
+                                        <span className="text-[11px] text-neutral-400">+{user.skills.length - 5} lainnya</span>
                                     )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Quick CTA Buttons */}
+                        {/* Quick CTA Buttons (Pills) */}
                         <div className="flex flex-wrap md:flex-col gap-2.5 shrink-0">
                             <Link
                                 href="/projects/create"
-                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow transition"
+                                className="inline-flex items-center justify-center gap-1.5 px-6 py-3 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold shadow-md shadow-indigo-500/25 transition-all"
                             >
                                 <Plus className="size-3.5" />
                                 Buat Proyek Baru
                             </Link>
                             <Link
                                 href="/matching"
-                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-semibold border border-white/20 transition"
+                                className="inline-flex items-center justify-center gap-1.5 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-full text-xs font-semibold border border-white/20 transition-all"
                             >
                                 <Sparkles className="size-3.5" />
                                 Smart Matching Rekan
@@ -144,101 +151,113 @@ export default function Dashboard({
 
                 {/* Profile Completion Alert if incomplete */}
                 {profileCompletion && profileCompletion.percent < 80 && (
-                    <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="bg-gradient-to-r from-purple-50/90 to-white border border-purple-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                         <div className="flex items-center gap-3">
-                            <div className="size-9 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-xs font-bold shrink-0">
+                            <div className="size-9 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center text-xs font-bold shrink-0">
                                 {profileCompletion.percent}%
                             </div>
                             <div>
-                                <h4 className="text-xs font-bold text-amber-900">Profil Anda Belum 100% Lengkap</h4>
-                                <p className="text-[11px] text-amber-700">
-                                    Tambahkan keahlian dan jam ketersediaan agar Anda lebih mudah direkrut oleh Project Leader.
+                                <h4 className="text-xs font-bold text-neutral-900">Kelengkapan Profil Belum 100%</h4>
+                                <p className="text-[11px] text-neutral-500">
+                                    Lengkapi keahlian dan jam ketersediaan agar algoritma Smart Matching dapat merekomendasikan proyek secara presisi.
                                 </p>
                             </div>
                         </div>
                         <Link
                             href="/settings/profile"
-                            className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-medium self-start sm:self-auto transition"
+                            className="px-4 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold self-start sm:self-auto transition shadow-xs"
                         >
                             Lengkapi Profil
                         </Link>
                     </div>
                 )}
 
-                {/* 4 Stats Cards */}
+                {/* 2. 4 Metric Cards (Matching the TaskGo "Why Teams Choose" card aesthetic) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Stat 1: Teams & Workspaces */}
                     <Link
                         href="/workspace"
-                        className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs hover:border-blue-300 hover:shadow-md transition group"
+                        className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                     >
-                        <div className="flex items-center justify-between text-neutral-500 mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider">Tim & Workspace</span>
-                            <div className="p-2 rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition">
-                                <Kanban className="size-4" />
-                            </div>
+                        <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
+                            <ArrowUpRight className="size-4" />
                         </div>
-                        <div className="text-2xl font-bold text-neutral-900">{stats.my_teams_count} Tim Aktif</div>
-                        <span className="text-[11px] text-blue-600 font-medium block mt-1">
-                            Buka papan Kanban kolaborasi &rarr;
+                        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+                            Tim & Workspace
                         </span>
+                        <div className="text-3xl font-extrabold text-neutral-900 mt-2">
+                            {stats.my_teams_count} <span className="text-base font-semibold text-neutral-500">Tim Aktif</span>
+                        </div>
+                        <p className="text-xs text-[#5448EE] font-medium mt-3">
+                            Buka papan Kanban kolaborasi &rarr;
+                        </p>
                     </Link>
 
-                    <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                        <div className="flex items-center justify-between text-neutral-500 mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider">Tugas Perlu Dikerjakan</span>
-                            <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
-                                <Clock className="size-4" />
-                            </div>
+                    {/* Stat 2: Pending Tasks */}
+                    <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs relative">
+                        <div className="size-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center absolute top-5 right-5">
+                            <Clock className="size-4" />
                         </div>
-                        <div className="text-2xl font-bold text-neutral-900">{stats.pending_tasks_count} Tugas</div>
-                        <span className="text-[11px] text-neutral-500 block mt-1">
-                            Dari seluruh proyek yang Anda ikuti
+                        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+                            Tugas Tertunda
                         </span>
+                        <div className="text-3xl font-extrabold text-neutral-900 mt-2">
+                            {stats.pending_tasks_count} <span className="text-base font-semibold text-neutral-500">Tugas</span>
+                        </div>
+                        <p className="text-xs text-neutral-500 mt-3">
+                            Dari seluruh proyek yang Anda ikuti
+                        </p>
                     </div>
 
+                    {/* Stat 3: Matching Opportunities */}
                     <Link
                         href="/matching"
-                        className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs hover:border-purple-300 hover:shadow-md transition group"
+                        className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                     >
-                        <div className="flex items-center justify-between text-neutral-500 mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider">Peluang Match</span>
-                            <div className="p-2 rounded-lg bg-purple-50 text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
-                                <Sparkles className="size-4" />
-                            </div>
+                        <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
+                            <ArrowUpRight className="size-4" />
                         </div>
-                        <div className="text-2xl font-bold text-neutral-900">{stats.recommended_matches_count} Rekomendasi</div>
-                        <span className="text-[11px] text-purple-600 font-medium block mt-1">
-                            Sesuai keahlian & minat Anda &rarr;
+                        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+                            Peluang Match
                         </span>
+                        <div className="text-3xl font-extrabold text-neutral-900 mt-2">
+                            {stats.recommended_matches_count} <span className="text-base font-semibold text-neutral-500">Proyek</span>
+                        </div>
+                        <p className="text-xs text-[#5448EE] font-medium mt-3">
+                            Sesuai keahlian & minat Anda &rarr;
+                        </p>
                     </Link>
 
+                    {/* Stat 4: Competitions */}
                     <Link
                         href="/competitions"
-                        className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs hover:border-emerald-300 hover:shadow-md transition group"
+                        className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group"
                     >
-                        <div className="flex items-center justify-between text-neutral-500 mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider">Kompetisi Terbuka</span>
-                            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-600 group-hover:text-white transition">
-                                <Trophy className="size-4" />
-                            </div>
+                        <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-5 right-5 group-hover:scale-110 transition-transform">
+                            <ArrowUpRight className="size-4" />
                         </div>
-                        <div className="text-2xl font-bold text-neutral-900">{stats.upcoming_competitions_count} Kompetisi</div>
-                        <span className="text-[11px] text-emerald-600 font-medium block mt-1">
-                            Bentuk tim & rebut prestasi &rarr;
+                        <span className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider block">
+                            Kompetisi Terbuka
                         </span>
+                        <div className="text-3xl font-extrabold text-neutral-900 mt-2">
+                            {stats.upcoming_competitions_count} <span className="text-base font-semibold text-neutral-500">Lomba</span>
+                        </div>
+                        <p className="text-xs text-[#5448EE] font-medium mt-3">
+                            Bentuk tim & raih prestasi &rarr;
+                        </p>
                     </Link>
                 </div>
 
-                {/* Main 2-Column Section */}
+                {/* 3. Main 2-Column Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left 2 Columns: Teams & Tasks */}
                     <div className="lg:col-span-2 flex flex-col gap-6">
                         {/* Section: My Teams & Workspaces */}
-                        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
+                        <div className="bg-white/95 border border-neutral-200/90 rounded-3xl p-6 shadow-2xs">
+                            <div className="flex items-center justify-between mb-5 pb-4 border-b border-neutral-100">
                                 <div>
                                     <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
-                                        <Kanban className="size-4 text-blue-600" />
+                                        <Kanban className="size-4 text-[#5448EE]" />
                                         Tim Kolaborasi & Workspace Saya
                                     </h2>
                                     <p className="text-xs text-neutral-500 mt-0.5">
@@ -247,56 +266,56 @@ export default function Dashboard({
                                 </div>
                                 <Link
                                     href="/workspace"
-                                    className="text-xs font-medium text-blue-600 hover:text-blue-800 transition"
+                                    className="text-xs font-semibold text-[#5448EE] hover:text-[#4336D6] transition"
                                 >
                                     Lihat Semua &rarr;
                                 </Link>
                             </div>
 
                             {myTeams.length === 0 ? (
-                                <div className="text-center py-8 px-4 bg-neutral-50 rounded-lg border border-dashed border-neutral-200">
+                                <div className="text-center py-10 px-4 bg-neutral-50/70 rounded-2xl border border-dashed border-neutral-200">
                                     <FolderKanban className="size-8 text-neutral-400 mx-auto mb-2" />
                                     <p className="text-xs font-semibold text-neutral-700">Belum tergabung dalam tim manapun</p>
-                                    <p className="text-[11px] text-neutral-500 max-w-sm mx-auto mt-1 mb-3">
+                                    <p className="text-[11px] text-neutral-500 max-w-sm mx-auto mt-1 mb-4">
                                         Lamar posisi di proyek kampus atau buat proyek Anda sendiri untuk memulai kolaborasi.
                                     </p>
                                     <div className="flex justify-center gap-2">
                                         <Link
                                             href="/projects"
-                                            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition"
+                                            className="px-5 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold transition"
                                         >
                                             Cari Proyek
                                         </Link>
                                         <Link
                                             href="/projects/create"
-                                            className="px-3 py-1.5 border border-neutral-200 hover:bg-white text-neutral-700 rounded-lg text-xs font-medium transition"
+                                            className="px-5 py-2 border border-neutral-200 hover:bg-white text-neutral-700 rounded-full text-xs font-semibold transition"
                                         >
                                             Buat Proyek
                                         </Link>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col gap-3">
+                                <div className="flex flex-col gap-3.5">
                                     {myTeams.map((team: any) => (
                                         <div
                                             key={team.id}
-                                            className="p-4 border border-neutral-200 rounded-xl hover:border-blue-200 hover:shadow-xs transition bg-white"
+                                            className="p-4 border border-neutral-200/90 rounded-2xl hover:border-purple-200 hover:shadow-xs transition bg-white flex flex-col justify-between"
                                         >
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="text-sm font-bold text-neutral-900">{team.name}</h3>
                                                         {team.is_leader && (
-                                                            <span className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded font-semibold">
+                                                            <span className="text-[10px] bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-full font-semibold">
                                                                 Leader
                                                             </span>
                                                         )}
-                                                        <span className="text-[10px] bg-neutral-100 text-neutral-600 px-1.5 py-0.5 rounded font-medium capitalize">
+                                                        <span className="text-[10px] bg-neutral-100 text-neutral-600 px-2 py-0.5 rounded-full font-medium capitalize">
                                                             {team.type}
                                                         </span>
                                                     </div>
                                                     {team.project && (
-                                                        <p className="text-xs text-blue-600 font-medium mt-0.5">
+                                                        <p className="text-xs text-[#5448EE] font-medium mt-0.5">
                                                             {team.project.title}
                                                         </p>
                                                     )}
@@ -304,7 +323,7 @@ export default function Dashboard({
 
                                                 <Link
                                                     href={`/workspace/${team.id}`}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-neutral-900 hover:bg-neutral-800 text-white rounded-lg text-xs font-medium self-start sm:self-auto transition"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-[#181135] hover:bg-neutral-900 text-white rounded-full text-xs font-semibold self-start sm:self-auto transition"
                                                 >
                                                     <Kanban className="size-3" />
                                                     Buka Workspace
@@ -315,26 +334,24 @@ export default function Dashboard({
                                             {/* Progress Bar */}
                                             <div className="mt-3">
                                                 <div className="flex justify-between text-[11px] text-neutral-500 mb-1">
-                                                    <span>Progres Tugas Selesai</span>
+                                                    <span>Penyelesaian Tugas</span>
                                                     <span className="font-semibold text-neutral-800">
                                                         {team.done_tasks} / {team.total_tasks} ({team.progress_percent}%)
                                                     </span>
                                                 </div>
                                                 <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
                                                     <div
-                                                        className="bg-blue-600 h-1.5 rounded-full"
+                                                        className="bg-[#5448EE] h-1.5 rounded-full transition-all"
                                                         style={{ width: `${Math.min(100, team.progress_percent)}%` }}
                                                     />
                                                 </div>
                                             </div>
 
-                                            {/* Members preview */}
+                                            {/* Members avatar stack */}
                                             <div className="mt-3 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-xs text-neutral-500">
                                                 <div className="flex items-center gap-2">
-                                                    <Users className="size-3.5" />
-                                                    <span>
-                                                        {team.members.map((m: any) => m.name).join(', ')}
-                                                    </span>
+                                                    <Users className="size-3.5 text-neutral-400" />
+                                                    <span>{team.members.map((m: any) => m.name).join(', ')}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -344,8 +361,8 @@ export default function Dashboard({
                         </div>
 
                         {/* Section: My Assigned Tasks */}
-                        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
+                        <div className="bg-white/95 border border-neutral-200/90 rounded-3xl p-6 shadow-2xs">
+                            <div className="flex items-center justify-between mb-5 pb-4 border-b border-neutral-100">
                                 <div>
                                     <h2 className="text-base font-bold text-neutral-900 flex items-center gap-2">
                                         <CheckCircle2 className="size-4 text-emerald-600" />
@@ -358,7 +375,7 @@ export default function Dashboard({
                             </div>
 
                             {myTasks.length === 0 ? (
-                                <div className="text-center py-6 px-4 bg-neutral-50 rounded-lg border border-dashed border-neutral-200">
+                                <div className="text-center py-8 px-4 bg-neutral-50/70 rounded-2xl border border-dashed border-neutral-200">
                                     <CheckCircle2 className="size-8 text-neutral-400 mx-auto mb-2" />
                                     <p className="text-xs font-semibold text-neutral-700">Tidak ada tugas tertunda saat ini</p>
                                     <p className="text-[11px] text-neutral-500 mt-0.5">
@@ -370,10 +387,10 @@ export default function Dashboard({
                                     {myTasks.map((task: any) => (
                                         <div
                                             key={task.id}
-                                            className="p-3 border border-neutral-200 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-neutral-50 transition"
+                                            className="p-3.5 border border-neutral-200/90 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-neutral-50/70 transition"
                                         >
                                             <div className="flex items-start gap-3">
-                                                <div className="size-2 rounded-full bg-blue-600 mt-1.5 shrink-0" />
+                                                <div className="size-2 rounded-full bg-[#5448EE] mt-1.5 shrink-0" />
                                                 <div>
                                                     <h4 className="text-xs font-bold text-neutral-900">{task.title}</h4>
                                                     <div className="flex flex-wrap items-center gap-2 text-[11px] text-neutral-500 mt-0.5">
@@ -389,12 +406,12 @@ export default function Dashboard({
                                             </div>
 
                                             <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
-                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border uppercase tracking-wider ${
+                                                <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border uppercase tracking-wider ${
                                                     priorityColors[task.priority] || priorityColors.medium
                                                 }`}>
                                                     {task.priority}
                                                 </span>
-                                                <span className="text-[10px] px-2 py-0.5 rounded bg-neutral-100 text-neutral-700 font-medium">
+                                                <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-neutral-100 text-neutral-700 font-medium">
                                                     {statusLabels[task.status] || task.status}
                                                 </span>
                                                 {task.team_id && (
@@ -416,19 +433,19 @@ export default function Dashboard({
 
                     {/* Right Column: Recommendations & Competitions */}
                     <div className="flex flex-col gap-6">
-                        {/* Smart Matching Preview */}
-                        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                            <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-100">
+                        {/* Smart Matching Preview (Bento card style) */}
+                        <div className="bg-white/95 border border-neutral-200/90 rounded-3xl p-6 shadow-2xs">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
                                 <div>
                                     <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-1.5">
-                                        <Sparkles className="size-4 text-purple-600" />
+                                        <Sparkles className="size-4 text-[#5448EE]" />
                                         Rekomendasi Proyek
                                     </h3>
                                     <p className="text-[11px] text-neutral-500">Kecocokan keahlian & profil</p>
                                 </div>
                                 <Link
                                     href="/matching"
-                                    className="text-xs text-purple-600 hover:text-purple-800 font-medium transition"
+                                    className="text-xs text-[#5448EE] hover:text-[#4336D6] font-semibold transition"
                                 >
                                     Semua &rarr;
                                 </Link>
@@ -443,13 +460,13 @@ export default function Dashboard({
                                     {recommendedProjects.map((rec: any, idx: number) => (
                                         <div
                                             key={idx}
-                                            className="p-3 bg-neutral-50 rounded-lg border border-neutral-100 flex flex-col gap-1.5"
+                                            className="p-3.5 bg-neutral-50/80 rounded-2xl border border-neutral-100 flex flex-col gap-1.5"
                                         >
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs font-bold text-neutral-900 line-clamp-1">
                                                     {rec.project?.title || rec.title}
                                                 </span>
-                                                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 shrink-0">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 shrink-0">
                                                     {rec.match_score}% Match
                                                 </span>
                                             </div>
@@ -459,7 +476,7 @@ export default function Dashboard({
                                             <div className="flex justify-end pt-1">
                                                 <Link
                                                     href={`/projects/${rec.project?.id || rec.project_id || rec.id}`}
-                                                    className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 transition"
+                                                    className="text-[11px] font-semibold text-[#5448EE] hover:text-[#4336D6] transition"
                                                 >
                                                     Lihat Detail Proyek &rarr;
                                                 </Link>
@@ -471,8 +488,8 @@ export default function Dashboard({
                         </div>
 
                         {/* Upcoming Competitions */}
-                        <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                            <div className="flex items-center justify-between mb-3 pb-3 border-b border-neutral-100">
+                        <div className="bg-white/95 border border-neutral-200/90 rounded-3xl p-6 shadow-2xs">
+                            <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
                                 <div>
                                     <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-1.5">
                                         <Trophy className="size-4 text-amber-500" />
@@ -482,7 +499,7 @@ export default function Dashboard({
                                 </div>
                                 <Link
                                     href="/competitions"
-                                    className="text-xs text-amber-600 hover:text-amber-800 font-medium transition"
+                                    className="text-xs text-amber-600 hover:text-amber-800 font-semibold transition"
                                 >
                                     Semua &rarr;
                                 </Link>
@@ -497,13 +514,13 @@ export default function Dashboard({
                                     {upcomingCompetitions.map((comp: any) => (
                                         <div
                                             key={comp.id}
-                                            className="p-3 bg-neutral-50 rounded-lg border border-neutral-100 flex flex-col gap-1.5"
+                                            className="p-3.5 bg-neutral-50/80 rounded-2xl border border-neutral-100 flex flex-col gap-1.5"
                                         >
                                             <div className="flex items-center justify-between gap-2">
                                                 <span className="text-xs font-bold text-neutral-900 line-clamp-1">
                                                     {comp.name}
                                                 </span>
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 uppercase shrink-0">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 uppercase shrink-0">
                                                     {comp.category || 'Lomba'}
                                                 </span>
                                             </div>
@@ -512,12 +529,12 @@ export default function Dashboard({
                                             </p>
                                             <div className="flex items-center justify-between pt-1 text-[11px] text-neutral-500">
                                                 <span className="flex items-center gap-1">
-                                                    <Calendar className="size-3" />
+                                                    <Calendar className="size-3 text-neutral-400" />
                                                     {comp.registration_deadline ? new Date(comp.registration_deadline).toLocaleDateString('id-ID') : 'Segera'}
                                                 </span>
                                                 <Link
                                                     href={`/competitions/${comp.id}`}
-                                                    className="font-semibold text-blue-600 hover:text-blue-800 transition"
+                                                    className="font-semibold text-[#5448EE] hover:text-[#4336D6] transition"
                                                 >
                                                     Bentuk Tim &rarr;
                                                 </Link>
@@ -530,8 +547,8 @@ export default function Dashboard({
 
                         {/* Recent Team Activities */}
                         {recentActivities.length > 0 && (
-                            <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
-                                <h3 className="text-sm font-bold text-neutral-900 mb-3 pb-3 border-b border-neutral-100 flex items-center gap-1.5">
+                            <div className="bg-white/95 border border-neutral-200/90 rounded-3xl p-6 shadow-2xs">
+                                <h3 className="text-sm font-bold text-neutral-900 mb-4 pb-3 border-b border-neutral-100 flex items-center gap-1.5">
                                     <Activity className="size-4 text-neutral-500" />
                                     Aktivitas Terbaru Tim
                                 </h3>
