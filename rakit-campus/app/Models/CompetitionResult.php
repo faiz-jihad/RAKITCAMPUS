@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CompetitionResult extends Model
 {
-    protected $fillable = ['outcome', 'rank', 'notes', 'evidence_url'];
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {

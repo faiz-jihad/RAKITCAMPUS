@@ -16,7 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  */
 class CompetitionParticipation extends Model
 {
-    protected $fillable = [];
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {

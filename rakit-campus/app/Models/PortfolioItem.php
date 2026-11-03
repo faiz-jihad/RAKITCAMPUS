@@ -10,13 +10,7 @@ class PortfolioItem extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'kind',
-        'title',
-        'description',
-        'url',
-        'is_public',
-    ];
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CompetitionDocument extends Model
 {
-    protected $fillable = ['name', 'url'];
+    protected $guarded = ['id'];
 
     public function participation(): BelongsTo
     {

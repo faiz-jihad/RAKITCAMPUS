@@ -13,6 +13,9 @@ use App\Models\RecruitmentRole;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\ApplicationStatusNotification;
+use App\Notifications\ApplicationSubmittedNotification;
+use App\Notifications\RecruitmentInvitationNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -94,6 +97,11 @@ class RecruitmentService
                 $application,
                 ['role_id' => $recruitmentRoleId]
             );
+
+            // Notify team leader
+            if ($team->leader && $team->leader->id !== $applicant->id) {
+                $team->leader->notify(new ApplicationSubmittedNotification($application));
+            }
 
             return $application;
         });
@@ -178,6 +186,9 @@ class RecruitmentService
                 ['applicant_id' => $application->user_id, 'role' => $role?->name]
             );
 
+            // Notify applicant
+            $application->user?->notify(new ApplicationStatusNotification($application, 'accepted'));
+
             return $member;
         });
     }
@@ -213,6 +224,9 @@ class RecruitmentService
                 'application_rejected',
                 $application
             );
+
+            // Notify applicant
+            $application->user?->notify(new ApplicationStatusNotification($application, 'rejected'));
         });
     }
 
@@ -283,6 +297,9 @@ class RecruitmentService
                 $invitation,
                 ['invitee_id' => $invitee->id]
             );
+
+            // Notify invitee
+            $invitee->notify(new RecruitmentInvitationNotification($invitation));
 
             return $invitation;
         });

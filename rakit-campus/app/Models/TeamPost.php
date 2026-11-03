@@ -12,13 +12,7 @@ class TeamPost extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'parent_id',
-        'kind',
-        'title',
-        'body',
-        'pinned',
-    ];
+    protected $guarded = ['id'];
 
     protected function casts(): array
     {
