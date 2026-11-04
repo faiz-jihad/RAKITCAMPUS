@@ -97,7 +97,7 @@ export default function Dashboard({
             case 'in_progress':
                 return { label: 'Sedang Dikerjakan', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
             case 'in_review':
-                return { label: 'Review', color: 'bg-purple-50 text-purple-700 border-purple-200' };
+                return { label: 'Review', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' };
             default:
                 return { label: 'Belum Mulai', color: 'bg-slate-100 text-slate-700 border-slate-200' };
         }
@@ -107,14 +107,18 @@ export default function Dashboard({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Dashboard — RAKIT Campus" />
 
-            <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-20 font-sans">
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-20 font-sans overflow-hidden">
+                {/* Natural ambient light diffusion */}
+                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
+
                 {/* Main Container */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 flex flex-col gap-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
 
                     {/* 1. COMPACT PROFESSIONAL HEADER BAR */}
-                    <div className="bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="glass-surface rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div className="flex items-start sm:items-center gap-4">
-                            <div className="size-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base shrink-0">
+                            <div className="size-12 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-base shrink-0 shadow-2xs">
                                 {user?.name ? user.name.split(' ').map((n: string) => n[0]).slice(0, 2).join('').toUpperCase() : 'RC'}
                             </div>
                             <div>
@@ -124,7 +128,7 @@ export default function Dashboard({
                                     </h1>
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold border ${
                                         isLecturer
-                                            ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
                                             : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                                     }`}>
                                         {isLecturer ? 'Dosen Pengampu' : 'Mahasiswa'}
@@ -222,7 +226,7 @@ export default function Dashboard({
                                 >
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-slate-500">Kelas Bimbingan</span>
-                                        <div className="p-2 rounded-lg bg-purple-50 text-purple-700">
+                                        <div className="p-2 rounded-lg bg-blue-50 text-blue-700">
                                             <GraduationCap className="size-4" />
                                         </div>
                                     </div>
@@ -357,7 +361,7 @@ export default function Dashboard({
                                 >
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-medium text-slate-500">Lomba & Kompetisi</span>
-                                        <div className="p-2 rounded-lg bg-purple-50 text-purple-700">
+                                        <div className="p-2 rounded-lg bg-sky-50 text-sky-700">
                                             <Trophy className="size-4" />
                                         </div>
                                     </div>

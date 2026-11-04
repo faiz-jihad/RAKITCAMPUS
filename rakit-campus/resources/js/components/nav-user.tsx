@@ -19,7 +19,7 @@ export function NavUser() {
                     <SidebarMenuButton
                         asChild
                         size="lg"
-                        className="bg-[#5448EE] hover:bg-[#4336D9] text-white font-medium justify-center rounded-xl shadow-sm transition"
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-medium justify-center rounded-xl shadow-xs transition"
                     >
                         <Link href="/login" className="flex items-center gap-2">
                             <LogIn className="size-4" />
