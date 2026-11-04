@@ -93,6 +93,11 @@ class AcademicClass extends Model
         return $this->hasMany(AcademicClassGuidance::class, 'academic_class_id')->latest();
     }
 
+    public function assessmentPeriods(): HasMany
+    {
+        return $this->hasMany(AssessmentPeriod::class)->orderBy('opens_at', 'asc');
+    }
+
     public function isLecturer(User $user): bool
     {
         if ($this->lecturer_id === $user->id) {

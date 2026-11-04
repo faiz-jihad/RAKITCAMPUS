@@ -78,6 +78,50 @@ class Project extends Model
         return $this->hasOne(Team::class);
     }
 
+    public function proposal(): HasOne
+    {
+        return $this->hasOne(ProjectProposal::class);
+    }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(ProjectSubmission::class);
+    }
+
+    /**
+     * Objective transparent calculation of Implementation Progress:
+     * 50% Tasks completed + 50% Milestones completed.
+     */
+    public function calculateImplementationProgress(): int
+    {
+        $team = $this->team;
+        if (! $team) {
+            return $this->progress ?? 0;
+        }
+
+        $totalTasks = Task::where('team_id', $team->id)->count();
+        $completedTasks = Task::where('team_id', $team->id)->where('status', \App\Enums\TaskStatus::Completed->value)->count();
+        $taskScore = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+
+        $totalMilestones = Milestone::where('team_id', $team->id)->count();
+        $completedMilestones = Milestone::where('team_id', $team->id)->where('status', 'completed')->count();
+        $milestoneScore = $totalMilestones > 0 ? ($completedMilestones / $totalMilestones) * 100 : 0;
+
+        if ($totalTasks === 0 && $totalMilestones === 0) {
+            return $this->progress ?? 0;
+        }
+
+        if ($totalMilestones === 0) {
+            return (int) round($taskScore);
+        }
+
+        if ($totalTasks === 0) {
+            return (int) round($milestoneScore);
+        }
+
+        return (int) round((0.50 * $taskScore) + (0.50 * $milestoneScore));
+    }
+
     public function activeMembersCount(): int
     {
         if ($this->relationLoaded('team') && $this->team && $this->team->relationLoaded('members')) {

@@ -3,10 +3,12 @@
 use App\Enums\CampusRole;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
+use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\MatchingWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
+use App\Http\Controllers\Web\ProjectProposalWebController;
 use App\Http\Controllers\Web\ProjectWebController;
 use App\Http\Controllers\Web\WorkspaceWebController;
 use Illuminate\Support\Facades\Route;
@@ -36,6 +38,17 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/projects/{id}/activate-team', [ProjectWebController::class, 'activateTeam'])->name('projects.activate-team');
     Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');
     Route::post('/projects/{id}/evaluate', [ProjectWebController::class, 'evaluate'])->name('projects.evaluate');
+
+    // Living Proposal Management (Continuous Development & Version History)
+    Route::post('/projects/{id}/proposal/draft', [ProjectProposalWebController::class, 'saveDraft'])->name('projects.proposal.draft');
+    Route::post('/projects/{id}/proposal/submit', [ProjectProposalWebController::class, 'submit'])->name('projects.proposal.submit');
+    Route::post('/projects/{id}/proposal/revise', [ProjectProposalWebController::class, 'revise'])->name('projects.proposal.revise');
+    Route::post('/projects/{id}/proposal/{versionId}/review', [ProjectProposalWebController::class, 'review'])->name('projects.proposal.review');
+    Route::get('/projects/{id}/proposal/compare', [ProjectProposalWebController::class, 'compare'])->name('projects.proposal.compare');
+
+    // UTS & UAS Assessment Periods & Immutable Snapshots
+    Route::post('/projects/{id}/assessments/{periodId}/submit', [AssessmentWebController::class, 'submit'])->name('projects.assessments.submit');
+    Route::post('/submissions/{id}/review', [AssessmentWebController::class, 'review'])->name('submissions.review');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');

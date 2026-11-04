@@ -112,6 +112,104 @@ class ProjectWebController extends Controller
                 ->get();
         }
 
+        // 1. Living Proposal & Version History (Continuous Development)
+        $livingProposal = \App\Models\ProjectProposal::ensureForProject($project);
+        $livingProposal->load([
+            'currentVersion.creator:id,name',
+            'currentVersion.reviewer:id,name',
+            'versions.creator:id,name',
+            'versions.reviewer:id,name',
+            'approver:id,name',
+        ]);
+
+        // 2. Assessment Periods (UTS, UAS, and Rubrics)
+        $assessmentService = app(\App\Services\Assessment\AssessmentService::class);
+        $assessmentPeriods = [];
+        if ($project->academicClass) {
+            $assessmentPeriods = $assessmentService->ensureDefaultPeriodsForClass($project->academicClass);
+        } else {
+            $assessmentPeriods = \App\Models\AssessmentPeriod::where('campus_id', $project->campus_id)
+                ->whereNull('academic_class_id')
+                ->with('rubrics')
+                ->get();
+        }
+
+        // 3. Project Submissions & Immutable Snapshots
+        $submissions = \App\Models\ProjectSubmission::where('project_id', $project->id)
+            ->with([
+                'assessmentPeriod.rubrics',
+                'submitter:id,name',
+                'evaluator:id,name',
+                'documents.uploader:id,name',
+                'snapshots.submitter:id,name',
+                'snapshots.documents',
+                'reviews.reviewer:id,name',
+            ])
+            ->get();
+
+        // 4. Project Implementation Management (Tasks & Kanban)
+        $team = $project->team;
+        $tasks = $team
+            ? \App\Models\Task::where('team_id', $team->id)
+                ->with(['assignee:id,name', 'milestone:id,title', 'comments.user:id,name'])
+                ->orderBy('position', 'asc')
+                ->get()
+            : collect();
+
+        $kanban = [
+            'todo' => $tasks->where('status', \App\Enums\TaskStatus::Todo)->values(),
+            'in_progress' => $tasks->where('status', \App\Enums\TaskStatus::InProgress)->values(),
+            'in_review' => $tasks->where('status', \App\Enums\TaskStatus::InReview)->values(),
+            'completed' => $tasks->where('status', \App\Enums\TaskStatus::Completed)->values(),
+        ];
+
+        // 5. Milestones
+        $milestones = $team
+            ? $team->milestones()
+                ->withCount(['tasks', 'tasks as completed_tasks_count' => fn ($q) => $q->where('status', 'completed')])
+                ->orderBy('starts_on')
+                ->get()
+                ->map(fn ($m) => [
+                    'id' => $m->id,
+                    'title' => $m->title,
+                    'description' => $m->description,
+                    'status' => $m->status,
+                    'starts_on' => $m->starts_on?->format('d M Y'),
+                    'due_on' => $m->due_on?->format('d M Y'),
+                    'tasks_count' => $m->tasks_count,
+                    'completed_tasks_count' => $m->completed_tasks_count,
+                    'progress' => $m->tasks_count > 0 ? (int) round(($m->completed_tasks_count / $m->tasks_count) * 100) : 0,
+                ])
+            : collect();
+
+        // 6. Activities & Discussions
+        $activities = $team
+            ? ActivityLog::where('team_id', $team->id)->with('actor:id,name')->latest('created_at')->take(20)->get()
+            : collect();
+
+        $posts = $team
+            ? \App\Models\TeamPost::where('team_id', $team->id)->with('author:id,name')->latest('created_at')->take(20)->get()
+            : collect();
+
+        // 7. Academic Guidances & Supervision Notes
+        $guidances = $project->academic_class_id
+            ? \App\Models\AcademicClassGuidance::where('academic_class_id', $project->academic_class_id)
+                ->where(function ($q) use ($project) {
+                    $q->whereNull('project_id')->orWhere('project_id', $project->id);
+                })
+                ->with('lecturer:id,name')
+                ->latest()
+                ->get()
+            : collect();
+
+        // 8. Progress Calculation
+        $implementationProgress = $project->calculateImplementationProgress();
+
+        // 9. Portfolio Achievements (If project completed)
+        $achievements = \App\Models\Achievement::where('project_id', $project->id)
+            ->with(['user:id,name,email', 'verifier:id,name'])
+            ->get();
+
         return Inertia::render('projects/show', [
             'project' => $project,
             'isBookmarked' => $isBookmarked,
@@ -121,6 +219,16 @@ class ProjectWebController extends Controller
             'userHasActiveProject' => $userHasActiveProject,
             'canEdit' => $user ? $user->can('update', $project) : false,
             'applications' => $applications,
+            'livingProposal' => $livingProposal,
+            'assessmentPeriods' => $assessmentPeriods,
+            'submissions' => $submissions,
+            'kanban' => $kanban,
+            'milestones' => $milestones,
+            'activities' => $activities,
+            'discussions' => $posts,
+            'guidances' => $guidances,
+            'implementationProgress' => $implementationProgress,
+            'achievements' => $achievements,
         ]);
     }
 
@@ -268,6 +376,13 @@ class ProjectWebController extends Controller
                 'project_created',
                 $project
             );
+
+            // Initialize Living Proposal (v1)
+            \App\Models\ProjectProposal::ensureForProject($project);
+
+            if ($project->academicClass) {
+                app(\App\Services\Assessment\AssessmentService::class)->ensureDefaultPeriodsForClass($project->academicClass);
+            }
 
             return $project;
         });
