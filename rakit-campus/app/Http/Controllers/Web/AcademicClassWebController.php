@@ -17,7 +17,12 @@ use App\Models\Project;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Models\MatchingAllocation;
+use App\Models\MatchingSession;
 use App\Services\MatchingService;
+use App\Services\Matchmaking\AllocationService;
+use App\Services\Matchmaking\EligibilityService;
+use App\Services\Matchmaking\FairnessAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,7 +32,10 @@ use Inertia\Response;
 class AcademicClassWebController extends Controller
 {
     public function __construct(
-        protected MatchingService $matchingService
+        protected MatchingService $matchingService,
+        protected AllocationService $allocationService,
+        protected FairnessAnalyticsService $fairnessAnalyticsService,
+        protected EligibilityService $eligibilityService
     ) {}
 
     public function index(Request $request): Response
@@ -118,8 +126,10 @@ class AcademicClassWebController extends Controller
             'lecturer:id,name,email',
             'campus:id,name',
             'students.profile.skills',
+            'students.teamMemberships.team.project',
             'projects.leader:id,name,email',
-            'projects.team.members.user:id,name,email',
+            'projects.team.members.user.profile.skills',
+            'projects.team.recruitment.roles',
             'projects.skills',
             'guidances.lecturer:id,name',
             'guidances.project:id,title',
@@ -127,17 +137,25 @@ class AcademicClassWebController extends Controller
 
         $isLecturer = $academicClass->isLecturer($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($academicClass->campus_id);
 
-        // Map enrolled students with team status in this class
-        $classProjectUserIds = $academicClass->projects
-            ->flatMap(fn ($p) => $p->team?->members?->pluck('user_id') ?? collect())
-            ->unique()
-            ->all();
+        // Map active project for every student in O(1) time without extra queries
+        $projectByUserId = [];
+        foreach ($academicClass->projects as $p) {
+            if ($p->team && $p->team->relationLoaded('members')) {
+                foreach ($p->team->members as $tm) {
+                    if ($tm->status === 'active') {
+                        $projectByUserId[$tm->user_id] = [
+                            'id' => $p->id,
+                            'title' => $p->title,
+                            'role_name' => $tm->role_name ?? 'Anggota',
+                        ];
+                    }
+                }
+            }
+        }
 
-        $studentsData = $academicClass->students->map(function ($s) use ($classProjectUserIds, $academicClass) {
-            $hasTeam = in_array($s->id, $classProjectUserIds);
-            $userProject = $hasTeam 
-                ? $academicClass->projects->first(fn ($p) => $p->team?->hasMember($s))
-                : null;
+        $studentsData = $academicClass->students->map(function ($s) use ($projectByUserId, $academicClass) {
+            $userProject = $projectByUserId[$s->id] ?? null;
+            $hasTeam = $userProject !== null;
 
             return [
                 'id' => $s->id,
@@ -148,11 +166,7 @@ class AcademicClassWebController extends Controller
                 'study_program' => $s->profile?->study_program ?? $academicClass->study_program ?? 'Teknik Informatika',
                 'semester' => $s->profile?->semester ?? 4,
                 'has_team' => $hasTeam,
-                'project' => $userProject ? [
-                    'id' => $userProject->id,
-                    'title' => $userProject->title,
-                    'role_name' => $userProject->team?->members?->firstWhere('user_id', $s->id)?->role_name ?? 'Anggota',
-                ] : null,
+                'project' => $userProject,
                 'skills' => $s->profile?->skills?->pluck('name')->take(4)->all() ?? [],
                 'enrolled_at' => $s->pivot?->enrolled_at ? \Carbon\Carbon::parse($s->pivot->enrolled_at)->format('d M Y') : 'Baru saja',
             ];
@@ -200,6 +214,13 @@ class AcademicClassWebController extends Controller
         }
         $classBalanceScore = $totalProjects > 0 ? (int) round(($balancedProjectsCount / $totalProjects) * 100) : 100;
 
+        $fairnessMetrics = $this->fairnessAnalyticsService->computeClassFairnessMetrics($academicClass);
+
+        $latestSimulation = MatchingSession::where('academic_class_id', $academicClass->id)
+            ->with(['allocations.user.profile.skills', 'allocations.project.team', 'allocations.recruitmentRole'])
+            ->latest()
+            ->first();
+
         return Inertia::render('classes/show', [
             'academicClass' => [
                 'id' => $academicClass->id,
@@ -241,6 +262,8 @@ class AcademicClassWebController extends Controller
             ],
             'students' => $studentsData->values(),
             'peerMatches' => $peerMatches,
+            'fairnessMetrics' => $fairnessMetrics,
+            'latestSimulation' => $latestSimulation,
             'myClassProject' => $myClassProject ? [
                 'id' => $myClassProject->id,
                 'title' => $myClassProject->title,
@@ -562,10 +585,50 @@ class AcademicClassWebController extends Controller
             'team_id' => $team->id,
             'user_id' => $invitedUser->id,
             'permission' => TeamPermission::Member,
+            'status' => 'active',
             'role_name' => 'Anggota (Matchmaking Terverifikasi)',
             'joined_at' => now(),
         ]);
 
         return back()->with('success', "Berhasil menambahkan {$invitedUser->name} ke dalam kelompok {$team->name}. {$validation['message']}");
+    }
+
+    /**
+     * Mode C: Lecturer triggers Smart Fair Assisted Allocation Simulation
+     */
+    public function simulateAllocation(Request $request, int $id)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen pengampu yang berwenang menjalankan simulasi alokasi tim.');
+        }
+
+        $session = $this->allocationService->simulateClassAllocation($academicClass, $user);
+
+        return back()->with('success', "Simulasi alokasi tim cerdas berhasil dibuat (#{$session->id}). Silakan tinjau metriks fairness dan klik 'Setujui & Aktifkan Kelompok' untuk meresmikan keanggotaan.");
+    }
+
+    /**
+     * Mode C: Lecturer formally approves and activates proposed team allocation
+     */
+    public function approveAllocation(Request $request, int $id, int $sessionId)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen pengampu yang berwenang menyetujui alokasi tim.');
+        }
+
+        $session = MatchingSession::where('academic_class_id', $academicClass->id)->findOrFail($sessionId);
+
+        try {
+            $this->allocationService->approveAndActivate($session, $user);
+            return back()->with('success', 'Alokasi tim berhasil disetujui! Seluruh mahasiswa telah dialokasikan ke kelompok proyek masing-masing secara resmi.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }

@@ -20,8 +20,9 @@ class Project extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'campus_id', 'academic_class_id', 'leader_id', 'slug', 'status', 'progress',
-        'title', 'short_description', 'description', 'category',
+        'campus_id', 'academic_class_id', 'leader_id', 'primary_supervisor_id', 'slug', 'status', 'progress',
+        'title', 'short_description', 'description', 'category', 'difficulty',
+        'min_team_size', 'max_team_size', 'recruitment_deadline',
         'problem_statement', 'objectives', 'proposed_solution',
         'tech_stack', 'visibility', 'starts_on', 'target_completion_on',
         'completed_at', 'moderation_status', 'lecturer_notes', 'lecturer_evaluation',
@@ -37,13 +38,26 @@ class Project extends Model
             'starts_on' => 'date',
             'target_completion_on' => 'date',
             'completed_at' => 'datetime',
+            'recruitment_deadline' => 'datetime',
             'progress' => 'integer',
+            'min_team_size' => 'integer',
+            'max_team_size' => 'integer',
         ];
     }
 
     public function academicClass(): BelongsTo
     {
         return $this->belongsTo(AcademicClass::class);
+    }
+
+    public function primarySupervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'primary_supervisor_id');
+    }
+
+    public function supervisors(): HasMany
+    {
+        return $this->hasMany(ProjectSupervisor::class);
     }
 
     public function campus(): BelongsTo
@@ -59,6 +73,21 @@ class Project extends Model
     public function team(): HasOne
     {
         return $this->hasOne(Team::class);
+    }
+
+    public function activeMembersCount(): int
+    {
+        if ($this->relationLoaded('team') && $this->team && $this->team->relationLoaded('members')) {
+            return $this->team->members->where('status', 'active')->count();
+        }
+
+        return $this->team ? $this->team->members()->where('status', 'active')->count() : 0;
+    }
+
+    public function hasCapacity(): bool
+    {
+        $maxCapacity = $this->max_team_size ?: ($this->team?->capacity ?: 5);
+        return $this->activeMembersCount() < $maxCapacity;
     }
 
     public function skills(): BelongsToMany

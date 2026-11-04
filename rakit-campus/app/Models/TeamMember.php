@@ -8,7 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TeamMember extends Model
 {
-    protected $fillable = ['team_id', 'user_id', 'permission', 'role_name', 'recruitment_role_id', 'joined_at'];
+    protected $fillable = ['team_id', 'user_id', 'permission', 'status', 'role_name', 'recruitment_role_id', 'joined_at'];
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
 
     protected function casts(): array
     {

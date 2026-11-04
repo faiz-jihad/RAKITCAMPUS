@@ -126,6 +126,53 @@ interface Props {
         total_projects: number;
     };
     isLecturer: boolean;
+    fairnessMetrics?: {
+        overview: {
+            total_eligible_students: number;
+            assigned_students_count: number;
+            unassigned_students_count: number;
+            total_projects: number;
+            total_positions: number;
+            filled_positions: number;
+            open_positions: number;
+        };
+        fairness_indicators: {
+            participation_rate: number;
+            position_fill_rate: number;
+            first_timers_count: number;
+            first_time_participation_rate: number;
+            repeated_rejection_count: number;
+            average_wait_days: number;
+            demand_imbalance_ratio: number;
+        };
+        skills_distribution: Record<string, number>;
+        unassigned_students: Array<{
+            id: number;
+            name: string;
+            email: string;
+            student_number: string;
+            study_program: string;
+            skills: string[];
+            preferred_roles: string[];
+            availability_hours: number;
+        }>;
+    };
+    latestSimulation?: {
+        id: number;
+        title: string;
+        status: string;
+        summary_metrics?: any;
+        approved_at?: string;
+        allocations: Array<{
+            id: number;
+            user: { id: number; name: string; email: string };
+            project: { id: number; title: string };
+            recruitmentRole?: { id: number; name: string };
+            score: number;
+            explanation: string;
+            status: string;
+        }>;
+    } | null;
 }
 
 export default function ClassShow({
@@ -138,8 +185,10 @@ export default function ClassShow({
     classRules,
     stats,
     isLecturer = false,
+    fairnessMetrics,
+    latestSimulation = null,
 }: Props) {
-    const [tab, setTab] = useState<'students' | 'projects' | 'smart_group' | 'guidances'>('students');
+    const [tab, setTab] = useState<'students' | 'projects' | 'smart_group' | 'guidances' | 'fairness'>('students');
     const [studentFilter, setStudentFilter] = useState<'all' | 'without_team' | 'with_team'>('all');
     const [searchStudent, setSearchStudent] = useState('');
     const [copiedCode, setCopiedCode] = useState(false);
@@ -147,6 +196,24 @@ export default function ClassShow({
     const [showGuidanceModal, setShowGuidanceModal] = useState(false);
     const [selectedProjectForGuidance, setSelectedProjectForGuidance] = useState<number | null>(null);
     const [invitingId, setInvitingId] = useState<number | null>(null);
+    const [simulating, setSimulating] = useState(false);
+    const [approving, setApproving] = useState(false);
+
+    const handleSimulateAllocation = () => {
+        setSimulating(true);
+        router.post(`/classes/${academicClass.id}/simulate-allocation`, {}, {
+            onFinish: () => setSimulating(false),
+        });
+    };
+
+    const handleApproveAllocation = (sessionId: number) => {
+        if (confirm('Setujui dan aktifkan seluruh alokasi kelompok yang diusulkan oleh sistem simulasi berimbang ini?')) {
+            setApproving(true);
+            router.post(`/classes/${academicClass.id}/approve-allocation/${sessionId}`, {}, {
+                onFinish: () => setApproving(false),
+            });
+        }
+    };
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Kelas Kuliah', href: '/classes' },
@@ -470,6 +537,18 @@ export default function ClassShow({
                             >
                                 <MessageSquare className="size-3.5" />
                                 <span>Bimbingan ({guidances.length})</span>
+                            </button>
+
+                            <button
+                                onClick={() => setTab('fairness')}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                    tab === 'fairness'
+                                        ? 'bg-blue-600 text-white shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                }`}
+                            >
+                                <ShieldCheck className="size-3.5 text-blue-500" />
+                                <span>Fairness & Alokasi</span>
                             </button>
                         </div>
 
@@ -1171,6 +1250,244 @@ export default function ClassShow({
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* TAB 5: FAIRNESS ANALYTICS & ASSISTED ALLOCATION (MODE C) */}
+                    {tab === 'fairness' && (
+                        <div className="flex flex-col gap-6">
+                            {/* Fairness KPI Indicators (4-Column Glass Cards) */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Tingkat Partisipasi</span>
+                                        <div className="size-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                            <Users className="size-4.5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                            {fairnessMetrics?.fairness_indicators?.participation_rate ?? 0}%
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-1 truncate">
+                                            {fairnessMetrics?.overview?.assigned_students_count ?? 0} dari {fairnessMetrics?.overview?.total_eligible_students ?? 0} mahasiswa bertim
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Keterisian Posisi</span>
+                                        <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                            <Target className="size-4.5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                            {fairnessMetrics?.fairness_indicators?.position_fill_rate ?? 0}%
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-1 truncate">
+                                            {fairnessMetrics?.overview?.filled_positions ?? 0} / {fairnessMetrics?.overview?.total_positions ?? 0} kuota terisi
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Afirmasi Perdana</span>
+                                        <div className="size-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                            <Sparkles className="size-4.5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                            {fairnessMetrics?.fairness_indicators?.first_time_participation_rate ?? 0}%
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-1 truncate">
+                                            {fairnessMetrics?.fairness_indicators?.first_timers_count ?? 0} mahasiswa proyek pertama
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Rata-rata Tunggu</span>
+                                        <div className="size-9 rounded-xl bg-slate-900/5 text-slate-700 border border-slate-900/10 flex items-center justify-center shrink-0">
+                                            <Clock className="size-4.5" />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className="text-3xl font-black text-slate-900 tracking-tight">
+                                            {fairnessMetrics?.fairness_indicators?.average_wait_days ?? 0} <span className="text-lg font-bold text-slate-500">Hari</span>
+                                        </div>
+                                        <p className="text-[11px] text-slate-400 mt-1 truncate">
+                                            Masa tunggu sebelum dapat tim
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Mode C: Assisted Team Allocation Simulation Panel */}
+                            <div className="glass-surface rounded-3xl p-6 sm:p-7 relative overflow-hidden bg-white/90">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80">
+                                    <div>
+                                        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold mb-2">
+                                            <Sparkles className="size-3" />
+                                            <span>Mode C: Assisted Team Allocation</span>
+                                        </div>
+                                        <h3 className="text-lg font-black text-slate-900">
+                                            Simulasi Alokasi Berimbang Dosen
+                                        </h3>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Algoritma global cerdas memasangkan mahasiswa tanpa tim ke proyek yang membutuhkan keahlian pelengkap tanpa memicu ketimpangan.
+                                        </p>
+                                    </div>
+
+                                    {isLecturer && (
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <button
+                                                onClick={handleSimulateAllocation}
+                                                disabled={simulating}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                                            >
+                                                <Sparkles className="size-3.5" />
+                                                <span>{simulating ? 'Menjalankan Simulasi...' : 'Jalankan Simulasi Alokasi'}</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Simulation Details & Proposed Allocations Table */}
+                                {latestSimulation ? (
+                                    <div className="mt-5 flex flex-col gap-4">
+                                        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
+                                            <div>
+                                                <span className="font-bold text-slate-900 block">{latestSimulation.title}</span>
+                                                <span className="text-slate-500 text-[11px]">
+                                                    Status: <strong className={latestSimulation.status === 'approved' ? 'text-emerald-700' : 'text-blue-700'}>
+                                                        {latestSimulation.status === 'approved' ? 'Disetujui & Aktif' : 'Draft Simulasi (Menunggu Persetujuan Dosen)'}
+                                                    </strong>
+                                                </span>
+                                            </div>
+
+                                            {latestSimulation.status === 'simulation' && isLecturer && (
+                                                <button
+                                                    onClick={() => handleApproveAllocation(latestSimulation.id)}
+                                                    disabled={approving}
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    <CheckCircle2 className="size-3.5" />
+                                                    <span>{approving ? 'Mengaktifkan...' : 'Setujui & Aktifkan Kelompok'}</span>
+                                                </button>
+                                            )}
+
+                                            {latestSimulation.status === 'approved' && (
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
+                                                    <Check className="size-3.5 text-emerald-600" />
+                                                    <span>Alokasi Resmi Aktif</span>
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {latestSimulation.allocations && latestSimulation.allocations.length > 0 ? (
+                                            <div className="overflow-x-auto rounded-2xl border border-slate-200/80 bg-white">
+                                                <table className="w-full text-left text-xs text-slate-600">
+                                                    <thead className="bg-slate-50 text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200">
+                                                        <tr>
+                                                            <th className="px-4 py-3">Mahasiswa</th>
+                                                            <th className="px-4 py-3">Kelompok Ditugaskan</th>
+                                                            <th className="px-4 py-3">Peran Diusulkan</th>
+                                                            <th className="px-4 py-3">Skor Kecocokan</th>
+                                                            <th className="px-4 py-3">Analisis Keselarasan</th>
+                                                            <th className="px-4 py-3 text-right">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {latestSimulation.allocations.map((alloc) => (
+                                                            <tr key={alloc.id} className="hover:bg-slate-50/80 transition">
+                                                                <td className="px-4 py-3 font-bold text-slate-900">
+                                                                    {alloc.user?.name}
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <span className="font-semibold text-blue-700">{alloc.project?.title}</span>
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium">
+                                                                        {alloc.recruitmentRole?.name ?? 'Anggota Pelengkap'}
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3">
+                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                                                        {alloc.score}%
+                                                                    </span>
+                                                                </td>
+                                                                <td className="px-4 py-3 max-w-xs truncate text-[11px] text-slate-500">
+                                                                    {alloc.explanation}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right">
+                                                                    <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
+                                                                        alloc.status === 'activated'
+                                                                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                                                            : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                                    }`}>
+                                                                        {alloc.status === 'activated' ? 'Aktif' : 'Diusulkan'}
+                                                                    </span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        ) : (
+                                            <p className="text-xs text-slate-500 p-4 text-center">
+                                                Tidak ada penugasan baru yang diperlukan dalam simulasi ini.
+                                            </p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="mt-6 text-center p-8 border border-dashed border-slate-200 rounded-2xl">
+                                        <Users className="size-8 text-slate-300 mx-auto mb-2" />
+                                        <h4 className="text-xs sm:text-sm font-bold text-slate-700">Belum Ada Simulasi Alokasi Berjalan</h4>
+                                        <p className="text-[11px] text-slate-400 mt-1">
+                                            Dosen pengampu dapat mengklik tombol di atas untuk menjalankan kalkulasi simulasi penugasan anggota berimbang.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Unassigned Students Table */}
+                            {fairnessMetrics?.unassigned_students && fairnessMetrics.unassigned_students.length > 0 && (
+                                <div className="glass-card rounded-2xl p-6 bg-white/85">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
+                                        <span>Mahasiswa Menunggu Kelompok ({fairnessMetrics.unassigned_students.length})</span>
+                                        <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                            Prioritas Afirmasi
+                                        </span>
+                                    </h4>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {fairnessMetrics.unassigned_students.map((st) => (
+                                            <div key={st.id} className="p-3.5 rounded-xl border border-slate-200/80 bg-white flex flex-col justify-between gap-2">
+                                                <div>
+                                                    <div className="font-bold text-xs text-slate-900">{st.name}</div>
+                                                    <div className="text-[11px] text-slate-400">{st.student_number} • {st.study_program}</div>
+                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                        {st.skills.slice(0, 3).map((s, idx) => (
+                                                            <span key={idx} className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
+                                                                {s}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <div className="text-[10px] text-slate-400 pt-2 border-t border-slate-100 flex items-center justify-between">
+                                                    <span>{st.availability_hours} jam/minggu</span>
+                                                    <span className="text-blue-600 font-semibold">Siap Bergabung</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         </div>

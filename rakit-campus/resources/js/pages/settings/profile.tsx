@@ -235,7 +235,7 @@ export default function Profile({
                         <div className="flex items-start sm:items-center gap-4">
                             {/* Avatar Initials with Glow */}
                             <div className="relative shrink-0">
-                                <div className="size-16 sm:size-20 rounded-3xl bg-gradient-to-tr from-[#181135] via-[#231752] to-[#5448EE] text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-md shadow-indigo-900/20">
+                                <div className="size-16 sm:size-20 rounded-3xl bg-gradient-to-tr from-[#181135] via-[#231752] to-[#2563EB] text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-md shadow-indigo-900/20">
                                     {data.name
                                         .split(' ')
                                         .map((n) => n[0])
@@ -259,7 +259,7 @@ export default function Profile({
                                         {campus || 'Politeknik Negeri Indramayu'}
                                     </span>
                                     {nim && (
-                                        <span className="px-3 py-0.5 rounded-full text-[11px] font-mono bg-purple-50 text-[#5448EE] font-semibold border border-purple-200/60">
+                                        <span className="px-3 py-0.5 rounded-full text-[11px] font-mono bg-purple-50 text-[#2563EB] font-semibold border border-purple-200/60">
                                             NIM: {nim}
                                         </span>
                                     )}
@@ -275,9 +275,9 @@ export default function Profile({
                         </div>
 
                         {/* Profile Completion Meter */}
-                        <div className="bg-[#FAF8FF] border border-purple-100/90 rounded-2xl p-4 sm:p-5 flex items-center gap-4 shrink-0 self-stretch sm:self-auto">
+                        <div className="bg-[#F8FAFC] border border-purple-100/90 rounded-2xl p-4 sm:p-5 flex items-center gap-4 shrink-0 self-stretch sm:self-auto">
                             <div className="relative size-14 flex items-center justify-center shrink-0">
-                                <div className="size-14 rounded-full bg-[#EEEDFD] flex items-center justify-center font-extrabold text-sm text-[#5448EE]">
+                                <div className="size-14 rounded-full bg-[#EFF6FF] flex items-center justify-center font-extrabold text-sm text-[#2563EB]">
                                     {completionPercent}%
                                 </div>
                             </div>
@@ -305,7 +305,7 @@ export default function Profile({
                                 {/* Card A: Informasi Akun */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                        <User className="size-4 text-[#5448EE]" />
+                                        <User className="size-4 text-[#2563EB]" />
                                         <h3 className="text-sm font-bold text-neutral-900">
                                             Informasi Identitas & Akun
                                         </h3>
@@ -321,7 +321,7 @@ export default function Profile({
                                                 value={data.name}
                                                 onChange={(e) => setData('name', e.target.value)}
                                                 required
-                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                             <InputError message={errors.name} />
                                         </div>
@@ -336,7 +336,7 @@ export default function Profile({
                                                 value={data.email}
                                                 onChange={(e) => setData('email', e.target.value)}
                                                 required
-                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                             <InputError message={errors.email} />
                                         </div>
@@ -346,7 +346,7 @@ export default function Profile({
                                 {/* Card B: Studi & Afiliasi Akademik */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                        <GraduationCap className="size-4 text-[#5448EE]" />
+                                        <GraduationCap className="size-4 text-[#2563EB]" />
                                         <h3 className="text-sm font-bold text-neutral-900">
                                             Studi & Afiliasi Perkuliahan
                                         </h3>
@@ -366,7 +366,7 @@ export default function Profile({
                                                 onChange={(e) => setData('student_number', e.target.value)}
                                                 placeholder="Contoh: 2201001"
                                                 required
-                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                         </div>
 
@@ -381,7 +381,7 @@ export default function Profile({
                                                 value={data.semester}
                                                 onChange={(e) => setData('semester', parseInt(e.target.value, 10))}
                                                 required
-                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                         </div>
 
@@ -394,7 +394,7 @@ export default function Profile({
                                                 onChange={(e) => setData('department', e.target.value)}
                                                 placeholder="Contoh: Teknik Informatika"
                                                 required
-                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#5448EE]"
+                                                className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                         </div>
 
@@ -406,7 +406,7 @@ export default function Profile({
                                                 value={data.study_program}
                                                 onChange={(e) => setData('study_program', e.target.value)}
                                                 required
-                                                className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none"
+                                                className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none"
                                             >
                                                 <option value="">-- Pilih Program Studi --</option>
                                                 <option value="Teknik Informatika">D4 Teknik Informatika</option>
@@ -427,7 +427,7 @@ export default function Profile({
                                             onChange={(e) => setData('bio', e.target.value)}
                                             rows={3}
                                             placeholder="Deskripsikan latar belakang teknis Anda, teknologi yang sering Anda gunakan, dan sasaran proyek kolaborasi..."
-                                            className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none leading-relaxed"
+                                            className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none leading-relaxed"
                                         />
                                     </div>
                                 </div>
@@ -436,7 +436,7 @@ export default function Profile({
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
                                         <div className="flex items-center gap-2">
-                                            <Code2 className="size-4 text-[#5448EE]" />
+                                            <Code2 className="size-4 text-[#2563EB]" />
                                             <div>
                                                 <h3 className="text-sm font-bold text-neutral-900">
                                                     Keahlian Teknis & Soft Skills
@@ -446,7 +446,7 @@ export default function Profile({
                                                 </p>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold text-[#5448EE] px-2.5 py-0.5 rounded-full bg-[#EEEDFD]">
+                                        <span className="text-xs font-bold text-[#2563EB] px-2.5 py-0.5 rounded-full bg-[#EFF6FF]">
                                             {data.skills.length} Keahlian
                                         </span>
                                     </div>
@@ -480,7 +480,7 @@ export default function Profile({
                                             <button
                                                 type="button"
                                                 onClick={() => handleAddSkill()}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-2xl text-xs font-bold shadow-xs transition"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-2xl text-xs font-bold shadow-xs transition"
                                             >
                                                 <Plus className="size-3.5" />
                                                 <span>Tambah</span>
@@ -496,7 +496,7 @@ export default function Profile({
                                                 key={s}
                                                 type="button"
                                                 onClick={() => handleAddSkill(s, 3)}
-                                                className="text-[10px] px-2.5 py-0.5 rounded-full bg-neutral-100 hover:bg-[#EEEDFD] hover:text-[#5448EE] text-neutral-600 font-medium transition"
+                                                className="text-[10px] px-2.5 py-0.5 rounded-full bg-neutral-100 hover:bg-[#EFF6FF] hover:text-[#2563EB] text-neutral-600 font-medium transition"
                                             >
                                                 + {s}
                                             </button>
@@ -508,10 +508,10 @@ export default function Profile({
                                         {data.skills.map((s) => (
                                             <span
                                                 key={s.name}
-                                                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-purple-200/80 text-xs text-neutral-800 shadow-2xs font-medium group hover:border-[#5448EE] transition"
+                                                className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-purple-200/80 text-xs text-neutral-800 shadow-2xs font-medium group hover:border-[#2563EB] transition"
                                             >
                                                 <span className="font-semibold text-neutral-900">{s.name}</span>
-                                                <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#EEEDFD] text-[#5448EE] font-extrabold">
+                                                <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-[#EFF6FF] text-[#2563EB] font-extrabold">
                                                     Lv {s.proficiency}/5
                                                 </span>
                                                 <button
@@ -539,7 +539,7 @@ export default function Profile({
                                 {/* Card D: Minat & Peran yang Diminati */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                        <Briefcase className="size-4 text-[#5448EE]" />
+                                        <Briefcase className="size-4 text-[#2563EB]" />
                                         <h3 className="text-sm font-bold text-neutral-900">
                                             Peran Tim & Topik Proyek
                                         </h3>
@@ -575,7 +575,7 @@ export default function Profile({
                                             {data.preferred_roles.map((r) => (
                                                 <span
                                                     key={r}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-[#5448EE] border border-purple-200/60 rounded-full text-xs font-medium"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 text-[#2563EB] border border-purple-200/60 rounded-full text-xs font-medium"
                                                 >
                                                     {r}
                                                     <button
@@ -639,7 +639,7 @@ export default function Profile({
                                 {/* Card E: Ketersediaan Jam Kerja */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                        <Clock className="size-4 text-[#5448EE]" />
+                                        <Clock className="size-4 text-[#2563EB]" />
                                         <div>
                                             <h3 className="text-sm font-bold text-neutral-900">
                                                 Ketersediaan Jam Kerja Mingguan
@@ -656,7 +656,7 @@ export default function Profile({
                                                 <Label className="font-semibold text-neutral-700">
                                                     Komitmen Jam / Minggu
                                                 </Label>
-                                                <span className="font-bold text-[#5448EE]">
+                                                <span className="font-bold text-[#2563EB]">
                                                     {data.availability_hours || 0} Jam / Minggu
                                                 </span>
                                             </div>
@@ -689,7 +689,7 @@ export default function Profile({
                                 {/* Card F: Tautan Eksternal & Portofolio */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
                                     <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                        <Globe className="size-4 text-[#5448EE]" />
+                                        <Globe className="size-4 text-[#2563EB]" />
                                         <h3 className="text-sm font-bold text-neutral-900">
                                             Tautan Karya & Media Sosial
                                         </h3>
@@ -740,7 +740,7 @@ export default function Profile({
                                 {/* Card G: Privasi & Visibilitas Publik */}
                                 <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
                                     <div className="flex items-center gap-2 mb-2 pb-3 border-b border-neutral-100">
-                                        <ShieldCheck className="size-4 text-[#5448EE]" />
+                                        <ShieldCheck className="size-4 text-[#2563EB]" />
                                         <h3 className="text-sm font-bold text-neutral-900">
                                             Privasi & Visibilitas Publik
                                         </h3>
@@ -759,7 +759,7 @@ export default function Profile({
                                             type="checkbox"
                                             checked={data.portfolio_public}
                                             onChange={(e) => setData('portfolio_public', e.target.checked)}
-                                            className="size-4 rounded text-[#5448EE] focus:ring-[#5448EE] accent-[#5448EE]"
+                                            className="size-4 rounded text-[#2563EB] focus:ring-[#2563EB] accent-[#2563EB]"
                                         />
                                     </div>
 
@@ -776,7 +776,7 @@ export default function Profile({
                                             type="checkbox"
                                             checked={data.open_to_invites}
                                             onChange={(e) => setData('open_to_invites', e.target.checked)}
-                                            className="size-4 rounded text-[#5448EE] focus:ring-[#5448EE] accent-[#5448EE]"
+                                            className="size-4 rounded text-[#2563EB] focus:ring-[#2563EB] accent-[#2563EB]"
                                         />
                                     </div>
                                 </div>
@@ -808,7 +808,7 @@ export default function Profile({
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/25 transition active:scale-95 disabled:opacity-50 shrink-0 w-full sm:w-auto"
+                                className="inline-flex items-center justify-center gap-2 px-8 py-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs sm:text-sm font-bold shadow-md shadow-indigo-500/25 transition active:scale-95 disabled:opacity-50 shrink-0 w-full sm:w-auto"
                             >
                                 <Save className="size-4" />
                                 <span>{processing ? 'Menyimpan...' : 'Simpan Perubahan Profil'}</span>

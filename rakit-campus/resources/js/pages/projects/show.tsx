@@ -201,16 +201,18 @@ export default function ProjectShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${project.title} — RAKIT Campus`} />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24">
-                {/* Background glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[300px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+            {/* Modern Glassmorphic Canvas */}
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden font-sans">
+                {/* Natural ambient light diffusion */}
+                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
 
-                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
                     {/* Top navigation row */}
                     <div className="flex items-center justify-between">
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#5448EE] hover:border-[#5448EE]/30 shadow-2xs transition"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:border-blue-200 shadow-2xs transition"
                         >
                             <ArrowLeft className="size-3.5" />
                             <span>Kembali ke Project Hub</span>
@@ -218,10 +220,10 @@ export default function ProjectShow({
 
                         <button
                             onClick={toggleBookmark}
-                            className={`inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold rounded-full border transition ${
+                            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
                                 bookmarked
-                                    ? 'bg-[#EEEDFD] text-[#5448EE] border-[#5448EE]/30'
-                                    : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                             }`}
                         >
                             <Bookmark className="size-3.5" />
@@ -229,64 +231,64 @@ export default function ProjectShow({
                         </button>
                     </div>
 
-                    {/* Hero Project Card */}
-                    <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 sm:p-8 shadow-sm">
+                    {/* Hero Project Card — Glass Surface */}
+                    <div className="glass-surface rounded-3xl p-6 sm:p-8">
                         <div className="flex flex-wrap items-center gap-2 mb-3">
-                            <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                            <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                 {project.category?.replace('_', ' ')}
                             </span>
-                            <span className="text-xs px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 font-semibold capitalize border border-neutral-200/60">
+                            <span className="text-xs px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 font-semibold capitalize border border-slate-200/60">
                                 Status: {project.status?.replace('_', ' ')}
                             </span>
-                            <span className="text-xs text-neutral-500 font-medium ml-auto">
+                            <span className="text-xs text-slate-500 font-medium ml-auto">
                                 {project.campus?.name}
                             </span>
                         </div>
 
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0E121B] leading-tight">
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight tracking-tight">
                             {project.title}
                         </h1>
-                        <p className="text-xs sm:text-sm text-neutral-600 mt-2 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
                             {project.short_description}
                         </p>
 
                         {/* Metadata row */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-neutral-100 text-xs">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100 text-xs">
                             <div>
-                                <span className="text-neutral-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
+                                <span className="text-slate-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
                                     Project Leader
                                 </span>
-                                <span className="font-bold text-neutral-900">{project.leader?.name}</span>
+                                <span className="font-bold text-slate-900">{project.leader?.name}</span>
                             </div>
                             <div>
-                                <span className="text-neutral-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
+                                <span className="text-slate-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
                                     Progress Proyek
                                 </span>
-                                <span className="font-bold text-neutral-900">{project.progress}% Selesai</span>
+                                <span className="font-bold text-slate-900">{project.progress}% Selesai</span>
                             </div>
                             <div>
-                                <span className="text-neutral-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
+                                <span className="text-slate-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
                                     Kapasitas Tim
                                 </span>
-                                <span className="font-bold text-neutral-900">
+                                <span className="font-bold text-slate-900">
                                     {project.team?.members?.length || 1} / {project.team?.capacity || 5} Orang
                                 </span>
                             </div>
                             <div>
-                                <span className="text-neutral-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
+                                <span className="text-slate-400 block mb-0.5 text-[11px] font-semibold uppercase tracking-wider">
                                     Visibilitas
                                 </span>
-                                <span className="font-bold text-neutral-900 capitalize">
+                                <span className="font-bold text-slate-900 capitalize">
                                     {project.visibility || 'Kampus'}
                                 </span>
                             </div>
                         </div>
 
                         {/* Action buttons row */}
-                        <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-neutral-100">
+                        <div className="flex flex-wrap items-center justify-between gap-3 mt-6 pt-4 border-t border-slate-100">
                             {project.academic_class ? (
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200 text-purple-900 text-xs font-medium">
-                                    <GraduationCap className="size-3.5 text-purple-700" />
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-900 text-xs font-medium">
+                                    <GraduationCap className="size-3.5 text-blue-600" />
                                     <span>Tugas Mata Kuliah: <strong>{project.academic_class.name}</strong></span>
                                 </div>
                             ) : <div />}
@@ -295,7 +297,7 @@ export default function ProjectShow({
                                 {isLeader && project.status !== 'completed' && (
                                     <button
                                         onClick={handleCompleteProject}
-                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-xs shadow-xs transition"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
                                     >
                                         <CheckCircle2 className="size-3.5" />
                                         <span>Tandai Proyek Selesai</span>
@@ -304,7 +306,7 @@ export default function ProjectShow({
                                 {!isMember && (
                                     <button
                                         onClick={() => setApplyingRole(project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' })}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full font-bold text-xs shadow-md shadow-indigo-500/20 transition active:scale-95"
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
                                     >
                                         <Send className="size-3.5" />
                                         <span>Lamar Posisi / Gabung Tim</span>
@@ -313,7 +315,7 @@ export default function ProjectShow({
                                 {isMember && (
                                     <Link
                                         href={`/workspace/${project.team?.id}`}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-bold text-xs shadow-md transition"
+                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-bold text-xs shadow-xs transition"
                                     >
                                         <FolderKanban className="size-3.5" />
                                         <span>Buka Ruang Kerja Tim</span>
@@ -329,19 +331,19 @@ export default function ProjectShow({
                         <div className="lg:col-span-2 flex flex-col gap-6">
                             {/* Lecturer Guidance Note (if exists) */}
                             {project.lecturer_notes && (
-                                <div className="rounded-3xl bg-gradient-to-r from-[#FAF8FF] to-[#F1EEFD] border border-[#5448EE]/30 p-6 shadow-xs">
+                                <div className="glass-card rounded-2xl bg-blue-50/40 border-blue-200/80 p-5 shadow-xs">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <GraduationCap className="size-4 text-[#5448EE]" />
-                                        <h3 className="text-xs font-bold uppercase tracking-wider text-[#5448EE]">
+                                        <GraduationCap className="size-4 text-blue-600" />
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700">
                                             Catatan Bimbingan & Evaluasi Dosen
                                         </h3>
                                         {project.lecturer_evaluation && (
-                                            <span className="ml-auto px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#5448EE] text-white">
+                                            <span className="ml-auto px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-blue-600 text-white">
                                                 {project.lecturer_evaluation}
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-xs text-neutral-800 whitespace-pre-line leading-relaxed">
+                                    <p className="text-xs text-slate-800 whitespace-pre-line leading-relaxed">
                                         {project.lecturer_notes}
                                     </p>
                                 </div>
@@ -349,14 +351,14 @@ export default function ProjectShow({
 
                             {/* Leader Management: Incoming Applications */}
                             {isLeader && applications.length > 0 && (
-                                <div className="rounded-3xl bg-white border-2 border-[#5448EE]/30 p-6 shadow-xs">
-                                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                                         <div>
-                                            <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                                                <UserCheck className="size-4 text-[#5448EE]" />
+                                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                <UserCheck className="size-4 text-blue-600" />
                                                 <span>Aplikasi Pelamar Calon Anggota ({applications.length})</span>
                                             </h3>
-                                            <p className="text-xs text-neutral-500 mt-0.5">
+                                            <p className="text-xs text-slate-500 mt-0.5">
                                                 Tinjau pesan dan profil mahasiswa yang melamar posisi di proyek ini.
                                             </p>
                                         </div>
@@ -366,13 +368,13 @@ export default function ProjectShow({
                                         {applications.map((app: any) => (
                                             <div
                                                 key={app.id}
-                                                className="p-4 border border-neutral-200 rounded-2xl bg-neutral-50/70 flex flex-col gap-2"
+                                                className="p-4 border border-slate-200 rounded-xl bg-white/70 flex flex-col gap-2"
                                             >
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div>
-                                                        <span className="text-xs font-bold text-neutral-900">{app.user?.name || app.applicant?.name || 'Mahasiswa'}</span>
-                                                        <span className="text-[11px] text-neutral-500 ml-2">({app.user?.email || app.applicant?.email})</span>
-                                                        <div className="text-[11px] text-[#5448EE] font-semibold mt-0.5">
+                                                        <span className="text-xs font-bold text-slate-900">{app.user?.name || app.applicant?.name || 'Mahasiswa'}</span>
+                                                        <span className="text-[11px] text-slate-500 ml-2">({app.user?.email || app.applicant?.email})</span>
+                                                        <div className="text-[11px] text-blue-600 font-semibold mt-0.5">
                                                             Melamar Posisi: {app.role?.name || 'Anggota Tim'}
                                                         </div>
                                                     </div>
@@ -388,17 +390,17 @@ export default function ProjectShow({
                                                 </div>
 
                                                 {app.message && (
-                                                    <div className="text-xs text-neutral-700 bg-white p-3 rounded-xl border border-neutral-200/70 mt-1 italic">
+                                                    <div className="text-xs text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-200/70 mt-1 italic">
                                                         "{app.message}"
                                                     </div>
                                                 )}
 
                                                 {(app.status === 'pending' || app.status === 'submitted') && (
-                                                    <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-neutral-200">
+                                                    <div className="flex justify-end gap-2 mt-2 pt-2 border-t border-slate-200">
                                                         <button
                                                             onClick={() => handleDecideApplication(app.id, 'reject')}
                                                             disabled={decidingId === app.id}
-                                                            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-neutral-200 rounded-full text-xs font-bold transition disabled:opacity-50"
+                                                            className="inline-flex items-center gap-1 px-3.5 py-1.5 bg-white hover:bg-rose-50 text-rose-600 border border-slate-200 rounded-xl text-xs font-bold transition disabled:opacity-50 cursor-pointer"
                                                         >
                                                             <XCircle className="size-3.5" />
                                                             <span>Tolak</span>
@@ -406,7 +408,7 @@ export default function ProjectShow({
                                                         <button
                                                             onClick={() => handleDecideApplication(app.id, 'accept')}
                                                             disabled={decidingId === app.id}
-                                                            className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full text-xs font-bold transition disabled:opacity-50 shadow-xs"
+                                                            className="inline-flex items-center gap-1 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
                                                         >
                                                             <Check className="size-3.5" />
                                                             <span>Terima Jadi Anggota</span>
@@ -421,11 +423,11 @@ export default function ProjectShow({
 
                             {/* Permasalahan */}
                             {project.problem_statement && (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                    <h3 className="text-sm font-bold text-[#0E121B] mb-2">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-2">
                                         Permasalahan yang Diselesaikan
                                     </h3>
-                                    <p className="text-xs text-neutral-600 whitespace-pre-line leading-relaxed">
+                                    <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed">
                                         {project.problem_statement}
                                     </p>
                                 </div>
@@ -433,11 +435,11 @@ export default function ProjectShow({
 
                             {/* Solusi & Pendekatan */}
                             {project.proposed_solution && (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                    <h3 className="text-sm font-bold text-[#0E121B] mb-2">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-2">
                                         Solusi & Pendekatan Teknis
                                     </h3>
-                                    <p className="text-xs text-neutral-600 whitespace-pre-line leading-relaxed">
+                                    <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed">
                                         {project.proposed_solution}
                                     </p>
                                 </div>
@@ -445,11 +447,11 @@ export default function ProjectShow({
 
                             {/* Deskripsi Lengkap */}
                             {project.description && (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                    <h3 className="text-sm font-bold text-[#0E121B] mb-2">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-2">
                                         Deskripsi Lengkap Proyek
                                     </h3>
-                                    <p className="text-xs text-neutral-600 whitespace-pre-line leading-relaxed">
+                                    <p className="text-xs text-slate-600 whitespace-pre-line leading-relaxed">
                                         {project.description}
                                     </p>
                                 </div>
@@ -457,13 +459,13 @@ export default function ProjectShow({
 
                             {/* Open Recruitment Roles */}
                             {project.team?.recruitment && (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                                         <div>
-                                            <h3 className="text-sm font-bold text-[#0E121B]">
+                                            <h3 className="text-sm font-bold text-slate-900">
                                                 Lowongan Posisi Terbuka
                                             </h3>
-                                            <p className="text-xs text-neutral-500 mt-0.5">{project.team.recruitment.title}</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">{project.team.recruitment.title}</p>
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase">
@@ -477,7 +479,7 @@ export default function ProjectShow({
                                                             project.team.recruitment.status === 'open' ? 'closed' : 'open'
                                                         )
                                                     }
-                                                    className="text-xs text-[#5448EE] hover:underline font-bold"
+                                                    className="text-xs text-blue-600 hover:underline font-bold cursor-pointer"
                                                 >
                                                     {project.team.recruitment.status === 'open'
                                                         ? 'Tutup Rekrutmen'
@@ -491,11 +493,11 @@ export default function ProjectShow({
                                         {project.team.recruitment.roles?.map((role: any) => (
                                             <div
                                                 key={role.id}
-                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-neutral-200/80 rounded-2xl bg-neutral-50/60 gap-3"
+                                                className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-slate-200 rounded-xl bg-white/70 gap-3"
                                             >
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-[#0E121B]">{role.name}</h4>
-                                                    <p className="text-[11px] text-neutral-500 mt-0.5">
+                                                    <h4 className="text-xs font-bold text-slate-900">{role.name}</h4>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                                         Kebutuhan: {role.slots} slot • {role.requirements || 'Keahlian teknis relevan'}
                                                     </p>
                                                 </div>
@@ -503,7 +505,7 @@ export default function ProjectShow({
                                                 {!isMember && project.team.recruitment.status === 'open' && (
                                                     <button
                                                         onClick={() => setApplyingRole(role)}
-                                                        className="px-4 py-2 bg-[#5448EE] hover:bg-[#4336D9] text-white rounded-full text-xs font-bold transition shadow-xs self-start sm:self-auto shrink-0"
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs self-start sm:self-auto shrink-0 cursor-pointer"
                                                     >
                                                         Lamar Posisi Ini
                                                     </button>
@@ -518,13 +520,13 @@ export default function ProjectShow({
                         {/* Sidebar Info (Right 1 col) */}
                         <div className="flex flex-col gap-6">
                             {/* Tech Stack Card */}
-                            <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3">
+                            <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                                     Teknologi & Tools
                                 </h3>
                                 <div className="flex flex-wrap gap-1.5">
                                     {project.tech_stack?.map((t: string, i: number) => (
-                                        <span key={i} className="px-3 py-1 bg-neutral-100 text-neutral-800 text-xs rounded-full font-semibold">
+                                        <span key={i} className="px-3 py-1 bg-slate-100 text-slate-800 text-xs rounded-lg font-semibold border border-slate-200/60">
                                             {t}
                                         </span>
                                     ))}
@@ -533,13 +535,13 @@ export default function ProjectShow({
 
                             {/* Required Skills Card */}
                             {project.skills && project.skills.length > 0 && (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3">
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                                         Kebutuhan Keahlian
                                     </h3>
                                     <div className="flex flex-wrap gap-1.5">
                                         {project.skills.map((s: any) => (
-                                            <span key={s.id} className="px-2.5 py-1 bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20 text-xs rounded-lg font-bold">
+                                            <span key={s.id} className="px-2.5 py-1 bg-blue-50 text-blue-700 border border-blue-200/80 text-xs rounded-md font-bold">
                                                 {s.name} (Min: {s.pivot?.min_proficiency || 1}/5)
                                             </span>
                                         ))}
@@ -548,19 +550,19 @@ export default function ProjectShow({
                             )}
 
                             {/* Team Members Roster */}
-                            <div className="rounded-3xl bg-white border border-neutral-200/80 p-6 shadow-xs">
-                                <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3">
+                            <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
                                     Anggota Tim ({project.team?.members?.length || 1} Orang)
                                 </h3>
                                 <div className="flex flex-col gap-2.5">
                                     {project.team?.members?.map((m: any, i: number) => (
-                                        <div key={i} className="flex items-center gap-3 p-2 rounded-xl bg-neutral-50">
-                                            <div className="size-8 rounded-full bg-[#EEEDFD] text-[#5448EE] flex items-center justify-center font-bold text-xs shrink-0">
+                                        <div key={i} className="flex items-center gap-3 p-2.5 rounded-xl bg-white/70 border border-slate-200/60">
+                                            <div className="size-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
                                                 {m.user?.name?.charAt(0) || 'M'}
                                             </div>
                                             <div className="min-w-0 flex-1">
-                                                <h5 className="text-xs font-bold text-[#0E121B] truncate">{m.user?.name}</h5>
-                                                <span className="text-[10px] text-neutral-400 block">{m.role_name || 'Anggota'}</span>
+                                                <h5 className="text-xs font-bold text-slate-900 truncate">{m.user?.name}</h5>
+                                                <span className="text-[10px] text-slate-400 block">{m.role_name || 'Anggota'}</span>
                                             </div>
                                         </div>
                                     ))}
@@ -573,23 +575,23 @@ export default function ProjectShow({
 
             {/* APPLY ROLE MODAL */}
             {applyingRole && (
-                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-                    <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-neutral-100 flex flex-col gap-5">
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
                         <div className="flex items-start justify-between">
                             <div>
-                                <span className="text-xs font-bold text-[#5448EE] uppercase tracking-wider block mb-1">
+                                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">
                                     Lamaran Posisi Tim
                                 </span>
-                                <h3 className="text-lg font-bold text-[#0E121B]">
+                                <h3 className="text-lg font-bold text-slate-900">
                                     Lamar sebagai {applyingRole.name}
                                 </h3>
-                                <p className="text-xs text-neutral-500 mt-0.5">
+                                <p className="text-xs text-slate-500 mt-0.5">
                                     Kirim pesan perkenalan singkat kepada ketua tim proyek.
                                 </p>
                             </div>
                             <button
                                 onClick={() => setApplyingRole(null)}
-                                className="size-7 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-600 flex items-center justify-center text-xs font-bold transition"
+                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
@@ -597,7 +599,7 @@ export default function ProjectShow({
 
                         <form onSubmit={handleApply} className="flex flex-col gap-4">
                             <div>
-                                <label className="block text-xs font-bold text-neutral-700 mb-1">
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
                                     Pesan Singkat & Portofolio Relevan *
                                 </label>
                                 <textarea
@@ -606,22 +608,22 @@ export default function ProjectShow({
                                     rows={4}
                                     placeholder="Jelaskan pengalaman teknis Anda, teknologi yang pernah Anda gunakan, dan komitmen waktu per minggu..."
                                     required
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 text-xs focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-neutral-100">
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                                 <button
                                     type="button"
                                     onClick={() => setApplyingRole(null)}
-                                    className="px-4 py-2 rounded-full border border-neutral-200 text-xs font-semibold text-neutral-600 hover:bg-neutral-50"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="px-6 py-2.5 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-bold transition disabled:opacity-50 shadow-xs"
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
                                 >
                                     {submitting ? 'Mengirim...' : 'Kirim Lamaran'}
                                 </button>

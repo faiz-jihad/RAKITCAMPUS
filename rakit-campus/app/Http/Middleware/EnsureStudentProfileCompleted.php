@@ -17,8 +17,8 @@ class EnsureStudentProfileCompleted
     {
         $user = $request->user();
 
-        // If not logged in, or is lecturer / admin, bypass onboarding check
-        if (!$user || $user->isLecturer() || $user->isPlatformAdmin()) {
+        // If not logged in, or is lecturer / platform admin / campus admin, bypass onboarding check
+        if (!$user || $user->isLecturer() || $user->isPlatformAdmin() || $user->isCampusAdmin()) {
             return $next($request);
         }
 

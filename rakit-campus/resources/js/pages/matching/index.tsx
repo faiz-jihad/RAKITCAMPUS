@@ -41,6 +41,7 @@ interface RecommendedProject {
     match_score: number;
     matched_skills: string[];
     missing_skills: string[];
+    complementary_skills?: string[];
     role_compatibility: string;
     explanation: string;
     breakdown: {
@@ -49,6 +50,7 @@ interface RecommendedProject {
         interests: number;
         experience: number;
         availability: number;
+        diversity?: number;
     };
 }
 
@@ -69,6 +71,7 @@ interface Candidate {
     score: number;
     matched_skills: string[];
     missing_skills: string[];
+    complementary_skills?: string[];
     explanation: string;
     breakdown?: Record<string, number>;
 }
@@ -88,6 +91,8 @@ interface Props {
     profileCompletion?: { percent: number; missing: string[] } | null;
     userSkills?: string[];
     isGuest?: boolean;
+    hasActiveProject?: boolean;
+    activeProject?: { id: number; title: string; role_name: string } | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -103,6 +108,8 @@ export default function MatchingIndex({
     profileCompletion,
     userSkills = [],
     isGuest = false,
+    hasActiveProject = false,
+    activeProject = null,
 }: Props) {
     const [tab, setTab] = useState<'projects' | 'candidates'>('projects');
     const [searchQuery, setSearchQuery] = useState('');
@@ -121,88 +128,118 @@ export default function MatchingIndex({
     });
 
     const getScoreBadgeColor = (score: number) => {
-        if (score >= 90) return 'text-[#5448EE] bg-[#EEEDFD] border-[#5448EE]/20';
-        if (score >= 75) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-        return 'text-amber-700 bg-amber-50 border-amber-200';
+        if (score >= 90) return 'text-blue-700 bg-blue-500/10 border-blue-500/20';
+        if (score >= 75) return 'text-emerald-700 bg-emerald-500/10 border-emerald-500/20';
+        return 'text-amber-700 bg-amber-500/10 border-amber-500/20';
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Cari Teman Tim & Rekomendasi Proyek — RAKIT Campus" />
+            <Head title="Cari Teman Tim & Rekomendasi Cerdas — RAKIT Campus" />
 
-            {/* Atmosphere background container */}
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-20">
-                {/* Ethereal background radial glows */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
-                <div className="absolute top-48 right-10 w-96 h-96 bg-[#9B87F5]/10 rounded-full blur-3xl pointer-events-none -z-0" />
+            {/* Atmosphere container with diffuse ambient washes */}
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
+                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
+                <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-sky-100/50 blur-[100px]" />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-8">
-                    {/* Hero Header */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2">
-                        <div className="max-w-3xl">
-                            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#EEEDFD] border border-[#5448EE]/20 text-[#5448EE] text-xs font-semibold tracking-wide mb-4 shadow-sm">
-                                <Sparkles className="size-3.5" />
-                                <span>Rekomendasi Cerdas Sesuai Keahlian</span>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
+
+                    {/* HERO HEADER: Modern Frosted Glass Surface */}
+                    <div className="glass-surface rounded-3xl p-6 sm:p-8 relative overflow-hidden">
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
+
+                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                            <div className="max-w-3xl">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-700 text-xs font-bold mb-3">
+                                    <Sparkles className="size-3.5 text-blue-600" />
+                                    <span>Smart Fair Matchmaking Engine</span>
+                                </div>
+                                <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                                    Cari Teman Tim & Proyek Kolaboratif
+                                </h1>
+                                <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                                    Sistem rekomendasi berimbang berbasis keahlian, peran, minat, dan ketersediaan waktu. Mencegah ketimpangan dan memberikan kesempatan adil bagi seluruh mahasiswa.
+                                </p>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0E121B] leading-tight">
-                                Cari Teman Tim
-                            </h1>
-                            <p className="text-sm sm:text-base text-neutral-600 mt-2.5 leading-relaxed">
-                                Temukan proyek seru, tim lomba, atau teman kelompok yang paling pas dengan keahlian dan waktu luang kamu. Nggak perlu bingung lagi cari rekan sefrekuensi!
-                            </p>
-                        </div>
 
-                        {/* Top quick actions */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            <Link
-                                href="/projects"
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-semibold shadow-sm transition"
-                            >
-                                <Compass className="size-4 text-[#5448EE]" />
-                                <span>Lihat Semua Proyek</span>
-                            </Link>
-                            <Link
-                                href="/competitions"
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-neutral-200/80 bg-white hover:bg-neutral-50 text-neutral-800 text-xs font-semibold shadow-sm transition"
-                            >
-                                <Award className="size-4 text-amber-500" />
-                                <span>Lomba & Kompetisi</span>
-                            </Link>
+                            {/* Quick Navigation Action Pills */}
+                            <div className="flex items-center gap-2.5 shrink-0">
+                                <Link
+                                    href="/projects"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
+                                >
+                                    <Compass className="size-4 text-blue-600" />
+                                    <span>Semua Proyek</span>
+                                </Link>
+                                <Link
+                                    href="/competitions"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-amber-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
+                                >
+                                    <Award className="size-4 text-amber-500" />
+                                    <span>Lomba & Prestasi</span>
+                                </Link>
+                            </div>
                         </div>
                     </div>
 
-                    {/* Guest Callout Banner */}
-                    {isGuest && (
-                        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#5448EE] via-[#6152F6] to-[#7B68EE] p-6 sm:p-8 text-white shadow-xl shadow-[#5448EE]/20 border border-white/20">
-                            {/* Decorative background orbs */}
-                            <div className="absolute -top-12 -right-12 size-56 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                            <div className="absolute -bottom-10 right-1/3 size-40 bg-purple-300/20 rounded-full blur-xl pointer-events-none" />
+                    {/* ACTIVE PROJECT RULE ALERT (RULE 1) */}
+                    {hasActiveProject && activeProject && (
+                        <div className="glass-card rounded-2xl p-4 sm:p-5 border-l-4 border-l-blue-600 bg-white/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div className="flex items-start sm:items-center gap-3.5">
+                                <div className="size-10 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                    <ShieldCheck className="size-5" />
+                                </div>
+                                <div>
+                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <span>Aturan 1 Mahasiswa 1 Proyek Aktif Terpenuhi</span>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                            Status: Aktif Berkolaborasi
+                                        </span>
+                                    </h4>
+                                    <p className="text-xs text-slate-600 mt-0.5">
+                                        Saat ini Anda sedang aktif di proyek <strong className="text-slate-900">{activeProject.title}</strong> sebagai <strong className="text-slate-900">{activeProject.role_name}</strong>. Anda dapat menjelajahi rekomendasi untuk referensi atau semester berikutnya.
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                href={`/projects/${activeProject.id}`}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs transition"
+                            >
+                                <span>Lihat Proyek Aktif</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        </div>
+                    )}
 
+                    {/* GUEST BANNER */}
+                    {isGuest && (
+                        <div className="relative overflow-hidden rounded-3xl bg-slate-900 p-6 sm:p-8 text-white shadow-xl shadow-slate-900/10 border border-slate-800">
                             <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                                 <div className="max-w-2xl">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-white mb-3">
+                                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-semibold text-blue-300 mb-3 border border-white/10">
                                         <Zap className="size-3.5 text-amber-300" />
                                         <span>Mode Tamu • Rekomendasi Terbuka</span>
                                     </div>
-                                    <h2 className="text-xl sm:text-2xl font-bold leading-snug">
-                                        Masuk untuk Melihat Proyek yang Paling Pas Buat Kamu
+                                    <h2 className="text-xl sm:text-2xl font-black text-white leading-snug">
+                                        Masuk untuk Rekomendasi Proyek yang Presisi
                                     </h2>
-                                    <p className="text-xs sm:text-sm text-purple-100 mt-2 leading-relaxed">
-                                        Saat ini kamu melihat daftar proyek rekomendasi umum. Yuk login dengan akun mahasiswa kamu biar sistem bisa menghitung skor kecocokan otomatis sesuai skill dan minat kamu.
+                                    <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
+                                        Daftarkan profil mahasiswa dan keahlian Anda untuk membuka perhitungan kecocokan 6-komponen (Skill, Peran, Minat, Waktu, Diversitas, dan Kesempatan Adil).
                                     </p>
                                 </div>
 
                                 <div className="flex flex-wrap items-center gap-3 shrink-0">
                                     <Link
                                         href="/login"
-                                        className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-[#5448EE] hover:bg-neutral-100 text-xs sm:text-sm font-bold shadow-lg shadow-black/10 transition"
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold shadow-md transition"
                                     >
                                         <LogIn className="size-4" />
                                         <span>Masuk Sekarang</span>
                                     </Link>
                                     <Link
                                         href="/register"
-                                        className="inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-md text-xs sm:text-sm font-semibold transition"
+                                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs sm:text-sm font-semibold transition"
                                     >
                                         <span>Daftar Akun Mahasiswa</span>
                                         <ArrowRight className="size-4" />
@@ -212,28 +249,28 @@ export default function MatchingIndex({
                         </div>
                     )}
 
-                    {/* Authenticated Profile Optimization Card */}
+                    {/* AUTHENTICATED PROFILE PROGRESS CARD */}
                     {!isGuest && profileCompletion && profileCompletion.percent < 85 && (
-                        <div className="rounded-2xl bg-white border border-[#5448EE]/20 p-5 shadow-sm shadow-[#5448EE]/5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <div className="size-12 rounded-2xl bg-[#EEEDFD] flex items-center justify-center font-extrabold text-[#5448EE] text-sm shrink-0 border border-[#5448EE]/20">
+                        <div className="glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3.5">
+                                <div className="size-11 rounded-xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center font-black text-blue-600 text-sm shrink-0">
                                     {profileCompletion.percent}%
                                 </div>
                                 <div>
-                                    <h4 className="text-sm font-bold text-[#0E121B] flex items-center gap-2">
+                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <span>Tingkatkan Akurasi Rekomendasi Tim</span>
-                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                                            Profil {profileCompletion.percent}% Selesai
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                            Profil {profileCompletion.percent}% Lengkap
                                         </span>
                                     </h4>
-                                    <p className="text-xs text-neutral-500 mt-0.5">
-                                        Lengkapi keahlian teknis spesifik dan estimasi jam ketersediaan per minggu agar sistem dapat memasangkan Anda dengan proyek yang paling presisi.
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Lengkapi keahlian teknis spesifik dan estimasi jam luang per minggu agar algoritma memasangkan Anda dengan proyek yang paling presisi.
                                     </p>
                                 </div>
                             </div>
                             <Link
                                 href="/settings/profile"
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-semibold shrink-0 shadow-sm transition"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0 shadow-2xs transition"
                             >
                                 <span>Lengkapi Profil</span>
                                 <ArrowRight className="size-3.5" />
@@ -241,15 +278,15 @@ export default function MatchingIndex({
                         </div>
                     )}
 
-                    {/* Navigation Tabs & Search Controls */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200/80 pb-3">
+                    {/* NAVIGATION SEGMENTED TABS & SEARCH CONTROLS */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-3">
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={() => setTab('projects')}
-                                className={`px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition flex items-center gap-2 ${
+                                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
                                     tab === 'projects'
-                                        ? 'bg-[#5448EE] text-white shadow-md shadow-[#5448EE]/25'
-                                        : 'bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200/80'
+                                        ? 'bg-blue-600 text-white shadow-2xs'
+                                        : 'bg-white/80 hover:bg-white text-slate-600 border border-slate-200/80'
                                 }`}
                             >
                                 <Target className="size-4" />
@@ -259,10 +296,10 @@ export default function MatchingIndex({
                             {myLedProjects.length > 0 && (
                                 <button
                                     onClick={() => setTab('candidates')}
-                                    className={`px-4 py-2.5 rounded-full text-xs sm:text-sm font-bold transition flex items-center gap-2 ${
+                                    className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 cursor-pointer ${
                                         tab === 'candidates'
-                                            ? 'bg-[#5448EE] text-white shadow-md shadow-[#5448EE]/25'
-                                            : 'bg-white hover:bg-neutral-100 text-neutral-600 border border-neutral-200/80'
+                                            ? 'bg-blue-600 text-white shadow-2xs'
+                                            : 'bg-white/80 hover:bg-white text-slate-600 border border-slate-200/80'
                                     }`}
                                 >
                                     <Users className="size-4" />
@@ -273,94 +310,91 @@ export default function MatchingIndex({
 
                         {/* Search Input Filter */}
                         <div className="relative max-w-xs w-full">
-                            <Search className="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                            <Search className="size-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="text"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Cari nama, keahlian, kategori..."
-                                className="w-full pl-9 pr-4 py-2 rounded-full border border-neutral-200/80 bg-white text-xs text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                placeholder="Cari nama, keahlian, topik..."
+                                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200/80 bg-white/80 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition"
                             />
                         </div>
                     </div>
 
                     {/* TAB 1: RECOMMENDED PROJECTS */}
                     {tab === 'projects' && (
-                        <div className="flex flex-col gap-5">
+                        <div className="flex flex-col gap-4">
                             {filteredProjects.length === 0 ? (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-12 text-center shadow-sm">
-                                    <div className="size-14 rounded-2xl bg-[#EEEDFD] text-[#5448EE] flex items-center justify-center mx-auto mb-4">
-                                        <Sparkles className="size-7" />
+                                <div className="glass-card rounded-3xl p-12 text-center bg-white/85">
+                                    <div className="size-12 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                                        <Sparkles className="size-6" />
                                     </div>
-                                    <h3 className="text-base font-bold text-neutral-800">
-                                        Tidak Ada Proyek yang Cocok dengan Kriteria
+                                    <h3 className="text-sm sm:text-base font-bold text-slate-900">
+                                        Tidak Ada Proyek yang Sesuai dengan Kriteria
                                     </h3>
-                                    <p className="text-xs text-neutral-500 max-w-md mx-auto mt-1.5 leading-relaxed">
+                                    <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
                                         {searchQuery
-                                            ? 'Coba gunakan kata kunci pencarian yang berbeda untuk menemukan proyek lainnya.'
-                                            : 'Saat ini belum ada proyek baru dengan kuota rekrutmen aktif. Silakan cek kembali dalam waktu dekat.'}
+                                            ? 'Coba gunakan kata kunci pencarian berbeda untuk menemukan proyek lainnya.'
+                                            : 'Saat ini belum ada proyek baru dengan kuota terbuka. Silakan cek kembali dalam waktu dekat.'}
                                     </p>
                                     {searchQuery && (
                                         <button
                                             onClick={() => setSearchQuery('')}
-                                            className="mt-4 px-4 py-1.5 rounded-full text-xs font-semibold bg-[#EEEDFD] text-[#5448EE] hover:bg-[#5448EE] hover:text-white transition"
+                                            className="mt-3.5 px-4 py-1.5 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 transition cursor-pointer"
                                         >
                                             Reset Pencarian
                                         </button>
                                     )}
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 gap-5">
+                                <div className="grid grid-cols-1 gap-4">
                                     {filteredProjects.map((item) => (
                                         <div
                                             key={item.id}
-                                            className="group rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-6 shadow-sm hover:shadow-xl hover:shadow-[#5448EE]/10 transition-all duration-300 flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+                                            className="group glass-card rounded-3xl p-6 bg-white/85 hover:bg-white/95 border border-white/85 hover:border-blue-200 shadow-2xs hover:shadow-md transition-all flex flex-col lg:flex-row lg:items-center justify-between gap-6"
                                         >
-                                            {/* Project Info Block */}
+                                            {/* Left: Project Details */}
                                             <div className="flex-1 min-w-0">
-                                                {/* Badges row */}
-                                                <div className="flex flex-wrap items-center gap-2 mb-2.5">
-                                                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                    <span className="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
                                                         {item.category}
                                                     </span>
-                                                    <span className="text-neutral-300">•</span>
-                                                    <span className="inline-flex items-center gap-1 text-xs text-neutral-500 font-medium">
-                                                        <MapPin className="size-3 text-neutral-400" />
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="inline-flex items-center gap-1 text-xs text-slate-500 font-medium">
+                                                        <MapPin className="size-3 text-slate-400" />
                                                         <span>{item.campus_name}</span>
                                                     </span>
                                                     {item.open_roles_count > 0 && (
                                                         <>
-                                                            <span className="text-neutral-300">•</span>
-                                                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                                            <span className="text-slate-300">•</span>
+                                                            <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                                                                 {item.open_roles_count} Posisi Terbuka
                                                             </span>
                                                         </>
                                                     )}
                                                 </div>
 
-                                                {/* Project Title */}
-                                                <Link href={`/projects/${item.id}`} className="block group-hover:text-[#5448EE] transition">
-                                                    <h3 className="text-lg font-bold text-[#0E121B] leading-snug">
+                                                <Link href={`/projects/${item.id}`} className="block group-hover:text-blue-600 transition">
+                                                    <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
                                                         {item.title}
                                                     </h3>
                                                 </Link>
 
-                                                {/* Short Description */}
-                                                <p className="text-xs text-neutral-600 mt-1.5 line-clamp-2 leading-relaxed">
+                                                <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
                                                     {item.short_description}
                                                 </p>
 
-                                                {/* Open roles list */}
+                                                {/* Open roles */}
                                                 {item.open_roles.length > 0 && (
                                                     <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                                                        <span className="text-[11px] font-medium text-neutral-400 mr-1 flex items-center gap-1">
-                                                            <Briefcase className="size-3 text-neutral-400" />
+                                                        <span className="text-[11px] font-bold text-slate-400 mr-1 flex items-center gap-1">
+                                                            <Briefcase className="size-3 text-slate-400" />
                                                             <span>Dicari:</span>
                                                         </span>
                                                         {item.open_roles.map((roleName, rIdx) => (
                                                             <span
                                                                 key={rIdx}
-                                                                className="text-[11px] font-semibold bg-neutral-100 hover:bg-[#EEEDFD] text-neutral-700 hover:text-[#5448EE] px-2.5 py-0.5 rounded-full transition"
+                                                                className="text-[11px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg"
                                                             >
                                                                 {roleName}
                                                             </span>
@@ -368,56 +402,62 @@ export default function MatchingIndex({
                                                     </div>
                                                 )}
 
-                                                {/* Matched Skills pills */}
-                                                {item.matched_skills.length > 0 && (
-                                                    <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                                                        <span className="text-[11px] font-medium text-neutral-400 mr-1 flex items-center gap-1">
-                                                            <CheckCircle2 className="size-3 text-emerald-600" />
-                                                            <span>Keahlian Cocok:</span>
-                                                        </span>
-                                                        {item.matched_skills.map((skill, sIdx) => (
-                                                            <span
-                                                                key={sIdx}
-                                                                className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2.5 py-0.5 rounded-full"
-                                                            >
-                                                                <Check className="size-2.5 text-emerald-600" />
-                                                                <span>{skill}</span>
+                                                {/* Matched & Complementary Skills */}
+                                                <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                                                    {item.matched_skills.length > 0 && (
+                                                        <>
+                                                            <span className="text-[11px] font-bold text-slate-400 mr-1 flex items-center gap-1">
+                                                                <CheckCircle2 className="size-3 text-emerald-600" />
+                                                                <span>Keahlian Cocok:</span>
                                                             </span>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                            {item.matched_skills.map((skill, sIdx) => (
+                                                                <span
+                                                                    key={sIdx}
+                                                                    className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80 px-2 py-0.5 rounded-md"
+                                                                >
+                                                                    <Check className="size-2.5 text-emerald-600" />
+                                                                    <span>{skill}</span>
+                                                                </span>
+                                                            ))}
+                                                        </>
+                                                    )}
+
+                                                    {item.complementary_skills && item.complementary_skills.length > 0 && (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                                                            <span>+ Variasi Baru ({item.complementary_skills.slice(0, 2).join(', ')})</span>
+                                                        </span>
+                                                    )}
+                                                </div>
 
                                                 {/* Transparent AI explanation pill */}
-                                                <div className="mt-3.5 inline-flex items-start gap-2 text-xs text-purple-900 bg-[#FAF8FF] border border-[#5448EE]/15 p-2.5 rounded-xl w-full">
-                                                    <Sparkles className="size-4 shrink-0 text-[#5448EE] mt-0.5" />
+                                                <div className="mt-3.5 inline-flex items-start gap-2 text-xs text-slate-700 bg-slate-50 border border-slate-200/90 p-2.5 rounded-xl w-full">
+                                                    <Sparkles className="size-4 shrink-0 text-blue-600 mt-0.5" />
                                                     <span className="text-[11px] leading-relaxed">
                                                         {item.explanation}
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {/* Match Gauge & CTA Block */}
-                                            <div className="flex lg:flex-col items-center justify-between lg:justify-center gap-4 shrink-0 border-t lg:border-t-0 lg:border-l border-neutral-100 pt-4 lg:pt-0 lg:pl-6 min-w-[190px]">
-                                                {/* Score badge */}
+                                            {/* Right: Score Gauge & Action */}
+                                            <div className="flex lg:flex-col items-center justify-between lg:justify-center gap-4 shrink-0 border-t lg:border-t-0 lg:border-l border-slate-200/80 pt-4 lg:pt-0 lg:pl-6 min-w-[190px]">
                                                 <div className="flex items-center lg:flex-col gap-3 lg:gap-1 text-center">
-                                                    <div className={`size-14 sm:size-16 rounded-2xl flex items-center justify-center font-extrabold text-xl sm:text-2xl border ${getScoreBadgeColor(item.match_score)}`}>
+                                                    <div className={`size-14 sm:size-16 rounded-2xl flex items-center justify-center font-black text-xl sm:text-2xl border ${getScoreBadgeColor(item.match_score)}`}>
                                                         {item.match_score}%
                                                     </div>
                                                     <div>
-                                                        <span className="text-[11px] font-bold text-neutral-700 uppercase tracking-wider block">
-                                                            Match Score
+                                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                                                            Skor Kecocokan
                                                         </span>
-                                                        <span className="text-[10px] text-neutral-400 block">
+                                                        <span className="text-[10px] text-slate-400 block truncate max-w-[150px]">
                                                             {item.role_compatibility}
                                                         </span>
                                                     </div>
                                                 </div>
 
-                                                {/* Action CTA */}
                                                 <div className="flex flex-col gap-2 w-full sm:w-auto lg:w-full">
                                                     <Link
                                                         href={`/projects/${item.id}`}
-                                                        className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-bold shadow-md shadow-[#5448EE]/20 hover:shadow-lg hover:shadow-[#5448EE]/30 transition w-full"
+                                                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition w-full"
                                                     >
                                                         <span>Lihat Proyek</span>
                                                         <ArrowRight className="size-3.5" />
@@ -433,26 +473,26 @@ export default function MatchingIndex({
 
                     {/* TAB 2: FIND CANDIDATES FOR LED PROJECT */}
                     {tab === 'candidates' && myLedProjects.length > 0 && (
-                        <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-5">
                             {/* Project selector dropdown */}
-                            <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                            <div className="glass-card rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white/85">
                                 <div>
-                                    <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-500">
+                                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">
                                         Proyek yang Anda Pimpin
                                     </h3>
-                                    <p className="text-xs text-neutral-600 mt-0.5">
-                                        Pilih proyek untuk mencari calon anggota dengan kecocokan tertinggi.
+                                    <p className="text-xs text-slate-600 mt-0.5">
+                                        Pilih proyek untuk mencari calon anggota dengan kecocokan dan afirmasi fairness tertinggi.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
                                     {myLedProjects.map((p) => (
                                         <Link
                                             key={p.id}
                                             href={`/matching?project_id=${p.id}`}
                                             className={`px-3 py-1.5 rounded-xl text-xs font-bold transition border ${
                                                 activeProjectFilter === p.id
-                                                    ? 'bg-[#5448EE] text-white border-[#5448EE]'
-                                                    : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
+                                                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                                                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                                             }`}
                                         >
                                             {p.title}
@@ -461,18 +501,18 @@ export default function MatchingIndex({
                                 </div>
                             </div>
 
-                            {/* Candidate Cards */}
+                            {/* Candidate Cards Grid */}
                             {candidates && candidates.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {candidates.map((cand, idx) => (
                                         <div
                                             key={idx}
-                                            className="rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-5 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between gap-4"
+                                            className="glass-card rounded-3xl p-5 bg-white/85 hover:bg-white/95 border border-white/85 hover:border-blue-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-4"
                                         >
                                             <div>
                                                 <div className="flex items-start justify-between gap-3">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-11 rounded-full bg-[#EEEDFD] text-[#5448EE] font-bold text-sm flex items-center justify-center border border-[#5448EE]/20 overflow-hidden">
+                                                        <div className="size-11 rounded-2xl bg-blue-500/10 text-blue-700 font-bold text-sm flex items-center justify-center border border-blue-500/20 overflow-hidden shrink-0">
                                                             {cand.avatar ? (
                                                                 <img src={cand.avatar} alt={cand.name} className="size-full object-cover" />
                                                             ) : (
@@ -480,10 +520,10 @@ export default function MatchingIndex({
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <h4 className="text-sm font-bold text-[#0E121B]">
+                                                            <h4 className="text-sm font-bold text-slate-900">
                                                                 {cand.name}
                                                             </h4>
-                                                            <p className="text-xs text-neutral-500">
+                                                            <p className="text-xs text-slate-500">
                                                                 {cand.study_program} • Semester {cand.semester}
                                                             </p>
                                                         </div>
@@ -494,8 +534,7 @@ export default function MatchingIndex({
                                                     </div>
                                                 </div>
 
-                                                {/* Bio / Headline */}
-                                                <p className="text-xs text-neutral-600 mt-3 line-clamp-2 leading-relaxed">
+                                                <p className="text-xs text-slate-600 mt-3 line-clamp-2 leading-relaxed">
                                                     {cand.bio || cand.headline || 'Mahasiswa aktif dengan minat kolaborasi proyek.'}
                                                 </p>
 
@@ -505,7 +544,7 @@ export default function MatchingIndex({
                                                         {cand.skills.slice(0, 5).map((s, sIdx) => (
                                                             <span
                                                                 key={sIdx}
-                                                                className="text-[10px] font-semibold bg-neutral-100 text-neutral-700 px-2 py-0.5 rounded-md"
+                                                                className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md"
                                                             >
                                                                 {s.name} ({s.proficiency}/5)
                                                             </span>
@@ -513,21 +552,21 @@ export default function MatchingIndex({
                                                     </div>
                                                 )}
 
-                                                {/* AI Matching explanation */}
-                                                <div className="mt-3 text-[11px] text-purple-900 bg-[#FAF8FF] border border-[#5448EE]/15 p-2.5 rounded-xl">
-                                                    <span className="font-semibold text-[#5448EE]">Analisis Kecocokan: </span>
+                                                {/* Explanation */}
+                                                <div className="mt-3 text-[11px] text-slate-700 bg-slate-50 border border-slate-200/90 p-2.5 rounded-xl">
+                                                    <span className="font-bold text-blue-700">Analisis Kecocokan: </span>
                                                     {cand.explanation}
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center justify-between pt-3 border-t border-neutral-100 mt-2">
-                                                <span className="text-[11px] text-neutral-500 flex items-center gap-1">
-                                                    <Clock className="size-3.5 text-neutral-400" />
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-200/80 mt-2">
+                                                <span className="text-[11px] text-slate-500 flex items-center gap-1 font-medium">
+                                                    <Clock className="size-3.5 text-slate-400" />
                                                     <span>{cand.availability_hours} jam/minggu</span>
                                                 </span>
                                                 <Link
                                                     href={cand.profile_slug ? `/p/${cand.profile_slug}` : `/projects`}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-[#5448EE] text-white text-xs font-semibold transition"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-semibold transition"
                                                 >
                                                     <span>Lihat Profil</span>
                                                     <ExternalLink className="size-3" />
@@ -537,7 +576,7 @@ export default function MatchingIndex({
                                     ))}
                                 </div>
                             ) : (
-                                <div className="rounded-3xl bg-white border border-neutral-200/80 p-8 text-center text-xs text-neutral-500">
+                                <div className="glass-card rounded-3xl p-8 text-center text-xs text-slate-500 bg-white/85">
                                     Belum ada kandidat aktif yang cocok dengan kriteria proyek ini saat ini.
                                 </div>
                             )}

@@ -43,14 +43,20 @@ class WebPageRenderTest extends TestCase
             'role' => CampusRole::Student,
             'status' => MembershipStatus::Active,
             'verification_status' => VerificationStatus::Verified,
+            'student_number' => '2105001',
         ]);
-        StudentProfile::create([
+        $studentProfile = StudentProfile::create([
             'user_id' => $this->student->id,
             'campus_id' => $this->campus->id,
             'slug' => 'student-test',
             'department' => 'Teknik Informatika',
+            'study_program' => 'Rekayasa Perangkat Lunak',
+            'availability_hours' => 20,
             'visibility' => Visibility::Campus,
         ]);
+        $s1 = \App\Models\Skill::firstOrCreate(['slug' => 'laravel'], ['name' => 'Laravel', 'category' => 'backend']);
+        $s2 = \App\Models\Skill::firstOrCreate(['slug' => 'react'], ['name' => 'React', 'category' => 'frontend']);
+        $studentProfile->skills()->attach([$s1->id, $s2->id]);
 
         $this->campusAdmin = User::factory()->create();
         CampusMembership::create([

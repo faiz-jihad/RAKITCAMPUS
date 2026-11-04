@@ -106,16 +106,18 @@ return new class extends Migration
         });
 
         // Standard Laravel database-notification table.
-        Schema::create('notifications', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->string('type');
-            $table->morphs('notifiable');
-            $table->text('data');
-            $table->timestamp('read_at')->nullable();
-            $table->timestamps();
+        if (!Schema::hasTable('notifications')) {
+            Schema::create('notifications', function (Blueprint $table) {
+                $table->uuid('id')->primary();
+                $table->string('type');
+                $table->morphs('notifiable');
+                $table->text('data');
+                $table->timestamp('read_at')->nullable();
+                $table->timestamps();
 
-            $table->index(['notifiable_type', 'notifiable_id', 'read_at'], 'notifications_unread_idx');
-        });
+                $table->index(['notifiable_type', 'notifiable_id', 'read_at'], 'notifications_unread_idx');
+            });
+        }
     }
 
     public function down(): void

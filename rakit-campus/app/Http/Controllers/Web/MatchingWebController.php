@@ -9,6 +9,7 @@ use App\Models\Campus;
 use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Services\MatchingService;
+use App\Services\Matchmaking\MatchmakingEngine;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -17,6 +18,7 @@ use Inertia\Response;
 class MatchingWebController extends Controller
 {
     public function __construct(
+        protected MatchmakingEngine $matchmakingEngine,
         protected MatchingService $matchingService
     ) {}
 
@@ -90,25 +92,28 @@ class MatchingWebController extends Controller
             $profile->loadMissing(['skills', 'experiences', 'campus']);
         }
 
-        $recommended = $this->matchingService->recommendProjectsForStudent($profile, 12);
+        $hasActiveProject = $user->hasActiveProject();
+        $activeMembership = $user->activeProjectMembership();
+
+        // Mode B: Smart Recommendation Engine
+        $engineRecommendations = $this->matchmakingEngine->recommendProjectsForStudent($user, null, 15);
 
         // Projects where user is leader to find teammates
         $myLedProjects = Project::where('leader_id', $user->id)
-            ->whereIn('status', ['recruiting', 'in_progress'])
+            ->whereIn('status', [ProjectStatus::Recruiting->value, ProjectStatus::InProgress->value])
             ->with(['skills', 'team.recruitment.roles'])
             ->get();
 
         $selectedProjectId = (int) ($request->input('project_id') ?: ($myLedProjects->first()?->id ?? 0));
         $selectedProj = $selectedProjectId > 0 ? $myLedProjects->firstWhere('id', $selectedProjectId) : null;
         
-        $candidatesForLedProject = $selectedProj 
-            ? $this->matchingService->findCandidatesForProject($selectedProj, 12)
-            : collect();
+        $engineCandidates = $selectedProj 
+            ? $this->matchmakingEngine->recommendCandidatesForProject($selectedProj, 12)
+            : [];
 
-        // Format recommended projects
-        $recommendedData = $recommended->map(function ($item) {
+        // Format recommended projects using the 6-component scoring formula
+        $recommendedData = collect($engineRecommendations)->map(function ($item) {
             $p = $item['project'];
-            $m = $item['match'];
             return [
                 'id' => $p->id,
                 'title' => $p->title,
@@ -120,47 +125,50 @@ class MatchingWebController extends Controller
                 'status' => $p->status?->value ?? 'recruiting',
                 'open_roles_count' => $p->team?->recruitment?->roles?->count() ?? 0,
                 'open_roles' => $p->team?->recruitment?->roles?->pluck('name')->all() ?? [],
-                'match_score' => (int) ($m['match_score'] ?? $item['score'] ?? 0),
-                'matched_skills' => $m['matched_skills'] ?? [],
-                'missing_skills' => $m['missing_skills'] ?? [],
-                'role_compatibility' => $m['role_compatibility'] ?? 'Cocok',
-                'explanation' => $m['explanation'] ?? 'Kecocokan berdasarkan profil dan keahlian Anda.',
-                'breakdown' => $m['breakdown'] ?? [
-                    'skills' => 0,
-                    'roles' => 0,
-                    'interests' => 0,
-                    'experience' => 0,
-                    'availability' => 0,
+                'match_score' => $item['match_score'],
+                'matched_skills' => $item['matched_skills'] ?? [],
+                'missing_skills' => $item['missing_skills'] ?? [],
+                'complementary_skills' => $item['complementary_skills'] ?? [],
+                'role_compatibility' => !empty($item['matched_roles']) ? implode(', ', $item['matched_roles']) : 'Rekomendasi Fleksibel',
+                'explanation' => $item['explanation'] ?? 'Kecocokan dihitung secara adil berdasarkan keahlian, peran, minat, dan ketersediaan waktu Anda.',
+                'breakdown' => [
+                    'skills' => $item['breakdown']['skill'] ?? 70,
+                    'roles' => $item['breakdown']['role'] ?? 70,
+                    'interests' => $item['breakdown']['interest'] ?? 70,
+                    'experience' => $item['breakdown']['fairness'] ?? 70,
+                    'availability' => $item['breakdown']['availability'] ?? 70,
+                    'diversity' => $item['breakdown']['diversity'] ?? 70,
                 ],
             ];
         });
 
         // Format candidates
-        $candidatesData = $candidatesForLedProject->map(function ($cand) {
-            $st = $cand['student'];
-            $m = $cand['match'];
+        $candidatesData = collect($engineCandidates)->map(function ($cand) {
+            $u = $cand['user'];
+            $st = $u->profile;
             return [
-                'user_id' => $st->user_id,
-                'profile_slug' => $st->slug,
-                'name' => $st->user?->name ?? 'Mahasiswa',
-                'email' => $st->user?->email,
-                'avatar' => $st->user?->avatar,
-                'department' => $st->department ?? 'Teknik',
-                'study_program' => $st->study_program ?? 'Teknik Informatika',
-                'semester' => $st->semester ?? 4,
-                'headline' => $st->headline ?? 'Mahasiswa Aktif',
-                'bio' => $st->bio,
-                'availability_hours' => $st->availability_hours ?? 10,
-                'skills' => $st->skills->map(fn ($s) => [
+                'user_id' => $u->id,
+                'profile_slug' => $st?->slug ?? ('user-' . $u->id),
+                'name' => $u->name,
+                'email' => $u->email,
+                'avatar' => $u->avatar,
+                'department' => $st?->department ?? 'Teknik',
+                'study_program' => $st?->study_program ?? 'Teknik Informatika',
+                'semester' => $st?->semester ?? 4,
+                'headline' => $st?->headline ?? 'Mahasiswa Aktif',
+                'bio' => $st?->bio,
+                'availability_hours' => $st?->availability_hours ?? 10,
+                'skills' => $st ? $st->skills->map(fn ($s) => [
                     'name' => $s->name,
                     'proficiency' => $s->pivot?->proficiency ?? 1,
-                ])->all(),
-                'preferred_roles' => $st->preferred_roles ?? [],
-                'score' => (int) ($m['match_score'] ?? $cand['score'] ?? 0),
-                'matched_skills' => $m['matched_skills'] ?? [],
-                'missing_skills' => $m['missing_skills'] ?? [],
-                'explanation' => $m['explanation'] ?? 'Kandidat memiliki keahlian relevan.',
-                'breakdown' => $m['breakdown'] ?? [],
+                ])->all() : [],
+                'preferred_roles' => $st?->preferred_roles ?? [],
+                'score' => $cand['match_score'],
+                'matched_skills' => $cand['matched_skills'] ?? [],
+                'missing_skills' => $cand['missing_skills'] ?? [],
+                'complementary_skills' => $cand['complementary_skills'] ?? [],
+                'explanation' => $cand['explanation'] ?? 'Kandidat memiliki keahlian dan peran yang sesuai dengan kebutuhan proyek.',
+                'breakdown' => $cand['breakdown'] ?? [],
             ];
         });
 
@@ -172,13 +180,19 @@ class MatchingWebController extends Controller
         ]);
 
         return Inertia::render('matching/index', [
-            'recommendedProjects' => $recommendedData,
+            'recommendedProjects' => $recommendedData->values(),
             'myLedProjects' => $ledProjectsData,
             'selectedProjectId' => $selectedProjectId,
-            'candidates' => $candidatesData,
+            'candidates' => $candidatesData->values(),
             'profileCompletion' => $profile->completion(),
             'userSkills' => $profile->skills->pluck('name')->all(),
             'isGuest' => false,
+            'hasActiveProject' => $hasActiveProject,
+            'activeProject' => $activeMembership ? [
+                'id' => $activeMembership->team?->project?->id,
+                'title' => $activeMembership->team?->project?->title,
+                'role_name' => $activeMembership->role_name,
+            ] : null,
         ]);
     }
 }

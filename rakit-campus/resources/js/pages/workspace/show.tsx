@@ -362,7 +362,7 @@ export default function WorkspaceShow({
     };
 
     const columns = [
-        { key: 'todo', label: 'To Do', badgeColor: 'bg-purple-100 text-[#5448EE]' },
+        { key: 'todo', label: 'To Do', badgeColor: 'bg-blue-100 text-blue-700' },
         { key: 'in_progress', label: 'In Process', badgeColor: 'bg-indigo-100 text-indigo-700' },
         { key: 'in_review', label: 'In Review', badgeColor: 'bg-amber-100 text-amber-800' },
         { key: 'completed', label: 'Completed', badgeColor: 'bg-emerald-100 text-emerald-800' },
@@ -371,8 +371,8 @@ export default function WorkspaceShow({
     const priorityBadge: Record<string, { label: string; cls: string }> = {
         urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
         high: { label: 'High Priority', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-        medium: { label: 'Standard', cls: 'bg-[#EEEDFD] text-[#5448EE] border-[#5448EE]/20' },
-        low: { label: 'Low', cls: 'bg-neutral-100 text-neutral-600 border-neutral-200' },
+        medium: { label: 'Standard', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+        low: { label: 'Low', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
     };
 
     const filterTasks = (list: any[]) => {
@@ -390,9 +390,9 @@ export default function WorkspaceShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Workspace & Roadmap — ${team.name}`} />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24 selection:bg-[#5448EE] selection:text-white">
-                {/* Atmosphere background radial glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1100px] h-[340px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden selection:bg-blue-600 selection:text-white">
+                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
                     {/* Top Row: Back & Team Identity */}
@@ -400,21 +400,21 @@ export default function WorkspaceShow({
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/workspace"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#5448EE] shadow-xs transition"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 shadow-2xs transition"
                             >
                                 <ArrowLeft className="size-3.5" />
                                 <span>Ruang Kerja Tim</span>
                             </Link>
 
                             <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-neutral-400">/</span>
-                                <h1 className="text-xl sm:text-2xl font-extrabold text-[#0E121B] tracking-tight">
+                                <span className="text-xs font-semibold text-slate-400">/</span>
+                                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                                     {team.name}
                                 </h1>
                                 {project && (
                                     <Link
                                         href={`/projects/${project.id}`}
-                                        className="text-xs px-2.5 py-0.5 rounded-full bg-[#EEEDFD] text-[#5448EE] font-semibold hover:underline"
+                                        className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-semibold hover:underline border border-blue-200/80"
                                     >
                                         Proyek: {project.title}
                                     </Link>
@@ -425,15 +425,15 @@ export default function WorkspaceShow({
                         {/* Top Action Pills: Capacity, Progress, & Add Task */}
                         <div className="flex flex-wrap items-center gap-3">
                             {/* Capacity Pill */}
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-white border border-neutral-200/90 text-neutral-700 shadow-2xs">
-                                <Users className="size-3.5 text-neutral-400" />
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
+                                <Users className="size-3.5 text-slate-400" />
                                 <span>{team.members?.length || 1} / {team.capacity} Anggota</span>
                                 {isFull ? (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-extrabold">
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-black">
                                         Penuh
                                     </span>
                                 ) : (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-extrabold">
+                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-black">
                                         Slot Terbuka
                                     </span>
                                 )}
@@ -445,7 +445,7 @@ export default function WorkspaceShow({
                                     setTargetColumn('todo');
                                     setTaskModalOpen(true);
                                 }}
-                                className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/25 transition active:scale-95"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
                             >
                                 <Plus className="size-4" />
                                 <span>Tambah Tugas</span>
@@ -465,7 +465,7 @@ export default function WorkspaceShow({
                     {isLecturer ? (
                         /* Panel Input Khusus Dosen */
                         <div className="bg-gradient-to-r from-[#181135] via-[#231752] to-[#181135] text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#5448EE]/20 blur-3xl pointer-events-none" />
+                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#2563EB]/20 blur-3xl pointer-events-none" />
 
                             <div className="relative z-10 flex flex-col gap-6">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
@@ -546,7 +546,7 @@ export default function WorkspaceShow({
                                             <button
                                                 type="submit"
                                                 disabled={savingEval}
-                                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/30 transition active:scale-95 disabled:opacity-50"
+                                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/30 transition active:scale-95 disabled:opacity-50"
                                             >
                                                 <Save className="size-3.5" />
                                                 <span>{savingEval ? 'Menyimpan...' : 'Simpan Nilai & Catatan'}</span>
@@ -574,7 +574,7 @@ export default function WorkspaceShow({
                                     </div>
 
                                     {project.lecturer_evaluation && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20 font-bold text-xs">
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20 font-bold text-xs">
                                             <Award className="size-3.5" />
                                             <span>Nilai / Status: {project.lecturer_evaluation}</span>
                                         </div>
@@ -599,7 +599,7 @@ export default function WorkspaceShow({
                                         <h2 className="text-base font-extrabold text-[#0E121B]">
                                             Roadmap & Jadwal Pengerjaan Tim
                                         </h2>
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20">
                                             Jadwal Bertahap
                                         </span>
                                     </div>
@@ -637,7 +637,7 @@ export default function WorkspaceShow({
                                     >
                                         <div>
                                             <div className="flex items-center justify-between gap-1 mb-2">
-                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#5448EE]/10 text-[#5448EE] font-extrabold">
+                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] font-extrabold">
                                                     Sprint {idx + 1}
                                                 </span>
                                                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-neutral-600 font-semibold capitalize">
@@ -668,7 +668,7 @@ export default function WorkspaceShow({
                                             </div>
                                             <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
                                                 <div
-                                                    className="bg-[#5448EE] h-1.5 rounded-full transition-all duration-500"
+                                                    className="bg-[#2563EB] h-1.5 rounded-full transition-all duration-500"
                                                     style={{ width: `${m.progress || 0}%` }}
                                                 />
                                             </div>
@@ -687,7 +687,7 @@ export default function WorkspaceShow({
                                 onClick={() => setActiveView('board')}
                                 className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold transition ${
                                     activeView === 'board'
-                                        ? 'bg-white shadow-xs text-[#5448EE]'
+                                        ? 'bg-white shadow-xs text-[#2563EB]'
                                         : 'text-neutral-600 hover:text-neutral-900'
                                 }`}
                             >
@@ -698,7 +698,7 @@ export default function WorkspaceShow({
                                 onClick={() => setActiveView('list')}
                                 className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold transition ${
                                     activeView === 'list'
-                                        ? 'bg-white shadow-xs text-[#5448EE]'
+                                        ? 'bg-white shadow-xs text-[#2563EB]'
                                         : 'text-neutral-600 hover:text-neutral-900'
                                 }`}
                             >
@@ -716,7 +716,7 @@ export default function WorkspaceShow({
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari tugas di papan..."
-                                    className="w-full pl-9 pr-3.5 py-1.5 rounded-full border border-neutral-200/80 text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                    className="w-full pl-9 pr-3.5 py-1.5 rounded-full border border-neutral-200/80 text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                 />
                             </div>
                         </div>
@@ -749,7 +749,7 @@ export default function WorkspaceShow({
                                                     setTargetColumn(col.key);
                                                     setTaskModalOpen(true);
                                                 }}
-                                                className="p-1 rounded-full text-neutral-400 hover:text-[#5448EE] hover:bg-white transition"
+                                                className="p-1 rounded-full text-neutral-400 hover:text-[#2563EB] hover:bg-white transition"
                                                 title={`Tambah tugas ke ${col.label}`}
                                             >
                                                 <Plus className="size-4" />
@@ -779,7 +779,7 @@ export default function WorkspaceShow({
                                                                     {/* Edit button */}
                                                                     <button
                                                                         onClick={() => handleOpenEditModal(task)}
-                                                                        className="p-1 rounded text-neutral-400 hover:text-[#5448EE] hover:bg-neutral-50 transition"
+                                                                        className="p-1 rounded text-neutral-400 hover:text-[#2563EB] hover:bg-neutral-50 transition"
                                                                         title="Edit Tugas"
                                                                     >
                                                                         <Edit3 className="size-3" />
@@ -789,7 +789,7 @@ export default function WorkspaceShow({
                                                                     <select
                                                                         value={task.status}
                                                                         onChange={(e) => handleMoveStatus(task, e.target.value)}
-                                                                        className="text-[10px] font-semibold bg-neutral-50 border border-neutral-200/80 rounded-full px-2 py-0.5 text-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#5448EE] cursor-pointer"
+                                                                        className="text-[10px] font-semibold bg-neutral-50 border border-neutral-200/80 rounded-full px-2 py-0.5 text-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
                                                                     >
                                                                         <option value="todo">To Do</option>
                                                                         <option value="in_progress">In Process</option>
@@ -826,7 +826,7 @@ export default function WorkspaceShow({
                                                             </div>
 
                                                             {task.milestone && (
-                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#5448EE]/10 text-[#5448EE] font-semibold truncate max-w-[110px]">
+                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] font-semibold truncate max-w-[110px]">
                                                                     {task.milestone.title?.split(':')[0] || task.milestone.title}
                                                                 </span>
                                                             )}
@@ -845,7 +845,7 @@ export default function WorkspaceShow({
                                                             setTargetColumn(col.key);
                                                             setTaskModalOpen(true);
                                                         }}
-                                                        className="mt-2 text-[11px] text-[#5448EE] font-semibold hover:underline"
+                                                        className="mt-2 text-[11px] text-[#2563EB] font-semibold hover:underline"
                                                     >
                                                         + Buat tugas
                                                     </button>
@@ -877,7 +877,7 @@ export default function WorkspaceShow({
                                                     className="p-3.5 border border-neutral-200/70 rounded-2xl flex items-center justify-between gap-3 hover:bg-neutral-50/70 transition"
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className="size-2 rounded-full bg-[#5448EE]" />
+                                                        <div className="size-2 rounded-full bg-[#2563EB]" />
                                                         <div>
                                                             <h4 className="text-xs font-bold text-neutral-900">{task.title}</h4>
                                                             <p className="text-[11px] text-neutral-500">{task.description}</p>
@@ -890,7 +890,7 @@ export default function WorkspaceShow({
                                                         </span>
                                                         <button
                                                             onClick={() => handleOpenEditModal(task)}
-                                                            className="p-1 rounded text-neutral-400 hover:text-[#5448EE] transition"
+                                                            className="p-1 rounded text-neutral-400 hover:text-[#2563EB] transition"
                                                             title="Edit Tugas"
                                                         >
                                                             <Edit3 className="size-3.5" />
@@ -946,7 +946,7 @@ export default function WorkspaceShow({
                                         onChange={(e) => setTaskTitle(e.target.value)}
                                         placeholder="Contoh: Implementasi Layar Auth di Flutter"
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     />
                                 </div>
 
@@ -959,7 +959,7 @@ export default function WorkspaceShow({
                                         onChange={(e) => setTaskDescription(e.target.value)}
                                         placeholder="Rincian subtask, referensi desain, atau acceptance criteria..."
                                         rows={3}
-                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     />
                                 </div>
 
@@ -971,7 +971,7 @@ export default function WorkspaceShow({
                                         <select
                                             value={taskPriority}
                                             onChange={(e) => setTaskPriority(e.target.value)}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                         >
                                             <option value="urgent">Urgent</option>
                                             <option value="high">High</option>
@@ -987,7 +987,7 @@ export default function WorkspaceShow({
                                         <select
                                             value={targetColumn}
                                             onChange={(e) => setTargetColumn(e.target.value)}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                         >
                                             <option value="todo">To Do</option>
                                             <option value="in_progress">In Process</option>
@@ -1004,7 +1004,7 @@ export default function WorkspaceShow({
                                     <select
                                         value={taskMilestone}
                                         onChange={(e) => setTaskMilestone(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     >
                                         <option value="">-- Tanpa Sprint Khusus --</option>
                                         {milestones.map((m: any) => (
@@ -1022,7 +1022,7 @@ export default function WorkspaceShow({
                                     <select
                                         value={taskAssignee}
                                         onChange={(e) => setTaskAssignee(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     >
                                         <option value="">-- Belum Ditugaskan (Unassigned) --</option>
                                         {allMembers.map((m: any) => (
@@ -1044,7 +1044,7 @@ export default function WorkspaceShow({
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-6 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                        className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
                                     >
                                         {submitting ? 'Menyimpan...' : 'Tambah Tugas'}
                                     </button>
@@ -1083,7 +1083,7 @@ export default function WorkspaceShow({
                                         value={taskToEdit.title}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, title: e.target.value })}
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none transition"
                                     />
                                 </div>
 
@@ -1095,7 +1095,7 @@ export default function WorkspaceShow({
                                         value={taskToEdit.description || ''}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, description: e.target.value })}
                                         rows={3}
-                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] outline-none transition"
+                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none transition"
                                     />
                                 </div>
 
@@ -1190,7 +1190,7 @@ export default function WorkspaceShow({
                                         <button
                                             type="submit"
                                             disabled={submitting}
-                                            className="px-6 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                            className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
                                         >
                                             {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                                         </button>

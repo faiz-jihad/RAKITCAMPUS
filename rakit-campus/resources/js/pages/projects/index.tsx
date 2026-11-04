@@ -81,11 +81,11 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
             case 'recruiting':
                 return 'bg-emerald-50 text-emerald-700 border-emerald-200';
             case 'in_progress':
-                return 'bg-[#EEEDFD] text-[#5448EE] border-[#5448EE]/20';
+                return 'bg-blue-50 text-blue-700 border-blue-200';
             case 'completed':
-                return 'bg-neutral-100 text-neutral-700 border-neutral-200';
+                return 'bg-slate-100 text-slate-700 border-slate-200';
             default:
-                return 'bg-neutral-50 text-neutral-600 border-neutral-200';
+                return 'bg-slate-50 text-slate-600 border-slate-200';
         }
     };
 
@@ -93,23 +93,25 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Project Hub — Temukan & Bangun Proyek Kolaborasi Kampus" />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24">
-                {/* Background glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[950px] h-[320px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+            {/* Modern Glassmorphic Canvas */}
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-20 overflow-hidden font-sans">
+                {/* Natural ambient light diffusion */}
+                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-8">
-                    {/* Header Banner */}
-                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-2 border-b border-neutral-200/80">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
+                    {/* Header Banner Glass Surface */}
+                    <div className="glass-surface rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-6 relative overflow-hidden">
                         <div className="max-w-3xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold tracking-wide mb-3 border border-[#5448EE]/20 shadow-2xs">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold tracking-wide mb-3">
                                 <Compass className="size-3.5" />
                                 <span>Kolaborasi & Proyek Mahasiswa</span>
                             </div>
-                            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#0E121B]">
-                                Cari Proyek
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
+                                Cari Proyek Kolaborasi
                             </h1>
-                            <p className="text-sm text-neutral-600 mt-2 leading-relaxed">
-                                Temukan ide proyek seru, tugas kuliah, atau tim riset dan startup kampus. Kamu bisa gabung ke tim yang lagi cari anggota atau mulai proyek kamu sendiri!
+                            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                                Temukan ide proyek tugas akhir, kompetisi, riset kampus, atau startup. Bergabung ke tim yang sedang merekrut atau mulai inisiatif proyek baru Anda!
                             </p>
                         </div>
 
@@ -117,7 +119,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                         <div className="flex items-center gap-3 shrink-0">
                             <Link
                                 href="/projects/create"
-                                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs sm:text-sm font-bold shadow-md shadow-[#5448EE]/20 hover:shadow-lg transition"
+                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                             >
                                 <Plus className="size-4" />
                                 <span>Buat Proyek Baru</span>
@@ -126,15 +128,15 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                     </div>
 
                     {/* Filter and Search Bar */}
-                    <div className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <form onSubmit={handleSearch} className="relative w-full md:w-96">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-neutral-400" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="Cari judul proyek, topik riset, teknologi..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2.5 bg-neutral-50/70 border border-neutral-200/90 rounded-xl text-xs sm:text-sm text-neutral-900 placeholder-neutral-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
                             />
                         </form>
 
@@ -142,7 +144,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                             <select
                                 value={category}
                                 onChange={(e) => handleFilterChange(e.target.value, status)}
-                                className="text-xs bg-white border border-neutral-200/90 rounded-xl px-3.5 py-2.5 text-neutral-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             >
                                 <option value="">Semua Kategori</option>
                                 {categories.map((c) => (
@@ -155,7 +157,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                             <select
                                 value={status}
                                 onChange={(e) => handleFilterChange(category, e.target.value)}
-                                className="text-xs bg-white border border-neutral-200/90 rounded-xl px-3.5 py-2.5 text-neutral-700 font-medium focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             >
                                 <option value="">Semua Status</option>
                                 {statuses.map((s) => (
@@ -173,7 +175,7 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                         setStatus('');
                                         router.get('/projects');
                                     }}
-                                    className="px-3 py-2 text-xs font-semibold text-neutral-500 hover:text-neutral-900"
+                                    className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
                                 >
                                     Reset Filter
                                 </button>
@@ -183,45 +185,40 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
 
                     {/* Projects Grid */}
                     {projects.data.length === 0 ? (
-                        <div className="rounded-3xl bg-white border border-neutral-200/80 p-14 text-center shadow-xs">
-                            <div className="size-14 rounded-2xl bg-[#EEEDFD] text-[#5448EE] flex items-center justify-center mx-auto mb-4">
+                        <div className="glass-surface rounded-3xl p-10 text-center max-w-lg mx-auto flex flex-col items-center">
+                            <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center mb-4 shadow-2xs">
                                 <FolderKanban className="size-7" />
                             </div>
-                            <h3 className="text-base font-bold text-neutral-800">
+                            <h3 className="text-base font-bold text-slate-900">
                                 Tidak Ada Proyek yang Ditemukan
                             </h3>
-                            <p className="text-xs text-neutral-500 max-w-sm mx-auto mt-1 leading-relaxed">
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                 {search || category || status
                                     ? 'Coba sesuaikan kata kunci atau bersihkan filter untuk menampilkan lebih banyak proyek.'
                                     : 'Belum ada proyek yang diterbitkan. Jadilah yang pertama menginisiasi proyek kolaborasi di kampus Anda!'}
                             </p>
                             <Link
                                 href="/projects/create"
-                                className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-bold shadow-md shadow-[#5448EE]/20 transition"
+                                className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
                             >
                                 <Plus className="size-3.5" />
-                                <span>Buat Proyek Baru</span>
+                                <span>Buat Proyek Pertama</span>
                             </Link>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
                                 return (
                                     <div
                                         key={proj.id}
-                                        className="rounded-3xl bg-white border border-neutral-200/80 hover:border-[#5448EE]/40 p-6 shadow-sm hover:shadow-xl hover:shadow-[#5448EE]/10 transition-all duration-300 flex flex-col justify-between gap-5 group"
+                                        className="glass-card rounded-2xl p-6 flex flex-col justify-between gap-5 group"
                                     >
                                         <div>
-                                            {/* Badges row with 3D Icon */}
+                                            {/* Badges row with clean squircle */}
                                             <div className="flex items-start justify-between gap-2 mb-3">
                                                 <div className="flex items-center gap-2">
-                                                    <Premium3dIcon
-                                                        icon={FolderKanban}
-                                                        variant="purple"
-                                                        size="sm"
-                                                    />
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] border border-[#5448EE]/20">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                                         {proj.category.replace('_', ' ')}
                                                     </span>
                                                 </div>
@@ -231,14 +228,14 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                             </div>
 
                                             {/* Title */}
-                                            <Link href={`/projects/${proj.id}`} className="block group-hover:text-[#5448EE] transition">
-                                                <h3 className="text-base font-bold text-[#0E121B] leading-snug line-clamp-2">
+                                            <Link href={`/projects/${proj.id}`} className="block group-hover:text-blue-600 transition">
+                                                <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
                                                     {proj.title}
                                                 </h3>
                                             </Link>
 
                                             {/* Description */}
-                                            <p className="text-xs text-neutral-600 mt-2 line-clamp-2 leading-relaxed">
+                                            <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
                                                 {proj.short_description}
                                             </p>
 
@@ -267,13 +264,13 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                                     {proj.tech_stack.slice(0, 4).map((tech, i) => (
                                                         <span
                                                             key={i}
-                                                            className="text-[10px] font-semibold bg-neutral-100 text-neutral-700 px-2.5 py-0.5 rounded-full"
+                                                            className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md border border-slate-200/60"
                                                         >
                                                             {tech}
                                                         </span>
                                                     ))}
                                                     {proj.tech_stack.length > 4 && (
-                                                        <span className="text-[10px] text-neutral-400 font-semibold self-center">
+                                                        <span className="text-[10px] text-slate-400 font-semibold self-center">
                                                             +{proj.tech_stack.length - 4}
                                                         </span>
                                                     )}
@@ -282,17 +279,17 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                         </div>
 
                                         {/* Card Footer */}
-                                        <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-xs">
-                                            <div className="flex items-center gap-1.5 text-neutral-500">
-                                                <Users className="size-3.5 text-neutral-400" />
-                                                <span className="font-semibold text-neutral-700">
+                                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                                            <div className="flex items-center gap-1.5 text-slate-500">
+                                                <Users className="size-3.5 text-slate-400" />
+                                                <span className="font-semibold text-slate-700">
                                                     {proj.team?.members?.length || 1} Anggota
                                                 </span>
                                             </div>
 
                                             <Link
                                                 href={`/projects/${proj.id}`}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-neutral-900 group-hover:bg-[#5448EE] text-white text-xs font-bold transition shadow-2xs"
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs"
                                             >
                                                 <span>Detail</span>
                                                 <ArrowRight className="size-3" />
@@ -313,8 +310,8 @@ export default function ProjectIndex({ projects, filters, categories = [], statu
                                     href={`/projects?page=${i + 1}${category ? `&category=${category}` : ''}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}`}
                                     className={`size-9 rounded-xl flex items-center justify-center text-xs font-bold transition ${
                                         projects.current_page === i + 1
-                                            ? 'bg-[#5448EE] text-white shadow-xs'
-                                            : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50'
+                                            ? 'bg-blue-600 text-white shadow-xs'
+                                            : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
                                     }`}
                                 >
                                     {i + 1}

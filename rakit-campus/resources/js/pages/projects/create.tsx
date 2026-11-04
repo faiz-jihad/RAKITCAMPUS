@@ -120,16 +120,16 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Buat Proyek Baru — RAKIT Campus" />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24">
+            <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] via-white to-[#F1F5F9] relative text-[#0E121B] pb-24">
                 {/* Background glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[300px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[850px] h-[300px] bg-gradient-to-b from-[#2563EB]/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
                     {/* Back link */}
                     <div>
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#5448EE] hover:border-[#5448EE]/30 shadow-sm transition"
+                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#2563EB] hover:border-[#2563EB]/30 shadow-sm transition"
                         >
                             <ArrowLeft className="size-3.5" />
                             <span>Kembali ke Cari Proyek</span>
@@ -137,10 +137,10 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                     </div>
 
                     {/* Main Form Card */}
-                    <div className="rounded-3xl bg-white border border-neutral-200/80 shadow-lg shadow-[#5448EE]/5 p-6 sm:p-10 relative overflow-hidden">
+                    <div className="rounded-3xl bg-white border border-neutral-200/80 shadow-lg shadow-[#2563EB]/5 p-6 sm:p-10 relative overflow-hidden">
                         {/* Header */}
                         <div className="border-b border-neutral-100 pb-6 mb-8">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold mb-3 border border-[#5448EE]/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold mb-3 border border-[#2563EB]/20">
                                 <Sparkles className="size-3.5" />
                                 <span>Buka Ide Proyek & Rekrut Teman Tim</span>
                             </div>
@@ -168,15 +168,15 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                         <form onSubmit={submit} className="flex flex-col gap-6">
                             {/* Kelas Perkuliahan (Jika Terdaftar) */}
                             {enrolledClasses && enrolledClasses.length > 0 && (
-                                <div className="p-4 rounded-2xl bg-[#FAF8FF] border border-[#5448EE]/20">
-                                    <label className="block text-xs font-bold text-[#5448EE] mb-1.5 flex items-center gap-1.5">
-                                        <GraduationCap className="size-4 text-[#5448EE]" />
+                                <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/20">
+                                    <label className="block text-xs font-bold text-[#2563EB] mb-1.5 flex items-center gap-1.5">
+                                        <GraduationCap className="size-4 text-[#2563EB]" />
                                         <span>Kaitkan ke Kelas Kuliah (Opsional)</span>
                                     </label>
                                     <select
                                         value={data.academic_class_id}
                                         onChange={(e) => setData('academic_class_id', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE]"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
                                     >
                                         <option value="">Proyek Mandiri (Bukan Tugas Kelas)</option>
                                         {enrolledClasses.map((cls) => (
@@ -202,7 +202,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     onChange={(e) => setData('title', e.target.value)}
                                     placeholder="Contoh: AgriTani — Sistem IoT & AI Monitoring Kebun Mangga"
                                     required
-                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                 />
                             </div>
 
@@ -217,7 +217,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     placeholder="Jelaskan dalam 1-2 kalimat apa yang mau dibuat tim kamu dan apa manfaatnya..."
                                     required
                                     rows={2}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                 />
                             </div>
 
@@ -230,7 +230,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     <select
                                         value={data.category}
                                         onChange={(e) => setData('category', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                     >
                                         {categories.map((c) => (
                                             <option key={c} value={c}>
@@ -250,7 +250,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                         max={15}
                                         value={data.capacity}
                                         onChange={(e) => setData('capacity', parseInt(e.target.value, 10))}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                     />
                                 </div>
 
@@ -261,7 +261,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     <select
                                         value={data.visibility}
                                         onChange={(e) => setData('visibility', e.target.value)}
-                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                     >
                                         <option value="campus">Hanya Kampus Saya</option>
                                         <option value="public">Publik (Bisa Antar-Kampus)</option>
@@ -281,7 +281,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                         value={data.tech_stack_input}
                                         onChange={(e) => setData('tech_stack_input', e.target.value)}
                                         placeholder="Contoh: Laravel, React, Tailwind CSS, PostgreSQL, Python"
-                                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                     />
                                 </div>
                                 <span className="text-[11px] text-neutral-400 mt-1 block">
@@ -299,7 +299,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     value={data.required_skills_input}
                                     onChange={(e) => setData('required_skills_input', e.target.value)}
                                     placeholder="Contoh: UI/UX Design: 4, Backend Development: 3, IoT Architecture: 3"
-                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                 />
                             </div>
 
@@ -313,7 +313,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                     onChange={(e) => setData('description', e.target.value)}
                                     rows={4}
                                     placeholder="Ceritakan latar belakang ide, target hasil yang ingin dicapai tim, dan peran apa aja yang lagi kamu cari..."
-                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#5448EE]/20 focus:border-[#5448EE] transition"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-neutral-200 bg-white text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB] transition"
                                 />
                             </div>
 
@@ -328,7 +328,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="px-6 py-2.5 rounded-full bg-[#5448EE] hover:bg-[#4336D9] text-white text-xs font-bold shadow-md shadow-[#5448EE]/20 hover:shadow-lg transition disabled:opacity-50 flex items-center gap-2"
+                                    className="px-6 py-2.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-md shadow-[#2563EB]/20 hover:shadow-lg transition disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {submitting ? (
                                         <>

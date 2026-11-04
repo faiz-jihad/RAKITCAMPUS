@@ -54,23 +54,40 @@ Aplikasi telah terpasang dan siap uji secara langsung di server production:
 
 ## 3. Fitur Unggulan
 
-### A. Manajemen Kelas & Bimbingan Dosen (`/classes`)
-* **Kode Gabung Instan:** Dosen membuat kelas mata kuliah dan sistem menerbitkan kode unik 6 digit (contoh: `LKYFZ4`). Mahasiswa cukup memasukkan kode untuk bergabung.
-* **Smart Team Balancing (Anti-Ketimpangan):**
-  * Membagi mahasiswa yang belum berkelompok secara otomatis dan adil berdasarkan keahlian komplementer.
-  * Mencegah monopoli satu keahlian dalam satu tim (maksimal 2 spesialis sejenis).
-  * Menghindari pengelompokan "teman satu geng" agar semua kelompok memiliki daya saing yang setara.
-  * Fitur *Rombak Seluruh Kelas* untuk restrukturisasi tim darurat bila terjadi ketimpangan.
-* **Catatan Bimbingan & Evaluasi:** Dosen dapat menerbitkan catatan bimbingan umum maupun bimbingan khusus untuk tim proyek tertentu.
+### A. Smart Fair Matchmaking System (`App\Services\Matchmaking`)
+* **Aturan Ketat 1 Mahasiswa 1 Proyek Aktif (Rule 1):**
+  * Mahasiswa hanya dapat menjadi anggota aktif pada **1 proyek aktif** dalam satu waktu (berlaku lintas Project Hub dan Competition Hub).
+  * Menghindari ketimpangan beban kerja, monopoli talenta, dan *free-riding*.
+  * Dijamin dengan transaksi database atomik dan *pessimistic locking* (`lockForUpdate`) untuk mencegah *race condition*.
+  * Ketika proyek selesai secara resmi (*completed*), status mahasiswa terbebas untuk bergabung ke proyek berikutnya.
+* **Model Pembobotan Kecocokan 6-Komponen (Formula Transparan):**
+  $$\text{Final Score} = (0.30 \times \text{Skill}) + (0.20 \times \text{Role}) + (0.15 \times \text{Interest}) + (0.10 \times \text{Availability}) + (0.15 \times \text{Diversity}) + (0.10 \times \text{Fairness})$$
+  * **Skill Compatibility (30%):** Cakupan skill kunci, level profisiensi (pemula/menengah/mahir), dan fleksibilitas proyek pemula.
+  * **Role Compatibility (20%):** Keselarasan peran yang diminati dengan posisi rekrutmen yang lowong.
+  * **Interest Compatibility (15%):** Kesesuaian minat topik mahasiswa dengan kategori proyek.
+  * **Availability Compatibility (10%):** Keselarasan jam komitmen mingguan.
+  * **Team Diversity (15%):** Komposisi komplementer (menghindari penumpukan peran sejenis).
+  * **Opportunity Fairness (10%):** Afirmasi kesempatan bagi mahasiswa proyek perdana (*first-timers*) dan mahasiswa yang pernah ditolak agar tidak tereksklusi berulang kali.
+* **Tiga Moda Matchmaking:**
+  1. **Mode A — Manual Matching:** Ketua tim memilih kandidat secara manual dengan validasi kelayakan dan kuota ketat.
+  2. **Mode B — Smart Recommendation:** Rekomendasi personal bagi mahasiswa dan ketua tim dengan transparansi alasan & radar skor.
+  3. **Mode C — Assisted Team Allocation:** Simulasi alokasi kelas cerdas bagi dosen pengampu, lengkap dengan pratinjau matriks, metriks fairness, dan persetujuan dosen sebelum aktivasi keanggotaan.
+* **Fairness Analytics Dashboard (`/classes/{id}`):**
+  * Metriks real-time dari database: Tingkat Partisipasi (%), Tingkat Keterisian Kuota (%), Afirmasi Mahasiswa Perdana (%), Rata-rata Waktu Menunggu, dan Rasio Ketimpangan Permintaan.
 
-### B. Matchmaking Rekan Sekelas & Proyek Terbuka (`/matching`)
-* **Scoring Komplementer Transparan:** Menampilkan persentase kecocokan (e.g. `92% Cocok Komplementer`) disertai penjelasan detail keahlian yang saling melengkapi.
-* **Validasi Sinergi Ketat:** Sistem menolak undangan rekan jika kuota kelompok telah penuh atau jika peran yang diundang akan menyebabkan monopoli spesialisasi.
+### B. Arsitektur Database & Bebas N+1 Query
+* **Strict Anti N+1 Prevention:** Mengaktifkan `Model::preventLazyLoading(!app()->isProduction())` di `AppServiceProvider` yang menggagalkan eksekusi bila terjadi query N+1.
+* Seluruh kueri pada controller, service, dan resource menggunakan *eager loading* teroptimasi (`with(...)`, `loadMissing(...)`, `withCount(...)`), meminimalkan beban basis data.
+* **Hasil Pengujian Otomatis:** 50 Test Cases Lulus 100% (232 assertions) termasuk test alokasi, pembobotan, dan transaksi keanggotaan.
 
-### C. Workspace Proyek & Kanban Roadmap (`/projects/{id}`)
-* **Kanban Task Board:** Pengelolaan backlog tugas dengan prioritas (`Urgent`, `High`, `Medium`, `Low`), estimasi jam pengerjaan, dan lampiran berkas.
-* **Timeline & Roadmap Otomatis:** Pemetaan milestone mingguan untuk memastikan proyek selesai tepat sebelum ujian semester/tenggat lomba.
-* **Evaluasi Dosen Langsung:** Riwayat bimbingan dan status persetujuan milestone langsung di dalam halaman proyek tim.
+### C. Portal Kelas & Bimbingan Dosen (`/classes`)
+* **Kode Gabung Instan:** Dosen membuat kelas mata kuliah dan sistem menerbitkan kode unik 6 digit (contoh: `LKYFZ4`).
+* **Multi-Dosen & Supervisi:** Mendukung pembimbing utama dan ko-pembimbing untuk bimbingan milestone serta evaluasi berkala.
+* **Catatan Bimbingan & Pengumuman:** Dosen dapat menerbitkan arahan teknis umum maupun umpan balik privat untuk kelompok proyek tertentu.
+
+### D. Workspace Proyek & Kanban Roadmap (`/workspace/{teamId}`)
+* **Papan Kanban Interaktif:** Pengelolaan tugas tim (`todo`, `in_progress`, `in_review`, `completed`) dengan prioritas dan penanggung jawab.
+* **Desain Glassmorphism Bersatu:** Menggunakan palet resmi *Royal Electric Blue* (`#2563EB`) dan *Deep Slate* (`#0F172A`) di atas kanvas kabut kaca buram bebas dari elemen ungu AI generik.
 
 ---
 

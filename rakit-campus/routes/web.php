@@ -56,6 +56,8 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/guidance', [AcademicClassWebController::class, 'addGuidance'])->name('classes.guidance.store');
     Route::post('/classes/{id}/auto-form-teams', [AcademicClassWebController::class, 'autoFormTeams'])->name('classes.auto-form-teams');
     Route::post('/classes/{id}/invite-student', [AcademicClassWebController::class, 'inviteStudent'])->name('classes.invite-student');
+    Route::post('/classes/{id}/simulate-allocation', [AcademicClassWebController::class, 'simulateAllocation'])->name('classes.simulate-allocation');
+    Route::post('/classes/{id}/approve-allocation/{sessionId}', [AcademicClassWebController::class, 'approveAllocation'])->name('classes.approve-allocation');
 
     // Quick Role Switcher for Testing (Mahasiswa <-> Dosen)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {

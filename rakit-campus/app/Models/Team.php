@@ -75,26 +75,52 @@ class Team extends Model
         return $this->hasMany(ActivityLog::class);
     }
 
-    public function hasMember(User $user): bool
+    public function hasMember(User|int $user): bool
     {
-        return $this->members()->where('user_id', $user->id)->exists();
+        $userId = $user instanceof User ? $user->id : $user;
+
+        if ($this->relationLoaded('members')) {
+            return $this->members->contains('user_id', $userId);
+        }
+
+        return $this->members()->where('user_id', $userId)->exists();
     }
 
-    public function isLeader(User $user): bool
+    public function isLeader(User|int $user): bool
     {
+        $userId = $user instanceof User ? $user->id : $user;
+
+        if ($this->relationLoaded('members')) {
+            return $this->members->contains(function ($m) use ($userId) {
+                return $m->user_id === $userId && (
+                    $m->permission === TeamPermission::Leader || 
+                    $m->permission === TeamPermission::Leader->value || 
+                    $m->permission === 'leader'
+                );
+            });
+        }
+
         return $this->members()
-            ->where('user_id', $user->id)
+            ->where('user_id', $userId)
             ->where('permission', TeamPermission::Leader->value)
             ->exists();
     }
 
     public function availableSlots(): int
     {
-        return max(0, $this->capacity - $this->members()->count());
+        $count = $this->relationLoaded('members')
+            ? $this->members->where('status', 'active')->count()
+            : $this->members()->where('status', 'active')->count();
+
+        return max(0, $this->capacity - $count);
     }
 
     public function isFull(): bool
     {
-        return $this->members()->count() >= $this->capacity;
+        $count = $this->relationLoaded('members')
+            ? $this->members->where('status', 'active')->count()
+            : $this->members()->where('status', 'active')->count();
+
+        return $count >= $this->capacity;
     }
 }

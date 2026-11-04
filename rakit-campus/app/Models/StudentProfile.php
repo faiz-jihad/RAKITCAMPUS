@@ -50,7 +50,7 @@ class StudentProfile extends Model
     public function skills(): BelongsToMany
     {
         return $this->belongsToMany(Skill::class, 'student_skills')
-            ->withPivot('proficiency')
+            ->withPivot(['proficiency', 'category', 'experience_description', 'evidence_url'])
             ->withTimestamps();
     }
 

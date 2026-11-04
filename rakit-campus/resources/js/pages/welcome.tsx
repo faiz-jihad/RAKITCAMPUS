@@ -29,7 +29,7 @@ export default function Welcome() {
     const [stepIndex, setStepIndex] = useState(0);
 
     return (
-        <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#5448EE] selection:text-white font-sans antialiased">
+        <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#2563EB] selection:text-white font-sans antialiased">
             <Head title="RAKIT Campus — Simplify Student Projects, Boost Campus Achievements" />
 
             {/* Background Atmosphere Glow (Soft Ethereal Lavender Gradient) */}
@@ -47,7 +47,7 @@ export default function Welcome() {
                         {/* Logo */}
                         <Link href="/" className="flex items-center gap-2 group">
                             <img src="/images/rakit-logo.png" alt="RAKIT" className="h-7 w-auto object-contain" />
-                            <span className="text-[11px] font-bold text-[#5448EE] uppercase px-2 py-0.5 rounded-full bg-[#EEEDFD] border border-[#5448EE]/20 tracking-wider">
+                            <span className="text-[11px] font-bold text-[#2563EB] uppercase px-2 py-0.5 rounded-full bg-[#EFF6FF] border border-[#2563EB]/20 tracking-wider">
                                 Campus
                             </span>
                         </Link>
@@ -58,8 +58,8 @@ export default function Welcome() {
                             <a href="#why-choose" className="hover:text-neutral-900 transition">Keunggulan</a>
                             <a href="#workflow" className="hover:text-neutral-900 transition">Cara Kerja</a>
                             <a href="#testimonials" className="hover:text-neutral-900 transition">Testimoni</a>
-                            <Link href="/projects" className="hover:text-[#5448EE] transition">Project Hub</Link>
-                            <Link href="/competitions" className="hover:text-[#5448EE] transition">Kompetisi</Link>
+                            <Link href="/projects" className="hover:text-[#2563EB] transition">Project Hub</Link>
+                            <Link href="/competitions" className="hover:text-[#2563EB] transition">Kompetisi</Link>
                         </nav>
 
                         {/* Action Buttons */}
@@ -108,7 +108,7 @@ export default function Welcome() {
                     <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
                         <Link
                             href={auth?.user ? "/dashboard" : "/register"}
-                            className="bg-[#5448EE] hover:bg-[#4336D6] text-white text-xs sm:text-sm font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
+                            className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold px-7 py-3.5 rounded-full shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all"
                         >
                             Get Started Free
                         </Link>
@@ -150,13 +150,13 @@ export default function Welcome() {
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-neutral-100 gap-3">
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                        <div className="size-6 rounded-lg bg-[#5448EE] flex items-center justify-center text-white">
+                                        <div className="size-6 rounded-lg bg-[#2563EB] flex items-center justify-center text-white">
                                             <Sparkles className="size-3.5" />
                                         </div>
                                         <span className="text-sm font-bold text-neutral-900">TaskGo / RAKIT</span>
                                     </div>
                                     <div className="hidden md:flex items-center gap-4 text-xs font-medium text-neutral-500">
-                                        <span className="text-neutral-900 font-semibold border-b-2 border-[#5448EE] pb-0.5">Dashboard</span>
+                                        <span className="text-neutral-900 font-semibold border-b-2 border-[#2563EB] pb-0.5">Dashboard</span>
                                         <span className="hover:text-neutral-800 cursor-pointer">My Tasks</span>
                                         <span className="hover:text-neutral-800 cursor-pointer">Activities</span>
                                         <span className="hover:text-neutral-800 cursor-pointer">Reporting</span>
@@ -263,7 +263,7 @@ export default function Welcome() {
                                         </p>
                                         {/* Mini progress bar */}
                                         <div className="w-full bg-neutral-100 h-1.5 rounded-full mt-2.5 overflow-hidden">
-                                            <div className="bg-[#5448EE] h-1.5 rounded-full w-3/4" />
+                                            <div className="bg-[#2563EB] h-1.5 rounded-full w-3/4" />
                                         </div>
                                         <div className="flex items-center justify-between mt-2.5 text-[10px] text-neutral-400">
                                             <span>75% Done</span>
@@ -387,7 +387,7 @@ export default function Welcome() {
                         <div className="bg-white border border-neutral-200 rounded-2xl p-4 mt-6 shadow-2xs">
                             <div className="flex items-center justify-between text-xs mb-3">
                                 <span className="font-bold text-neutral-900">105 Total Tasks</span>
-                                <span className="text-[11px] text-[#5448EE] font-semibold cursor-pointer">Lihat Rincian</span>
+                                <span className="text-[11px] text-[#2563EB] font-semibold cursor-pointer">Lihat Rincian</span>
                             </div>
 
                             <div className="flex flex-col gap-2 text-xs">
@@ -444,7 +444,7 @@ export default function Welcome() {
                                 <span className="text-[10px] text-neutral-400">UI/UX Specialist</span>
                             </div>
 
-                            <button className="w-full mt-4 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <button className="w-full mt-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition">
                                 <Plus className="size-3" /> Tambah Kolaborator
                             </button>
                         </div>
@@ -470,7 +470,7 @@ export default function Welcome() {
                                     <div className="size-6 rounded-full bg-purple-600 text-white font-bold text-[9px] flex items-center justify-center">B</div>
                                     <div>
                                         <span className="font-bold text-neutral-900 block leading-tight">Budi Santoso</span>
-                                        <span className="text-[10px] text-[#5448EE] font-medium">Typing...</span>
+                                        <span className="text-[10px] text-[#2563EB] font-medium">Typing...</span>
                                     </div>
                                 </div>
                                 <span className="size-2 rounded-full bg-emerald-500" />
@@ -498,7 +498,7 @@ export default function Welcome() {
                             </p>
                             <Link
                                 href="/projects"
-                                className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-[#5448EE] hover:text-[#4336D6] transition"
+                                className="inline-flex items-center gap-1.5 mt-4 text-xs font-semibold text-[#2563EB] hover:text-[#1D4ED8] transition"
                             >
                                 Jelajah Semua Proyek Aktif &rarr;
                             </Link>
@@ -570,7 +570,7 @@ export default function Welcome() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
                         {/* Stat Card 1 */}
                         <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/80 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group">
-                            <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
+                            <div className="size-8 rounded-full bg-purple-100 text-[#2563EB] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
                                 <ArrowUpRight className="size-4" />
                             </div>
                             <div className="text-4xl font-extrabold text-neutral-900 mt-4">95%</div>
@@ -581,7 +581,7 @@ export default function Welcome() {
 
                         {/* Stat Card 2 */}
                         <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/80 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group">
-                            <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
+                            <div className="size-8 rounded-full bg-purple-100 text-[#2563EB] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
                                 <ArrowUpRight className="size-4" />
                             </div>
                             <div className="text-4xl font-extrabold text-neutral-900 mt-4">3x</div>
@@ -592,7 +592,7 @@ export default function Welcome() {
 
                         {/* Stat Card 3 */}
                         <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/80 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group">
-                            <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
+                            <div className="size-8 rounded-full bg-purple-100 text-[#2563EB] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
                                 <ArrowUpRight className="size-4" />
                             </div>
                             <div className="text-4xl font-extrabold text-neutral-900 mt-4">100%</div>
@@ -603,7 +603,7 @@ export default function Welcome() {
 
                         {/* Stat Card 4 */}
                         <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/80 rounded-3xl p-6 shadow-2xs hover:shadow-md transition relative group">
-                            <div className="size-8 rounded-full bg-purple-100 text-[#5448EE] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
+                            <div className="size-8 rounded-full bg-purple-100 text-[#2563EB] flex items-center justify-center absolute top-6 right-6 group-hover:scale-110 transition-transform">
                                 <ArrowUpRight className="size-4" />
                             </div>
                             <div className="text-4xl font-extrabold text-neutral-900 mt-4">500+</div>
@@ -631,7 +631,7 @@ export default function Welcome() {
                     <div className="bg-neutral-50 border border-neutral-200 rounded-3xl p-6 shadow-sm relative overflow-hidden">
                         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 shadow-xs">
                             <div className="flex items-center gap-2 mb-4 pb-3 border-b border-neutral-100">
-                                <div className="size-7 rounded-lg bg-[#5448EE] text-white flex items-center justify-center text-xs font-bold">
+                                <div className="size-7 rounded-lg bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold">
                                     R
                                 </div>
                                 <span className="text-xs font-bold text-neutral-900">RAKIT Onboarding System</span>
@@ -654,7 +654,7 @@ export default function Welcome() {
 
                                 <div className="flex items-center justify-between text-xs pt-2">
                                     <span className="text-neutral-400 font-medium">Status Akun: Aktif</span>
-                                    <span className="text-[#5448EE] font-bold">Langkah {stepIndex + 1} dari 3</span>
+                                    <span className="text-[#2563EB] font-bold">Langkah {stepIndex + 1} dari 3</span>
                                 </div>
                             </div>
                         </div>
@@ -673,7 +673,7 @@ export default function Welcome() {
                         >
                             <div className="flex items-start gap-4">
                                 <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                    stepIndex === 0 ? 'bg-[#5448EE] text-white' : 'bg-neutral-100 text-neutral-600'
+                                    stepIndex === 0 ? 'bg-[#2563EB] text-white' : 'bg-neutral-100 text-neutral-600'
                                 }`}>
                                     01
                                 </div>
@@ -697,7 +697,7 @@ export default function Welcome() {
                         >
                             <div className="flex items-start gap-4">
                                 <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                    stepIndex === 1 ? 'bg-[#5448EE] text-white' : 'bg-neutral-100 text-neutral-600'
+                                    stepIndex === 1 ? 'bg-[#2563EB] text-white' : 'bg-neutral-100 text-neutral-600'
                                 }`}>
                                     02
                                 </div>
@@ -721,7 +721,7 @@ export default function Welcome() {
                         >
                             <div className="flex items-start gap-4">
                                 <div className={`size-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                                    stepIndex === 2 ? 'bg-[#5448EE] text-white' : 'bg-neutral-100 text-neutral-600'
+                                    stepIndex === 2 ? 'bg-[#2563EB] text-white' : 'bg-neutral-100 text-neutral-600'
                                 }`}>
                                     03
                                 </div>
@@ -826,7 +826,7 @@ export default function Welcome() {
             <section className="py-20 relative overflow-hidden">
                 <div className="max-w-4xl mx-auto px-4 text-center">
                     <div className="bg-gradient-to-r from-[#181135] via-[#221650] to-[#181135] rounded-3xl p-8 sm:p-14 text-white shadow-xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-80 h-80 bg-[#5448EE]/20 blur-3xl rounded-full pointer-events-none" />
+                        <div className="absolute top-0 right-0 w-80 h-80 bg-[#2563EB]/20 blur-3xl rounded-full pointer-events-none" />
                         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight relative z-10">
                             Siap Membangun Tim & Raih Prestasi di Kampus?
                         </h2>
@@ -836,7 +836,7 @@ export default function Welcome() {
                         <div className="mt-8 flex flex-wrap items-center justify-center gap-3 relative z-10">
                             <Link
                                 href={auth?.user ? "/dashboard" : "/register"}
-                                className="bg-[#5448EE] hover:bg-[#4336D6] text-white text-xs sm:text-sm font-semibold px-8 py-3.5 rounded-full shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
+                                className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold px-8 py-3.5 rounded-full shadow-lg shadow-indigo-500/30 transition-all hover:-translate-y-0.5"
                             >
                                 Daftar Akun Mahasiswa
                             </Link>

@@ -8,11 +8,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RecruitmentRole extends Model
 {
-    protected $fillable = ['recruitment_id', 'name', 'slots', 'requirements'];
+    protected $fillable = [
+        'recruitment_id',
+        'name',
+        'slots',
+        'requirements',
+        'required_skills',
+        'optional_skills',
+        'min_proficiency',
+    ];
 
     protected function casts(): array
     {
-        return ['slots' => 'integer'];
+        return [
+            'slots' => 'integer',
+            'min_proficiency' => 'integer',
+            'required_skills' => 'array',
+            'optional_skills' => 'array',
+        ];
     }
 
     public function recruitment(): BelongsTo

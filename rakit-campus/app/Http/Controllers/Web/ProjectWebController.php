@@ -22,6 +22,7 @@ use App\Models\Skill;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Services\Matchmaking\MembershipService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -31,6 +32,10 @@ use Inertia\Response;
 
 class ProjectWebController extends Controller
 {
+    public function __construct(
+        protected MembershipService $membershipService
+    ) {}
+
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -155,6 +160,14 @@ class ProjectWebController extends Controller
             'required_skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
 
+        // Rule 1: One student, one active project
+        if ($user->hasActiveProject()) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Anda sudah tergabung dalam proyek aktif lain. Selesaikan proyek saat ini terlebih dahulu.'], 422);
+            }
+            return back()->withErrors(['title' => 'Anda sudah tergabung dalam proyek aktif lain. Selesaikan proyek sebelumnya sebelum membuat proyek baru.']);
+        }
+
         $project = DB::transaction(function () use ($validated, $user, $activeCampusId) {
             $slug = Str::slug($validated['title']) . '-' . Str::lower(Str::random(6));
 
@@ -267,64 +280,24 @@ class ProjectWebController extends Controller
         }
 
         $project = Project::with(['team.recruitment.roles'])->findOrFail($id);
-        $team = $project->team;
-
-        if (!$team) {
-            return back()->with('error', 'Tim proyek belum diinisialisasi.');
-        }
-
-        if ($team->hasMember($user)) {
-            return back()->with('info', 'Kamu sudah bergabung dalam tim proyek ini.');
-        }
-
-        if ($team->members()->count() >= $team->capacity) {
-            return back()->with('error', 'Kapasitas tim proyek ini sudah penuh.');
-        }
-
-        // Ensure recruitment exists
-        $recruitment = $team->recruitment;
-        if (!$recruitment) {
-            $recruitment = Recruitment::create([
-                'campus_id' => $project->campus_id,
-                'team_id' => $team->id,
-                'title' => 'Rekrutmen Terbuka ' . $project->title,
-                'status' => RecruitmentStatus::Open,
-            ]);
-
-            RecruitmentRole::create([
-                'recruitment_id' => $recruitment->id,
-                'name' => 'Anggota Tim Pengembang',
-                'slots' => max(1, $team->capacity - $team->members()->count()),
-            ]);
-            $recruitment->load('roles');
-        }
-
-        // Check if already applied
-        $existing = Application::where('recruitment_id', $recruitment->id)
-            ->where('user_id', $user->id)
-            ->whereIn('status', [ApplicationStatus::Pending->value, ApplicationStatus::UnderReview->value])
-            ->first();
-
-        if ($existing) {
-            return back()->with('info', 'Lamaran kamu sedang ditinjau oleh ketua tim.');
-        }
 
         $validated = $request->validate([
             'recruitment_role_id' => ['nullable', 'integer'],
             'message' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $roleId = $validated['recruitment_role_id'] ?? $recruitment->roles->first()?->id;
+        $role = !empty($validated['recruitment_role_id'])
+            ? RecruitmentRole::find($validated['recruitment_role_id'])
+            : $project->team?->recruitment?->roles?->first();
 
-        Application::create([
-            'recruitment_id' => $recruitment->id,
-            'recruitment_role_id' => $roleId,
-            'user_id' => $user->id,
-            'message' => $validated['message'] ?? 'Saya tertarik untuk berkolaborasi dan berkontribusi dalam proyek ini.',
-            'status' => ApplicationStatus::Pending,
-        ]);
-
-        return back()->with('success', 'Lamaran kamu berhasil dikirim ke ketua tim!');
+        try {
+            $this->membershipService->applyToProject($user, $project, $role, $validated['message'] ?? null);
+            return back()->with('success', 'Lamaran kamu berhasil dikirim ke ketua tim!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function respondApplication(Request $request, int $id, int $applicationId)
@@ -336,42 +309,29 @@ class ProjectWebController extends Controller
             abort(403, 'Hanya ketua tim yang dapat memproses lamaran.');
         }
 
-        $application = Application::with(['user', 'role'])->findOrFail($applicationId);
+        $application = Application::with(['user', 'role', 'recruitment.team.project'])->findOrFail($applicationId);
         $action = $request->input('action', 'accept'); // 'accept' or 'reject'
 
-        if ($action === 'accept') {
-            $team = $project->team;
-            if ($team->members->count() >= $team->capacity) {
-                return back()->with('error', 'Kapasitas tim sudah penuh.');
+        try {
+            if ($action === 'accept') {
+                $this->membershipService->acceptApplication(
+                    $application,
+                    $user,
+                    $request->input('note', 'Diterima oleh ketua tim.')
+                );
+                return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim!");
+            } else {
+                $this->membershipService->rejectApplication(
+                    $application,
+                    $user,
+                    $request->input('note', 'Mohon maaf, posisi saat ini belum sesuai.')
+                );
+                return back()->with('info', 'Lamaran telah ditolak.');
             }
-
-            if (!$team->hasMember($application->user)) {
-                TeamMember::create([
-                    'team_id' => $team->id,
-                    'user_id' => $application->user_id,
-                    'permission' => TeamPermission::Member,
-                    'role_name' => $application->role?->name ?? 'Anggota Tim',
-                    'joined_at' => now(),
-                ]);
-            }
-
-            $application->update([
-                'status' => ApplicationStatus::Accepted,
-                'decided_by' => $user->id,
-                'decided_at' => now(),
-                'decision_note' => 'Diterima oleh ketua tim.',
-            ]);
-
-            return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim!");
-        } else {
-            $application->update([
-                'status' => ApplicationStatus::Rejected,
-                'decided_by' => $user->id,
-                'decided_at' => now(),
-                'decision_note' => $request->input('note', 'Mohon maaf, posisi saat ini belum sesuai.'),
-            ]);
-
-            return back()->with('info', 'Lamaran telah ditolak.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
         }
     }
 }

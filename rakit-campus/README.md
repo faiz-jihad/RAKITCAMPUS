@@ -24,6 +24,19 @@ Dokumentasi arsitektur lengkap dan panduan mobile tersedia di [Root README](../R
 
 ---
 
+## Fitur Inti & Smart Fair Matchmaking
+
+1. **Aturan 1 Mahasiswa 1 Proyek Aktif (Rule 1):** Mahasiswa hanya boleh aktif di 1 proyek sekaligus. Dilindungi transaksi database atomik & row locking.
+2. **Formula Pembobotan Cerdas 6-Komponen:**
+   $$\text{Final Score} = (0.30 \times \text{Skill}) + (0.20 \times \text{Role}) + (0.15 \times \text{Interest}) + (0.10 \times \text{Availability}) + (0.15 \times \text{Diversity}) + (0.10 \times \text{Fairness})$$
+3. **3 Moda Matchmaking:** Mode A (Manual), Mode B (Rekomendasi Cerdas), Mode C (Simulasi & Alokasi Terbimbing Dosen).
+4. **Fairness Analytics:** Pemantauan real-time rasio partisipasi, keterisian kuota, dan afirmasi mahasiswa proyek perdana.
+5. **Zero N+1 Query Guarantee:** Dilengkapi `Model::preventLazyLoading(!app()->isProduction())` dengan eager loading teroptimasi di seluruh query.
+6. **Desain Glassmorphism Bersatu:** Menggunakan Royal Electric Blue (`#2563EB`) & Deep Slate (`#0F172A`) di seluruh halaman (bebas ungu AI).
+7. **Passing Tests:** 50 test cases lulus 100% (232 assertions).
+
+---
+
 ## Perintah Penting Pengembang
 
 ```bash

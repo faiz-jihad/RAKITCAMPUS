@@ -106,15 +106,15 @@ export default function PortfolioIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Portfolio & Rekam Jejak — RAKIT Campus" />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#FAF8FF] via-white to-[#F8F6FF] relative text-[#0E121B] pb-24 selection:bg-[#5448EE] selection:text-white">
+            <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] via-white to-[#F1F5F9] relative text-[#0E121B] pb-24 selection:bg-[#2563EB] selection:text-white">
                 {/* Atmosphere background radial glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#5448EE]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#2563EB]/10 to-transparent blur-3xl pointer-events-none -z-0" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-8">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/80 pb-6">
                         <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold mb-2 border border-[#5448EE]/20">
+                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold mb-2 border border-[#2563EB]/20">
                                 <Award className="size-3.5" />
                                 <span>Rekam Jejak Akademik & Kolaboratif</span>
                             </div>
@@ -192,7 +192,7 @@ export default function PortfolioIndex({
                             <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
                                 <div className="flex items-center justify-between mb-5 pb-3 border-b border-neutral-100">
                                     <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                                        <FolderKanban className="size-4 text-[#5448EE]" />
+                                        <FolderKanban className="size-4 text-[#2563EB]" />
                                         Proyek yang Telah Selesai ({completedProjects.length})
                                     </h3>
                                     <span className="text-xs text-neutral-400 font-medium">Histori Portofolio</span>
@@ -220,7 +220,7 @@ export default function PortfolioIndex({
                                                 {cp.team?.project?.id && (
                                                     <Link
                                                         href={`/projects/${cp.team.project.id}`}
-                                                        className="text-[11px] font-semibold text-[#5448EE] hover:underline mt-3 block"
+                                                        className="text-[11px] font-semibold text-[#2563EB] hover:underline mt-3 block"
                                                     >
                                                         Lihat Detail Proyek &rarr;
                                                     </Link>
@@ -242,7 +242,7 @@ export default function PortfolioIndex({
                                     </div>
                                     <button
                                         onClick={() => setAddModalOpen(true)}
-                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#EEEDFD] text-[#5448EE] text-xs font-semibold hover:bg-[#E0DCFB] transition"
+                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold hover:bg-[#E0DCFB] transition"
                                         title="Tambah Tautan"
                                     >
                                         <Plus className="size-3.5" />
@@ -259,7 +259,7 @@ export default function PortfolioIndex({
                                         {items.map((it) => (
                                             <div
                                                 key={it.id}
-                                                className="p-3.5 border border-neutral-200/80 rounded-2xl flex items-center justify-between group hover:border-[#5448EE]/40 transition bg-neutral-50/50"
+                                                className="p-3.5 border border-neutral-200/80 rounded-2xl flex items-center justify-between group hover:border-[#2563EB]/40 transition bg-neutral-50/50"
                                             >
                                                 <div className="truncate mr-2">
                                                     <h4 className="text-xs font-bold text-neutral-900 truncate">
@@ -269,7 +269,7 @@ export default function PortfolioIndex({
                                                         href={it.url}
                                                         target="_blank"
                                                         rel="noreferrer"
-                                                        className="text-[11px] text-[#5448EE] hover:underline truncate block mt-0.5"
+                                                        className="text-[11px] text-[#2563EB] hover:underline truncate block mt-0.5"
                                                     >
                                                         {it.url}
                                                     </a>
@@ -303,7 +303,7 @@ export default function PortfolioIndex({
                             </button>
 
                             <div className="flex items-center gap-2 mb-2">
-                                <span className="p-2 rounded-xl bg-[#EEEDFD] text-[#5448EE]">
+                                <span className="p-2 rounded-xl bg-[#EFF6FF] text-[#2563EB]">
                                     <Award className="size-5" />
                                 </span>
                                 <div>
@@ -323,7 +323,7 @@ export default function PortfolioIndex({
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Contoh: GitHub Repository AgriTani Mobile"
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     />
                                 </div>
 
@@ -337,7 +337,7 @@ export default function PortfolioIndex({
                                         onChange={(e) => setUrl(e.target.value)}
                                         placeholder="https://github.com/..."
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     />
                                 </div>
 
@@ -348,7 +348,7 @@ export default function PortfolioIndex({
                                     <select
                                         value={kind}
                                         onChange={(e) => setKind(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#5448EE] focus:border-transparent outline-none transition"
+                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
                                     >
                                         <option value="link">Link Eksternal Umum</option>
                                         <option value="repository">Source Code / Repository</option>
@@ -367,7 +367,7 @@ export default function PortfolioIndex({
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-6 py-2 bg-[#5448EE] hover:bg-[#4336D6] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                        className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
                                     >
                                         {submitting ? 'Menyimpan...' : 'Simpan Tautan'}
                                     </button>
