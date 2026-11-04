@@ -287,4 +287,174 @@ class MembershipService
             );
         });
     }
+
+    /**
+     * Check if a student can join a competition team.
+     */
+    public function canJoinCompetition(User $student, ?Team $team = null): array
+    {
+        return $this->eligibilityService->checkCompetitionEligibility($student, $team);
+    }
+
+    /**
+     * Enforce competition eligibility or throw ValidationException.
+     */
+    public function assertCanJoinCompetition(User $student, ?Team $team = null): void
+    {
+        $check = $this->canJoinCompetition($student, $team);
+        if (!$check['eligible']) {
+            throw ValidationException::withMessages([
+                'student' => [$check['reason']],
+            ]);
+        }
+    }
+
+    /**
+     * Atomically add a student member to a competition team.
+     */
+    public function addMemberToCompetitionTeam(Team $team, User $student, string $roleName = 'Member', ?int $recruitmentRoleId = null): TeamMember
+    {
+        return DB::transaction(function () use ($team, $student, $roleName, $recruitmentRoleId) {
+            // Lock team
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+
+            $participation = \App\Models\CompetitionParticipation::where('team_id', $lockedTeam->id)
+                ->latest()
+                ->lockForUpdate()
+                ->first();
+
+            if ($participation && $participation->is_formation_locked) {
+                throw ValidationException::withMessages([
+                    'team' => ['Susunan tim kompetisi sudah dikunci dan tidak dapat menerima anggota baru.'],
+                ]);
+            }
+
+            // Check eligibility under lock
+            $this->assertCanJoinCompetition($student, $lockedTeam);
+
+            $member = TeamMember::updateOrCreate(
+                [
+                    'team_id' => $lockedTeam->id,
+                    'user_id' => $student->id,
+                ],
+                [
+                    'permission' => 'member',
+                    'status' => 'active',
+                    'role_name' => $roleName,
+                    'recruitment_role_id' => $recruitmentRoleId,
+                    'joined_at' => now(),
+                ]
+            );
+
+            return $member;
+        });
+    }
+
+    /**
+     * Lock team formation so no further additions can be made.
+     */
+    public function lockTeamFormation(\App\Models\CompetitionParticipation $participation, User $leader): void
+    {
+        DB::transaction(function () use ($participation, $leader) {
+            $participation = \App\Models\CompetitionParticipation::where('id', $participation->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $participation->update([
+                'is_formation_locked' => true,
+                'stage' => $participation->stage === 'recruiting' ? 'team_formation' : $participation->stage,
+            ]);
+
+            \App\Models\CompetitionStatusHistory::create([
+                'participation_id' => $participation->id,
+                'from_stage' => 'recruiting',
+                'to_stage' => $participation->stage,
+                'notes' => 'Susunan tim resmi dikunci oleh ketua tim.',
+                'changed_by' => $leader->id,
+            ]);
+        });
+    }
+
+    /**
+     * Complete competition participation and create verified achievements for all team members.
+     */
+    public function completeCompetition(
+        \App\Models\CompetitionParticipation $participation,
+        string $outcome,
+        ?string $achievementTitle = null,
+        ?string $certificatePath = null,
+        ?User $verifier = null,
+        ?int $rank = null,
+        ?string $notes = null
+    ): void {
+        DB::transaction(function () use ($participation, $outcome, $achievementTitle, $certificatePath, $verifier, $rank, $notes) {
+            $participation = \App\Models\CompetitionParticipation::where('id', $participation->id)
+                ->with(['team.members', 'competition'])
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $terminalStage = in_array($outcome, ['1st_place', '2nd_place', '3rd_place', 'finalist', 'special_award'])
+                ? 'winner'
+                : ($outcome === 'withdrawn' ? 'withdrawn' : 'not_selected');
+
+            $participation->update([
+                'stage' => $terminalStage,
+                'progress_status' => 'finished',
+            ]);
+
+            // Record or update result
+            \App\Models\CompetitionResult::updateOrCreate(
+                ['participation_id' => $participation->id],
+                [
+                    'outcome' => $outcome,
+                    'rank' => $rank,
+                    'notes' => $notes,
+                    'achievement_title' => $achievementTitle ?? "Hasil Kompetisi: {$participation->competition->name}",
+                    'certificate_path' => $certificatePath,
+                    'recorded_by' => $verifier?->id ?? $participation->team?->leader_id,
+                    'verification_status' => $verifier ? 'verified' : 'unverified',
+                    'verified_by' => $verifier?->id,
+                    'verified_at' => $verifier ? now() : null,
+                ]
+            );
+
+            // Audit history
+            \App\Models\CompetitionStatusHistory::create([
+                'participation_id' => $participation->id,
+                'from_stage' => $participation->getOriginal('stage'),
+                'to_stage' => $terminalStage,
+                'notes' => "Kompetisi diselesaikan dengan hasil: {$outcome}.",
+                'changed_by' => $verifier?->id ?? $participation->team?->leader_id,
+            ]);
+
+            // Release active status for team members and create achievements if verified
+            if ($participation->team) {
+                $participation->team->members()->update(['status' => 'completed']);
+
+                if ($verifier) {
+                    foreach ($participation->team->members as $member) {
+                        \App\Models\Achievement::firstOrCreate(
+                            [
+                                'user_id' => $member->user_id,
+                                'participation_id' => $participation->id,
+                                'type' => \App\Enums\AchievementType::CompetitionResult->value,
+                            ],
+                            [
+                                'campus_id' => $participation->competition->campus_id,
+                                'team_id' => $participation->team_id,
+                                'title' => $achievementTitle ?? "Prestasi: {$participation->competition->name} ({$outcome})",
+                                'description' => "Berhasil menyelesaikan kompetisi {$participation->competition->name} sebagai {$member->role_name}.",
+                                'achieved_on' => now(),
+                                'evidence_url' => $certificatePath,
+                                'verification_status' => \App\Enums\AchievementVerification::Verified->value,
+                                'verified_by' => $verifier->id,
+                                'verified_at' => now(),
+                                'is_public' => true,
+                            ]
+                        );
+                    }
+                }
+            }
+        });
+    }
 }

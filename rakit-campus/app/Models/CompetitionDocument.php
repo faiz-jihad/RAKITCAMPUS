@@ -13,4 +13,9 @@ class CompetitionDocument extends Model
     {
         return $this->belongsTo(CompetitionParticipation::class, 'participation_id');
     }
+
+    public function uploader(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
 }

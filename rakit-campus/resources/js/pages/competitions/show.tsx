@@ -1,7 +1,8 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     Bookmark,
     Calendar,
@@ -17,13 +18,14 @@ import {
     Users,
     X,
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 interface Props {
     competition: any;
     isBookmarked: boolean;
     myParticipation?: any;
     myLedProjects?: any[];
+    eligibilityCheck?: { eligible: boolean; reason?: string };
 }
 
 export default function CompetitionShow({
@@ -31,6 +33,7 @@ export default function CompetitionShow({
     isBookmarked: initialBookmarked,
     myParticipation,
     myLedProjects = [],
+    eligibilityCheck = { eligible: true },
 }: Props) {
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [isParticipateModalOpen, setParticipateModalOpen] = useState(false);
@@ -39,40 +42,26 @@ export default function CompetitionShow({
     const [teamName, setTeamName] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
         { title: competition.name, href: `/competitions/${competition.id}` },
     ];
 
-    const getXsrfToken = () => {
-        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-        if (match) return decodeURIComponent(match[1]);
-        const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
-        return meta?.content || '';
+    const toggleBookmark = () => {
+        router.post(route('competitions.bookmark', competition.id), {}, {
+            preserveScroll: true,
+            onSuccess: () => setBookmarked(!bookmarked),
+        });
     };
 
-    const toggleBookmark = async () => {
-        try {
-            const res = await fetch(`/api/v1/competitions/${competition.id}/bookmark`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': getXsrfToken(),
-                },
-            });
-            const json = await res.json();
-            setBookmarked(json.bookmarked);
-        } catch {
-            alert('Gagal memperbarui bookmark.');
+    const handleVerify = () => {
+        if (confirm(`Verifikasi kompetisi '${competition.name}' dan publikasikan secara resmi?`)) {
+            router.post(route('competitions.verify', competition.id));
         }
     };
 
-    const handleCreateParticipation = async (e: React.FormEvent) => {
+    const handleCreateParticipation = (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
 
@@ -89,164 +78,145 @@ export default function CompetitionShow({
             }
         }
 
-        try {
-            const res = await fetch(`/api/v1/competitions/${competition.id}/participate`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': getXsrfToken(),
-                },
-                body: JSON.stringify(payload),
-            });
-
-            const json = await res.json();
-            if (res.ok) {
-                setToastMessage('Tim berhasil didaftarkan ke kompetisi! Mengarahkan ke halaman workspace...');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1200);
-            } else {
-                alert(json.message || 'Gagal mendaftar kompetisi.');
-            }
-        } catch {
-            alert('Terjadi kesalahan jaringan.');
-        } finally {
-            setSubmitting(false);
-        }
+        router.post(route('competitions.participate', competition.id), payload, {
+            onFinish: () => setSubmitting(false),
+            onSuccess: () => setParticipateModalOpen(false),
+        });
     };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${competition.name} — RAKIT Campus`} />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] via-white to-[#F1F5F9] relative text-[#0E121B] pb-24 selection:bg-[#2563EB] selection:text-white">
-                {/* Atmosphere background radial glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#2563EB]/10 to-transparent blur-3xl pointer-events-none -z-0" />
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
+                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
+                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-amber-100/40 blur-[100px]" />
 
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
                     {/* Top Navigation Row */}
                     <div className="flex items-center justify-between">
                         <Link
-                            href="/competitions"
-                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white border border-neutral-200/80 text-xs font-semibold text-neutral-600 hover:text-[#2563EB] hover:border-[#2563EB]/30 shadow-xs transition"
+                            href={route('competitions.index')}
+                            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-semibold text-slate-600 hover:text-blue-600 shadow-2xs transition"
                         >
                             <ArrowLeft className="size-3.5" />
                             <span>Kembali ke Competition Hub</span>
                         </Link>
 
                         <div className="flex items-center gap-2">
+                            {competition.verification_status !== 'verified' && (
+                                <button
+                                    onClick={handleVerify}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                >
+                                    <ShieldCheck className="size-3.5" />
+                                    <span>Verifikasi & Publikasikan</span>
+                                </button>
+                            )}
+
                             <button
                                 onClick={toggleBookmark}
-                                className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-full border shadow-xs transition ${
+                                className={`inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-xl border shadow-2xs transition cursor-pointer ${
                                     bookmarked
-                                        ? 'bg-[#EFF6FF] text-[#2563EB] border-[#2563EB]/30'
-                                        : 'bg-white text-neutral-700 border-neutral-200/80 hover:bg-neutral-50'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                                 }`}
                             >
                                 <Bookmark className="size-3.5" />
-                                {bookmarked ? 'Tersimpan' : 'Simpan Lomba'}
+                                <span>{bookmarked ? 'Tersimpan' : 'Simpan Lomba'}</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Toast Notification */}
-                    {toastMessage && (
-                        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-xs animate-in fade-in">
-                            <CheckCircle2 className="size-4 shrink-0 text-emerald-600" />
-                            <span>{toastMessage}</span>
-                        </div>
-                    )}
-
                     {/* Hero Header Card */}
-                    <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-10 shadow-lg shadow-[#2563EB]/5 relative overflow-hidden">
+                    <div className="glass-surface rounded-3xl p-6 sm:p-10 bg-white/85 relative overflow-hidden">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
-                            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20">
+                            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
                                 {competition.category?.replace('_', ' ')}
                             </span>
-                            <span className="text-[11px] px-3 py-1 rounded-full bg-neutral-100 text-neutral-700 font-medium capitalize">
-                                Status: {competition.status}
-                            </span>
-                            {competition.scope === 'global' ? (
-                                <span className="text-[11px] px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 font-semibold">
-                                    Nasional / Multi-Kampus
-                                </span>
-                            ) : (
-                                <span className="text-[11px] px-3 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200/80 font-semibold">
-                                    Internal Kampus
+                            {competition.level && (
+                                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-slate-100 text-slate-700">
+                                    Tingkat: {competition.level}
                                 </span>
                             )}
-                            <span className="text-xs text-neutral-500 ml-auto hidden sm:inline-block">
-                                Penyelenggara: <strong className="text-neutral-800">{competition.organizer}</strong>
+                            {competition.verification_status === 'verified' ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                                    <ShieldCheck className="size-3.5" />
+                                    <span>Terverifikasi Resmi</span>
+                                </span>
+                            ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                                    <Clock className="size-3.5" />
+                                    <span>Menunggu Verifikasi</span>
+                                </span>
+                            )}
+                            <span className="text-xs text-slate-500 ml-auto hidden sm:inline-block">
+                                Penyelenggara: <strong className="text-slate-800">{competition.organizer}</strong>
                             </span>
                         </div>
 
-                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0E121B]">
+                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-tight">
                             {competition.name}
                         </h1>
 
-                        <p className="text-xs sm:text-sm text-neutral-600 mt-3 leading-relaxed max-w-4xl">
-                            {competition.description}
+                        <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed max-w-4xl">
+                            {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
                         </p>
 
                         {/* Meta Highlights Bar */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-neutral-100">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-100">
                             <div className="flex items-center gap-3">
                                 <div className="size-10 rounded-2xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shrink-0">
                                     <Calendar className="size-5" />
                                 </div>
                                 <div>
-                                    <span className="text-[11px] text-neutral-400 font-medium block">Batas Registrasi</span>
-                                    <span className="text-xs font-bold text-neutral-900">
+                                    <span className="text-[11px] text-slate-400 font-medium block">Batas Pendaftaran</span>
+                                    <span className="text-xs font-bold text-slate-900">
                                         {competition.registration_deadline
                                             ? new Date(competition.registration_deadline).toLocaleDateString('id-ID', {
                                                   day: 'numeric',
                                                   month: 'long',
                                                   year: 'numeric',
                                               })
-                                            : 'Segera Diumumkan'}
+                                            : 'Terbuka'}
                                     </span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-[#2563EB] shrink-0">
+                                <div className="size-10 rounded-2xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shrink-0">
                                     <Users className="size-5" />
                                 </div>
                                 <div>
-                                    <span className="text-[11px] text-neutral-400 font-medium block">Ukuran Tim</span>
-                                    <span className="text-xs font-bold text-neutral-900">
+                                    <span className="text-[11px] text-slate-400 font-medium block">Ukuran Tim</span>
+                                    <span className="text-xs font-bold text-slate-900">
                                         {competition.min_team_size} - {competition.max_team_size} Mahasiswa / Tim
                                     </span>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-600 shrink-0">
-                                    <ShieldCheck className="size-5" />
+                                <div className="size-10 rounded-2xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600 shrink-0">
+                                    <Trophy className="size-5" />
                                 </div>
                                 <div>
-                                    <span className="text-[11px] text-neutral-400 font-medium block">Verifikasi Kampus</span>
-                                    <span className="text-xs font-bold text-neutral-900">
-                                        {competition.verification_status === 'verified'
-                                            ? 'Terverifikasi Resmi'
-                                            : 'Menunggu Verifikasi'}
+                                    <span className="text-[11px] text-slate-400 font-medium block">Hadiah / Apresiasi</span>
+                                    <span className="text-xs font-bold text-slate-900 truncate max-w-[200px] block">
+                                        {competition.prize_info || 'Sertifikat & Penghargaan'}
                                     </span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Call to action buttons row */}
-                        <div className="mt-8 pt-6 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-4">
+                        {/* CTA Row */}
+                        <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
                             <div>
                                 {competition.official_url && (
                                     <a
                                         href={competition.official_url}
                                         target="_blank"
                                         rel="noreferrer"
-                                        className="inline-flex items-center gap-1.5 px-4 py-2 border border-neutral-200/90 hover:bg-neutral-50 text-neutral-700 rounded-full text-xs font-semibold shadow-xs transition"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 border border-slate-200/90 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition"
                                     >
                                         <span>Website Resmi Kompetisi</span>
                                         <ExternalLink className="size-3.5" />
@@ -257,77 +227,62 @@ export default function CompetitionShow({
                             <div className="flex items-center gap-3">
                                 {myParticipation ? (
                                     <Link
-                                        href={`/workspace/${myParticipation.team_id}`}
-                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#181135] hover:bg-neutral-900 text-white rounded-full text-xs font-bold shadow-md shadow-indigo-900/10 transition"
+                                        href={route('competitions.workspace', myParticipation.id)}
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition"
                                     >
                                         <FolderKanban className="size-4" />
-                                        <span>Buka Workspace Tim ({myParticipation.team?.name})</span>
+                                        <span>Masuk ke Preparation Workspace ({myParticipation.team?.name})</span>
                                     </Link>
                                 ) : (
                                     <button
                                         onClick={() => setParticipateModalOpen(true)}
-                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/25 transition active:scale-95"
+                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition cursor-pointer"
                                     >
                                         <Trophy className="size-4" />
-                                        <span>Daftarkan / Bentuk Tim Lomba</span>
+                                        <span>Bentuk Tim & Ikuti Kompetisi</span>
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Main 2-Column Bento Layout */}
+                    {/* Main Content Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left 2 Cols: Details, Eligibility, Prizes, and Registered Teams */}
+                        {/* Left 2 Cols: Details, Eligibility, Prizes, and Participating Teams */}
                         <div className="lg:col-span-2 flex flex-col gap-6">
                             {/* Eligibility Card */}
                             {competition.eligibility && (
-                                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-2xs">
-                                    <h3 className="text-sm font-bold text-neutral-900 mb-3 flex items-center gap-2">
-                                        <Sparkles className="size-4 text-[#2563EB]" />
-                                        Persyaratan & Ketentuan Peserta
+                                <div className="glass-card rounded-3xl p-6 bg-white/85">
+                                    <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+                                        <Sparkles className="size-4 text-blue-600" />
+                                        <span>Persyaratan & Kriteria Kelayakan</span>
                                     </h3>
-                                    <p className="text-xs text-neutral-700 whitespace-pre-line leading-relaxed">
+                                    <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
                                         {competition.eligibility}
                                     </p>
                                 </div>
                             )}
 
-                            {/* Prize Info Card */}
-                            {competition.prize_info && (
-                                <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-2xs">
-                                    <h3 className="text-sm font-bold text-neutral-900 mb-3 flex items-center gap-2">
-                                        <Trophy className="size-4 text-amber-500" />
-                                        Penghargaan & Hadiah
-                                    </h3>
-                                    <p className="text-xs text-neutral-700 whitespace-pre-line leading-relaxed">
-                                        {competition.prize_info}
-                                    </p>
-                                </div>
-                            )}
-
                             {/* Registered Teams */}
-                            <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-2xs">
-                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-neutral-100">
-                                    <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
-                                        <Users className="size-4 text-[#2563EB]" />
-                                        Tim Kampus yang Berpartisipasi ({competition.participations?.length || 0})
+                            <div className="glass-card rounded-3xl p-6 bg-white/85">
+                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <Users className="size-4 text-blue-600" />
+                                        <span>Tim Kampus yang Terdaftar ({competition.participations?.length || 0})</span>
                                     </h3>
-                                    <span className="text-xs text-neutral-500 font-medium">
-                                        Perwakilan Mahasiswa
-                                    </span>
+                                    <span className="text-xs text-slate-500 font-medium">Kontingen Mahasiswa</span>
                                 </div>
 
                                 {competition.participations?.length === 0 ? (
-                                    <div className="text-center py-8 px-4 bg-neutral-50/70 rounded-2xl border border-dashed border-neutral-200">
-                                        <Trophy className="size-8 text-neutral-400 mx-auto mb-2" />
-                                        <p className="text-xs font-semibold text-neutral-700">Belum ada tim kampus yang mendaftar</p>
-                                        <p className="text-[11px] text-neutral-500 mt-1 mb-4">
-                                            Jadilah kontingen pertama yang mewakili almamater Anda di ajang ini!
+                                    <div className="text-center py-8 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                                        <Trophy className="size-8 text-slate-400 mx-auto mb-2" />
+                                        <p className="text-xs font-semibold text-slate-700">Belum ada tim kampus yang mendaftar</p>
+                                        <p className="text-[11px] text-slate-500 mt-1 mb-4">
+                                            Jadilah kontingen pertama yang mewakili almamater di ajang ini!
                                         </p>
                                         <button
                                             onClick={() => setParticipateModalOpen(true)}
-                                            className="px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition"
+                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition cursor-pointer"
                                         >
                                             Bentuk Tim Sekarang
                                         </button>
@@ -337,31 +292,26 @@ export default function CompetitionShow({
                                         {competition.participations?.map((part: any) => (
                                             <div
                                                 key={part.id}
-                                                className="p-4 border border-neutral-200/80 rounded-2xl bg-neutral-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-neutral-50 transition"
+                                                className="p-4 border border-slate-200/80 rounded-2xl bg-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                             >
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <h4 className="text-xs font-bold text-neutral-900">{part.team?.name}</h4>
-                                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold">
-                                                            {part.registration_status}
+                                                        <span className="text-xs font-bold text-slate-900">{part.team?.name}</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                                            {part.stage?.replace('_', ' ') || 'Recruiting'}
                                                         </span>
                                                     </div>
-                                                    {part.project && (
-                                                        <span className="text-[11px] text-[#2563EB] block mt-0.5 font-medium">
-                                                            Taut Proyek: {part.project.title}
-                                                        </span>
-                                                    )}
-                                                    <span className="text-[11px] text-neutral-500 mt-1 block">
-                                                        Anggota: {part.team?.members?.map((m: any) => m.user?.name).join(', ') || 'Belum ada anggota lain'}
-                                                    </span>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                                        {part.team?.members?.length || 0} Anggota • Ketua: {part.team?.members?.find((m: any) => m.permission === 'leader')?.user?.name || 'Mahasiswa'}
+                                                    </p>
                                                 </div>
 
-                                                {part.team_id && (
+                                                {myParticipation?.id === part.id && (
                                                     <Link
-                                                        href={`/workspace/${part.team_id}`}
-                                                        className="px-3.5 py-1.5 rounded-full bg-white border border-neutral-200 hover:border-[#2563EB] text-neutral-700 hover:text-[#2563EB] text-xs font-semibold transition shrink-0 self-start sm:self-auto"
+                                                        href={route('competitions.workspace', part.id)}
+                                                        className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shrink-0"
                                                     >
-                                                        Lihat Workspace
+                                                        Workspace Tim
                                                     </Link>
                                                 )}
                                             </div>
@@ -371,99 +321,103 @@ export default function CompetitionShow({
                             </div>
                         </div>
 
-                        {/* Right Sidebar: Timeline & Verification Status */}
+                        {/* Right Col: Timeline & Sources */}
                         <div className="flex flex-col gap-6">
-                            {/* Timeline Card */}
-                            <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-2xs space-y-3.5 text-xs text-neutral-700">
-                                <h3 className="text-sm font-bold text-neutral-900 mb-2 flex items-center gap-1.5">
-                                    <Clock className="size-4 text-[#2563EB]" />
-                                    Timeline Pelaksanaan
+                            <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-4">
+                                <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
+                                    <Clock className="size-4 text-blue-600" />
+                                    <span>Timeline Penting</span>
                                 </h3>
-                                <div className="flex justify-between py-2 border-b border-neutral-100">
-                                    <span className="text-neutral-500">Buka Pendaftaran:</span>
-                                    <span className="font-semibold text-neutral-900">
-                                        {competition.registration_opens_at
-                                            ? new Date(competition.registration_opens_at).toLocaleDateString('id-ID')
-                                            : '-'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b border-neutral-100">
-                                    <span className="text-neutral-500">Tutup Pendaftaran:</span>
-                                    <span className="font-semibold text-neutral-900">
-                                        {competition.registration_deadline
-                                            ? new Date(competition.registration_deadline).toLocaleDateString('id-ID')
-                                            : '-'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2 border-b border-neutral-100">
-                                    <span className="text-neutral-500">Mulai Kompetisi:</span>
-                                    <span className="font-semibold text-neutral-900">
-                                        {competition.starts_at ? new Date(competition.starts_at).toLocaleDateString('id-ID') : '-'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-2">
-                                    <span className="text-neutral-500">Selesai / Final:</span>
-                                    <span className="font-semibold text-neutral-900">
-                                        {competition.ends_at ? new Date(competition.ends_at).toLocaleDateString('id-ID') : '-'}
-                                    </span>
+
+                                <div className="space-y-3 text-xs">
+                                    <div className="flex justify-between py-1.5 border-b border-slate-100">
+                                        <span className="text-slate-500">Pendaftaran Buka:</span>
+                                        <span className="font-bold text-slate-900">
+                                            {competition.registration_opens_at ? new Date(competition.registration_opens_at).toLocaleDateString('id-ID') : 'Sudah Buka'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between py-1.5 border-b border-slate-100">
+                                        <span className="text-slate-500">Batas Deadline:</span>
+                                        <span className="font-bold text-rose-600">
+                                            {competition.registration_deadline ? new Date(competition.registration_deadline).toLocaleDateString('id-ID') : 'Terbuka'}
+                                        </span>
+                                    </div>
+
+                                    <div className="flex justify-between py-1.5 border-b border-slate-100">
+                                        <span className="text-slate-500">Pelaksanaan:</span>
+                                        <span className="font-bold text-slate-900">
+                                            {competition.starts_at ? new Date(competition.starts_at).toLocaleDateString('id-ID') : 'Menyusul'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Verification Card */}
-                            <div className="bg-gradient-to-b from-[#F3F0FE] to-white border border-purple-100/90 rounded-3xl p-6 shadow-2xs">
-                                <h4 className="text-xs font-bold text-neutral-900 flex items-center gap-2 mb-2">
-                                    <ShieldCheck className="size-4 text-[#2563EB]" />
-                                    Validitas Sumber Lomba
-                                </h4>
-                                <p className="text-xs text-neutral-600 leading-relaxed">
-                                    {competition.verification_status === 'verified' ? (
-                                        <>
-                                            Kompetisi ini telah diverifikasi validitasnya oleh Administrator Kampus resmi.
-                                            {competition.last_verified_at && (
-                                                <span className="block mt-2 text-[11px] text-[#2563EB] font-medium">
-                                                    Terakhir diverifikasi:{' '}
-                                                    {new Date(competition.last_verified_at).toLocaleDateString('id-ID')}
-                                                </span>
-                                            )}
-                                        </>
-                                    ) : (
-                                        'Kompetisi ini diajukan oleh komunitas mahasiswa dan saat ini sedang menunggu verifikasi kurator kampus.'
-                                    )}
-                                </p>
-                            </div>
+                            {/* Provenance Source */}
+                            {competition.sources && competition.sources.length > 0 && (
+                                <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-3">
+                                    <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2 flex items-center gap-2">
+                                        <ShieldCheck className="size-4 text-emerald-600" />
+                                        <span>Sumber Informasi Valid</span>
+                                    </h3>
+                                    {competition.sources.map((src: any) => (
+                                        <div key={src.id} className="text-xs space-y-1">
+                                            <div className="font-semibold text-slate-800">{src.label}</div>
+                                            <a
+                                                href={src.url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="text-blue-600 hover:text-blue-700 underline truncate block"
+                                            >
+                                                {src.url}
+                                            </a>
+                                            {src.notes && <p className="text-[11px] text-slate-400">{src.notes}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Form / Register Team Modal */}
+                {/* MODAL PENDAFTARAN TIM */}
                 {isParticipateModalOpen && (
-                    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 relative">
-                            <button
-                                onClick={() => setParticipateModalOpen(false)}
-                                className="absolute top-6 right-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
-                            >
-                                <X className="size-4" />
-                            </button>
-
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="p-2 rounded-xl bg-[#EFF6FF] text-[#2563EB]">
-                                    <Trophy className="size-5" />
-                                </span>
-                                <div>
-                                    <h3 className="text-base font-bold text-neutral-900">Daftarkan Tim ke Kompetisi</h3>
-                                    <p className="text-xs text-neutral-500">{competition.name}</p>
+                    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <Trophy className="size-4" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900">Bentuk Tim Kompetisi</h3>
+                                        <p className="text-[11px] text-slate-400">{competition.name}</p>
+                                    </div>
                                 </div>
+                                <button onClick={() => setParticipateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="size-4" />
+                                </button>
                             </div>
 
+                            {/* Eligibility Check Alert */}
+                            {!eligibilityCheck.eligible && (
+                                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+                                    <AlertCircle className="size-4 text-rose-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-bold block">Tidak Memenuhi Syarat Pendaftaran:</span>
+                                        <span>{eligibilityCheck.reason}</span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Mode Switcher */}
-                            {myLedProjects.length > 0 && (
-                                <div className="flex border border-neutral-200/80 rounded-full p-1 mt-4 bg-neutral-100/70 text-xs">
+                            {myLedProjects.length > 0 && eligibilityCheck.eligible && (
+                                <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
                                     <button
                                         type="button"
                                         onClick={() => setParticipationMode('new_team')}
-                                        className={`flex-1 py-1.5 rounded-full font-semibold transition ${
-                                            participationMode === 'new_team' ? 'bg-white shadow-xs text-[#2563EB]' : 'text-neutral-500'
+                                        className={`flex-1 py-1.5 rounded-lg transition ${
+                                            participationMode === 'new_team' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500'
                                         }`}
                                     >
                                         Bentuk Tim Baru
@@ -471,8 +425,8 @@ export default function CompetitionShow({
                                     <button
                                         type="button"
                                         onClick={() => setParticipationMode('existing_project')}
-                                        className={`flex-1 py-1.5 rounded-full font-semibold transition ${
-                                            participationMode === 'existing_project' ? 'bg-white shadow-xs text-[#2563EB]' : 'text-neutral-500'
+                                        className={`flex-1 py-1.5 rounded-lg transition ${
+                                            participationMode === 'existing_project' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500'
                                         }`}
                                     >
                                         Tautkan Proyek Saya
@@ -480,11 +434,11 @@ export default function CompetitionShow({
                                 </div>
                             )}
 
-                            <form onSubmit={handleCreateParticipation} className="mt-5 flex flex-col gap-4">
+                            <form onSubmit={handleCreateParticipation} className="space-y-4">
                                 {participationMode === 'existing_project' ? (
                                     <div>
-                                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                                            Pilih Proyek yang Ingin Didaftarkan *
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Pilih Proyek yang Ingin Diikutsertakan
                                         </label>
                                         <select
                                             value={selectedProjectId}
@@ -494,64 +448,61 @@ export default function CompetitionShow({
                                                 if (p) setTeamName(p.title);
                                             }}
                                             required
-                                            className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
                                         >
-                                            <option value="">-- Pilih Proyek Aktif yang Anda Pimpin --</option>
+                                            <option value="">-- Pilih Proyek Aktif --</option>
                                             {myLedProjects.map((p) => (
                                                 <option key={p.id} value={p.id}>
                                                     {p.title} ({p.status})
                                                 </option>
                                             ))}
                                         </select>
-                                        <p className="text-[11px] text-neutral-500 mt-1.5">
-                                            Data tim dan seluruh anggota aktif akan langsung terhubung ke kompetisi ini tanpa duplikasi basis data.
-                                        </p>
                                     </div>
                                 ) : (
                                     <>
                                         <div>
-                                            <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                                                Nama Tim Mahasiswa *
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Nama Tim Kompetisi <span className="text-rose-500">*</span>
                                             </label>
                                             <input
                                                 type="text"
+                                                required
+                                                placeholder="Contoh: Garuda Tech, Inovasi Cemerlang"
                                                 value={teamName}
                                                 onChange={(e) => setTeamName(e.target.value)}
-                                                placeholder="Contoh: Garuda Tech Polindra"
-                                                required
-                                                className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
-                                                Deskripsi / Sasaran Karya Tim
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Deskripsi Singkat Tim & Sasaran Karya
                                             </label>
                                             <textarea
+                                                rows={3}
+                                                placeholder="Tuliskan gambaran inovasi yang akan dipersiapkan..."
                                                 value={description}
                                                 onChange={(e) => setDescription(e.target.value)}
-                                                placeholder="Tuliskan fokus ide karya inovasi atau pembagian peran divisi tim..."
-                                                rows={3}
-                                                className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                                className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
                                             />
                                         </div>
                                     </>
                                 )}
 
-                                <div className="flex justify-end gap-2.5 mt-4 pt-2">
+                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => setParticipateModalOpen(false)}
-                                        className="px-4 py-2 border border-neutral-200 rounded-full text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition"
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
-                                        disabled={submitting}
-                                        className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                        disabled={submitting || !eligibilityCheck.eligible}
+                                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs disabled:opacity-50 cursor-pointer"
                                     >
-                                        {submitting ? 'Memproses Pendaftaran...' : 'Konfirmasi & Bentuk Tim'}
+                                        {submitting ? 'Memproses...' : 'Bentuk Tim & Masuk Workspace'}
                                     </button>
                                 </div>
                             </form>

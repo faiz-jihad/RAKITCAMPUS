@@ -22,11 +22,11 @@ class Competition extends Model
     protected $fillable = [
         'campus_id', 'scope', 'created_by', 'slug', 'status', 'status_locked',
         'verification_status', 'last_verified_at', 'verified_by', 'moderation_status',
-        'name', 'organizer', 'description', 'category',
+        'name', 'organizer', 'description', 'category', 'level', 'competition_type',
         'official_url', 'registration_url',
         'registration_opens_at', 'registration_deadline', 'starts_at', 'ends_at',
         'eligibility', 'min_team_size', 'max_team_size',
-        'required_documents', 'prize_info',
+        'required_documents', 'prize_info', 'cover_image',
     ];
 
     protected function casts(): array

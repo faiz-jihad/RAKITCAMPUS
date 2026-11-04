@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CompetitionSource extends Model
 {
-    protected $fillable = ['label', 'url', 'notes'];
+    protected $fillable = ['competition_id', 'label', 'url', 'notes', 'verified_at', 'verified_by'];
 
     protected function casts(): array
     {

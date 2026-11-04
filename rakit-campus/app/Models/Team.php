@@ -90,6 +90,10 @@ class Team extends Model
     {
         $userId = $user instanceof User ? $user->id : $user;
 
+        if ($this->leader_id === $userId) {
+            return true;
+        }
+
         if ($this->relationLoaded('members')) {
             return $this->members->contains(function ($m) use ($userId) {
                 return $m->user_id === $userId && (
