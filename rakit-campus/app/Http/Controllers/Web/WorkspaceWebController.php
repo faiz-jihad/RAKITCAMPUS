@@ -30,7 +30,7 @@ class WorkspaceWebController extends Controller
             $teamsQuery->where(function ($q) use ($user) {
                 $q->where('leader_id', $user->id)
                   ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id))
-                  ->orWhereHas('project.academicClass', fn ($ac) => $ac->where('lecturer_id', $user->id));
+                  ->orWhereHas('project.academicClass', fn ($ac) => $ac->where('lecturer_id', $user->id)->orWhereHas('coLecturers', fn ($cl) => $cl->where('users.id', $user->id)));
             });
         } else {
             $teamsQuery->where(function ($q) use ($user) {
@@ -50,7 +50,7 @@ class WorkspaceWebController extends Controller
             $totalTasks = $team->tasks->count();
             $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
             $isTeamLeader = $team->leader_id === $user->id || $team->isLeader($user);
-            $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->lecturer_id === $user->id;
+            $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
 
             return [
                 'id' => $team->id,
@@ -81,7 +81,7 @@ class WorkspaceWebController extends Controller
         ]);
     }
 
-    public function show(Request $request, int $teamId): Response
+    public function show(Request $request, int $teamId): \Inertia\Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         $team = Team::with([
@@ -92,12 +92,27 @@ class WorkspaceWebController extends Controller
             'posts.author:id,name',
         ])->findOrFail($teamId);
 
-        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->lecturer_id === $user->id;
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
         $isLecturer = $user->isLecturer() || $isClassLecturer;
 
         // If not a lecturer and not a member, verify authorization
         if (! $isLecturer) {
             $this->authorize('view', $team);
+        }
+
+        // Project Workspace must only become available after successful team activation
+        if ($team->project) {
+            $allowedStatuses = [
+                \App\Enums\ProjectStatus::InProgress->value,
+                \App\Enums\ProjectStatus::Completed->value,
+                \App\Enums\ProjectStatus::OnHold->value,
+            ];
+            $projStatus = is_object($team->project->status) ? $team->project->status->value : $team->project->status;
+
+            if (! in_array($projStatus, $allowedStatuses, true) && ! $isLecturer) {
+                return redirect()->route('projects.show', $team->project->id)
+                    ->with('warning', 'Workspace proyek hanya dapat diakses setelah formasi kelompok dikonfirmasi dan diaktifkan (Status: Sedang Berjalan). Silakan selesaikan formasi tim terlebih dahulu.');
+            }
         }
 
         $tasks = Task::where('team_id', $team->id)

@@ -59,6 +59,18 @@ class AcademicClass extends Model
         return $this->belongsTo(User::class, 'lecturer_id');
     }
 
+    public function coLecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'academic_class_lecturers',
+            'academic_class_id',
+            'lecturer_id'
+        )
+            ->withPivot(['id', 'role'])
+            ->withTimestamps();
+    }
+
     public function students(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -83,7 +95,15 @@ class AcademicClass extends Model
 
     public function isLecturer(User $user): bool
     {
-        return $this->lecturer_id === $user->id;
+        if ($this->lecturer_id === $user->id) {
+            return true;
+        }
+
+        if ($this->relationLoaded('coLecturers')) {
+            return $this->coLecturers->contains('id', $user->id);
+        }
+
+        return $this->coLecturers()->where('users.id', $user->id)->exists();
     }
 
     public function hasStudent(User $user): bool

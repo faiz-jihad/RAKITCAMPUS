@@ -87,6 +87,7 @@ interface Props {
         target_team_size: number;
         status: string;
         lecturer?: { id: number; name: string; email: string };
+        co_lecturers?: Array<{ id: number; name: string; email: string }>;
         campus?: { id: number; name: string };
     };
     students: Student[];
@@ -373,8 +374,14 @@ export default function ClassShow({
                                 <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/5 border border-slate-900/10 text-slate-700 font-medium backdrop-blur-xs">
                                         <GraduationCap className="size-3.5 text-slate-500" />
-                                        <span>Dosen: <strong className="text-slate-900 font-bold">{academicClass.lecturer?.name || 'Dosen Pengampu'}</strong></span>
+                                        <span>Dosen Utama: <strong className="text-slate-900 font-bold">{academicClass.lecturer?.name || 'Dosen Pengampu'}</strong></span>
                                     </span>
+                                    {academicClass.co_lecturers && academicClass.co_lecturers.length > 0 && (
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-800 font-medium backdrop-blur-xs">
+                                            <Users className="size-3.5 text-blue-600" />
+                                            <span>Dosen Mitra ({academicClass.co_lecturers.length}): <strong className="text-blue-900 font-bold">{academicClass.co_lecturers.map(cl => cl.name).join(', ')}</strong></span>
+                                        </span>
+                                    )}
                                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/5 border border-slate-900/10 text-slate-700 font-medium backdrop-blur-xs">
                                         <Users className="size-3.5 text-slate-500" />
                                         <span>Target: <strong className="text-slate-900 font-bold">{academicClass.target_team_size} Mahasiswa / Kelompok</strong></span>

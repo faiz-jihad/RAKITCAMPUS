@@ -26,7 +26,9 @@ interface Props {
     project: any;
     isBookmarked: boolean;
     isLeader: boolean;
+    isLecturer?: boolean;
     isMember: boolean;
+    userHasActiveProject?: boolean;
     canEdit: boolean;
     applications?: any[];
 }
@@ -35,7 +37,9 @@ export default function ProjectShow({
     project,
     isBookmarked: initialBookmarked,
     isLeader,
+    isLecturer = false,
     isMember,
+    userHasActiveProject = false,
     canEdit,
     applications: initialApplications = [],
 }: Props) {
@@ -45,6 +49,17 @@ export default function ProjectShow({
     const [applyMessage, setApplyMessage] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [decidingId, setDecidingId] = useState<number | null>(null);
+
+    // Lifecycle action modals
+    const [showSubmitFinalModal, setShowSubmitFinalModal] = useState(false);
+    const [showEvaluateModal, setShowEvaluateModal] = useState(false);
+    const [repoUrl, setRepoUrl] = useState(project.repository_url || '');
+    const [demoUrl, setDemoUrl] = useState(project.demo_url || '');
+    const [submissionNotes, setSubmissionNotes] = useState(project.submission_notes || '');
+    const [evaluationGrade, setEvaluationGrade] = useState(project.lecturer_evaluation || 'A');
+    const [evaluationNotes, setEvaluationNotes] = useState(project.lecturer_notes || '');
+    const [completeProjectCheckbox, setCompleteProjectCheckbox] = useState(true);
+    const [lifecycleProcessing, setLifecycleProcessing] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Project Hub', href: '/projects' },
@@ -197,6 +212,102 @@ export default function ProjectShow({
         }
     };
 
+    const handleActivateTeam = async () => {
+        if (!confirm('Konfirmasi dan aktifkan formasi kelompok ini? Setelah diaktifkan, status proyek menjadi "Sedang Berjalan" dan Project Workspace resmi dibuka untuk seluruh anggota.')) return;
+        setLifecycleProcessing(true);
+        try {
+            const res = await fetch(`/projects/${project.id}/activate-team`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+            });
+            if (res.ok) {
+                alert('Kelompok berhasil diaktifkan! Workspace proyek telah dibuka.');
+                window.location.reload();
+            } else {
+                const json = await res.json().catch(() => ({}));
+                alert(json.message || 'Gagal mengaktifkan kelompok.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setLifecycleProcessing(false);
+        }
+    };
+
+    const handleSubmitFinal = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLifecycleProcessing(true);
+        try {
+            const res = await fetch(`/projects/${project.id}/submit-final`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({
+                    repository_url: repoUrl,
+                    demo_url: demoUrl,
+                    submission_notes: submissionNotes,
+                }),
+            });
+            if (res.ok) {
+                alert('Tugas akhir proyek berhasil diserahkan ke Dosen Pembimbing untuk evaluasi!');
+                setShowSubmitFinalModal(false);
+                window.location.reload();
+            } else {
+                const json = await res.json().catch(() => ({}));
+                alert(json.message || 'Gagal menyerahkan tugas akhir.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setLifecycleProcessing(false);
+        }
+    };
+
+    const handleEvaluate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLifecycleProcessing(true);
+        try {
+            const res = await fetch(`/projects/${project.id}/evaluate`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({
+                    lecturer_evaluation: evaluationGrade,
+                    lecturer_notes: evaluationNotes,
+                    complete_project: completeProjectCheckbox,
+                }),
+            });
+            if (res.ok) {
+                alert('Evaluasi dan penilaian dosen berhasil disimpan!');
+                setShowEvaluateModal(false);
+                window.location.reload();
+            } else {
+                const json = await res.json().catch(() => ({}));
+                alert(json.message || 'Gagal menyimpan evaluasi.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setLifecycleProcessing(false);
+        }
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${project.title} — RAKIT Campus`} />
@@ -293,33 +404,70 @@ export default function ProjectShow({
                                 </div>
                             ) : <div />}
 
-                            <div className="flex items-center gap-3">
-                                {isLeader && project.status !== 'completed' && (
-                                    <button
-                                        onClick={handleCompleteProject}
-                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
-                                    >
-                                        <CheckCircle2 className="size-3.5" />
-                                        <span>Tandai Proyek Selesai</span>
-                                    </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Rule 1 Alert if visitor already has active project */}
+                                {!isMember && userHasActiveProject && (
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold">
+                                        <AlertCircle className="size-3.5 text-amber-600" />
+                                        <span>Aturan 1 Mahasiswa 1 Proyek Aktif: Anda sedang aktif di proyek lain.</span>
+                                    </div>
                                 )}
+
+                                {/* Apply button for non-members */}
                                 {!isMember && (
                                     <button
                                         onClick={() => setApplyingRole(project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' })}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
+                                        disabled={userHasActiveProject || project.status === 'completed'}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs shadow-xs transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                         <Send className="size-3.5" />
-                                        <span>Lamar Posisi / Gabung Tim</span>
+                                        <span>{userHasActiveProject ? 'Terkunci (Aturan 1 Proyek)' : 'Lamar Posisi / Gabung Tim'}</span>
                                     </button>
                                 )}
-                                {isMember && (
+
+                                {/* Team activation button for leader / lecturer before in_progress */}
+                                {(isLeader || isLecturer) && (project.status === 'recruiting' || project.status === 'draft' || project.status === 'team_formation') && (
+                                    <button
+                                        onClick={handleActivateTeam}
+                                        disabled={lifecycleProcessing}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-xs transition cursor-pointer"
+                                    >
+                                        <CheckCircle2 className="size-3.5" />
+                                        <span>{lifecycleProcessing ? 'Mengaktifkan...' : 'Konfirmasi & Aktifkan Formasi Tim'}</span>
+                                    </button>
+                                )}
+
+                                {/* Open Workspace for members/leader once in_progress or completed */}
+                                {(isMember || isLeader || isLecturer) && (project.status === 'in_progress' || project.status === 'completed' || project.status === 'on_hold') && (
                                     <Link
                                         href={`/workspace/${project.team?.id}`}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-bold text-xs shadow-xs transition"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-bold text-xs shadow-xs transition"
                                     >
                                         <FolderKanban className="size-3.5" />
-                                        <span>Buka Ruang Kerja Tim</span>
+                                        <span>Buka Project Workspace</span>
                                     </Link>
+                                )}
+
+                                {/* Final Submission button for members during in_progress */}
+                                {isMember && project.status === 'in_progress' && (
+                                    <button
+                                        onClick={() => setShowSubmitFinalModal(true)}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200/80 hover:bg-blue-100 rounded-xl font-bold text-xs transition cursor-pointer"
+                                    >
+                                        <Sparkles className="size-3.5 text-blue-600" />
+                                        <span>{project.submitted_at ? 'Update Serah Tugas Akhir' : 'Serahkan Tugas Akhir'}</span>
+                                    </button>
+                                )}
+
+                                {/* Lecturer Evaluation button */}
+                                {isLecturer && (
+                                    <button
+                                        onClick={() => setShowEvaluateModal(true)}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl font-bold text-xs transition cursor-pointer"
+                                    >
+                                        <GraduationCap className="size-3.5 text-slate-700" />
+                                        <span>Evaluasi Nilai Dosen</span>
+                                    </button>
                                 )}
                             </div>
                         </div>
@@ -626,6 +774,183 @@ export default function ProjectShow({
                                     className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
                                 >
                                     {submitting ? 'Mengirim...' : 'Kirim Lamaran'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* MODAL: SUBMIT FINAL DELIVERABLES */}
+            {showSubmitFinalModal && (
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block mb-1">
+                                    Serah Tugas Akhir Proyek
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    Final Project Submission
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Kumpulkan repositori kode sumber dan tautan demo untuk dievaluasi oleh Dosen Pembimbing.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowSubmitFinalModal(false)}
+                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmitFinal} className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    URL Repositori (GitHub / GitLab / Bitbucket)
+                                </label>
+                                <input
+                                    type="url"
+                                    value={repoUrl}
+                                    onChange={(e) => setRepoUrl(e.target.value)}
+                                    placeholder="https://github.com/organisasi/proyek-kelas"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    URL Live Demo / Dokumen Hasil Proyek
+                                </label>
+                                <input
+                                    type="url"
+                                    value={demoUrl}
+                                    onChange={(e) => setDemoUrl(e.target.value)}
+                                    placeholder="https://demo-proyek.web.app atau link video/drive"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Catatan Serah Terima & Rangkuman Pencapaian
+                                </label>
+                                <textarea
+                                    value={submissionNotes}
+                                    onChange={(e) => setSubmissionNotes(e.target.value)}
+                                    rows={3}
+                                    placeholder="Rangkum fitur utama yang telah berhasil diselesaikan oleh tim..."
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSubmitFinalModal(false)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={lifecycleProcessing}
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                >
+                                    {lifecycleProcessing ? 'Menyerahkan...' : 'Serahkan ke Dosen'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: LECTURER EVALUATION & COMPLETION */}
+            {showEvaluateModal && (
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <span className="text-xs font-bold text-purple-700 uppercase tracking-wider block mb-1">
+                                    Supervisi & Penilaian Dosen
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    Evaluasi Proyek Mahasiswa
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Berikan nilai kelulusan dan catatan evaluasi yang akan tercatat di portofolio resmi mahasiswa.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setShowEvaluateModal(false)}
+                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleEvaluate} className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Predikat / Nilai Evaluasi *
+                                </label>
+                                <select
+                                    value={evaluationGrade}
+                                    onChange={(e) => setEvaluationGrade(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-white text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                >
+                                    <option value="A (Sangat Memuaskan)">A (Sangat Memuaskan - 4.0)</option>
+                                    <option value="A- (Memuaskan)">A- (Memuaskan - 3.7)</option>
+                                    <option value="B+ (Baik Sekali)">B+ (Baik Sekali - 3.3)</option>
+                                    <option value="B (Baik)">B (Baik - 3.0)</option>
+                                    <option value="Lulus Evaluasi">Lulus Evaluasi</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Catatan Masukan & Evaluasi Teknis Dosen *
+                                </label>
+                                <textarea
+                                    value={evaluationNotes}
+                                    onChange={(e) => setEvaluationNotes(e.target.value)}
+                                    rows={4}
+                                    required
+                                    placeholder="Tuliskan feedback mengenai arsitektur kode, kepatuhan requirements, dan kolaborasi tim..."
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-start gap-2.5">
+                                <input
+                                    type="checkbox"
+                                    id="completeProjectCheckbox"
+                                    checked={completeProjectCheckbox}
+                                    onChange={(e) => setCompleteProjectCheckbox(e.target.checked)}
+                                    className="mt-0.5 rounded border-emerald-300 text-emerald-600 focus:ring-emerald-500 size-4"
+                                />
+                                <label htmlFor="completeProjectCheckbox" className="text-xs text-emerald-900 leading-tight">
+                                    <strong>Resmikan Proyek Sebagai Selesai (Completed):</strong>
+                                    <span className="block text-[11px] text-emerald-700 mt-0.5">
+                                        Status proyek selesai, melepaskan batasan Aturan 1 Proyek Aktif untuk seluruh anggota, dan menerbitkan sertifikasi portofolio terverifikasi.
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEvaluateModal(false)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={lifecycleProcessing}
+                                    className="px-5 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                >
+                                    {lifecycleProcessing ? 'Menyimpan...' : 'Simpan Evaluasi & Nilai'}
                                 </button>
                             </div>
                         </form>

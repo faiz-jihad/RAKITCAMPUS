@@ -15,6 +15,7 @@ use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\Bookmark;
 use App\Models\Campus;
+use App\Models\MatchingAuditLog;
 use App\Models\Project;
 use App\Models\Recruitment;
 use App\Models\RecruitmentRole;
@@ -96,6 +97,13 @@ class ProjectWebController extends Controller
             ->exists() : false;
 
         $isLeader = $user ? $project->isLeader($user) : false;
+        $isLecturer = $user ? (
+            ($project->academicClass && $project->academicClass->isLecturer($user))
+            || $project->primary_supervisor_id === $user->id
+            || $user->isPlatformAdmin()
+        ) : false;
+        $userHasActiveProject = $user ? $user->hasActiveProject() : false;
+
         $applications = [];
         if ($isLeader && $project->team?->recruitment) {
             $applications = Application::where('recruitment_id', $project->team->recruitment->id)
@@ -108,7 +116,9 @@ class ProjectWebController extends Controller
             'project' => $project,
             'isBookmarked' => $isBookmarked,
             'isLeader' => $isLeader,
+            'isLecturer' => $isLecturer,
             'isMember' => $user ? ($project->team?->hasMember($user) ?? false) : false,
+            'userHasActiveProject' => $userHasActiveProject,
             'canEdit' => $user ? $user->can('update', $project) : false,
             'applications' => $applications,
         ]);
@@ -333,5 +343,154 @@ class ProjectWebController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function activateTeam(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+
+        $isLeader = $project->isLeader($user);
+        $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
+            || $project->primary_supervisor_id === $user->id;
+
+        if (! $isLeader && ! $isLecturer && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya ketua tim atau dosen pembimbing yang dapat mengaktifkan kelompok.');
+        }
+
+        DB::transaction(function () use ($project, $user) {
+            $project->update([
+                'status' => ProjectStatus::InProgress->value,
+            ]);
+
+            if ($project->team) {
+                // Ensure all members are active
+                $project->team->members()->update(['status' => 'active']);
+
+                // Close recruitment
+                $project->team->recruitment?->update(['is_open' => false]);
+
+                // Create initial milestones if none exist
+                if ($project->team->milestones()->count() === 0) {
+                    \App\Models\Milestone::create([
+                        'campus_id' => $project->campus_id,
+                        'team_id' => $project->team->id,
+                        'created_by' => $user->id,
+                        'title' => 'Milestone 1: Perencanaan & Arsitektur',
+                        'description' => 'Penyusunan backlog tugas, pembagian peran, dan perancangan skema data.',
+                        'starts_on' => now(),
+                        'due_on' => now()->addWeeks(2),
+                        'status' => 'in_progress',
+                    ]);
+                    \App\Models\Milestone::create([
+                        'campus_id' => $project->campus_id,
+                        'team_id' => $project->team->id,
+                        'created_by' => $user->id,
+                        'title' => 'Milestone 2: Pengembangan & Integrasi Fitur',
+                        'description' => 'Pengembangan sprint utama, implementasi komponen UI, dan integrasi backend API.',
+                        'starts_on' => now()->addWeeks(2),
+                        'due_on' => now()->addWeeks(6),
+                        'status' => 'planned',
+                    ]);
+                    \App\Models\Milestone::create([
+                        'campus_id' => $project->campus_id,
+                        'team_id' => $project->team->id,
+                        'created_by' => $user->id,
+                        'title' => 'Milestone 3: Pengujian, Evaluasi & Final Submission',
+                        'description' => 'Quality assurance, dokumentasi tugas akhir, dan serah terima ke Dosen Pembimbing.',
+                        'starts_on' => now()->addWeeks(6),
+                        'due_on' => now()->addWeeks(8),
+                        'status' => 'planned',
+                    ]);
+                }
+            }
+
+            $teamId = $project->team?->id;
+
+            MatchingAuditLog::log(
+                'team_activated',
+                ['project_id' => $project->id, 'team_id' => $teamId],
+                $project->academic_class_id,
+                $project->id,
+                $user->id
+            );
+        });
+
+        $teamId = $project->team?->id;
+
+        return redirect()->route('workspace.show', ['teamId' => $teamId])
+            ->with('success', 'Formasi kelompok berhasil dikonfirmasi dan diaktifkan! Workspace proyek telah dibuka.');
+    }
+
+    public function submitFinal(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members'])->findOrFail($id);
+
+        if (! $project->team?->hasMember($user) && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya anggota kelompok yang dapat mengumpulkan tugas akhir proyek.');
+        }
+
+        $validated = $request->validate([
+            'repository_url' => ['nullable', 'url', 'max:255'],
+            'demo_url' => ['nullable', 'url', 'max:255'],
+            'submission_notes' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $project->update([
+            'repository_url' => $validated['repository_url'] ?? $project->repository_url,
+            'demo_url' => $validated['demo_url'] ?? $project->demo_url,
+            'submission_notes' => $validated['submission_notes'] ?? $project->submission_notes,
+            'submitted_at' => now(),
+            'progress' => 100,
+        ]);
+
+        MatchingAuditLog::log(
+            'final_submission_submitted',
+            [
+                'project_id' => $project->id,
+                'repository_url' => $validated['repository_url'] ?? null,
+                'demo_url' => $validated['demo_url'] ?? null,
+            ],
+            $project->academic_class_id,
+            $project->id,
+            $user->id
+        );
+
+        return back()->with('success', 'Tugas akhir proyek berhasil diserahkan untuk dievaluasi oleh Dosen Pembimbing!');
+    }
+
+    public function evaluate(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+
+        $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
+            || $project->primary_supervisor_id === $user->id
+            || $user->isPlatformAdmin();
+
+        if (! $isLecturer) {
+            abort(403, 'Hanya dosen pembimbing atau pengampu kelas yang dapat memberikan evaluasi nilai.');
+        }
+
+        $validated = $request->validate([
+            'lecturer_evaluation' => ['required', 'string', 'max:50'],
+            'lecturer_notes' => ['required', 'string', 'max:2000'],
+            'complete_project' => ['nullable', 'boolean'],
+        ]);
+
+        $project->update([
+            'lecturer_evaluation' => $validated['lecturer_evaluation'],
+            'lecturer_notes' => $validated['lecturer_notes'],
+            'evaluated_at' => now(),
+        ]);
+
+        if (! empty($validated['complete_project'])) {
+            $this->membershipService->completeProject($project, $user->id);
+
+            return back()->with('success', "Evaluasi nilai {$validated['lecturer_evaluation']} berhasil disimpan. Proyek resmi dinyatakan Selesai (Completed) dan portofolio seluruh anggota tim telah diverifikasi!");
+        }
+
+        return back()->with('success', 'Catatan evaluasi bimbingan dosen berhasil disimpan.');
     }
 }

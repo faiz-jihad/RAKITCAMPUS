@@ -131,6 +131,9 @@ class WebPageRenderTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('portfolio/index'));
 
+        // Workspace requires team activation (ProjectStatus::InProgress)
+        $this->project->update(['status' => ProjectStatus::InProgress]);
+
         $team = $this->project->team;
         $this->actingAs($this->student)
             ->get("/workspace/{$team->id}")

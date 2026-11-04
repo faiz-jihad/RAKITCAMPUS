@@ -33,6 +33,9 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/projects', [ProjectWebController::class, 'store'])->name('projects.store');
     Route::post('/projects/{id}/apply', [ProjectWebController::class, 'apply'])->name('projects.apply');
     Route::post('/projects/{id}/applications/{appId}/respond', [ProjectWebController::class, 'respondApplication'])->name('projects.applications.respond');
+    Route::post('/projects/{id}/activate-team', [ProjectWebController::class, 'activateTeam'])->name('projects.activate-team');
+    Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');
+    Route::post('/projects/{id}/evaluate', [ProjectWebController::class, 'evaluate'])->name('projects.evaluate');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');
@@ -58,6 +61,8 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/invite-student', [AcademicClassWebController::class, 'inviteStudent'])->name('classes.invite-student');
     Route::post('/classes/{id}/simulate-allocation', [AcademicClassWebController::class, 'simulateAllocation'])->name('classes.simulate-allocation');
     Route::post('/classes/{id}/approve-allocation/{sessionId}', [AcademicClassWebController::class, 'approveAllocation'])->name('classes.approve-allocation');
+    Route::post('/classes/{id}/co-lecturers', [AcademicClassWebController::class, 'addCoLecturer'])->name('classes.co-lecturers.add');
+    Route::delete('/classes/{id}/co-lecturers/{lecturerId}', [AcademicClassWebController::class, 'removeCoLecturer'])->name('classes.co-lecturers.remove');
 
     // Quick Role Switcher for Testing (Mahasiswa <-> Dosen)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {

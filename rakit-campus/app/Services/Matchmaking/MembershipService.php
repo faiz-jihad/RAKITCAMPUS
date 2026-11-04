@@ -239,11 +239,11 @@ class MembershipService
     }
 
     /**
-     * Formally complete a project. Releases all active student restrictions.
+     * Formally complete a project. Releases all active student restrictions and awards verified portfolio achievements.
      */
-    public function completeProject(Project $project): void
+    public function completeProject(Project $project, ?int $evaluatorId = null): void
     {
-        DB::transaction(function () use ($project) {
+        DB::transaction(function () use ($project, $evaluatorId) {
             $project->update([
                 'status' => ProjectStatus::Completed->value,
                 'completed_at' => now(),
@@ -251,9 +251,31 @@ class MembershipService
             ]);
 
             if ($project->team) {
+                $members = $project->team->members;
                 $project->team->members()->update([
                     'status' => 'completed',
                 ]);
+
+                foreach ($members as $member) {
+                    \App\Models\Achievement::firstOrCreate(
+                        [
+                            'user_id' => $member->user_id,
+                            'project_id' => $project->id,
+                            'type' => 'project_completed',
+                        ],
+                        [
+                            'campus_id' => $project->campus_id,
+                            'team_id' => $project->team_id ?? $project->team->id,
+                            'title' => 'Menyelesaikan Proyek: '.$project->title,
+                            'description' => "Menyelesaikan proyek kolaborasi dengan peran {$member->role_name}.".($project->lecturer_evaluation ? " Evaluasi: {$project->lecturer_evaluation}." : ''),
+                            'achieved_on' => now(),
+                            'verification_status' => 'verified',
+                            'verified_by' => $evaluatorId ?? $project->primary_supervisor_id ?? $project->academicClass?->lecturer_id,
+                            'verified_at' => now(),
+                            'is_public' => true,
+                        ]
+                    );
+                }
             }
 
             MatchingAuditLog::log(

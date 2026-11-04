@@ -124,6 +124,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::with([
             'lecturer:id,name,email',
+            'coLecturers:id,name,email',
             'campus:id,name',
             'students.profile.skills',
             'students.teamMemberships.team.project',
@@ -630,5 +631,58 @@ class AcademicClassWebController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /**
+     * Add co-lecturer to class (Multi-lecturer support)
+     */
+    public function addCoLecturer(Request $request, int $id)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        if (! $academicClass->isLecturer($user) && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen pengampu utama atau admin yang dapat menambahkan dosen tim pengajar.');
+        }
+
+        $validated = $request->validate([
+            'lecturer_identifier' => ['required', 'string', 'max:150'],
+            'role' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $lecturer = User::where('email', $validated['lecturer_identifier'])
+            ->orWhere('id', is_numeric($validated['lecturer_identifier']) ? (int) $validated['lecturer_identifier'] : 0)
+            ->first();
+
+        if (! $lecturer) {
+            return back()->withErrors(['lecturer_identifier' => 'Dosen dengan email atau ID tersebut tidak ditemukan.']);
+        }
+
+        if ($lecturer->id === $academicClass->lecturer_id || $academicClass->coLecturers()->where('users.id', $lecturer->id)->exists()) {
+            return back()->withErrors(['lecturer_identifier' => 'Dosen tersebut sudah terdaftar di kelas ini.']);
+        }
+
+        $academicClass->coLecturers()->attach($lecturer->id, [
+            'role' => $validated['role'] ?? 'co_lecturer',
+        ]);
+
+        return back()->with('success', "Dosen {$lecturer->name} berhasil ditambahkan sebagai tim pengajar kelas!");
+    }
+
+    /**
+     * Remove co-lecturer from class
+     */
+    public function removeCoLecturer(Request $request, int $id, int $lecturerId)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        if ($academicClass->lecturer_id !== $user->id && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen pengampu utama yang dapat menghapus dosen tim pengajar.');
+        }
+
+        $academicClass->coLecturers()->detach($lecturerId);
+
+        return back()->with('info', 'Dosen telah dihapus dari tim pengajar kelas.');
     }
 }

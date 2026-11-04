@@ -26,6 +26,7 @@ class Project extends Model
         'problem_statement', 'objectives', 'proposed_solution',
         'tech_stack', 'visibility', 'starts_on', 'target_completion_on',
         'completed_at', 'moderation_status', 'lecturer_notes', 'lecturer_evaluation',
+        'repository_url', 'demo_url', 'submission_notes', 'submitted_at', 'evaluated_at',
     ];
 
     protected function casts(): array
@@ -39,6 +40,8 @@ class Project extends Model
             'target_completion_on' => 'date',
             'completed_at' => 'datetime',
             'recruitment_deadline' => 'datetime',
+            'submitted_at' => 'datetime',
+            'evaluated_at' => 'datetime',
             'progress' => 'integer',
             'min_team_size' => 'integer',
             'max_team_size' => 'integer',
