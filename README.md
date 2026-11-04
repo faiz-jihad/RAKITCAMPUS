@@ -1,130 +1,177 @@
 # RAKIT Campus
 
-> **Build the Right Team, Build Something Real.**  
-> Platform Student Opportunity & Team Formation yang menghubungkan mahasiswa dengan proyek nyata, kompetisi, riset akademik, dan kolaborator sepadan.
+<p align="center">
+  <img src="rakit-campus/public/images/rakit-logo.png" alt="RAKIT Campus Logo" width="280" />
+</p>
+
+<p align="center">
+  <strong>Build the Right Team, Build Something Real.</strong><br />
+  Platform Ekosistem Pembentukan Tim Berimbang, Manajemen Kelas Akademik Dosen, dan Workspace Proyek Mahasiswa.
+</p>
+
+<p align="center">
+  <a href="https://rakitcampus.mataceria.my.id" target="_blank">
+    <img src="https://img.shields.io/badge/Production%20Live-rakitcampus.mataceria.my.id-2563EB?style=for-the-badge&logo=cloudflare&logoColor=white" alt="Live Production" />
+  </a>
+  <img src="https://img.shields.io/badge/Laravel-12.x-FF2D20?style=for-the-badge&logo=laravel&logoColor=white" alt="Laravel 12" />
+  <img src="https://img.shields.io/badge/Inertia.js-React%2019-9333EA?style=for-the-badge&logo=react&logoColor=white" alt="React 19" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-v4-38BDF8?style=for-the-badge&logo=tailwindcss&logoColor=white" alt="Tailwind CSS v4" />
+  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
+</p>
 
 ---
 
-## 1. Arsitektur Proyek
+## 1. Ikhtisar Platform
 
-Repository ini dibangun secara terpadu tanpa fragmentasi layanan yang tidak perlu:
+**RAKIT Campus** hadir menjawab problematika klasik perkuliahan dan kompetisi mahasiswa: **ketimpangan pembentukan kelompok, fenomena "teman satu geng" (*social loafing* & *free rider*), serta minimnya pemantauan terstruktur dari dosen pengampu**.
+
+Platform ini mengintegrasikan:
+1. **Portal Kelas Akademik & Dosen Pengampu (`/classes`)**: Manajemen kelas perkuliahan berbasis Kode Gabung unik, pembagian kelompok otomatis berkeadilan (*Smart Team Balancing*), dan pencatatan bimbingan proyek terpusat.
+2. **Mesin Matchmaking Anti-Ketimpangan**: Algoritma pencocokan 4-dimensi komplementer yang memastikan tiap kelompok memiliki kombinasi peran teknis berimbang (Backend, Frontend, Mobile, UI/UX, Data/AI) serta mengunci kuota tim secara ketat.
+3. **Workspace Proyek Kolaboratif (`/projects/{id}`)**: Papan Kanban interaktif ala Trello (`todo`, `in_progress`, `in_review`, `completed`), visualisasi roadmap tenggat waktu, dan catatan evaluasi/nilai dari dosen.
+4. **Desain Modern Glassmorphism**: Antarmuka bersih berestetika kaca buram (*frosted glass*), pencahayaan ambien alami, dan skema warna resmi *Royal Electric Blue* & *Deep Slate* yang bebas dari gradien ungu khas AI generik.
+
+---
+
+## 2. Live Demo & Kredensial Pilot (Polindra)
+
+Aplikasi telah terpasang dan siap uji secara langsung di server production:
+
+* **URL Web Production:** [https://rakitcampus.mataceria.my.id](https://rakitcampus.mataceria.my.id)
+* **Demo Cepat 1-Klik:** Tersedia tombol *1-Click Demo Login* di halaman login untuk beralih instan antara mode **Mahasiswa** dan **Dosen**.
+
+### Kredensial Uji Coba:
+
+| Role | Nama | Email Akun | Password | Deskripsi Akses |
+| :--- | :--- | :--- | :--- | :--- |
+| **Dosen** | **Budi Santoso, M.Kom.** | `budi@polindra.ac.id` | `password123` | Buat kelas, kunci aturan kelompok, auto-balance tim, & beri nilai |
+| **Mahasiswa** | **Ahmad Fauzi** | `ahmad.fauzi@student.polindra.ac.id` | `password123` | Mahasiswa Backend (cari rekan komplementer kelas) |
+| **Mahasiswa** | **Siti Rahma** | `siti@polindra.ac.id` | `password123` | Mahasiswa Mobile Flutter & IoT |
+| **Mahasiswa** | **Agus Pratama** | `agus@polindra.ac.id` | `password123` | Mahasiswa Rekayasa Perangkat Lunak |
+| **Mahasiswa** | **Dewi Sartika** | `dewi@polindra.ac.id` | `password123` | Mahasiswa UI/UX Designer & Data |
+
+---
+
+## 3. Fitur Unggulan
+
+### A. Manajemen Kelas & Bimbingan Dosen (`/classes`)
+* **Kode Gabung Instan:** Dosen membuat kelas mata kuliah dan sistem menerbitkan kode unik 6 digit (contoh: `LKYFZ4`). Mahasiswa cukup memasukkan kode untuk bergabung.
+* **Smart Team Balancing (Anti-Ketimpangan):**
+  * Membagi mahasiswa yang belum berkelompok secara otomatis dan adil berdasarkan keahlian komplementer.
+  * Mencegah monopoli satu keahlian dalam satu tim (maksimal 2 spesialis sejenis).
+  * Menghindari pengelompokan "teman satu geng" agar semua kelompok memiliki daya saing yang setara.
+  * Fitur *Rombak Seluruh Kelas* untuk restrukturisasi tim darurat bila terjadi ketimpangan.
+* **Catatan Bimbingan & Evaluasi:** Dosen dapat menerbitkan catatan bimbingan umum maupun bimbingan khusus untuk tim proyek tertentu.
+
+### B. Matchmaking Rekan Sekelas & Proyek Terbuka (`/matching`)
+* **Scoring Komplementer Transparan:** Menampilkan persentase kecocokan (e.g. `92% Cocok Komplementer`) disertai penjelasan detail keahlian yang saling melengkapi.
+* **Validasi Sinergi Ketat:** Sistem menolak undangan rekan jika kuota kelompok telah penuh atau jika peran yang diundang akan menyebabkan monopoli spesialisasi.
+
+### C. Workspace Proyek & Kanban Roadmap (`/projects/{id}`)
+* **Kanban Task Board:** Pengelolaan backlog tugas dengan prioritas (`Urgent`, `High`, `Medium`, `Low`), estimasi jam pengerjaan, dan lampiran berkas.
+* **Timeline & Roadmap Otomatis:** Pemetaan milestone mingguan untuk memastikan proyek selesai tepat sebelum ujian semester/tenggat lomba.
+* **Evaluasi Dosen Langsung:** Riwayat bimbingan dan status persetujuan milestone langsung di dalam halaman proyek tim.
+
+---
+
+## 4. Arsitektur Repositori
 
 ```
 RakitCampus/
 │
-├── rakit-campus/                 # Backend REST API & Web Application
-│   ├── app/                      # Domain Services, Controllers, Models, Policies
-│   │   ├── Enums/                # 28 Domain Enums (State Machines, Levels, Categories)
+├── rakit-campus/                 # Laravel 12 + Inertia.js (React 19 + TypeScript + Tailwind)
+│   ├── app/
+│   │   ├── Enums/                # Domain Enums (State Machines, Levels, Categories)
 │   │   ├── Http/Controllers/Api/ # REST API v1 Handlers
-│   │   ├── Http/Controllers/Web/ # Inertia.js Web Handlers
-│   │   ├── Models/               # Eloquent Models with Scopes & Relations
-│   │   ├── Policies/             # Granular IDOR & Scoped Permission Policies
-│   │   └── Services/             # Explainable Matching & Concurrency Services
-│   ├── database/                 # Migrations & Real Pilot Seeders
-│   ├── resources/js/             # Inertia React 19 + TypeScript + Tailwind Frontend
+│   │   ├── Http/Controllers/Web/ # Inertia.js Web Handlers (Class, Project, Matching, Auth)
+│   │   ├── Models/               # Eloquent Models & Active Relations
+│   │   ├── Policies/             # IDOR Security & Permission Policies
+│   │   └── Services/             # MatchingService (Fair Distribution & Team Synergy)
+│   ├── database/                 # Migrations & Real Pilot Seeders (Polindra)
+│   ├── resources/
+│   │   ├── css/app.css           # Modern Glassmorphism Utilities (.glass-surface, .glass-card)
+│   │   └── js/
+│   │       ├── components/       # UI Shell, Sidebar, Icons, Forms
+│   │       ├── layouts/          # AppLayout & AuthLayout
+│   │       └── pages/            # Classes, Projects, Matching, Dashboard, Auth
 │   └── tests/                    # PHPUnit Test Suite (41 tests, 196 assertions)
 │
-├── mobile/                       # Cross-Platform Mobile Application
+├── mobile/                       # Flutter Cross-Platform Mobile Client
 │   ├── lib/
 │   │   ├── core/                 # Dio Client, Sanctum Interceptors, Router, Theme
-│   │   └── features/             # Feature-first Clean Architecture:
-│   │       ├── auth/             # Login & Registration Flow
-│   │       ├── home/             # Main Navigation Bottom Bar Shell
-│   │       ├── projects/         # Project Discovery & Application
-│   │       ├── competitions/     # Competition Hub
-│   │       ├── matching/         # Explainable Matching UI (4-Dimension Scoring)
-│   │       ├── workspace/        # Task Management & Kanban Boards
-│   │       └── profile/          # Student Profile, Skills, and Portfolio
+│   │   └── features/             # Clean Architecture: Auth, Projects, Matching, Profile
 │   └── test/                     # Flutter Smoke & Widget Test Suite
 │
-└── docs/                         # Technical Documentation
-    ├── ARCHITECTURE.md           # System design & multi-tenancy specs
-    ├── DATABASE.md               # Complete ERD & schema catalog
-    ├── API.md                    # REST API v1 endpoint specifications
-    ├── SECURITY.md               # Threat modeling, RBAC & concurrency defense
-    └── IMPLEMENTATION_STATUS.md  # Detailed milestone completion matrix
+├── server_deploy/                # Production VPS Deployment Assets
+│   ├── docker-compose.yml        # Dockerized App, MySQL, Nginx configuration
+│   └── README_DEPLOY.md          # Server provision & SSL maintenance guide
+│
+└── docs/                         # Technical Specs & Architecture Docs
 ```
 
 ---
 
-## 2. Kredensial Pilot Politeknik Negeri Indramayu (Polindra)
-
-Database telah disiapkan dengan data pilot Polindra (Jurusan Teknik Informatika, Rekayasa Perangkat Lunak, dan Sistem Informasi Kota Cerdas):
-
-| Nama Mahasiswa | Email Kampus | Program Studi | Peran / Deskripsi | Password |
-| :--- | :--- | :--- | :--- | :--- |
-| **Budi Santoso** | `budi@polindra.ac.id` | Teknik Informatika | Project Leader (Proyek IoT Pertanian) | `password123` |
-| **Siti Nurhaliza** | `siti@polindra.ac.id` | Teknik Informatika | Student Candidate (Flutter & Mobile) | `password123` |
-| **Agus Pratama** | `agus@polindra.ac.id` | Rekayasa Perangkat Lunak | Student Candidate (Backend & DevOps) | `password123` |
-| **Dewi Sartika** | `dewi@polindra.ac.id` | Sistem Informasi Kota Cerdas | Student Candidate (Data & UI/UX) | `password123` |
-
----
-
-## 3. Menjalankan Aplikasi Web & Backend
+## 5. Cara Menjalankan Secara Lokal
 
 ### Prasyarat
-- PHP 8.3+ (diuji pada PHP 8.4) dengan ekstensi `pdo_mysql`, `mbstring`, `openssl`
-- MySQL 8.0 berjalan pada port `3307` (atau disesuaikan di `.env`)
+- PHP 8.2+ (diuji pada PHP 8.4) dengan ekstensi `pdo_mysql`, `mbstring`, `openssl`, `curl`
+- Composer 2.x
 - Node.js 20+ & npm
+- MySQL 8.0
 
-### Langkah Menjalankan Web Backend
+### Langkah Instalasi Web & Backend:
 ```bash
+# 1. Masuk ke direktori web
 cd rakit-campus
 
-# Install dependencies (jika belum)
+# 2. Pasang dependencies PHP dan JavaScript
 composer install
 npm install
 
-# Jalankan migrasi dan seeder data pilot
+# 3. Konfigurasi file environment
+cp .env.example .env
+php artisan key:generate
+
+# 4. Jalankan migrasi dan seeder data pilot Polindra
 php artisan migrate:fresh --seed
 
-# Build asset frontend Inertia React
+# 5. Bangun aset frontend
 npm run build
 
-# Jalankan web server lokal
+# 6. Jalankan server lokal
 php artisan serve
 ```
-Akses web melalui browser di `http://127.0.0.1:8000`.
+Buka browser pada `http://127.0.0.1:8000`.
 
----
-
-## 4. Menjalankan Aplikasi Mobile (Flutter)
-
-### Prasyarat
-- Flutter SDK 3.20+ (diuji pada Flutter 3.41.8 / Dart 3.11.5)
-- Android Emulator atau perangkat fisik yang terhubung
-
-### Langkah Menjalankan Mobile
+### Menjalankan Aplikasi Mobile (Flutter):
 ```bash
 cd mobile
-
-# Mengunduh paket dependencies
 flutter pub get
-
-# Menjalankan static analyzer
-flutter analyze
-
-# Menjalankan aplikasi mobile
 flutter run
 ```
 
-> **Catatan Endpoint API Mobile:**  
-> Secara default, `mobile/lib/core/constants/api_constants.dart` mengarah ke `http://127.0.0.1:8000/api/v1` (untuk desktop/web/sim) atau ubah ke `http://10.0.2.2:8000/api/v1` jika menggunakan Android Emulator default.
-
 ---
 
-## 5. Menjalankan Automated Tests
+## 6. Verifikasi & Pengujian Otomatis
 
-### Backend Unit & Feature Tests
+### Backend Test Suite (PHPUnit):
 ```bash
 cd rakit-campus
 php vendor/phpunit/phpunit/phpunit
 ```
-*Hasil Verifikasi:* **`OK (41 tests, 196 assertions)` 100% Passing.**
+> **Hasil Verifikasi:** `OK (41 tests, 196 assertions)` — 100% Passing.
 
-### Mobile Analyzer & Tests
+### Mobile Static Analysis:
 ```bash
 cd mobile
+flutter analyze
 flutter test
 ```
-*Hasil Verifikasi:* **All tests passed! 0 errors on static analysis.**
+> **Hasil Verifikasi:** `No issues found!` — 0 warnings / errors.
+
+---
+
+## 7. Lisensi & Tim Pengembang
+
+Dikembangkan dengan bangga untuk memajukan kolaborasi mahasiswa dan pendidikan vokasi/akademik di Indonesia.  
+© 2026 **RAKIT Campus** — All Rights Reserved.
