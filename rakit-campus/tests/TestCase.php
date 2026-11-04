@@ -25,6 +25,7 @@ abstract class TestCase extends BaseTestCase
         config([
             'database.default' => 'sqlite',
             'database.connections.sqlite.database' => $dbPath,
+            'inertia.testing.page_paths' => [resource_path('js/pages')],
         ]);
 
         return $app;
