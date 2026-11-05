@@ -16,6 +16,7 @@ class Invitation extends Model
         'invitee_id',
         'role_name',
         'message',
+        'declined_reason',
         'status',
         'pending_marker',
         'expires_at',

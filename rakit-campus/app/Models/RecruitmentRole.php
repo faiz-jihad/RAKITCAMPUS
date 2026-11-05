@@ -11,7 +11,9 @@ class RecruitmentRole extends Model
     protected $fillable = [
         'recruitment_id',
         'name',
+        'description',
         'slots',
+        'priority',
         'requirements',
         'required_skills',
         'optional_skills',

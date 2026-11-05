@@ -11,6 +11,8 @@ use App\Enums\TeamPermission;
 use App\Enums\TeamType;
 use App\Enums\Visibility;
 use App\Http\Controllers\Controller;
+use App\Enums\InvitationStatus;
+use App\Models\Invitation;
 use App\Models\ActivityLog;
 use App\Models\Application;
 use App\Models\Bookmark;
@@ -23,7 +25,13 @@ use App\Models\Skill;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Services\Matchmaking\EligibilityService;
+use App\Services\Matchmaking\InvitationService;
+use App\Services\Matchmaking\MatchmakingEngine;
 use App\Services\Matchmaking\MembershipService;
+use App\Services\Matchmaking\TeamBalanceService;
+use App\Services\Matchmaking\TeamFormationService;
+use App\Services\Matchmaking\TeamOptimizationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -34,7 +42,13 @@ use Inertia\Response;
 class ProjectWebController extends Controller
 {
     public function __construct(
-        protected MembershipService $membershipService
+        protected MembershipService $membershipService,
+        protected InvitationService $invitationService,
+        protected TeamFormationService $teamFormationService,
+        protected TeamOptimizationService $teamOptimizationService,
+        protected TeamBalanceService $teamBalanceService,
+        protected EligibilityService $eligibilityService,
+        protected MatchmakingEngine $matchmakingEngine
     ) {}
 
     public function index(Request $request): Response
@@ -210,6 +224,66 @@ class ProjectWebController extends Controller
             ->with(['user:id,name,email', 'verifier:id,name'])
             ->get();
 
+        // 10. Smart Matchmaking & Team Balance Analysis (Strictly Class-Based)
+        $teamBalance = $this->teamBalanceService->analyzeTeamBalance($project);
+        $teamOptimization = ($isLeader || $isLecturer)
+            ? $this->teamOptimizationService->optimizeTeam($project)
+            : null;
+
+        $sameClassCandidates = ($isLeader || $isLecturer)
+            ? $this->matchmakingEngine->recommendCandidatesForProject($project, 25)
+            : [];
+
+        // Class students list for Mode A manual teammate search
+        $classStudents = collect();
+        if ($project->academicClass) {
+            $classStudents = $project->academicClass->students()
+                ->with(['profile.skills', 'teamMemberships' => fn ($q) => $q->where('status', 'active')])
+                ->wherePivot('status', 'enrolled')
+                ->get()
+                ->map(function ($s) use ($project) {
+                    $hasActive = $this->eligibilityService->hasActiveProjectMembership($s);
+                    $isMember = $project->team ? $project->team->hasMember($s) : false;
+                    return [
+                        'id' => $s->id,
+                        'name' => $s->name,
+                        'email' => $s->email,
+                        'avatar' => $s->avatar,
+                        'student_number' => $s->student_number ?? $s->pivot?->student_number ?? '',
+                        'study_program' => $s->profile?->study_program ?? 'Teknik Informatika',
+                        'semester' => $s->profile?->semester ?? 4,
+                        'availability_hours' => $s->profile?->availability_hours ?? 10,
+                        'preferred_roles' => $s->profile?->preferred_roles ?? [],
+                        'interests' => $s->profile?->interests ?? [],
+                        'skills' => $s->profile ? $s->profile->skills->map(fn ($sk) => [
+                            'name' => $sk->name,
+                            'proficiency' => $sk->pivot?->proficiency ?? 1,
+                        ])->all() : [],
+                        'has_active_project' => $hasActive,
+                        'is_member' => $isMember,
+                        'is_leader' => $project->leader_id === $s->id,
+                    ];
+                });
+        }
+
+        // Sent and Received Invitations
+        $sentInvitations = $project->team
+            ? Invitation::where('team_id', $project->team->id)
+                ->with(['invitee.profile.skills', 'role'])
+                ->latest()
+                ->get()
+            : collect();
+
+        $receivedInvitations = $user
+            ? Invitation::where('invitee_id', $user->id)
+                ->where('status', InvitationStatus::Pending->value)
+                ->with(['team.project', 'inviter'])
+                ->latest()
+                ->get()
+            : collect();
+
+        $canAccessWorkspace = $user ? $this->teamFormationService->canAccessWorkspace($project, $user) : false;
+
         return Inertia::render('projects/show', [
             'project' => $project,
             'isBookmarked' => $isBookmarked,
@@ -229,6 +303,13 @@ class ProjectWebController extends Controller
             'guidances' => $guidances,
             'implementationProgress' => $implementationProgress,
             'achievements' => $achievements,
+            'teamBalance' => $teamBalance,
+            'teamOptimization' => $teamOptimization,
+            'sameClassCandidates' => $sameClassCandidates,
+            'classStudents' => $classStudents,
+            'sentInvitations' => $sentInvitations,
+            'receivedInvitations' => $receivedInvitations,
+            'canAccessWorkspace' => $canAccessWorkspace,
         ]);
     }
 
@@ -259,7 +340,7 @@ class ProjectWebController extends Controller
             ?? Campus::value('id');
 
         $validated = $request->validate([
-            'academic_class_id' => ['nullable', 'integer', 'exists:academic_classes,id'],
+            'academic_class_id' => ['required', 'integer', 'exists:academic_classes,id'],
             'title' => ['required', 'string', 'max:255'],
             'short_description' => ['required', 'string', 'max:300'],
             'description' => ['nullable', 'string'],
@@ -271,12 +352,26 @@ class ProjectWebController extends Controller
             'tech_stack.*' => ['string', 'max:50'],
             'visibility' => ['nullable', Rule::enum(Visibility::class)],
             'capacity' => ['nullable', 'integer', 'min:2', 'max:15'],
+            'expected_weekly_hours' => ['nullable', 'integer', 'min:1', 'max:40'],
             'starts_on' => ['nullable', 'date'],
             'target_completion_on' => ['nullable', 'date', 'after_or_equal:starts_on'],
             'required_skills' => ['nullable', 'array'],
             'required_skills.*.name' => ['required', 'string', 'max:80'],
             'required_skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
+
+        // Class Boundary Check: Must be enrolled in this academic class
+        $isEnrolled = $user->enrolledClasses()
+            ->where('academic_classes.id', $validated['academic_class_id'])
+            ->wherePivot('status', 'enrolled')
+            ->exists();
+
+        if (! $isEnrolled && ! $user->isPlatformAdmin()) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => 'Anda hanya dapat membuat proyek pada kelas perkuliahan tempat Anda terdaftar sebagai mahasiswa aktif.'], 422);
+            }
+            return back()->withErrors(['academic_class_id' => 'Anda hanya dapat membuat proyek pada kelas perkuliahan tempat Anda terdaftar sebagai mahasiswa aktif (Batas Kelas Ketat).']);
+        }
 
         // Rule 1: One student, one active project
         if ($user->hasActiveProject()) {
@@ -304,6 +399,8 @@ class ProjectWebController extends Controller
                 'tech_stack' => $validated['tech_stack'] ?? [],
                 'visibility' => $validated['visibility'] ?? Visibility::Campus,
                 'status' => ProjectStatus::Recruiting,
+                'formation_status' => 'requirements_configured',
+                'expected_weekly_hours' => $validated['expected_weekly_hours'] ?? 10,
                 'progress' => 0,
                 'starts_on' => $validated['starts_on'] ?? now(),
                 'target_completion_on' => $validated['target_completion_on'] ?? null,
@@ -607,5 +704,182 @@ class ProjectWebController extends Controller
         }
 
         return back()->with('success', 'Catatan evaluasi bimbingan dosen berhasil disimpan.');
+    }
+
+    /**
+     * Section 4: Project Team Requirements Configuration
+     */
+    public function updateRequirements(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.recruitment.roles', 'skills'])->findOrFail($id);
+
+        $validated = $request->validate([
+            'min_team_size' => ['required', 'integer', 'min:2', 'max:10'],
+            'max_team_size' => ['required', 'integer', 'gte:min_team_size', 'max:10'],
+            'expected_weekly_hours' => ['required', 'integer', 'min:1', 'max:40'],
+            'formation_deadline' => ['nullable', 'date'],
+            'roles' => ['nullable', 'array'],
+            'roles.*.name' => ['required', 'string', 'max:100'],
+            'roles.*.description' => ['nullable', 'string', 'max:300'],
+            'roles.*.slots' => ['required', 'integer', 'min:1', 'max:5'],
+            'roles.*.priority' => ['nullable', 'string', 'in:high,normal,low'],
+            'roles.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'skills' => ['nullable', 'array'],
+            'skills.*.name' => ['required', 'string', 'max:80'],
+            'skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
+        ]);
+
+        $this->teamFormationService->configureRequirements($project, $validated, $user);
+
+        return back()->with('success', 'Konfigurasi kebutuhan tim dan peran proyek berhasil diperbarui.');
+    }
+
+    /**
+     * Step 2: Open Matchmaking
+     */
+    public function openMatchmaking(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with('team.recruitment')->findOrFail($id);
+
+        $this->teamFormationService->openMatchmaking($project, $user);
+
+        return back()->with('success', 'Sesi matchmaking dan rekrutmen tim resmi dibuka!');
+    }
+
+    /**
+     * Step 3: Submit Proposed Team for Lecturer Review
+     */
+    public function submitFormation(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+
+        $this->teamFormationService->submitForReview($project, $user);
+
+        return back()->with('success', 'Susunan tim proyek berhasil diajukan untuk dievaluasi oleh Dosen Pengampu.');
+    }
+
+    /**
+     * Step 4: Lecturer Reviews Team Formation (Approve, Reject, or Request Changes)
+     */
+    public function reviewFormation(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+
+        $validated = $request->validate([
+            'action' => ['required', 'string', 'in:approve,reject,request_changes'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($validated['action'] === 'approve') {
+            $this->teamFormationService->approveFormation($project, $user, $validated['notes'] ?? null);
+            return back()->with('success', 'Susunan tim proyek berhasil disetujui dosen! Tim kini dapat mengaktifkan workspace proyek.');
+        } elseif ($validated['action'] === 'reject') {
+            if (empty($validated['reason'])) {
+                return back()->withErrors(['reason' => 'Alasan penolakan susunan tim wajib diisi.']);
+            }
+            $this->teamFormationService->rejectFormation($project, $user, $validated['reason']);
+            return back()->with('info', 'Susunan tim proyek ditolak. Ketua tim akan menerima alasan penolakan.');
+        } elseif ($validated['action'] === 'request_changes') {
+            if (empty($validated['notes'])) {
+                return back()->withErrors(['notes' => 'Catatan revisi susunan tim wajib diisi.']);
+            }
+            $this->teamFormationService->requestChanges($project, $user, $validated['notes']);
+            return back()->with('info', 'Permintaan revisi susunan tim berhasil diteruskan ke ketua tim.');
+        }
+
+        return back();
+    }
+
+    /**
+     * Step 5: Activate Workspace Gatekeeper
+     */
+    public function activateWorkspace(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with('team')->findOrFail($id);
+
+        if (! $project->isLeader($user) && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya ketua proyek yang berwenang mengaktifkan ruang kerja.');
+        }
+
+        $this->teamFormationService->activateWorkspace($project, $user);
+
+        return redirect()->route('workspace.show', $project->team->id)
+            ->with('success', 'Selamat! Ruang kerja proyek (Project Workspace) resmi aktif.');
+    }
+
+    /**
+     * Send Project Invitation to Same-Class Student
+     */
+    public function sendInvitation(Request $request, int $id)
+    {
+        $user = $request->user();
+        $project = Project::with(['team', 'academicClass'])->findOrFail($id);
+        $team = $project->team;
+
+        if (! $team) {
+            abort(404, 'Tim proyek tidak ditemukan.');
+        }
+
+        $validated = $request->validate([
+            'invitee_id' => ['required', 'integer', 'exists:users,id'],
+            'recruitment_role_id' => ['nullable', 'integer', 'exists:recruitment_roles,id'],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $invitee = User::findOrFail($validated['invitee_id']);
+        $role = ! empty($validated['recruitment_role_id']) ? RecruitmentRole::find($validated['recruitment_role_id']) : null;
+
+        $this->invitationService->sendInvitation($team, $user, $invitee, $role, $validated['message'] ?? null);
+
+        return back()->with('success', "Undangan kolaborasi proyek berhasil dikirimkan ke {$invitee->name}!");
+    }
+
+    /**
+     * Accept Project Invitation
+     */
+    public function acceptInvitation(Request $request, int $invitationId)
+    {
+        $user = $request->user();
+        $invitation = Invitation::with('team.project')->findOrFail($invitationId);
+
+        $member = $this->invitationService->acceptInvitation($invitation, $user);
+
+        return back()->with('success', "Selamat! Anda resmi bergabung dengan tim {$invitation->team?->name}.");
+    }
+
+    /**
+     * Decline Project Invitation
+     */
+    public function declineInvitation(Request $request, int $invitationId)
+    {
+        $user = $request->user();
+        $invitation = Invitation::findOrFail($invitationId);
+
+        $validated = $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $this->invitationService->declineInvitation($invitation, $user, $validated['reason'] ?? null);
+
+        return back()->with('info', 'Undangan proyek telah ditolak.');
+    }
+
+    /**
+     * Cancel Sent Project Invitation
+     */
+    public function cancelInvitation(Request $request, int $invitationId)
+    {
+        $user = $request->user();
+        $invitation = Invitation::findOrFail($invitationId);
+
+        $this->invitationService->cancelInvitation($invitation, $user);
+
+        return back()->with('info', 'Undangan proyek berhasil dibatalkan.');
     }
 }

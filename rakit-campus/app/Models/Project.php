@@ -27,6 +27,8 @@ class Project extends Model
         'tech_stack', 'visibility', 'starts_on', 'target_completion_on',
         'completed_at', 'moderation_status', 'lecturer_notes', 'lecturer_evaluation',
         'repository_url', 'demo_url', 'submission_notes', 'submitted_at', 'evaluated_at',
+        'formation_status', 'formation_notes', 'formation_approved_at', 'formation_approved_by',
+        'expected_weekly_hours', 'formation_deadline',
     ];
 
     protected function casts(): array
@@ -45,7 +47,15 @@ class Project extends Model
             'progress' => 'integer',
             'min_team_size' => 'integer',
             'max_team_size' => 'integer',
+            'expected_weekly_hours' => 'integer',
+            'formation_approved_at' => 'datetime',
+            'formation_deadline' => 'date',
         ];
+    }
+
+    public function formationApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'formation_approved_by');
     }
 
     public function academicClass(): BelongsTo

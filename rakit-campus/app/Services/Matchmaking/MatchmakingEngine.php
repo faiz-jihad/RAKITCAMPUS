@@ -134,7 +134,7 @@ class MatchmakingEngine
             // Scope to class enrolled students
             $candidateQuery->whereHas('enrolledClasses', function ($q) use ($project) {
                 $q->where('academic_class_id', $project->academic_class_id)
-                    ->where('status', 'enrolled');
+                    ->where('academic_class_students.status', 'enrolled');
             });
         } elseif ($project->campus_id) {
             $candidateQuery->whereHas('memberships', function ($q) use ($project) {

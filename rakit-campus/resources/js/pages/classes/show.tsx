@@ -201,6 +201,34 @@ export default function ClassShow({
     const [invitingId, setInvitingId] = useState<number | null>(null);
     const [simulating, setSimulating] = useState(false);
     const [approving, setApproving] = useState(false);
+    const [adjustingAlloc, setAdjustingAlloc] = useState<any | null>(null);
+    const [adjustProjectId, setAdjustProjectId] = useState<number>(0);
+    const [adjustReason, setAdjustReason] = useState<string>('');
+    const [submittingAdjust, setSubmittingAdjust] = useState<boolean>(false);
+
+    const handleAdjustAllocation = () => {
+        if (!adjustingAlloc || !adjustProjectId || !adjustReason.trim()) {
+            alert('Pilih kelompok tujuan dan isi alasan penyesuaian alokasi.');
+            return;
+        }
+
+        setSubmittingAdjust(true);
+        router.post(
+            `/classes/${academicClass.id}/adjust-allocation/${latestSimulation?.id}/${adjustingAlloc.id}`,
+            {
+                project_id: adjustProjectId,
+                reason: adjustReason,
+            },
+            {
+                onSuccess: () => {
+                    setAdjustingAlloc(null);
+                    setAdjustReason('');
+                    setAdjustProjectId(0);
+                },
+                onFinish: () => setSubmittingAdjust(false),
+            }
+        );
+    };
 
     const handleSimulateAllocation = () => {
         setSimulating(true);
@@ -1411,6 +1439,9 @@ export default function ClassShow({
                                                             <th className="px-4 py-3">Skor Kecocokan</th>
                                                             <th className="px-4 py-3">Analisis Keselarasan</th>
                                                             <th className="px-4 py-3 text-right">Status</th>
+                                                            {isLecturer && (
+                                                                <th className="px-4 py-3 text-center">Aksi</th>
+                                                            )}
                                                         </tr>
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100">
@@ -1444,6 +1475,22 @@ export default function ClassShow({
                                                                         {alloc.status === 'activated' ? 'Aktif' : 'Diusulkan'}
                                                                     </span>
                                                                 </td>
+                                                                {isLecturer && (
+                                                                    <td className="px-4 py-3 text-center">
+                                                                        {alloc.status !== 'activated' && (
+                                                                            <button
+                                                                                onClick={() => {
+                                                                                    setAdjustingAlloc(alloc);
+                                                                                    setAdjustProjectId(alloc.project_id || academicClass.projects[0]?.id || 0);
+                                                                                    setAdjustReason('');
+                                                                                }}
+                                                                                className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition cursor-pointer"
+                                                                            >
+                                                                                Sesuaikan
+                                                                            </button>
+                                                                        )}
+                                                                    </td>
+                                                                )}
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -1668,6 +1715,78 @@ export default function ClassShow({
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Adjust Allocation (Lecturer Manual Intervention) */}
+            {adjustingAlloc && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
+                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Sesuaikan Alokasi Simulasi
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Pindahkan mahasiswa <strong className="text-slate-800">{adjustingAlloc.user?.name}</strong> ke kelompok lain.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => setAdjustingAlloc(null)}
+                                className="p-1 rounded-xl text-slate-400 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <X className="size-5" />
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Pilih Proyek Tujuan *
+                                </label>
+                                <select
+                                    value={adjustProjectId}
+                                    onChange={(e) => setAdjustProjectId(Number(e.target.value))}
+                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800"
+                                >
+                                    {academicClass.projects.map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Alasan Penyesuaian Akademik *
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={adjustReason}
+                                    onChange={(e) => setAdjustReason(e.target.value)}
+                                    placeholder="Contoh: Mahasiswa memiliki minat riset khusus atau kesepakatan topik bimbingan..."
+                                    className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                    onClick={() => setAdjustingAlloc(null)}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    onClick={handleAdjustAllocation}
+                                    disabled={submittingAdjust}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+                                >
+                                    {submittingAdjust ? 'Menyimpan...' : 'Simpan Penyesuaian'}
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

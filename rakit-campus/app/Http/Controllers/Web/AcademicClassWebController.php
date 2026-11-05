@@ -634,6 +634,49 @@ class AcademicClassWebController extends Controller
     }
 
     /**
+     * Mode C: Lecturer manually adjusts an allocation before final approval with recorded reason
+     */
+    public function adjustAllocation(Request $request, int $id, int $sessionId, int $allocationId)
+    {
+        $user = $request->user();
+        $academicClass = AcademicClass::findOrFail($id);
+
+        if (! $academicClass->isLecturer($user) && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen pengampu yang berwenang mengubah alokasi simulasi.');
+        }
+
+        $session = MatchingSession::where('academic_class_id', $academicClass->id)->findOrFail($sessionId);
+        $allocation = MatchingAllocation::with('user')->where('matching_session_id', $session->id)->findOrFail($allocationId);
+
+        $validated = $request->validate([
+            'project_id' => ['required', 'exists:projects,id'],
+            'reason' => ['required', 'string', 'max:500'],
+        ]);
+
+        $targetProject = Project::where('academic_class_id', $academicClass->id)->findOrFail($validated['project_id']);
+
+        $allocation->update([
+            'project_id' => $targetProject->id,
+            'explanation' => "Penyesuaian manual oleh dosen ({$user->name}): {$validated['reason']}",
+        ]);
+
+        \App\Models\MatchingAuditLog::log(
+            'allocation_manually_adjusted',
+            [
+                'allocation_id' => $allocation->id,
+                'user_id' => $allocation->user_id,
+                'target_project_id' => $targetProject->id,
+                'reason' => $validated['reason'],
+            ],
+            $academicClass->id,
+            $targetProject->id,
+            $user->id
+        );
+
+        return back()->with('success', "Alokasi mahasiswa {$allocation->user->name} berhasil dipindahkan ke proyek {$targetProject->title} dengan alasan tercatat.");
+    }
+
+    /**
      * Add co-lecturer to class (Multi-lecturer support)
      */
     public function addCoLecturer(Request $request, int $id)

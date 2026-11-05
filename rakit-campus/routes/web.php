@@ -59,6 +59,17 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');
     Route::post('/projects/{id}/evaluate', [ProjectWebController::class, 'evaluate'])->name('projects.evaluate');
 
+    // Project Team Requirements & Formation Lifecycle
+    Route::post('/projects/{id}/requirements', [ProjectWebController::class, 'updateRequirements'])->name('projects.requirements.update');
+    Route::post('/projects/{id}/formation/open', [ProjectWebController::class, 'openMatchmaking'])->name('projects.formation.open');
+    Route::post('/projects/{id}/formation/submit', [ProjectWebController::class, 'submitFormation'])->name('projects.formation.submit');
+    Route::post('/projects/{id}/formation/review', [ProjectWebController::class, 'reviewFormation'])->name('projects.formation.review');
+    Route::post('/projects/{id}/formation/activate-workspace', [ProjectWebController::class, 'activateWorkspace'])->name('projects.formation.activate-workspace');
+    Route::post('/projects/{id}/invitations', [ProjectWebController::class, 'sendInvitation'])->name('projects.invitations.send');
+    Route::post('/invitations/{id}/accept', [ProjectWebController::class, 'acceptInvitation'])->name('invitations.accept');
+    Route::post('/invitations/{id}/decline', [ProjectWebController::class, 'declineInvitation'])->name('invitations.decline');
+    Route::post('/invitations/{id}/cancel', [ProjectWebController::class, 'cancelInvitation'])->name('invitations.cancel');
+
     // Living Proposal Management (Continuous Development & Version History)
     Route::post('/projects/{id}/proposal/draft', [ProjectProposalWebController::class, 'saveDraft'])->name('projects.proposal.draft');
     Route::post('/projects/{id}/proposal/submit', [ProjectProposalWebController::class, 'submit'])->name('projects.proposal.submit');
@@ -93,6 +104,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/auto-form-teams', [AcademicClassWebController::class, 'autoFormTeams'])->name('classes.auto-form-teams');
     Route::post('/classes/{id}/invite-student', [AcademicClassWebController::class, 'inviteStudent'])->name('classes.invite-student');
     Route::post('/classes/{id}/simulate-allocation', [AcademicClassWebController::class, 'simulateAllocation'])->name('classes.simulate-allocation');
+    Route::post('/classes/{id}/adjust-allocation/{sessionId}/{allocationId}', [AcademicClassWebController::class, 'adjustAllocation'])->name('classes.adjust-allocation');
     Route::post('/classes/{id}/approve-allocation/{sessionId}', [AcademicClassWebController::class, 'approveAllocation'])->name('classes.approve-allocation');
     Route::post('/classes/{id}/co-lecturers', [AcademicClassWebController::class, 'addCoLecturer'])->name('classes.co-lecturers.add');
     Route::delete('/classes/{id}/co-lecturers/{lecturerId}', [AcademicClassWebController::class, 'removeCoLecturer'])->name('classes.co-lecturers.remove');

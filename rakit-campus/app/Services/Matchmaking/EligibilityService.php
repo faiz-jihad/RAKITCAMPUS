@@ -53,7 +53,23 @@ class EligibilityService
             if ($project->academic_class_id && ! $this->isStudentInClass($student, $project->academic_class_id)) {
                 return [
                     'eligible' => false,
-                    'reason' => 'Mahasiswa belum terdaftar dalam kelas proyek ini.',
+                    'reason' => 'Mahasiswa belum terdaftar dalam kelas proyek ini (Batas Kelas Ketat).',
+                ];
+            }
+
+            // Check if student is already a member of this project
+            if ($project->team && $project->team->hasMember($student)) {
+                return [
+                    'eligible' => false,
+                    'reason' => 'Mahasiswa sudah menjadi anggota dari proyek ini.',
+                ];
+            }
+
+            // Check if formation is locked
+            if (in_array($project->formation_status, ['team_locked', 'workspace_activated'], true)) {
+                return [
+                    'eligible' => false,
+                    'reason' => 'Susunan tim proyek ini telah dikunci (team formation locked).',
                 ];
             }
 

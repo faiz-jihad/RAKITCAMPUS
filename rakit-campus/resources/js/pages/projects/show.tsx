@@ -7,6 +7,7 @@ import {
     ArrowLeft,
     Award,
     Bookmark,
+    Briefcase,
     Check,
     CheckCircle2,
     Clock,
@@ -17,9 +18,11 @@ import {
     GitBranch,
     GraduationCap,
     HelpCircle,
+    Inbox,
     Layers,
     Lock,
     MessageSquare,
+    PieChart,
     Plus,
     Send,
     ShieldCheck,
@@ -36,6 +39,11 @@ import LivingProposalTab from './components/LivingProposalTab';
 import ProposalVersionsTab from './components/ProposalVersionsTab';
 import TasksKanbanTab from './components/TasksKanbanTab';
 import AssessmentTab from './components/AssessmentTab';
+import RequirementsTab from './components/RequirementsTab';
+import MatchmakingTab from './components/MatchmakingTab';
+import TeamBalanceTab from './components/TeamBalanceTab';
+import InvitationsTab from './components/InvitationsTab';
+import TeamFormationTab from './components/TeamFormationTab';
 
 interface Props {
     project: any;
@@ -61,6 +69,13 @@ interface Props {
     guidances?: any[];
     implementationProgress?: number;
     achievements?: any[];
+    teamBalance?: any;
+    teamOptimization?: any;
+    sameClassCandidates?: any[];
+    classStudents?: any[];
+    sentInvitations?: any[];
+    receivedInvitations?: any[];
+    canAccessWorkspace?: boolean;
 }
 
 export default function ProjectShow({
@@ -82,6 +97,13 @@ export default function ProjectShow({
     guidances = [],
     implementationProgress = 0,
     achievements = [],
+    teamBalance,
+    teamOptimization,
+    sameClassCandidates = [],
+    classStudents = [],
+    sentInvitations = [],
+    receivedInvitations = [],
+    canAccessWorkspace = false,
 }: Props) {
     const [activeTab, setActiveTab] = useState<string>('overview');
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
@@ -245,9 +267,29 @@ export default function ProjectShow({
 
     const teamMembers = project.team?.members || [];
 
-    // 14 Tabs Definition
+    // Comprehensive Project Hub Tabs
     const tabs = [
         { id: 'overview', label: 'Overview', icon: Layers },
+        {
+            id: 'formation',
+            label: 'Alur Formasi',
+            icon: UserCheck,
+            badge: project.formation_status === 'workspace_activated' ? 'Aktif' : (project.formation_status ? project.formation_status.replace('_', ' ') : 'Draft'),
+        },
+        { id: 'requirements', label: 'Spesifikasi Tim', icon: Briefcase },
+        { id: 'matchmaking', label: 'Smart Matchmaking', icon: Sparkles },
+        {
+            id: 'team_balance',
+            label: 'Keseimbangan Tim',
+            icon: PieChart,
+            badge: teamBalance?.overall_score ? `${teamBalance.overall_score}%` : null,
+        },
+        {
+            id: 'invitations',
+            label: `Undangan (${sentInvitations.length + receivedInvitations.length})`,
+            icon: Inbox,
+            badge: receivedInvitations.length > 0 ? `${receivedInvitations.length} Baru` : null,
+        },
         { id: 'proposal', label: 'Proposal', icon: FileText },
         { id: 'versions', label: `Versions (${livingProposal?.versions?.length || 1})`, icon: GitBranch },
         { id: 'tasks', label: `Tasks & Kanban (${(kanban.todo?.length || 0) + (kanban.in_progress?.length || 0) + (kanban.in_review?.length || 0) + (kanban.completed?.length || 0)})`, icon: FolderKanban },
@@ -551,6 +593,54 @@ export default function ProjectShow({
                                 </div>
                             </div>
                         </div>
+                    )}
+
+                    {activeTab === 'formation' && (
+                        <TeamFormationTab
+                            project={project}
+                            isLeader={isLeader}
+                            isLecturer={isLecturer}
+                            canAccessWorkspace={canAccessWorkspace}
+                        />
+                    )}
+
+                    {activeTab === 'requirements' && (
+                        <RequirementsTab
+                            project={project}
+                            isLeader={isLeader}
+                            isLecturer={isLecturer}
+                        />
+                    )}
+
+                    {activeTab === 'matchmaking' && (
+                        <MatchmakingTab
+                            project={project}
+                            sameClassCandidates={sameClassCandidates}
+                            classStudents={classStudents}
+                            teamOptimization={teamOptimization}
+                            teamBalance={teamBalance}
+                            isLeader={isLeader}
+                            isLecturer={isLecturer}
+                        />
+                    )}
+
+                    {activeTab === 'team_balance' && (
+                        <TeamBalanceTab
+                            project={project}
+                            teamBalance={teamBalance}
+                            teamOptimization={teamOptimization}
+                        />
+                    )}
+
+                    {activeTab === 'invitations' && (
+                        <InvitationsTab
+                            project={project}
+                            sentInvitations={sentInvitations}
+                            receivedInvitations={receivedInvitations}
+                            isLeader={isLeader}
+                            isLecturer={isLecturer}
+                            userHasActiveProject={userHasActiveProject}
+                        />
                     )}
 
                     {activeTab === 'proposal' && (
