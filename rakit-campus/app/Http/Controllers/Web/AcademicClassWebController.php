@@ -377,6 +377,8 @@ class AcademicClassWebController extends Controller
             'enrolled_at' => now(),
         ]);
 
+        app(\App\Services\Notifications\NotificationService::class)->sendClassEnrollment($studentUser, $academicClass);
+
         return back()->with('success', 'Mahasiswa ' . $studentUser->name . ' berhasil ditambahkan ke kelas.');
     }
 
@@ -389,9 +391,14 @@ class AcademicClassWebController extends Controller
             abort(403);
         }
 
+        $studentUser = User::find($studentId);
         AcademicClassStudent::where('academic_class_id', $id)
             ->where('user_id', $studentId)
             ->delete();
+
+        if ($studentUser) {
+            app(\App\Services\Notifications\NotificationService::class)->sendClassRemoval($studentUser, $academicClass);
+        }
 
         return back()->with('success', 'Mahasiswa berhasil dikeluarkan dari kelas.');
     }
@@ -708,6 +715,8 @@ class AcademicClassWebController extends Controller
         $academicClass->coLecturers()->attach($lecturer->id, [
             'role' => $validated['role'] ?? 'co_lecturer',
         ]);
+
+        app(\App\Services\Notifications\NotificationService::class)->sendLecturerClassAssignment($lecturer, $academicClass);
 
         return back()->with('success', "Dosen {$lecturer->name} berhasil ditambahkan sebagai tim pengajar kelas!");
     }

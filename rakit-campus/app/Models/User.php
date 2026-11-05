@@ -81,6 +81,16 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(TeamMember::class);
     }
 
+    public function notificationPreferences(): HasMany
+    {
+        return $this->hasMany(NotificationPreference::class);
+    }
+
+    public function notificationDeliveryLogs(): HasMany
+    {
+        return $this->hasMany(NotificationDeliveryLog::class, 'recipient_id');
+    }
+
     public function isPlatformAdmin(): bool
     {
         return (bool) $this->is_platform_admin;

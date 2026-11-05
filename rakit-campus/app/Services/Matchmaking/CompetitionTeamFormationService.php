@@ -188,6 +188,16 @@ class CompetitionTeamFormationService
                 $inviter->id
             );
 
+            if ($participation->competition) {
+                app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitation(
+                    $invitee,
+                    $team,
+                    $participation->competition,
+                    $roleName,
+                    $inviter
+                );
+            }
+
             return $invitation;
         });
     }
@@ -278,6 +288,8 @@ class CompetitionTeamFormationService
                 $invitee->id
             );
 
+            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitationResponse($team, $invitee, true);
+
             return $member;
         });
     }
@@ -307,6 +319,10 @@ class CompetitionTeamFormationService
             null,
             $invitee->id
         );
+
+        if ($invitation->team) {
+            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitationResponse($invitation->team, $invitee, false);
+        }
     }
 
     /**

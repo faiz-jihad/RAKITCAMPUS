@@ -298,8 +298,8 @@ class RecruitmentService
                 ['invitee_id' => $invitee->id]
             );
 
-            // Notify invitee
-            $invitee->notify(new RecruitmentInvitationNotification($invitation));
+            // Notify invitee via Unified Notification System
+            app(\App\Services\Notifications\NotificationService::class)->sendProjectInvitation($invitation);
 
             return $invitation;
         });
@@ -363,6 +363,8 @@ class RecruitmentService
                 $member
             );
 
+            app(\App\Services\Notifications\NotificationService::class)->sendInvitationResponse($invitation, true);
+
             return $member;
         });
     }
@@ -383,5 +385,7 @@ class RecruitmentService
             'pending_marker' => null,
             'responded_at' => now(),
         ]);
+
+        app(\App\Services\Notifications\NotificationService::class)->sendInvitationResponse($invitation, false);
     }
 }

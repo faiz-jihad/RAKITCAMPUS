@@ -38,6 +38,12 @@ class PasswordController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
+        app(\App\Services\Notifications\NotificationService::class)->sendSecurityAlert(
+            $request->user(),
+            'Kata sandi akun telah berhasil diperbarui',
+            ['IP Address' => $request->ip() ?: '127.0.0.1']
+        );
+
         return back();
     }
 }

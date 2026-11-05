@@ -493,6 +493,12 @@ class CompetitionWebController extends Controller
                 'notes' => $validated['notes'] ?? "Pembaruan tahapan seleksi ke {$newStage}.",
                 'changed_by' => $user->id,
             ]);
+
+            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionStageChange(
+                $participation->fresh(['team', 'competition']),
+                $newStage,
+                $validated['notes'] ?? null
+            );
         });
 
         return back()->with('success', "Tahapan kompetisi berhasil diperbarui ke '{$newStage}'.");
@@ -642,6 +648,10 @@ class CompetitionWebController extends Controller
             $validated['notes'] ?? null
         );
 
+        if ($participation->fresh()->result) {
+            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionResult($participation->fresh()->result);
+        }
+
         $message = $isPrivileged
             ? 'Hasil kompetisi berhasil dicatat dan langsung diverifikasi ke portofolio mahasiswa!'
             : 'Hasil kompetisi berhasil diajukan dan menunggu verifikasi dari dosen pembimbing / admin.';
@@ -674,7 +684,7 @@ class CompetitionWebController extends Controller
             if ($participation->team) {
                 $outcomeStr = $result->outcome instanceof \BackedEnum ? $result->outcome->value : (string) $result->outcome;
                 foreach ($participation->team->members as $member) {
-                    Achievement::firstOrCreate(
+                    $ach = Achievement::firstOrCreate(
                         [
                             'user_id' => $member->user_id,
                             'participation_id' => $participation->id,
@@ -693,6 +703,8 @@ class CompetitionWebController extends Controller
                             'is_public' => true,
                         ]
                     );
+
+                    app(\App\Services\Notifications\NotificationService::class)->sendAchievementVerified($ach);
                 }
             }
         });

@@ -75,6 +75,8 @@ class ProposalService
                 );
             }
 
+            app(\App\Services\Notifications\NotificationService::class)->sendProposalSubmission($proposal, $user);
+
             return $version->fresh();
         });
     }
@@ -176,6 +178,8 @@ class ProposalService
                     ['decision' => $decision, 'notes' => $notes]
                 );
             }
+
+            app(\App\Services\Notifications\NotificationService::class)->sendProposalReview($proposal, $decision, $notes, $lecturer);
 
             return $version->fresh();
         });

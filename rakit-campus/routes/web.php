@@ -3,10 +3,12 @@
 use App\Enums\CampusRole;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
+use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
 use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\MatchingWebController;
+use App\Http\Controllers\Web\NotificationWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
 use App\Http\Controllers\Web\ProjectProposalWebController;
 use App\Http\Controllers\Web\ProjectWebController;
@@ -136,7 +138,17 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/', [AdminWebController::class, 'index'])->name('admin.index');
         Route::get('/students', [AdminWebController::class, 'students'])->name('admin.students');
+        Route::get('/notifications', [AdminNotificationWebController::class, 'index'])->name('admin.notifications.index');
+        Route::post('/notifications/send-test', [AdminNotificationWebController::class, 'sendTestEmail'])->name('admin.notifications.send-test');
+        Route::post('/notifications/retry/{id}', [AdminNotificationWebController::class, 'retryLog'])->name('admin.notifications.retry');
     });
+
+    // Central Notification Center
+    Route::get('/notifications', [NotificationWebController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationWebController::class, 'markAsRead'])->name('notifications.mark-as-read');
+    Route::post('/notifications/read-all', [NotificationWebController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::delete('/notifications/{id}', [NotificationWebController::class, 'destroy'])->name('notifications.destroy');
+    Route::post('/notifications/preferences', [NotificationWebController::class, 'updatePreferences'])->name('notifications.preferences.update');
 });
 
 require __DIR__.'/settings.php';
