@@ -373,7 +373,7 @@ class CompetitionWebController extends Controller
             'team.recruitment.roles',
             'team.invitations.invitee:id,name,email',
             'mentor.lecturerProfile',
-            'mentors.lecturerProfile',
+            'mentors.user.lecturerProfile',
             'documents.round',
             'documents.uploader:id,name',
             'result.verifier:id,name',
@@ -383,7 +383,7 @@ class CompetitionWebController extends Controller
         $team = $participation->team;
         $isMember = $team && $team->hasMember($user);
         $isLeader = $team && $team->isLeader($user);
-        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('lecturer_id', $user->id)->exists();
+        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('user_id', $user->id)->exists();
         $isAdmin = $user->isCampusAdminOf($participation->competition?->campus_id) || $user->isPlatformAdmin();
 
         if (!$isMember && !$isMentor && !$isAdmin) {
@@ -1019,7 +1019,7 @@ class CompetitionWebController extends Controller
         $participation = CompetitionParticipation::with('competition')->findOrFail($participationId);
         $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
 
-        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('lecturer_id', $user->id)->exists();
+        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('user_id', $user->id)->exists();
         $isPrivileged = $user->isCampusAdminOf($participation->competition->campus_id) || $user->isPlatformAdmin() || $user->isLecturer();
 
         if (!$isMentor && !$isPrivileged) {
