@@ -2,9 +2,10 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationTemplateServiceInterface;
 use Illuminate\Support\HtmlString;
 
-class NotificationTemplateService
+class NotificationTemplateService implements NotificationTemplateServiceInterface
 {
     /**
      * Render responsive branded HTML email.

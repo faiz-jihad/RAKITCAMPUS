@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Contracts\Notifications\NotificationCounterInterface;
+use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Services\Notifications\NotificationPreferenceService;
 use Illuminate\Http\RedirectResponse;
@@ -12,7 +14,8 @@ use Inertia\Response;
 class NotificationWebController extends Controller
 {
     public function __construct(
-        protected NotificationPreferenceService $preferenceService
+        protected NotificationPreferenceServiceInterface $preferenceService,
+        protected NotificationCounterInterface $counter
     ) {}
 
     /**
@@ -36,7 +39,7 @@ class NotificationWebController extends Controller
 
         $notifications = $query->latest()->paginate(15)->withQueryString();
 
-        $unreadCount = $user->unreadNotifications()->count();
+        $unreadCount = $this->counter->getUnreadCount($user);
         $preferences = $this->preferenceService->getPreferences($user);
 
         return Inertia::render('notifications/index', [
@@ -54,8 +57,11 @@ class NotificationWebController extends Controller
      */
     public function markAsRead(Request $request, string $id): RedirectResponse
     {
-        $notification = $request->user()->notifications()->where('id', $id)->firstOrFail();
+        $user = $request->user();
+        $notification = $user->notifications()->where('id', $id)->firstOrFail();
         $notification->markAsRead();
+
+        $this->counter->invalidateUnreadCountCache($user);
 
         return back()->with('success', 'Notifikasi telah ditandai dibaca.');
     }
@@ -65,7 +71,10 @@ class NotificationWebController extends Controller
      */
     public function markAllAsRead(Request $request): RedirectResponse
     {
-        $request->user()->unreadNotifications()->update(['read_at' => now()]);
+        $user = $request->user();
+        $user->unreadNotifications()->update(['read_at' => now()]);
+
+        $this->counter->invalidateUnreadCountCache($user);
 
         return back()->with('success', 'Semua notifikasi berhasil ditandai dibaca.');
     }
@@ -75,8 +84,11 @@ class NotificationWebController extends Controller
      */
     public function destroy(Request $request, string $id): RedirectResponse
     {
-        $notification = $request->user()->notifications()->where('id', $id)->firstOrFail();
+        $user = $request->user();
+        $notification = $user->notifications()->where('id', $id)->firstOrFail();
         $notification->delete();
+
+        $this->counter->invalidateUnreadCountCache($user);
 
         return back()->with('success', 'Notifikasi berhasil dihapus.');
     }

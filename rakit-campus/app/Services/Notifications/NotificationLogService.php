@@ -2,11 +2,13 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationLogServiceInterface;
 use App\Models\NotificationDeliveryLog;
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 
-class NotificationLogService
+class NotificationLogService implements NotificationLogServiceInterface
 {
     /**
      * Check if an idempotent delivery already happened within a time window.
@@ -15,6 +17,11 @@ class NotificationLogService
     {
         if (empty($idempotencyKey)) {
             return false;
+        }
+
+        // Fast path: check atomic memory / cache key
+        if (Cache::has("notif_processed:{$idempotencyKey}")) {
+            return true;
         }
 
         return NotificationDeliveryLog::where(function ($q) use ($idempotencyKey) {
@@ -27,14 +34,42 @@ class NotificationLogService
     }
 
     /**
+     * Acquire atomic concurrency lock for an idempotency key to prevent race conditions under 1000+ users.
+     */
+    public function acquireLock(string $idempotencyKey, int $seconds = 10): bool
+    {
+        if (empty($idempotencyKey)) {
+            return true;
+        }
+
+        return (bool) Cache::lock("notif_lock:{$idempotencyKey}", $seconds)->get();
+    }
+
+    /**
+     * Release atomic concurrency lock for an idempotency key.
+     */
+    public function releaseLock(string $idempotencyKey): void
+    {
+        if (!empty($idempotencyKey)) {
+            Cache::lock("notif_lock:{$idempotencyKey}")->forceRelease();
+        }
+    }
+
+    /**
      * Create initial log entry.
      */
     public function createLog(array $attributes): NotificationDeliveryLog
     {
-        return NotificationDeliveryLog::create(array_merge([
+        $log = NotificationDeliveryLog::create(array_merge([
             'status' => 'queued',
             'last_attempted_at' => now(),
         ], $attributes));
+
+        if (!empty($log->idempotency_key)) {
+            Cache::put("notif_processed:{$log->idempotency_key}", true, 300);
+        }
+
+        return $log;
     }
 
     /**

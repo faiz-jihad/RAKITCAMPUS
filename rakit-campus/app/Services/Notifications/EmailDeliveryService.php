@@ -2,16 +2,19 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\EmailDeliveryServiceInterface;
+use App\Contracts\Notifications\NotificationLogServiceInterface;
+use App\Contracts\Notifications\NotificationTemplateServiceInterface;
 use App\Models\NotificationDeliveryLog;
 use App\Models\User;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
-class EmailDeliveryService
+class EmailDeliveryService implements EmailDeliveryServiceInterface
 {
     public function __construct(
-        protected NotificationTemplateService $templateService,
-        protected NotificationLogService $logService
+        protected NotificationTemplateServiceInterface $templateService,
+        protected NotificationLogServiceInterface $logService
     ) {}
 
     /**

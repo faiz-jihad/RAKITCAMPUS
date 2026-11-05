@@ -2,10 +2,11 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
 use App\Models\NotificationPreference;
 use App\Models\User;
 
-class NotificationPreferenceService
+class NotificationPreferenceService implements NotificationPreferenceServiceInterface
 {
     public const CATEGORY_ACCOUNT_SECURITY = 'account_security';
     public const CATEGORY_CLASS_MANAGEMENT = 'class_management';

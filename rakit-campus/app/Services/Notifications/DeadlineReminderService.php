@@ -2,6 +2,8 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationLogServiceInterface;
+use App\Contracts\Notifications\NotificationRecipientResolverInterface;
 use App\Models\CompetitionDocument;
 use App\Models\Task;
 use App\Models\User;
@@ -11,8 +13,8 @@ use Illuminate\Support\Collection;
 class DeadlineReminderService
 {
     public function __construct(
-        protected NotificationLogService $logService,
-        protected NotificationRecipientResolver $resolver
+        protected NotificationLogServiceInterface $logService,
+        protected NotificationRecipientResolverInterface $resolver
     ) {}
 
     /**

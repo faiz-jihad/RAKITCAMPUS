@@ -2,12 +2,13 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationQueueServiceInterface;
 use App\Models\NotificationDeliveryLog;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
-class NotificationQueueService
+class NotificationQueueService implements NotificationQueueServiceInterface
 {
     /**
      * Inspect queue health metrics.

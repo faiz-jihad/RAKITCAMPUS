@@ -2,6 +2,7 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\NotificationRecipientResolverInterface;
 use App\Models\AcademicClass;
 use App\Models\Campus;
 use App\Models\Competition;
@@ -11,7 +12,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Collection;
 
-class NotificationRecipientResolver
+class NotificationRecipientResolver implements NotificationRecipientResolverInterface
 {
     /**
      * Resolve all active students enrolled in a class.
@@ -127,5 +128,18 @@ class NotificationRecipientResolver
         })
         ->where('status', 'active')
         ->get();
+    }
+
+    /**
+     * Get active student IDs with minimal memory overhead for high-concurrency bulk processing.
+     *
+     * @return array<int>
+     */
+    public function getActiveStudentIds(): array
+    {
+        return User::where('status', 'active')
+            ->whereHas('studentProfile')
+            ->pluck('id')
+            ->toArray();
     }
 }

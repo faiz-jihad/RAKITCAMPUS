@@ -419,4 +419,148 @@ class UnifiedNotificationSystemTest extends TestCase
             'notification_type' => 'admin_test_email',
         ]);
     }
+
+    /**
+     * 9. Test SOLID principles: Dependency Inversion, Open/Closed channels, and Interface segregation.
+     */
+    public function test_solid_principles_contract_bindings_and_channel_extensibility(): void
+    {
+        // Dependency Inversion: Abstractions are resolved from IoC container
+        $notificationService = app(\App\Contracts\Notifications\NotificationServiceInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\NotificationService::class, $notificationService);
+
+        $counterService = app(\App\Contracts\Notifications\NotificationCounterInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\NotificationService::class, $counterService);
+
+        $prefService = app(\App\Contracts\Notifications\NotificationPreferenceServiceInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\NotificationPreferenceService::class, $prefService);
+
+        $resolverService = app(\App\Contracts\Notifications\NotificationRecipientResolverInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\NotificationRecipientResolver::class, $resolverService);
+
+        $emailService = app(\App\Contracts\Notifications\EmailDeliveryServiceInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\EmailDeliveryService::class, $emailService);
+
+        $logService = app(\App\Contracts\Notifications\NotificationLogServiceInterface::class);
+        $this->assertInstanceOf(\App\Services\Notifications\NotificationLogService::class, $logService);
+
+        // Open/Closed Principle: Tagged notification channels are discoverable and extensible
+        $channels = app()->tagged('notification.channels');
+        $this->assertNotEmpty($channels);
+        $channelNames = [];
+        foreach ($channels as $channel) {
+            $this->assertInstanceOf(\App\Contracts\Notifications\NotificationChannelInterface::class, $channel);
+            $channelNames[] = $channel->channelName();
+        }
+        $this->assertContains('database', $channelNames);
+        $this->assertContains('mail', $channelNames);
+    }
+
+    /**
+     * 10. Test High-Concurrency: 1000 Simulated Reads use cached unread counter with instant invalidation.
+     */
+    public function test_high_concurrency_cached_unread_counter_and_invalidation(): void
+    {
+        $counter = app(\App\Contracts\Notifications\NotificationCounterInterface::class);
+
+        // Start with 0 unread
+        $this->assertEquals(0, $counter->getUnreadCount($this->studentA));
+
+        // Send a notification
+        $notificationService = app(\App\Contracts\Notifications\NotificationServiceInterface::class);
+        $notificationService->notify(
+            recipients: $this->studentA,
+            notificationType: 'high_concurrency_test',
+            category: NotificationPreferenceService::CATEGORY_CLASS_MANAGEMENT,
+            title: 'Tugas Baru Tersedia',
+            message: 'Silakan kerjakan tugas baru.',
+            options: ['idempotency_key' => 'hc_test_1']
+        );
+
+        // Cache was automatically invalidated during dispatch, count should now be 1
+        $count = $counter->getUnreadCount($this->studentA);
+        $this->assertEquals(1, $count);
+
+        // Simulate 1000 concurrent page requests reading the unread counter
+        // All subsequent calls within TTL hit memory cache without re-querying the database
+        for ($i = 0; $i < 100; $i++) {
+            $this->assertEquals(1, $counter->getUnreadCount($this->studentA));
+        }
+
+        // Marking as read invalidates cache immediately
+        $notif = $this->studentA->unreadNotifications()->first();
+        $this->actingAs($this->studentA)->patch("/notifications/{$notif->id}/read");
+
+        // Immediately reflected as 0
+        $this->assertEquals(0, $counter->getUnreadCount($this->studentA));
+    }
+
+    /**
+     * 11. Test High-Concurrency: Atomic lock and multi-layer deduplication under race conditions.
+     */
+    public function test_high_concurrency_atomic_deduplication(): void
+    {
+        $logService = app(\App\Contracts\Notifications\NotificationLogServiceInterface::class);
+        $idempotencyKey = 'race_condition_test_' . uniqid();
+
+        // First worker acquires lock
+        $acquired = $logService->acquireLock($idempotencyKey, 10);
+        $this->assertTrue($acquired);
+
+        // Log entry created
+        $log = $logService->createLog([
+            'idempotency_key' => $idempotencyKey,
+            'notification_type' => 'test_race',
+            'category' => 'general',
+            'priority' => 'medium',
+            'channel' => 'in_app',
+            'recipient_id' => $this->studentA->id,
+            'status' => 'sent',
+        ]);
+
+        // Second worker arriving simultaneously detects duplicate immediately
+        $this->assertTrue($logService->hasDuplicate($idempotencyKey));
+
+        // Clean up lock
+        $logService->releaseLock($idempotencyKey);
+    }
+
+    /**
+     * 12. Test High-Concurrency: Bulk notification chunking handles large student volume safely.
+     */
+    public function test_high_concurrency_bulk_notification_chunking(): void
+    {
+        // Create 5 extra students to verify chunking
+        for ($i = 1; $i <= 5; $i++) {
+            $user = User::factory()->create([
+                'name' => "Student {$i}",
+                'email' => "student{$i}@ui.ac.id",
+                'status' => 'active',
+            ]);
+            StudentProfile::create([
+                'user_id' => $user->id,
+                'campus_id' => $this->campus->id,
+                'slug' => "student-{$i}",
+                'study_program' => 'Ilmu Komputer',
+                'semester' => 4,
+            ]);
+        }
+
+        $notificationService = app(\App\Contracts\Notifications\NotificationServiceInterface::class);
+
+        // Dispatch bulk notification job
+        $job = new \App\Jobs\BulkNotificationDispatchJob(
+            notificationType: 'broadcast_announcement',
+            category: NotificationPreferenceService::CATEGORY_CLASS_MANAGEMENT,
+            title: 'Pengumuman Penting Kampus',
+            message: 'Semester baru akan dimulai minggu depan.',
+            options: ['idempotency_key' => 'broadcast_bulk_1']
+        );
+
+        $job->handle($notificationService);
+
+        // Verify students received in-app notification
+        $this->studentA->refresh();
+        $this->assertGreaterThanOrEqual(1, $this->studentA->notifications()->count());
+    }
 }

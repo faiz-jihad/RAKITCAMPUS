@@ -2,9 +2,10 @@
 
 namespace App\Notifications;
 
-use App\Services\Notifications\NotificationLogService;
-use App\Services\Notifications\NotificationPreferenceService;
-use App\Services\Notifications\NotificationTemplateService;
+use App\Contracts\Notifications\NotificationCounterInterface;
+use App\Contracts\Notifications\NotificationLogServiceInterface;
+use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
+use App\Contracts\Notifications\NotificationTemplateServiceInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -36,8 +37,8 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $preferenceService = app(NotificationPreferenceService::class);
-        $logService = app(NotificationLogService::class);
+        $preferenceService = app(NotificationPreferenceServiceInterface::class);
+        $logService = app(NotificationLogServiceInterface::class);
 
         // Check deduplication
         if ($logService->hasDuplicate($this->idempotencyKey, 60)) {
@@ -62,7 +63,7 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
      */
     public function toDatabase(object $notifiable): array
     {
-        $logService = app(NotificationLogService::class);
+        $logService = app(NotificationLogServiceInterface::class);
 
         $log = $logService->createLog([
             'idempotency_key' => $this->idempotencyKey . '_inapp',
@@ -81,6 +82,10 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
                 'entity_id' => $this->entityId,
             ],
         ]);
+
+        if (isset($notifiable->id)) {
+            app(NotificationCounterInterface::class)->invalidateUnreadCountCache($notifiable->id);
+        }
 
         return [
             'id' => (string) Str::uuid(),
@@ -103,8 +108,8 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        $templateService = app(NotificationTemplateService::class);
-        $logService = app(NotificationLogService::class);
+        $templateService = app(NotificationTemplateServiceInterface::class);
+        $logService = app(NotificationLogServiceInterface::class);
 
         $payload = [
             'title' => $this->title,

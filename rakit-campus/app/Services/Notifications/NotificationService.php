@@ -2,6 +2,12 @@
 
 namespace App\Services\Notifications;
 
+use App\Contracts\Notifications\EmailDeliveryServiceInterface;
+use App\Contracts\Notifications\NotificationLogServiceInterface;
+use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
+use App\Contracts\Notifications\NotificationRecipientResolverInterface;
+use App\Contracts\Notifications\NotificationServiceInterface;
+use App\Jobs\BulkNotificationDispatchJob;
 use App\Models\AcademicClass;
 use App\Models\Achievement;
 use App\Models\Competition;
@@ -15,16 +21,36 @@ use App\Models\Team;
 use App\Models\User;
 use App\Notifications\RakitUnifiedNotification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
-class NotificationService
+class NotificationService implements NotificationServiceInterface
 {
     public function __construct(
-        protected NotificationPreferenceService $preferenceService,
-        protected NotificationRecipientResolver $resolver,
-        protected NotificationLogService $logService,
-        protected EmailDeliveryService $emailDelivery
+        protected NotificationPreferenceServiceInterface $preferenceService,
+        protected NotificationRecipientResolverInterface $resolver,
+        protected NotificationLogServiceInterface $logService,
+        protected EmailDeliveryServiceInterface $emailDelivery
     ) {}
+
+    /**
+     * Get cached unread count for user to avoid high-concurrency database load.
+     */
+    public function getUnreadCount(User $user): int
+    {
+        return (int) Cache::remember("users:{$user->id}:unread_notifications_count", 60, function () use ($user) {
+            return $user->unreadNotifications()->count();
+        });
+    }
+
+    /**
+     * Invalidate unread count cache when notifications change.
+     */
+    public function invalidateUnreadCountCache(User|int $user): void
+    {
+        $id = $user instanceof User ? $user->id : $user;
+        Cache::forget("users:{$id}:unread_notifications_count");
+    }
 
     /**
      * Dispatch notification to one or multiple recipients.
@@ -71,7 +97,31 @@ class NotificationService
             );
 
             $recipient->notify($notification);
+
+            // Invalidate cached unread count for instant UI sync
+            $this->invalidateUnreadCountCache($recipient->id);
         }
+    }
+
+    /**
+     * Dispatch bulk notification asynchronously via queued batches for high concurrency (O(1) memory).
+     */
+    public function notifyBulk(
+        array $recipientIds,
+        string $notificationType,
+        string $category,
+        string $title,
+        string $message,
+        array $options = []
+    ): void {
+        BulkNotificationDispatchJob::dispatch(
+            notificationType: $notificationType,
+            category: $category,
+            title: $title,
+            message: $message,
+            options: $options,
+            recipientIds: $recipientIds
+        );
     }
 
     // ==========================================
@@ -420,8 +470,8 @@ class NotificationService
 
     public function sendCompetitionPublished(Competition $competition): void
     {
-        // Broadcast to students in the same campus
-        $students = User::whereHas('memberships', function ($q) use ($competition) {
+        // Broadcast to students in the same campus using async chunked queue job (O(1) memory)
+        $studentIds = User::whereHas('memberships', function ($q) use ($competition) {
             $q->where('role', \App\Enums\CampusRole::Student->value)
               ->where('status', \App\Enums\MembershipStatus::Active->value);
             if ($competition->campus_id) {
@@ -429,11 +479,11 @@ class NotificationService
             }
         })
         ->where('status', 'active')
-        ->limit(100) // Batch safeguard
-        ->get();
+        ->pluck('id')
+        ->toArray();
 
-        $this->notify(
-            recipients: $students,
+        $this->notifyBulk(
+            recipientIds: $studentIds,
             notificationType: 'competition_published',
             category: NotificationPreferenceService::CATEGORY_COMPETITION_HUB,
             title: "Kompetisi Baru Dibuka: {$competition->name}",

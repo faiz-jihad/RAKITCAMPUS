@@ -59,7 +59,7 @@ class HandleInertiaRequests extends Middleware
                     'email' => $user->email,
                     'is_platform_admin' => $user->isPlatformAdmin(),
                     'is_lecturer' => $user->isLecturer(),
-                    'unread_notifications_count' => $user->unreadNotifications()->count(),
+                    'unread_notifications_count' => app(\App\Contracts\Notifications\NotificationCounterInterface::class)->getUnreadCount($user),
                     'role' => $membership?->role?->value ?? ($user->isPlatformAdmin() ? 'platform_admin' : 'student'),
                     'campus' => ($membership && $membership->campus) ? [
                         'id' => $membership->campus->id,

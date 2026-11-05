@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Contracts\Notifications\EmailDeliveryServiceInterface;
+use App\Contracts\Notifications\NotificationLogServiceInterface;
+use App\Contracts\Notifications\NotificationQueueServiceInterface;
 use App\Http\Controllers\Controller;
-use App\Services\Notifications\EmailDeliveryService;
-use App\Services\Notifications\NotificationLogService;
-use App\Services\Notifications\NotificationQueueService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -14,9 +14,9 @@ use Inertia\Response;
 class AdminNotificationWebController extends Controller
 {
     public function __construct(
-        protected EmailDeliveryService $emailDelivery,
-        protected NotificationLogService $logService,
-        protected NotificationQueueService $queueService
+        protected EmailDeliveryServiceInterface $emailDelivery,
+        protected NotificationLogServiceInterface $logService,
+        protected NotificationQueueServiceInterface $queueService
     ) {}
 
     /**
