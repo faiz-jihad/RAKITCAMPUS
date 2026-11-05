@@ -26,7 +26,7 @@ class Competition extends Model
         'official_url', 'registration_url',
         'registration_opens_at', 'registration_deadline', 'starts_at', 'ends_at',
         'eligibility', 'min_team_size', 'max_team_size',
-        'required_documents', 'prize_info', 'cover_image',
+        'required_documents', 'prize_info', 'cover_image', 'category_tracks',
     ];
 
     protected function casts(): array
@@ -37,6 +37,7 @@ class Competition extends Model
             'status' => CompetitionStatus::class,
             'verification_status' => VerificationStatus::class,
             'required_documents' => 'array',
+            'category_tracks' => 'array',
             'registration_opens_at' => 'datetime',
             'registration_deadline' => 'datetime',
             'starts_at' => 'datetime',
@@ -71,6 +72,16 @@ class Competition extends Model
     public function participations(): HasMany
     {
         return $this->hasMany(CompetitionParticipation::class);
+    }
+
+    public function rounds(): HasMany
+    {
+        return $this->hasMany(CompetitionRound::class)->orderBy('round_number', 'asc');
+    }
+
+    public function allocations(): HasMany
+    {
+        return $this->hasMany(CompetitionAllocation::class);
     }
 
     public function bookmarks(): MorphMany

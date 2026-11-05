@@ -291,17 +291,17 @@ class MembershipService
     /**
      * Check if a student can join a competition team.
      */
-    public function canJoinCompetition(User $student, ?Team $team = null): array
+    public function canJoinCompetition(User $student, ?Team $team = null, ?int $competitionId = null): array
     {
-        return $this->eligibilityService->checkCompetitionEligibility($student, $team);
+        return $this->eligibilityService->checkCompetitionEligibility($student, $team, $competitionId);
     }
 
     /**
      * Enforce competition eligibility or throw ValidationException.
      */
-    public function assertCanJoinCompetition(User $student, ?Team $team = null): void
+    public function assertCanJoinCompetition(User $student, ?Team $team = null, ?int $competitionId = null): void
     {
-        $check = $this->canJoinCompetition($student, $team);
+        $check = $this->canJoinCompetition($student, $team, $competitionId);
         if (!$check['eligible']) {
             throw ValidationException::withMessages([
                 'student' => [$check['reason']],

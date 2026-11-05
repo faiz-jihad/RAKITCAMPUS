@@ -7,11 +7,13 @@ return [
     |--------------------------------------------------------------------------
     |
     | 'membership_mode':
-    | - 'strict': Exactly 1 active activity across both Project Hub and Competition Hub.
-    | - 'flexible': Max 1 active academic project AND max 1 active competition concurrently.
+    | - 'flexible': Default policy. Max 1 active academic project in Project Hub,
+    |   AND max 1 active team per competition in Competition Hub. Students may
+    |   participate in different competitions simultaneously.
+    | - 'strict': Exactly 1 active activity across all modules.
     |
     */
-    'membership_mode' => env('MATCHMAKING_MEMBERSHIP_MODE', 'strict'),
+    'membership_mode' => env('MATCHMAKING_MEMBERSHIP_MODE', 'flexible'),
 
     'weights' => [
         'skill_match' => 0.40,

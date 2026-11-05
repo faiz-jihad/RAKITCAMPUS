@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     Eye,
@@ -30,6 +30,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword = true }: LoginProps) {
+    const { flash } = usePage<{ flash?: { success?: string; warning?: string; error?: string; status?: string } }>().props;
     const [showPassword, setShowPassword] = useState(false);
     const [demoRole, setDemoRole] = useState<'student' | 'lecturer'>('student');
 
@@ -283,9 +284,19 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                 </Link>
             </div>
 
-            {status && (
-                <div className="mt-4 p-2.5 bg-emerald-50 border border-emerald-200 text-center text-xs font-medium text-emerald-700 rounded-lg">
-                    {status}
+            {flash?.warning && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 text-center text-xs font-semibold text-amber-800 rounded-xl">
+                    {flash.warning}
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mt-4 p-3 bg-rose-50 border border-rose-200 text-center text-xs font-semibold text-rose-800 rounded-xl">
+                    {flash.error}
+                </div>
+            )}
+            {(status || flash?.status || flash?.success) && (
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-center text-xs font-semibold text-emerald-800 rounded-xl">
+                    {status || flash?.status || flash?.success}
                 </div>
             )}
         </AuthLayout>

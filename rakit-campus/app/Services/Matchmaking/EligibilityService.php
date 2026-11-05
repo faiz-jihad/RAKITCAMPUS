@@ -6,6 +6,7 @@ use App\Enums\ProjectStatus;
 use App\Models\AcademicClass;
 use App\Models\Project;
 use App\Models\RecruitmentRole;
+use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
 
@@ -106,7 +107,25 @@ class EligibilityService
     }
 
     /**
-     * Check if student currently holds an active competition team membership.
+     * Check if student currently holds an active competition team membership in a specific competition.
+     */
+    public function hasActiveCompetitionMembershipIn(User $student, int $competitionId): bool
+    {
+        return TeamMember::where('user_id', $student->id)
+            ->where('status', 'active')
+            ->whereHas('team.participations', function ($query) use ($competitionId) {
+                $query->where('competition_id', $competitionId)
+                    ->whereNotIn('stage', [
+                        'winner',
+                        'not_selected',
+                        'withdrawn',
+                    ]);
+            })
+            ->exists();
+    }
+
+    /**
+     * Check if student currently holds an active competition team membership (any competition).
      */
     public function hasActiveCompetitionMembership(User $student): bool
     {
@@ -124,24 +143,42 @@ class EligibilityService
 
     /**
      * Check if a student is eligible to join or create a competition team.
+     * Enforces Flexible Membership by default:
+     * - Max 1 team membership per competition
+     * - Project Hub membership does not block Competition Hub
+     * - Multiple concurrent competitions allowed
      *
      * @return array{eligible: bool, reason: string|null}
      */
-    public function checkCompetitionEligibility(User $student, ?Team $team = null): array
+    public function checkCompetitionEligibility(User $student, ?Team $team = null, ?int $competitionId = null): array
     {
-        $mode = config('matchmaking.membership_mode', 'strict');
+        $mode = config('matchmaking.membership_mode', 'flexible');
 
-        if ($mode === 'strict' && $this->hasActiveProjectMembership($student)) {
-            return [
-                'eligible' => false,
-                'reason' => 'Mahasiswa sudah tergabung dalam proyek akademik aktif di Project Hub (Aturan 1 Aktivitas Aktif).',
-            ];
+        if ($mode === 'strict') {
+            if ($this->hasActiveProjectMembership($student)) {
+                return [
+                    'eligible' => false,
+                    'reason' => 'Mahasiswa sudah tergabung dalam proyek akademik aktif di Project Hub (Aturan Mode Ketat: 1 Aktivitas Aktif).',
+                ];
+            }
+            if ($this->hasActiveCompetitionMembership($student)) {
+                return [
+                    'eligible' => false,
+                    'reason' => 'Mahasiswa sudah tergabung dalam tim kompetisi aktif lain (Aturan Mode Ketat).',
+                ];
+            }
         }
 
-        if ($this->hasActiveCompetitionMembership($student)) {
+        // Flexible Membership (Default): Check specific competition boundary
+        $targetCompId = $competitionId;
+        if (! $targetCompId && $team) {
+            $targetCompId = $team->participations()->latest()->value('competition_id');
+        }
+
+        if ($targetCompId && $this->hasActiveCompetitionMembershipIn($student, $targetCompId)) {
             return [
                 'eligible' => false,
-                'reason' => 'Mahasiswa sudah tergabung dalam tim kompetisi aktif lain.',
+                'reason' => 'Mahasiswa sudah memiliki tim aktif dalam kompetisi ini (Aturan 1 Tim per Kompetisi).',
             ];
         }
 

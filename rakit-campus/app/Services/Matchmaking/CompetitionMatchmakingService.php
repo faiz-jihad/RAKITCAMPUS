@@ -152,25 +152,23 @@ class CompetitionMatchmakingService
         }
 
         // 3. Availability Score (20%)
-        $hasActiveProject = $this->eligibilityService->hasActiveProjectMembership($student);
-        $hasActiveCompetition = $this->eligibilityService->hasActiveCompetitionMembership($student);
-        $mode = config('matchmaking.membership_mode', 'strict');
+        $competitionId = $participation->competition_id;
+        $hasActiveInThisComp = $this->eligibilityService->hasActiveCompetitionMembershipIn($student, $competitionId);
+        $mode = config('matchmaking.membership_mode', 'flexible');
 
         $isAvailable = true;
         $ineligibilityReason = null;
 
-        if ($mode === 'strict') {
-            if ($hasActiveProject) {
+        if ($hasActiveInThisComp) {
+            $isAvailable = false;
+            $ineligibilityReason = 'Sudah memiliki tim aktif dalam kompetisi ini.';
+        } elseif ($mode === 'strict') {
+            if ($this->eligibilityService->hasActiveProjectMembership($student)) {
                 $isAvailable = false;
-                $ineligibilityReason = 'Sedang memiliki proyek aktif di Project Hub.';
-            } elseif ($hasActiveCompetition) {
+                $ineligibilityReason = 'Sedang memiliki proyek aktif di Project Hub (Mode Ketat).';
+            } elseif ($this->eligibilityService->hasActiveCompetitionMembership($student)) {
                 $isAvailable = false;
-                $ineligibilityReason = 'Sedang tergabung dalam tim kompetisi aktif lain.';
-            }
-        } else {
-            if ($hasActiveCompetition) {
-                $isAvailable = false;
-                $ineligibilityReason = 'Sedang tergabung dalam tim kompetisi aktif lain.';
+                $ineligibilityReason = 'Sedang tergabung dalam tim kompetisi aktif lain (Mode Ketat).';
             }
         }
 

@@ -10,11 +10,13 @@ import {
     Clock,
     ExternalLink,
     FolderKanban,
+    GraduationCap,
     Plus,
-    Share2,
     ShieldCheck,
     Sparkles,
     Trophy,
+    UserCheck,
+    UserPlus,
     Users,
     X,
 } from 'lucide-react';
@@ -26,6 +28,10 @@ interface Props {
     myParticipation?: any;
     myLedProjects?: any[];
     eligibilityCheck?: { eligible: boolean; reason?: string };
+    openTeams?: any[];
+    isLecturer?: boolean;
+    campusStudents?: any[];
+    myAllocations?: any[];
 }
 
 export default function CompetitionShow({
@@ -34,19 +40,46 @@ export default function CompetitionShow({
     myParticipation,
     myLedProjects = [],
     eligibilityCheck = { eligible: true },
+    openTeams = [],
+    isLecturer = false,
+    campusStudents = [],
+    myAllocations = [],
 }: Props) {
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [isParticipateModalOpen, setParticipateModalOpen] = useState(false);
+    const [isAllocateModalOpen, setAllocateModalOpen] = useState(false);
+    const [isAddRoundModalOpen, setAddRoundModalOpen] = useState(false);
     const [participationMode, setParticipationMode] = useState<'new_team' | 'existing_project'>('new_team');
     const [selectedProjectId, setSelectedProjectId] = useState<string>('');
     const [teamName, setTeamName] = useState('');
+    const [categoryTrack, setCategoryTrack] = useState('');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    // Allocation Form State
+    const [allocStudentId, setAllocStudentId] = useState('');
+    const [allocTeamId, setAllocTeamId] = useState('');
+    const [allocRole, setAllocRole] = useState('Anggota Tim');
+    const [allocNotes, setAllocNotes] = useState('');
+
+    // Round Form State
+    const [roundNumber, setRoundNumber] = useState(1);
+    const [roundName, setRoundName] = useState('');
+    const [roundDesc, setRoundDesc] = useState('');
+    const [roundStartsAt, setRoundStartsAt] = useState('');
+    const [roundEndsAt, setRoundEndsAt] = useState('');
+    const [roundIsFinal, setRoundIsFinal] = useState(false);
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
         { title: competition.name, href: `/competitions/${competition.id}` },
     ];
+
+    const categoryTracks: string[] = Array.isArray(competition.category_tracks)
+        ? competition.category_tracks
+        : (typeof competition.category_tracks === 'string'
+            ? JSON.parse(competition.category_tracks || '[]')
+            : []);
 
     const toggleBookmark = () => {
         router.post(route('competitions.bookmark', competition.id), {}, {
@@ -67,6 +100,7 @@ export default function CompetitionShow({
 
         const payload: any = {
             team_name: teamName,
+            category_track: categoryTrack || null,
             description: description,
         };
 
@@ -81,6 +115,60 @@ export default function CompetitionShow({
         router.post(route('competitions.participate', competition.id), payload, {
             onFinish: () => setSubmitting(false),
             onSuccess: () => setParticipateModalOpen(false),
+        });
+    };
+
+    const handleAllocateStudent = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!allocStudentId || !allocTeamId) {
+            alert('Silakan pilih mahasiswa dan tim sasaran.');
+            return;
+        }
+
+        router.post(route('competitions.allocate-student', competition.id), {
+            student_id: allocStudentId,
+            team_id: allocTeamId,
+            suggested_role: allocRole,
+            notes: allocNotes,
+        }, {
+            onSuccess: () => {
+                setIsAllocateModalOpen(false);
+                setAllocStudentId('');
+                setAllocNotes('');
+            },
+        });
+    };
+
+    const handleConfirmAllocation = (allocId: number) => {
+        if (confirm('Terima alokasi ini dan resmi bergabung ke tim kompetisi?')) {
+            router.post(route('competitions.allocations.confirm', allocId));
+        }
+    };
+
+    const handleRejectAllocation = (allocId: number) => {
+        const reason = prompt('Masukkan alasan penolakan alokasi:');
+        if (reason !== null) {
+            router.post(route('competitions.allocations.reject', allocId), { reason });
+        }
+    };
+
+    const handleAddRound = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.post(route('competitions.rounds.store', competition.id), {
+            round_number: roundNumber,
+            name: roundName,
+            description: roundDesc,
+            starts_at: roundStartsAt || null,
+            ends_at: roundEndsAt || null,
+            is_final_round: roundIsFinal,
+        }, {
+            onSuccess: () => {
+                setIsAddRoundModalOpen(false);
+                setRoundName('');
+                setRoundDesc('');
+                setRoundStartsAt('');
+                setRoundEndsAt('');
+            },
         });
     };
 
@@ -128,6 +216,56 @@ export default function CompetitionShow({
                         </div>
                     </div>
 
+                    {/* Pending Lecturer Allocations Alert (Student-Facing) */}
+                    {myAllocations.length > 0 && (
+                        <div className="glass-card rounded-3xl p-5 bg-amber-50/80 border border-amber-200 shadow-xs flex flex-col gap-3">
+                            <div className="flex items-center gap-2 text-amber-900 font-bold text-xs uppercase tracking-wider">
+                                <GraduationCap className="size-4 text-amber-600" />
+                                <span>Rekomendasi & Alokasi Dosen Pembimbing untuk Anda</span>
+                            </div>
+                            <div className="space-y-2">
+                                {myAllocations.map((alloc: any) => (
+                                    <div
+                                        key={alloc.id}
+                                        className="p-3.5 bg-white rounded-2xl border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                    >
+                                        <div className="text-xs">
+                                            <p className="font-bold text-slate-900">
+                                                Dosen {alloc.lecturer?.name || 'Pembimbing'} merekomendasikan Anda untuk bergabung ke tim{' '}
+                                                <span className="text-blue-600 font-black">{alloc.team?.name || 'Kompetisi'}</span>
+                                            </p>
+                                            <p className="text-slate-500 mt-0.5 text-[11px]">
+                                                Peran: <strong className="text-slate-700">{alloc.suggested_role || 'Anggota Tim'}</strong>
+                                                {alloc.notes ? ` • Catatan: "${alloc.notes}"` : ''}
+                                            </p>
+                                        </div>
+
+                                        {alloc.status === 'suggested' || alloc.status === 'pending' ? (
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    onClick={() => handleConfirmAllocation(alloc.id)}
+                                                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+                                                >
+                                                    Terima & Gabung
+                                                </button>
+                                                <button
+                                                    onClick={() => handleRejectAllocation(alloc.id)}
+                                                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold transition cursor-pointer"
+                                                >
+                                                    Tolak
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                                                Status: {alloc.status}
+                                            </span>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Hero Header Card */}
                     <div className="glass-surface rounded-3xl p-6 sm:p-10 bg-white/85 relative overflow-hidden">
                         <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -162,6 +300,21 @@ export default function CompetitionShow({
                         <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed max-w-4xl">
                             {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
                         </p>
+
+                        {/* Category Tracks Pills */}
+                        {categoryTracks.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 mt-4">
+                                <span className="text-[11px] font-bold text-slate-500">Kategori / Jalur:</span>
+                                {categoryTracks.map((trk, i) => (
+                                    <span
+                                        key={i}
+                                        className="text-[11px] font-semibold px-2.5 py-0.5 bg-blue-50/60 border border-blue-200/60 text-blue-800 rounded-md"
+                                    >
+                                        {trk}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
 
                         {/* Meta Highlights Bar */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-100">
@@ -210,7 +363,7 @@ export default function CompetitionShow({
 
                         {/* CTA Row */}
                         <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
-                            <div>
+                            <div className="flex items-center gap-2">
                                 {competition.official_url && (
                                     <a
                                         href={competition.official_url}
@@ -221,6 +374,16 @@ export default function CompetitionShow({
                                         <span>Website Resmi Kompetisi</span>
                                         <ExternalLink className="size-3.5" />
                                     </a>
+                                )}
+
+                                {isLecturer && (
+                                    <button
+                                        onClick={() => setIsAllocateModalOpen(true)}
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold shadow-2xs transition cursor-pointer"
+                                    >
+                                        <GraduationCap className="size-3.5" />
+                                        <span>Alokasikan Mahasiswa (Lecturer-Led)</span>
+                                    </button>
                                 )}
                             </div>
 
@@ -248,7 +411,7 @@ export default function CompetitionShow({
 
                     {/* Main Content Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left 2 Cols: Details, Eligibility, Prizes, and Participating Teams */}
+                        {/* Left 2 Cols: Details, Eligibility, Open Recruiting Teams, and Registered Teams */}
                         <div className="lg:col-span-2 flex flex-col gap-6">
                             {/* Eligibility Card */}
                             {competition.eligibility && (
@@ -263,14 +426,87 @@ export default function CompetitionShow({
                                 </div>
                             )}
 
+                            {/* Open Recruiting Teams (Matchmaking Discovery) */}
+                            <div className="glass-card rounded-3xl p-6 bg-white/85">
+                                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <UserPlus className="size-4 text-blue-600" />
+                                            <span>Tim yang Sedang Merekrut Anggota ({openTeams.length})</span>
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Mahasiswa antar program studi dapat bergabung untuk melengkapi formasi kompetisi
+                                        </p>
+                                    </div>
+                                    <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                                        Student-Led Open
+                                    </span>
+                                </div>
+
+                                {openTeams.length === 0 ? (
+                                    <div className="text-center py-6 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                                        <Users className="size-6 text-slate-400 mx-auto mb-1.5" />
+                                        <p className="text-xs font-semibold text-slate-700">Belum ada tim yang membuka rekrutmen terbuka</p>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Anda dapat membentuk tim baru dan mengundang kandidat potensial dari kampus.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-3">
+                                        {openTeams.map((part: any) => (
+                                            <div
+                                                key={part.id}
+                                                className="p-4 border border-slate-200/80 rounded-2xl bg-white shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-slate-900">{part.team?.name}</span>
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            Membuka Anggota
+                                                        </span>
+                                                        {part.category_track && (
+                                                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                                                {part.category_track}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-500 mt-1">
+                                                        Ketua: <strong className="text-slate-700">{part.team?.leader?.name || 'Mahasiswa'}</strong> • Kapasitas:{' '}
+                                                        {part.team?.members?.length || 0} / {competition.max_team_size || 5} Anggota
+                                                    </p>
+                                                </div>
+
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    {myParticipation?.id === part.id ? (
+                                                        <Link
+                                                            href={route('competitions.workspace', part.id)}
+                                                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold"
+                                                        >
+                                                            Workspace Tim
+                                                        </Link>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => alert(`Silakan hubungi ketua tim ${part.team?.leader?.name} untuk meminta undangan bergabung.`)}
+                                                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                                                        >
+                                                            Hubungi Ketua
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             {/* Registered Teams */}
                             <div className="glass-card rounded-3xl p-6 bg-white/85">
                                 <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <Users className="size-4 text-blue-600" />
-                                        <span>Tim Kampus yang Terdaftar ({competition.participations?.length || 0})</span>
+                                        <span>Seluruh Tim Kampus Terdaftar ({competition.participations?.length || 0})</span>
                                     </h3>
-                                    <span className="text-xs text-slate-500 font-medium">Kontingen Mahasiswa</span>
+                                    <span className="text-xs text-slate-500 font-medium">Kontingen Kampus</span>
                                 </div>
 
                                 {competition.participations?.length === 0 ? (
@@ -300,18 +536,28 @@ export default function CompetitionShow({
                                                         <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                                                             {part.stage?.replace('_', ' ') || 'Recruiting'}
                                                         </span>
+                                                        {part.is_formation_locked ? (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                                                Formasi Terkunci
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                                                Perekrutan
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <p className="text-[11px] text-slate-500 mt-0.5">
-                                                        {part.team?.members?.length || 0} Anggota • Ketua: {part.team?.members?.find((m: any) => m.permission === 'leader')?.user?.name || 'Mahasiswa'}
+                                                        {part.team?.members?.length || 0} Anggota • Pembimbing:{' '}
+                                                        <strong className="text-slate-700">{part.mentor?.name || 'Belum Ditugaskan'}</strong>
                                                     </p>
                                                 </div>
 
                                                 {myParticipation?.id === part.id && (
                                                     <Link
                                                         href={route('competitions.workspace', part.id)}
-                                                        className="px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shrink-0"
+                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shrink-0"
                                                     >
-                                                        Workspace Tim
+                                                        Masuk Workspace Tim
                                                     </Link>
                                                 )}
                                             </div>
@@ -321,12 +567,58 @@ export default function CompetitionShow({
                             </div>
                         </div>
 
-                        {/* Right Col: Timeline & Sources */}
+                        {/* Right Col: Rounds & Timeline & Sources */}
                         <div className="flex flex-col gap-6">
+                            {/* Competition Rounds Card */}
+                            <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <Clock className="size-4 text-blue-600" />
+                                        <span>Tahapan & Babak Lomba ({competition.rounds?.length || 0})</span>
+                                    </h3>
+                                    {isLecturer && (
+                                        <button
+                                            onClick={() => setIsAddRoundModalOpen(true)}
+                                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                                        >
+                                            + Babak
+                                        </button>
+                                    )}
+                                </div>
+
+                                {competition.rounds?.length === 0 ? (
+                                    <p className="text-xs text-slate-400">Belum ada babak khusus yang dikonfigurasi.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {competition.rounds?.map((rnd: any) => (
+                                            <div
+                                                key={rnd.id}
+                                                className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs"
+                                            >
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="font-bold text-slate-900">
+                                                        Babak {rnd.round_number}: {rnd.name}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-600">
+                                                        {rnd.status}
+                                                    </span>
+                                                </div>
+                                                {rnd.description && <p className="text-slate-500 text-[11px] mb-1">{rnd.description}</p>}
+                                                <div className="text-[10px] text-slate-400 flex items-center gap-2">
+                                                    <span>Mulai: {rnd.starts_at ? new Date(rnd.starts_at).toLocaleDateString('id-ID') : '-'}</span>
+                                                    <span>• Selesai: {rnd.ends_at ? new Date(rnd.ends_at).toLocaleDateString('id-ID') : '-'}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Timeline Card */}
                             <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-4">
                                 <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-3 flex items-center gap-2">
-                                    <Clock className="size-4 text-blue-600" />
-                                    <span>Timeline Penting</span>
+                                    <Calendar className="size-4 text-blue-600" />
+                                    <span>Jadwal Utama</span>
                                 </h3>
 
                                 <div className="space-y-3 text-xs">
@@ -380,7 +672,7 @@ export default function CompetitionShow({
                     </div>
                 </div>
 
-                {/* MODAL PENDAFTARAN TIM */}
+                {/* MODAL PENDAFTARAN TIM (STUDENT-LED) */}
                 {isParticipateModalOpen && (
                     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
                         <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in">
@@ -474,6 +766,39 @@ export default function CompetitionShow({
                                             />
                                         </div>
 
+                                        {categoryTracks.length > 0 ? (
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                    Pilih Kategori / Jalur Lomba
+                                                </label>
+                                                <select
+                                                    value={categoryTrack}
+                                                    onChange={(e) => setCategoryTrack(e.target.value)}
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
+                                                >
+                                                    <option value="">-- Umum / Tanpa Jalur Khusus --</option>
+                                                    {categoryTracks.map((trk, i) => (
+                                                        <option key={i} value={trk}>
+                                                            {trk}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                    Jalur / Kategori (Opsional)
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Contoh: UI/UX Design, Competitive Programming"
+                                                    value={categoryTrack}
+                                                    onChange={(e) => setCategoryTrack(e.target.value)}
+                                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
+                                                />
+                                            </div>
+                                        )}
+
                                         <div>
                                             <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                                 Deskripsi Singkat Tim & Sasaran Karya
@@ -503,6 +828,214 @@ export default function CompetitionShow({
                                         className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs disabled:opacity-50 cursor-pointer"
                                     >
                                         {submitting ? 'Memproses...' : 'Bentuk Tim & Masuk Workspace'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL LECTURER-LED ALLOCATION */}
+                {isAllocateModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="size-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                        <GraduationCap className="size-4" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900">Alokasikan Mahasiswa ke Tim</h3>
+                                        <p className="text-[11px] text-slate-400">Pembimbingan & Penataan Tim Kompetisi (Lecturer-Led)</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsAllocateModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="size-4" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAllocateStudent} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Pilih Mahasiswa Kampus <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        value={allocStudentId}
+                                        onChange={(e) => setAllocStudentId(e.target.value)}
+                                        required
+                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                                    >
+                                        <option value="">-- Pilih Mahasiswa --</option>
+                                        {campusStudents.map((s: any) => (
+                                            <option key={s.id} value={s.id}>
+                                                {s.name} ({s.study_program} • Sem {s.semester}) {s.has_team_in_competition ? '[Sudah ada tim]' : '[Tersedia]'}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Mendukung kolaborasi lintas prodi dan lintas kelas di lingkungan kampus.
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Tim Sasaran <span className="text-rose-500">*</span>
+                                    </label>
+                                    <select
+                                        value={allocTeamId}
+                                        onChange={(e) => setAllocTeamId(e.target.value)}
+                                        required
+                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
+                                    >
+                                        <option value="">-- Pilih Tim Kompetisi --</option>
+                                        {competition.participations?.map((p: any) => (
+                                            <option key={p.team_id} value={p.team_id}>
+                                                {p.team?.name} ({p.stage})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Peran yang Disarankan
+                                    </label>
+                                    <input
+                                        type="text"
+                                        placeholder="Contoh: Frontend Developer, Pitch Lead, AI Engineer"
+                                        value={allocRole}
+                                        onChange={(e) => setAllocRole(e.target.value)}
+                                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Catatan / Alasan Rekomendasi
+                                    </label>
+                                    <textarea
+                                        rows={2}
+                                        placeholder="Tuliskan alasan penugasan atau saran fokus pengerjaan karya..."
+                                        value={allocNotes}
+                                        onChange={(e) => setAllocNotes(e.target.value)}
+                                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAllocateModalOpen(false)}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                                    >
+                                        Alokasikan Mahasiswa
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL TAMBAH BABAK KOMPETISI */}
+                {isAddRoundModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in">
+                            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <h3 className="text-sm font-bold text-slate-900">Tambah Babak Kompetisi</h3>
+                                <button onClick={() => setIsAddRoundModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                    <X className="size-4" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleAddRound} className="space-y-3">
+                                <div className="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Babak</label>
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={roundNumber}
+                                            onChange={(e) => setRoundNumber(parseInt(e.target.value, 10))}
+                                            required
+                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Nama Babak</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Contoh: Seleksi Proposal, Final"
+                                            value={roundName}
+                                            onChange={(e) => setRoundName(e.target.value)}
+                                            required
+                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi / Sasaran</label>
+                                    <textarea
+                                        rows={2}
+                                        value={roundDesc}
+                                        onChange={(e) => setRoundDesc(e.target.value)}
+                                        className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Mulai</label>
+                                        <input
+                                            type="date"
+                                            value={roundStartsAt}
+                                            onChange={(e) => setRoundStartsAt(e.target.value)}
+                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Selesai</label>
+                                        <input
+                                            type="date"
+                                            value={roundEndsAt}
+                                            onChange={(e) => setRoundEndsAt(e.target.value)}
+                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-xl text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 pt-1">
+                                    <input
+                                        type="checkbox"
+                                        id="roundIsFinal"
+                                        checked={roundIsFinal}
+                                        onChange={(e) => setRoundIsFinal(e.target.checked)}
+                                        className="rounded border-slate-300 text-blue-600 focus:ring-blue-500 size-4"
+                                    />
+                                    <label htmlFor="roundIsFinal" className="text-xs font-bold text-slate-700 cursor-pointer">
+                                        Ini adalah Babak Final (Penentu Juara)
+                                    </label>
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAddRoundModalOpen(false)}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                                    >
+                                        Simpan Babak
                                     </button>
                                 </div>
                             </form>

@@ -26,8 +26,14 @@ class CompetitionParticipation extends Model
             'progress_status' => ParticipationProgress::class,
             'registered_at' => 'datetime',
             'submitted_at' => 'datetime',
+            'formation_approved_at' => 'datetime',
             'is_formation_locked' => 'boolean',
         ];
+    }
+
+    public function formationApprover(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'formation_approved_by');
     }
 
     public function competition(): BelongsTo

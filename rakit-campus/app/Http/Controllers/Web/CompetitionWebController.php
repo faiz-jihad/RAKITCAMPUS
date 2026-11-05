@@ -7,28 +7,41 @@ use App\Enums\AchievementVerification;
 use App\Enums\CompetitionCategory;
 use App\Enums\CompetitionScope;
 use App\Enums\CompetitionStatus;
+use App\Enums\DeliverableStatus;
+use App\Enums\RoundStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Enums\TeamPermission;
+use App\Enums\TeamStatus;
 use App\Enums\TeamType;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Achievement;
 use App\Models\Bookmark;
 use App\Models\Competition;
+use App\Models\CompetitionAllocation;
 use App\Models\CompetitionDocument;
 use App\Models\CompetitionMentor;
 use App\Models\CompetitionParticipation;
 use App\Models\CompetitionResult;
+use App\Models\CompetitionRound;
 use App\Models\CompetitionSource;
 use App\Models\CompetitionStatusHistory;
+use App\Models\Invitation;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Services\Matchmaking\CompetitionDeliverableService;
+use App\Services\Matchmaking\CompetitionManagementService;
 use App\Services\Matchmaking\CompetitionMatchmakingService;
+use App\Services\Matchmaking\CompetitionRoundService;
+use App\Services\Matchmaking\CompetitionTeamFormationService;
+use App\Services\Matchmaking\CompetitionVerificationService;
+use App\Services\Matchmaking\EligibilityService;
 use App\Services\Matchmaking\MembershipService;
+use App\Services\Matchmaking\UnifiedMembershipService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +56,14 @@ class CompetitionWebController extends Controller
 {
     public function __construct(
         protected MembershipService $membershipService,
-        protected CompetitionMatchmakingService $matchmakingService
+        protected CompetitionMatchmakingService $matchmakingService,
+        protected CompetitionManagementService $managementService,
+        protected CompetitionVerificationService $verificationService,
+        protected CompetitionTeamFormationService $teamFormationService,
+        protected CompetitionRoundService $roundService,
+        protected CompetitionDeliverableService $deliverableService,
+        protected UnifiedMembershipService $unifiedMembershipService,
+        protected EligibilityService $eligibilityService
     ) {}
 
     public function index(Request $request): Response
@@ -236,6 +256,8 @@ class CompetitionWebController extends Controller
         $competition = Competition::with([
             'sources',
             'campus:id,name',
+            'skills',
+            'rounds',
             'participations.team.members.user:id,name',
             'participations.project:id,title,slug',
             'participations.mentor:id,name',
@@ -262,8 +284,51 @@ class CompetitionWebController extends Controller
             ->with('team')
             ->get(['id', 'title', 'category', 'status']) : collect();
 
-        // Check if user is eligible to participate
-        $eligibilityCheck = $user ? $this->membershipService->canJoinCompetition($user) : ['eligible' => false, 'reason' => 'Silakan login terlebih dahulu.'];
+        // Check if user is eligible to participate under flexible policy
+        $eligibilityCheck = $user ? $this->unifiedMembershipService->canJoinCompetition($user, null, $competition->id) : ['eligible' => false, 'reason' => 'Silakan login terlebih dahulu.'];
+
+        // Open teams looking for members in this competition
+        $openTeams = $competition->participations()
+            ->where('is_formation_locked', false)
+            ->whereIn('stage', ['recruiting', 'team_formation'])
+            ->with(['team.leader:id,name', 'team.members.user:id,name'])
+            ->get();
+
+        // Available students in same campus for Lecturer-Led allocation
+        $isLecturer = $user ? ($user->isLecturer() || $user->isPlatformAdmin()) : false;
+        $campusStudents = collect();
+        if ($isLecturer) {
+            $campusId = $competition->campus_id ?? $user->campusId();
+            $campusStudents = User::whereHas('memberships', function ($q) use ($campusId) {
+                $q->where('role', \App\Enums\CampusRole::Student->value)
+                  ->where('status', \App\Enums\MembershipStatus::Active->value);
+                if ($campusId) {
+                    $q->where('campus_id', $campusId);
+                }
+            })
+            ->with(['profile.skills'])
+            ->take(60)
+            ->get()
+            ->map(function ($s) use ($competition) {
+                $hasActiveInComp = $this->eligibilityService->hasActiveCompetitionMembershipIn($s, $competition->id);
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'email' => $s->email,
+                    'study_program' => $s->profile?->study_program ?? 'Teknik Informatika',
+                    'semester' => $s->profile?->semester ?? 5,
+                    'skills' => $s->profile ? $s->profile->skills->pluck('name')->all() : [],
+                    'has_team_in_competition' => $hasActiveInComp,
+                ];
+            });
+        }
+
+        // Student's pending allocation invitations from lecturers (if any)
+        $myAllocations = $user ? \App\Models\CompetitionAllocation::where('competition_id', $competition->id)
+            ->where('student_id', $user->id)
+            ->with(['lecturer:id,name', 'team:id,name'])
+            ->latest()
+            ->get() : collect();
 
         return Inertia::render('competitions/show', [
             'competition' => $competition,
@@ -271,6 +336,10 @@ class CompetitionWebController extends Controller
             'myParticipation' => $myParticipation,
             'myLedProjects' => $myLedProjects,
             'eligibilityCheck' => $eligibilityCheck,
+            'openTeams' => $openTeams,
+            'isLecturer' => $isLecturer,
+            'campusStudents' => $campusStudents,
+            'myAllocations' => $myAllocations,
         ]);
     }
 
@@ -282,82 +351,11 @@ class CompetitionWebController extends Controller
         $validated = $request->validate([
             'project_id' => ['nullable', 'exists:projects,id'],
             'team_name' => ['required', 'string', 'max:100'],
+            'category_track' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $campusId = $user->campusId();
-        if (!$campusId) {
-            throw ValidationException::withMessages(['user' => ['Anda belum terafiliasi dengan kampus.']]);
-        }
-
-        // Rule 1: Unified membership validation
-        $this->membershipService->assertCanJoinCompetition($user);
-
-        $participation = DB::transaction(function () use ($validated, $user, $competition, $campusId) {
-            $projectId = $validated['project_id'] ?? null;
-            $team = null;
-
-            if ($projectId) {
-                $project = Project::with('team')->findOrFail($projectId);
-                if (!$project->isLeader($user)) {
-                    throw ValidationException::withMessages([
-                        'project_id' => ['Hanya ketua proyek yang dapat mendaftarkan proyek ke kompetisi.'],
-                    ]);
-                }
-                $team = $project->team;
-            }
-
-            // Create dedicated competition team if not reusing project team
-            if (!$team) {
-                $team = Team::create([
-                    'campus_id' => $campusId,
-                    'leader_id' => $user->id,
-                    'type' => TeamType::Competition,
-                    'name' => $validated['team_name'],
-                    'description' => $validated['description'] ?? null,
-                    'capacity' => $competition->max_team_size,
-                ]);
-
-                TeamMember::create([
-                    'team_id' => $team->id,
-                    'user_id' => $user->id,
-                    'permission' => TeamPermission::Leader,
-                    'role_name' => 'Ketua Tim',
-                    'joined_at' => now(),
-                ]);
-            }
-
-            // Check if already registered
-            $existing = CompetitionParticipation::where('competition_id', $competition->id)
-                ->where('team_id', $team->id)
-                ->first();
-
-            if ($existing) {
-                throw ValidationException::withMessages([
-                    'team' => ['Tim ini sudah terdaftar dalam kompetisi tersebut.'],
-                ]);
-            }
-
-            $part = CompetitionParticipation::create([
-                'competition_id' => $competition->id,
-                'team_id' => $team->id,
-                'project_id' => $projectId,
-                'registration_status' => 'planning',
-                'submission_status' => 'not_started',
-                'progress_status' => 'preparing',
-                'stage' => 'recruiting',
-            ]);
-
-            CompetitionStatusHistory::create([
-                'participation_id' => $part->id,
-                'from_stage' => null,
-                'to_stage' => 'recruiting',
-                'notes' => "Tim '{$team->name}' resmi dibentuk dan mendaftar ke kompetisi {$competition->name}.",
-                'changed_by' => $user->id,
-            ]);
-
-            return $part;
-        });
+        $participation = $this->teamFormationService->createTeam($competition, $user, $validated);
 
         return redirect()->route('competitions.workspace', $participation->id)
             ->with('success', 'Tim kompetisi berhasil dibentuk! Selamat datang di Preparation Workspace.');
@@ -369,11 +367,14 @@ class CompetitionWebController extends Controller
         $participation = CompetitionParticipation::with([
             'competition.sources',
             'competition.campus:id,name',
+            'competition.rounds',
             'team.members.user.profile.skills',
             'team.tasks.creator:id,name',
             'team.recruitment.roles',
+            'team.invitations.invitee:id,name,email',
             'mentor.lecturerProfile',
             'mentors.lecturerProfile',
+            'documents.round',
             'documents.uploader:id,name',
             'result.verifier:id,name',
             'statusHistories.changer:id,name',
@@ -423,12 +424,19 @@ class CompetitionWebController extends Controller
             'withdrawn' => ['label' => 'Mengundurkan Diri', 'order' => 99],
         ];
 
+        $teamAllocations = $team ? \App\Models\CompetitionAllocation::where('team_id', $team->id)
+            ->with(['student:id,name,email', 'lecturer:id,name'])
+            ->latest()
+            ->get() : collect();
+
         return Inertia::render('competitions/workspace', [
             'participation' => $participation,
             'readinessScore' => $readinessScore,
             'recommendedCandidates' => $recommendedCandidates,
             'availableLecturers' => $availableLecturers,
             'selectionStages' => $selectionStages,
+            'teamAllocations' => $teamAllocations,
+            'rounds' => $participation->competition?->rounds ?? collect(),
             'isLeader' => $isLeader,
             'isMember' => $isMember,
             'isMentor' => $isMentor,
@@ -797,5 +805,259 @@ class CompetitionWebController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+
+    public function storeRound(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+        $competition = Competition::findOrFail($id);
+
+        if (!$user->isLecturer() && !$user->isCampusAdminOf($competition->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen atau administrator yang dapat menambahkan tahapan kompetisi.');
+        }
+
+        $validated = $request->validate([
+            'round_number' => ['required', 'integer', 'min:1'],
+            'name' => ['required', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
+            'is_final_round' => ['nullable', 'boolean'],
+        ]);
+
+        $this->roundService->createRound($competition, $validated, $user);
+
+        return back()->with('success', "Tahapan/Babak '{$validated['name']}' berhasil ditambahkan ke jadwal kompetisi.");
+    }
+
+    public function updateRound(Request $request, int $id, int $roundId): RedirectResponse
+    {
+        $user = $request->user();
+        $competition = Competition::findOrFail($id);
+        $round = CompetitionRound::where('competition_id', $competition->id)->findOrFail($roundId);
+
+        if (!$user->isLecturer() && !$user->isCampusAdminOf($competition->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya dosen atau administrator yang dapat memperbarui tahapan kompetisi.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:150'],
+            'description' => ['nullable', 'string'],
+            'starts_at' => ['nullable', 'date'],
+            'ends_at' => ['nullable', 'date'],
+            'status' => ['nullable', 'string', 'in:upcoming,open,submission_closed,under_evaluation,qualified,not_qualified,completed'],
+            'is_final_round' => ['nullable', 'boolean'],
+        ]);
+
+        $this->roundService->updateRound($round, $validated, $user);
+
+        return back()->with('success', "Tahapan kompetisi '{$round->name}' berhasil diperbarui.");
+    }
+
+    public function sendTeamInvitation(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+
+        if (!$participation->team || !$participation->team->isLeader($user)) {
+            abort(403, 'Hanya ketua tim yang dapat mengirim undangan anggota ke tim kompetisi.');
+        }
+
+        $validated = $request->validate([
+            'student_id' => ['required', 'exists:users,id'],
+            'role_name' => ['required', 'string', 'max:100'],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $student = User::findOrFail($validated['student_id']);
+
+        $invitation = $this->teamFormationService->sendInvitation(
+            $participation,
+            $user,
+            $student,
+            $validated['role_name'],
+            $validated['message'] ?? null
+        );
+
+        return back()->with('success', "Undangan resmi bergabung ke tim telah dikirim kepada {$student->name}.");
+    }
+
+    public function acceptInvitation(Request $request, int $invitationId): RedirectResponse
+    {
+        $user = $request->user();
+        $invitation = Invitation::with('team')->findOrFail($invitationId);
+
+        if ($invitation->invitee_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki hak untuk menerima undangan ini.');
+        }
+
+        $member = $this->teamFormationService->acceptInvitation($invitation, $user);
+
+        return back()->with('success', "Selamat! Anda telah resmi bergabung dengan tim {$invitation->team->name} sebagai {$member->role_name}.");
+    }
+
+    public function declineInvitation(Request $request, int $invitationId): RedirectResponse
+    {
+        $user = $request->user();
+        $invitation = Invitation::findOrFail($invitationId);
+
+        if ($invitation->invitee_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki hak untuk menolak undangan ini.');
+        }
+
+        $this->teamFormationService->declineInvitation($invitation, $user, $request->input('reason'));
+
+        return back()->with('success', 'Undangan bergabung ke tim berhasil ditolak.');
+    }
+
+    public function allocateStudent(Request $request, int $id): RedirectResponse
+    {
+        $user = $request->user();
+        $competition = Competition::findOrFail($id);
+
+        if (!$user->isLecturer() && !$user->isPlatformAdmin() && !$user->isCampusAdminOf($competition->campus_id)) {
+            abort(403, 'Hanya dosen atau administrator yang dapat melakukan alokasi tim kompetisi.');
+        }
+
+        $validated = $request->validate([
+            'student_id' => ['required', 'exists:users,id'],
+            'team_id' => ['required', 'exists:teams,id'],
+            'suggested_role' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $student = User::findOrFail($validated['student_id']);
+        $team = Team::findOrFail($validated['team_id']);
+
+        $allocation = $this->teamFormationService->allocateStudent(
+            $competition,
+            $user,
+            $student,
+            $team,
+            $validated['suggested_role'] ?? 'Anggota Tim',
+            $validated['notes'] ?? null
+        );
+
+        return back()->with('success', "Mahasiswa {$student->name} berhasil dialokasikan ke tim '{$team->name}' dan notifikasi persetujuan telah dikirim.");
+    }
+
+    public function confirmAllocation(Request $request, int $allocationId): RedirectResponse
+    {
+        $user = $request->user();
+        $allocation = CompetitionAllocation::with('team')->findOrFail($allocationId);
+
+        if ($allocation->student_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki hak untuk merespon alokasi ini.');
+        }
+
+        $member = $this->teamFormationService->confirmAllocation($allocation, $user);
+
+        return back()->with('success', "Alokasi tim berhasil diterima! Anda telah resmi menjadi anggota tim '{$allocation->team->name}' sebagai {$member->role_name}.");
+    }
+
+    public function rejectAllocation(Request $request, int $allocationId): RedirectResponse
+    {
+        $user = $request->user();
+        $allocation = CompetitionAllocation::findOrFail($allocationId);
+
+        if ($allocation->student_id !== $user->id) {
+            abort(403, 'Anda tidak memiliki hak untuk menolak alokasi ini.');
+        }
+
+        $allocation->update([
+            'status' => 'declined',
+            'responded_at' => now(),
+            'notes' => ($allocation->notes ? $allocation->notes . "\n" : '') . 'Ditolak mahasiswa: ' . ($request->input('reason') ?? 'Tanpa alasan spesifik'),
+        ]);
+
+        return back()->with('success', 'Rekomendasi alokasi tim berhasil ditolak.');
+    }
+
+    public function approveFormation(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['competition', 'team'])->findOrFail($participationId);
+
+        if (!$user->isLecturer() && !$user->isPlatformAdmin() && !$user->isCampusAdminOf($participation->competition->campus_id)) {
+            abort(403, 'Hanya dosen pembimbing atau administrator yang dapat menyetujui susunan tim.');
+        }
+
+        $this->teamFormationService->approveFormation($participation, $user, $request->input('notes'));
+
+        return back()->with('success', 'Susunan tim kompetisi telah resmi disetujui dan diverifikasi oleh dosen pembimbing.');
+    }
+
+    public function submitDeliverable(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'required_document_key' => ['nullable', 'string', 'max:100'],
+            'competition_round_id' => ['nullable', 'exists:competition_rounds,id'],
+            'description' => ['nullable', 'string'],
+            'url' => ['nullable', 'url', 'max:255'],
+            'external_submission_url' => ['nullable', 'url', 'max:255'],
+            'deadline' => ['nullable', 'date'],
+            'file' => ['nullable', 'file', 'max:20480'], // max 20MB
+        ]);
+
+        $doc = $this->deliverableService->submitDeliverable(
+            $participation,
+            $user,
+            $validated,
+            $request->file('file')
+        );
+
+        return back()->with('success', "Berkas deliverable '{$doc->name}' versi {$doc->version} berhasil diunggah.");
+    }
+
+    public function reviewDeliverable(Request $request, int $participationId, int $docId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('competition')->findOrFail($participationId);
+        $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
+
+        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('lecturer_id', $user->id)->exists();
+        $isPrivileged = $user->isCampusAdminOf($participation->competition->campus_id) || $user->isPlatformAdmin() || $user->isLecturer();
+
+        if (!$isMentor && !$isPrivileged) {
+            abort(403, 'Hanya dosen pembimbing atau admin yang dapat memberikan ulasan deliverable.');
+        }
+
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:draft,in_review,ready,submitted,accepted,revision_required,rejected,approved'],
+            'feedback' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $this->deliverableService->reviewDeliverable($document, $user, $validated['status'], $validated['feedback'] ?? null);
+
+        return back()->with('success', 'Ulasan dan status berkas deliverable berhasil disimpan.');
+    }
+
+    public function withdrawMember(Request $request, int $participationId, int $userId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team.members')->findOrFail($participationId);
+        $team = $participation->team;
+
+        if (!$team) {
+            abort(404, 'Tim tidak ditemukan.');
+        }
+
+        $isLeader = $team->isLeader($user);
+        $isSelf = $user->id === $userId;
+
+        if (!$isLeader && !$isSelf) {
+            abort(403, 'Hanya ketua tim atau anggota yang bersangkutan yang dapat melakukan pelepasan keanggotaan.');
+        }
+
+        $targetMember = User::findOrFail($userId);
+        $reason = $request->input('reason', $isSelf ? 'Mengundurkan diri atas inisiatif sendiri.' : 'Dilepas oleh ketua tim.');
+
+        $this->unifiedMembershipService->withdrawFromTeam($team, $targetMember, $reason);
+
+        return back()->with('success', "Keanggotaan {$targetMember->name} dalam tim kompetisi telah berhasil dilepas.");
     }
 }

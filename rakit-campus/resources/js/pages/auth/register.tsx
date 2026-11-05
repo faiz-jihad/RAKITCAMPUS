@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     CheckCircle2,
@@ -25,6 +25,7 @@ interface RegisterForm {
 }
 
 export default function Register() {
+    const { flash } = usePage<{ flash?: { success?: string; warning?: string; error?: string; status?: string } }>().props;
     const [showPassword, setShowPassword] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm<RegisterForm>({
@@ -229,6 +230,22 @@ export default function Register() {
                     Masuk di sini
                 </Link>
             </div>
+
+            {flash?.warning && (
+                <div className="mt-4 p-3 bg-amber-50 border border-amber-200 text-center text-xs font-semibold text-amber-800 rounded-xl">
+                    {flash.warning}
+                </div>
+            )}
+            {flash?.error && (
+                <div className="mt-4 p-3 bg-rose-50 border border-rose-200 text-center text-xs font-semibold text-rose-800 rounded-xl">
+                    {flash.error}
+                </div>
+            )}
+            {flash?.success && (
+                <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-center text-xs font-semibold text-emerald-800 rounded-xl">
+                    {flash.success}
+                </div>
+            )}
         </AuthLayout>
     );
 }

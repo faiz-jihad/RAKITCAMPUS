@@ -15,12 +15,13 @@ class Team extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['campus_id', 'project_id', 'leader_id', 'type', 'name', 'description', 'capacity'];
+    protected $fillable = ['campus_id', 'project_id', 'leader_id', 'type', 'name', 'description', 'capacity', 'status'];
 
     protected function casts(): array
     {
         return [
             'type' => TeamType::class,
+            'status' => \App\Enums\TeamStatus::class,
             'capacity' => 'integer',
         ];
     }
@@ -68,6 +69,11 @@ class Team extends Model
     public function posts(): HasMany
     {
         return $this->hasMany(TeamPost::class);
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(Invitation::class);
     }
 
     public function activities(): HasMany
