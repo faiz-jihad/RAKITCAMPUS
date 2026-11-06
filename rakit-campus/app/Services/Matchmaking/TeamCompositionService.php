@@ -23,11 +23,13 @@ class TeamCompositionService
             ];
         }
 
-        // Eager load team members and their profile skills to avoid N+1 queries
-        $members = $team->members()
-            ->where('status', 'active')
-            ->with(['user.profile.skills'])
-            ->get();
+        // Eager load or re-use team members and their profile skills to avoid N+1 queries
+        $members = $team->relationLoaded('members')
+            ? $team->members->where('status', 'active')
+            : $team->members()
+                ->where('status', 'active')
+                ->with(['user.profile.skills'])
+                ->get();
 
         if ($members->isEmpty()) {
             return [

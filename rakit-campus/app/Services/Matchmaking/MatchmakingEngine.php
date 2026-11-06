@@ -128,6 +128,10 @@ class MatchmakingEngine
                 'profile.skills',
                 'teamMemberships' => fn ($q) => $q->where('status', 'active'),
             ])
+            ->withCount([
+                'teamMemberships as completed_projects_count' => fn ($q) => $q->where('status', 'completed'),
+                'applications as rejected_applications_count' => fn ($q) => $q->where('status', 'rejected'),
+            ])
             ->where('id', '!=', $project->leader_id);
 
         if ($project->academic_class_id) {
@@ -145,11 +149,23 @@ class MatchmakingEngine
 
         $candidates = $candidateQuery->get();
 
+        // Batch pre-fetch active project memberships (Zero N+1)
+        $activeUserIds = \App\Models\TeamMember::where('status', 'active')
+            ->whereIn('user_id', $candidates->pluck('id'))
+            ->whereHas('team.project', function ($q) {
+                $q->whereNotIn('status', [
+                    ProjectStatus::Archived->value,
+                    ProjectStatus::Completed->value,
+                ]);
+            })
+            ->pluck('user_id')
+            ->flip();
+
         $ranked = [];
 
         foreach ($candidates as $cand) {
             // Hard rule: Filter out students who already have an active project
-            if ($this->eligibilityService->hasActiveProjectMembership($cand)) {
+            if (isset($activeUserIds[$cand->id])) {
                 continue;
             }
 

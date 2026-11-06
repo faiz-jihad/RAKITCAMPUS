@@ -39,7 +39,7 @@ class CompetitionMatchmakingService
         $team = $participation->team;
         $campusId = $competition->campus_id ?? ($viewer?->campusId() ?? $team?->campus_id);
 
-        // Fetch students from same campus (or all students if global)
+        // Fetch students from same campus with eager loaded skills & counts (Zero N+1)
         $query = User::query()
             ->whereHas('memberships', function ($q) use ($campusId) {
                 $q->where('role', \App\Enums\CampusRole::Student->value)
@@ -48,15 +48,30 @@ class CompetitionMatchmakingService
                     $q->where('campus_id', $campusId);
                 }
             })
-            ->with(['profile.skills']);
+            ->with(['profile.skills'])
+            ->withCount([
+                'achievements',
+                'teamMemberships as completed_projects_count' => fn ($q) => $q->where('status', 'completed'),
+                'applications as rejected_applications_count' => fn ($q) => $q->where('status', 'rejected'),
+            ]);
 
         // Exclude members already in this team
         if ($team) {
             $existingMemberIds = $team->members()->pluck('user_id')->toArray();
-            $query->whereNotIn('id', $existingMemberIds);
+            if (!empty($existingMemberIds)) {
+                $query->whereNotIn('id', $existingMemberIds);
+            }
         }
 
         $students = $query->take(100)->get();
+
+        // Batch pre-fetch active competition memberships for these students (Zero N+1)
+        $activeInCompIds = \App\Models\TeamMember::where('status', 'active')
+            ->whereIn('user_id', $students->pluck('id'))
+            ->whereHas('team.participations', fn ($q) => $q->where('competition_id', $participation->competition_id))
+            ->pluck('user_id')
+            ->flip()
+            ->toArray();
 
         // Extract skills required by competition
         $requiredSkillNames = $this->extractRequiredSkills($participation);
@@ -67,8 +82,8 @@ class CompetitionMatchmakingService
             ->pluck('name')
             ->toArray() ?? [];
 
-        $evaluated = $students->map(function (User $student) use ($participation, $requiredSkillNames, $openRoles) {
-            return $this->evaluateStudent($student, $participation, $requiredSkillNames, $openRoles);
+        $evaluated = $students->map(function (User $student) use ($participation, $requiredSkillNames, $openRoles, $activeInCompIds) {
+            return $this->evaluateStudent($student, $participation, $requiredSkillNames, $openRoles, $activeInCompIds);
         });
 
         // Filter and sort: Prioritize eligible students with highest final_score
@@ -85,7 +100,8 @@ class CompetitionMatchmakingService
         User $student,
         CompetitionParticipation $participation,
         array $requiredSkills,
-        array $openRoles
+        array $openRoles,
+        ?array $preloadedActiveInComp = null
     ): array {
         $profile = $student->profile ?? $student->studentProfile;
         $studentSkills = $profile?->skills?->pluck('name')->map(fn ($s) => strtolower(trim($s)))->toArray() ?? [];
@@ -153,7 +169,9 @@ class CompetitionMatchmakingService
 
         // 3. Availability Score (20%)
         $competitionId = $participation->competition_id;
-        $hasActiveInThisComp = $this->eligibilityService->hasActiveCompetitionMembershipIn($student, $competitionId);
+        $hasActiveInThisComp = $preloadedActiveInComp !== null
+            ? isset($preloadedActiveInComp[$student->id])
+            : $this->eligibilityService->hasActiveCompetitionMembershipIn($student, $competitionId);
         $mode = config('matchmaking.membership_mode', 'flexible');
 
         $isAvailable = true;
@@ -175,8 +193,8 @@ class CompetitionMatchmakingService
         $availabilityScore = $isAvailable ? 100 : 15;
 
         // 4. Fair Opportunity / Beginner Boost (20%)
-        // Students who have fewer competition achievements or previous participations get boosted
-        $pastAchievementsCount = $student->achievements()->count();
+        // Use eager loaded count if present to prevent N+1 query
+        $pastAchievementsCount = $student->achievements_count ?? $student->achievements()->count();
         $fairnessData = $this->fairnessService->computeFairnessScore($student);
         $fairnessScore = $fairnessData['score'];
 

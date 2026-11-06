@@ -18,26 +18,29 @@ class FairnessScoringService
     {
         $baseScore = 50; // Neutral baseline
 
-        // 1. First-time participant bonus: Give a fair boost to students with 0 prior completed projects
-        $completedProjectsCount = TeamMember::where('user_id', $student->id)
-            ->where('status', 'completed')
-            ->count();
+        // 1. First-time participant bonus: use pre-calculated or eager-loaded count if available (Zero N+1)
+        $completedProjectsCount = $student->completed_projects_count
+            ?? ($student->relationLoaded('teamMemberships')
+                ? $student->teamMemberships->where('status', 'completed')->count()
+                : TeamMember::where('user_id', $student->id)->where('status', 'completed')->count());
 
         $isFirstTimer = $completedProjectsCount === 0;
         $firstTimerBonus = $isFirstTimer ? 25 : 0;
 
-        // 2. Rejection recovery bonus: Prevent repeated exclusion by boosting students
-        // who faced recent rejections
-        $recentRejectionsCount = Application::where('user_id', $student->id)
-            ->where('status', 'rejected')
-            ->count();
+        // 2. Rejection recovery bonus: use pre-calculated or eager-loaded count if available (Zero N+1)
+        $recentRejectionsCount = $student->rejected_applications_count
+            ?? ($student->relationLoaded('applications')
+                ? $student->applications->where('status', 'rejected')->count()
+                : Application::where('user_id', $student->id)->where('status', 'rejected')->count());
 
         $rejectionBonus = min(20, $recentRejectionsCount * 7);
 
         // 3. Waiting time boost: Days enrolled without an active team
-        $enrollment = $student->enrolledClasses()
-            ->orderByPivot('enrolled_at', 'asc')
-            ->first();
+        $enrollment = $student->relationLoaded('enrolledClasses')
+            ? $student->enrolledClasses->sortBy('pivot.enrolled_at')->first()
+            : $student->enrolledClasses()
+                ->orderByPivot('enrolled_at', 'asc')
+                ->first();
 
         $waitingDays = 0;
         $waitingBonus = 0;

@@ -34,9 +34,20 @@ class AllocationService
             ->wherePivot('status', 'enrolled')
             ->get();
 
-        // 2. Filter unassigned students who do not currently hold an active project
-        $eligibleStudents = $students->filter(function ($student) {
-            return ! $this->eligibilityService->hasActiveProjectMembership($student);
+        // 2. Filter unassigned students who do not currently hold an active project (Batch lookup - Zero N+1)
+        $activeUserIds = \App\Models\TeamMember::where('status', 'active')
+            ->whereIn('user_id', $students->pluck('id'))
+            ->whereHas('team.project', function ($q) {
+                $q->whereNotIn('status', [
+                    ProjectStatus::Archived->value,
+                    ProjectStatus::Completed->value,
+                ]);
+            })
+            ->pluck('user_id')
+            ->flip();
+
+        $eligibleStudents = $students->filter(function ($student) use ($activeUserIds) {
+            return ! isset($activeUserIds[$student->id]);
         })->values();
 
         // 3. Eager load all class projects with team, roles, and skills (Zero N+1)

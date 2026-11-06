@@ -55,7 +55,7 @@ class ProjectWebController extends Controller
     {
         $user = $request->user();
         $query = Project::visibleTo($user)
-            ->with(['leader:id,name', 'campus:id,name', 'skills', 'team.members'])
+            ->with(['leader:id,name', 'campus:id,name', 'skills', 'team.members.user:id,name'])
             ->latest();
 
         if ($request->filled('category')) {
@@ -237,33 +237,49 @@ class ProjectWebController extends Controller
         // Class students list for Mode A manual teammate search
         $classStudents = collect();
         if ($project->academicClass) {
-            $classStudents = $project->academicClass->students()
+            $rawStudents = $project->academicClass->students()
                 ->with(['profile.skills', 'teamMemberships' => fn ($q) => $q->where('status', 'active')])
                 ->wherePivot('status', 'enrolled')
-                ->get()
-                ->map(function ($s) use ($project) {
-                    $hasActive = $this->eligibilityService->hasActiveProjectMembership($s);
-                    $isMember = $project->team ? $project->team->hasMember($s) : false;
-                    return [
-                        'id' => $s->id,
-                        'name' => $s->name,
-                        'email' => $s->email,
-                        'avatar' => $s->avatar,
-                        'student_number' => $s->student_number ?? $s->pivot?->student_number ?? '',
-                        'study_program' => $s->profile?->study_program ?? 'Teknik Informatika',
-                        'semester' => $s->profile?->semester ?? 4,
-                        'availability_hours' => $s->profile?->availability_hours ?? 10,
-                        'preferred_roles' => $s->profile?->preferred_roles ?? [],
-                        'interests' => $s->profile?->interests ?? [],
-                        'skills' => $s->profile ? $s->profile->skills->map(fn ($sk) => [
-                            'name' => $sk->name,
-                            'proficiency' => $sk->pivot?->proficiency ?? 1,
-                        ])->all() : [],
-                        'has_active_project' => $hasActive,
-                        'is_member' => $isMember,
-                        'is_leader' => $project->leader_id === $s->id,
-                    ];
-                });
+                ->get();
+
+            $activeStudentIds = \App\Models\TeamMember::where('status', 'active')
+                ->whereIn('user_id', $rawStudents->pluck('id'))
+                ->whereHas('team.project', function ($query) {
+                    $query->whereNotIn('status', [
+                        ProjectStatus::Archived->value,
+                        ProjectStatus::Completed->value,
+                    ]);
+                })
+                ->pluck('user_id')
+                ->flip();
+
+            $teamMemberIds = $project->team && $project->team->relationLoaded('members')
+                ? $project->team->members->pluck('user_id')->flip()
+                : ($project->team ? $project->team->members()->pluck('user_id')->flip() : collect());
+
+            $classStudents = $rawStudents->map(function ($s) use ($project, $activeStudentIds, $teamMemberIds) {
+                $hasActive = isset($activeStudentIds[$s->id]);
+                $isMember = isset($teamMemberIds[$s->id]);
+                return [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'email' => $s->email,
+                    'avatar' => $s->avatar,
+                    'student_number' => $s->student_number ?? $s->pivot?->student_number ?? '',
+                    'study_program' => $s->profile?->study_program ?? 'Teknik Informatika',
+                    'semester' => $s->profile?->semester ?? 4,
+                    'availability_hours' => $s->profile?->availability_hours ?? 10,
+                    'preferred_roles' => $s->profile?->preferred_roles ?? [],
+                    'interests' => $s->profile?->interests ?? [],
+                    'skills' => $s->profile ? $s->profile->skills->map(fn ($sk) => [
+                        'name' => $sk->name,
+                        'proficiency' => $sk->pivot?->proficiency ?? 1,
+                    ])->all() : [],
+                    'has_active_project' => $hasActive,
+                    'is_member' => $isMember,
+                    'is_leader' => $project->leader_id === $s->id,
+                ];
+            });
         }
 
         // Sent and Received Invitations

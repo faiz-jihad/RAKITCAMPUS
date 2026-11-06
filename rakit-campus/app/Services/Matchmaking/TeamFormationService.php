@@ -99,11 +99,13 @@ class TeamFormationService
             throw ValidationException::withMessages(['auth' => ['Hanya ketua tim yang dapat membuka sesi matchmaking.']]);
         }
 
-        $project->update(['formation_status' => 'matchmaking_open']);
+        DB::transaction(function () use ($project) {
+            $project->update(['formation_status' => 'matchmaking_open']);
 
-        if ($project->team?->recruitment) {
-            $project->team->recruitment->update(['status' => RecruitmentStatus::Open]);
-        }
+            if ($project->team?->recruitment) {
+                $project->team->recruitment->update(['status' => RecruitmentStatus::Open]);
+            }
+        });
     }
 
     /**
@@ -125,18 +127,20 @@ class TeamFormationService
             ]);
         }
 
-        $project->update([
-            'formation_status' => 'formation_review',
-            'formation_notes' => null,
-        ]);
+        DB::transaction(function () use ($project, $user, $activeMembersCount) {
+            $project->update([
+                'formation_status' => 'formation_review',
+                'formation_notes' => null,
+            ]);
 
-        MatchingAuditLog::log(
-            'formation_submitted_review',
-            ['active_members' => $activeMembersCount],
-            $project->academic_class_id,
-            $project->id,
-            $user->id
-        );
+            MatchingAuditLog::log(
+                'formation_submitted_review',
+                ['active_members' => $activeMembersCount],
+                $project->academic_class_id,
+                $project->id,
+                $user->id
+            );
+        });
     }
 
     /**
@@ -185,18 +189,20 @@ class TeamFormationService
             throw ValidationException::withMessages(['auth' => ['Hanya dosen pengampu yang berwenang menolak susunan tim.']]);
         }
 
-        $project->update([
-            'formation_status' => 'requirements_configured',
-            'formation_notes' => $reason,
-        ]);
+        DB::transaction(function () use ($project, $reason, $class, $lecturer) {
+            $project->update([
+                'formation_status' => 'requirements_configured',
+                'formation_notes' => $reason,
+            ]);
 
-        MatchingAuditLog::log(
-            'formation_rejected',
-            ['reason' => $reason],
-            $class->id,
-            $project->id,
-            $lecturer->id
-        );
+            MatchingAuditLog::log(
+                'formation_rejected',
+                ['reason' => $reason],
+                $class->id,
+                $project->id,
+                $lecturer->id
+            );
+        });
     }
 
     /**
@@ -209,18 +215,20 @@ class TeamFormationService
             throw ValidationException::withMessages(['auth' => ['Hanya dosen pengampu yang berwenang meminta revisi susunan tim.']]);
         }
 
-        $project->update([
-            'formation_status' => 'matchmaking_open',
-            'formation_notes' => $revisionNotes,
-        ]);
+        DB::transaction(function () use ($project, $revisionNotes, $class, $lecturer) {
+            $project->update([
+                'formation_status' => 'matchmaking_open',
+                'formation_notes' => $revisionNotes,
+            ]);
 
-        MatchingAuditLog::log(
-            'formation_revision_requested',
-            ['revision_notes' => $revisionNotes],
-            $class->id,
-            $project->id,
-            $lecturer->id
-        );
+            MatchingAuditLog::log(
+                'formation_revision_requested',
+                ['revision_notes' => $revisionNotes],
+                $class->id,
+                $project->id,
+                $lecturer->id
+            );
+        });
     }
 
     /**
@@ -234,10 +242,16 @@ class TeamFormationService
             ]);
         }
 
-        $project->update([
-            'formation_status' => 'workspace_activated',
-            'status' => ProjectStatus::InProgress,
-        ]);
+        DB::transaction(function () use ($project) {
+            $project->update([
+                'formation_status' => 'workspace_activated',
+                'status' => ProjectStatus::InProgress,
+            ]);
+
+            if ($project->team) {
+                $project->team->update(['status' => 'active']);
+            }
+        });
     }
 
     /**

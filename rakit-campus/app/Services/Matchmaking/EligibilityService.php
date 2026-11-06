@@ -91,10 +91,27 @@ class EligibilityService
 
     /**
      * Check if student currently holds an active project membership.
+     * Checks in-memory eager loaded relation if present (Zero N+1 query).
      */
     public function hasActiveProjectMembership(User $student): bool
     {
-        // Eager load or check via query
+        if ($student->relationLoaded('teamMemberships')) {
+            return $student->teamMemberships->contains(function ($m) {
+                if ($m->status !== 'active') {
+                    return false;
+                }
+                $project = $m->team?->project;
+                if (!$project) {
+                    return false;
+                }
+                $status = $project->status?->value ?? $project->status;
+                return !in_array($status, [
+                    ProjectStatus::Archived->value,
+                    ProjectStatus::Completed->value,
+                ], true);
+            });
+        }
+
         return TeamMember::where('user_id', $student->id)
             ->where('status', 'active')
             ->whereHas('team.project', function ($query) {
@@ -108,9 +125,24 @@ class EligibilityService
 
     /**
      * Check if student currently holds an active competition team membership in a specific competition.
+     * Checks in-memory eager loaded relation if present (Zero N+1 query).
      */
     public function hasActiveCompetitionMembershipIn(User $student, int $competitionId): bool
     {
+        if ($student->relationLoaded('teamMemberships')) {
+            return $student->teamMemberships->contains(function ($m) use ($competitionId) {
+                if ($m->status !== 'active' || !$m->team) {
+                    return false;
+                }
+                if ($m->team->relationLoaded('participations')) {
+                    return $m->team->participations->contains(function ($p) use ($competitionId) {
+                        return $p->competition_id === $competitionId && !in_array($p->stage, ['winner', 'not_selected', 'withdrawn'], true);
+                    });
+                }
+                return false;
+            });
+        }
+
         return TeamMember::where('user_id', $student->id)
             ->where('status', 'active')
             ->whereHas('team.participations', function ($query) use ($competitionId) {
@@ -228,7 +260,9 @@ class EligibilityService
         }
 
         $maxCapacity = $project->max_team_size ?: ($team->capacity ?: 5);
-        $currentMembers = $team->members()->where('status', 'active')->count();
+        $currentMembers = $team->relationLoaded('members')
+            ? $team->members->where('status', 'active')->count()
+            : $team->members()->where('status', 'active')->count();
 
         return $currentMembers < $maxCapacity;
     }

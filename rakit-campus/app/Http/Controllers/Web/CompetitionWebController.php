@@ -299,7 +299,7 @@ class CompetitionWebController extends Controller
         $campusStudents = collect();
         if ($isLecturer) {
             $campusId = $competition->campus_id ?? $user->campusId();
-            $campusStudents = User::whereHas('memberships', function ($q) use ($campusId) {
+            $rawStudents = User::whereHas('memberships', function ($q) use ($campusId) {
                 $q->where('role', \App\Enums\CampusRole::Student->value)
                   ->where('status', \App\Enums\MembershipStatus::Active->value);
                 if ($campusId) {
@@ -308,9 +308,16 @@ class CompetitionWebController extends Controller
             })
             ->with(['profile.skills'])
             ->take(60)
-            ->get()
-            ->map(function ($s) use ($competition) {
-                $hasActiveInComp = $this->eligibilityService->hasActiveCompetitionMembershipIn($s, $competition->id);
+            ->get();
+
+            $activeInCompIds = TeamMember::where('status', 'active')
+                ->whereIn('user_id', $rawStudents->pluck('id'))
+                ->whereHas('team.participations', fn ($q) => $q->where('competition_id', $competition->id))
+                ->pluck('user_id')
+                ->flip();
+
+            $campusStudents = $rawStudents->map(function ($s) use ($activeInCompIds) {
+                $hasActiveInComp = isset($activeInCompIds[$s->id]);
                 return [
                     'id' => $s->id,
                     'name' => $s->name,
@@ -383,7 +390,7 @@ class CompetitionWebController extends Controller
         $team = $participation->team;
         $isMember = $team && $team->hasMember($user);
         $isLeader = $team && $team->isLeader($user);
-        $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('user_id', $user->id)->exists();
+        $isMentor = $participation->mentor_id === $user->id || $participation->mentors->contains('user_id', $user->id);
         $isAdmin = $user->isCampusAdminOf($participation->competition?->campus_id) || $user->isPlatformAdmin();
 
         if (!$isMember && !$isMentor && !$isAdmin) {
