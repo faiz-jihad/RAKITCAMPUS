@@ -2,7 +2,9 @@
 
 namespace App\Services\Matchmaking;
 
+use App\Enums\ApplicationStatus;
 use App\Enums\ProjectStatus;
+use App\Models\AcademicClass;
 use App\Models\Application;
 use App\Models\Invitation;
 use App\Models\MatchingAuditLog;
@@ -83,6 +85,19 @@ class MembershipService
             $project = $team->project;
             $applicant = $application->user;
 
+            if ($application->status !== ApplicationStatus::Pending) {
+                throw ValidationException::withMessages([
+                    'application' => ['Lamaran ini sudah diproses.'],
+                ]);
+            }
+
+            $isLeader = $project->isLeader($decidedBy) || $team->isLeader($decidedBy);
+            if (! $isLeader && ! $decidedBy->isPlatformAdmin()) {
+                throw ValidationException::withMessages([
+                    'authorization' => ['Hanya ketua kelompok yang dapat memproses lamaran.'],
+                ]);
+            }
+
             // 1. Check if applicant already joined an active project in the interim
             $hasActive = TeamMember::where('user_id', $applicant->id)
                 ->where('status', 'active')
@@ -108,8 +123,8 @@ class MembershipService
                 ]);
             }
 
-            // 2. Check team capacity
-            $maxCapacity = $project->max_team_size ?: ($team->capacity ?: 5);
+            // 2. Check team capacity, including the lecturer's class limit
+            $maxCapacity = $this->effectiveTeamCapacity($project, $team);
             $currentCount = $team->members()->where('status', 'active')->lockForUpdate()->count();
 
             if ($currentCount >= $maxCapacity) {
@@ -158,6 +173,29 @@ class MembershipService
      */
     public function rejectApplication(Application $application, User $decidedBy, ?string $decisionNote = null): void
     {
+        $application->loadMissing('recruitment.team.project');
+        $team = $application->recruitment?->team;
+        $project = $team?->project;
+
+        if (! $team || ! $project) {
+            throw ValidationException::withMessages([
+                'application' => ['Lamaran ini tidak terhubung ke kelompok proyek.'],
+            ]);
+        }
+
+        if ($application->status !== ApplicationStatus::Pending) {
+            throw ValidationException::withMessages([
+                'application' => ['Lamaran ini sudah diproses.'],
+            ]);
+        }
+
+        $isLeader = $project->isLeader($decidedBy) || $team->isLeader($decidedBy);
+        if (! $isLeader && ! $decidedBy->isPlatformAdmin()) {
+            throw ValidationException::withMessages([
+                'authorization' => ['Hanya ketua kelompok yang dapat memproses lamaran.'],
+            ]);
+        }
+
         $application->update([
             'status' => 'rejected',
             'decided_by' => $decidedBy->id,
@@ -203,8 +241,8 @@ class MembershipService
             $team = $invitation->team;
             $project = $team->project;
 
-            // 2. Check team capacity
-            $maxCapacity = $project->max_team_size ?: ($team->capacity ?: 5);
+            // 2. Check team capacity, including the lecturer's class limit
+            $maxCapacity = $this->effectiveTeamCapacity($project, $team);
             $currentCount = $team->members()->where('status', 'active')->lockForUpdate()->count();
 
             if ($currentCount >= $maxCapacity) {

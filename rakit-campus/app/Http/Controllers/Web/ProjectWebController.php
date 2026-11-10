@@ -428,10 +428,6 @@ class ProjectWebController extends Controller
             return redirect()->route('login');
         }
 
-        $activeCampusId = $user->campusId() 
-            ?? Campus::where('slug', 'polindra')->value('id') 
-            ?? Campus::value('id');
-
         $validated = $request->validate([
             'academic_class_id' => ['required', 'integer', 'exists:academic_classes,id'],
             'title' => ['required', 'string', 'max:255'],
@@ -453,9 +449,26 @@ class ProjectWebController extends Controller
             'required_skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
 
+        $academicClass = AcademicClass::findOrFail($validated['academic_class_id']);
+        $activeCampusId = $academicClass->campus_id;
+
+        if (! $user->isPlatformAdmin() && ! $user->isStudent($academicClass->campus_id)) {
+            abort(403, 'Hanya mahasiswa peserta kelas yang dapat membentuk kelompok.');
+        }
+
+        $requestedCapacity = $validated['capacity'] ?? $academicClass->target_team_size;
+        if ($requestedCapacity > $academicClass->target_team_size) {
+            $message = "Batas anggota kelompok untuk kelas ini adalah {$academicClass->target_team_size} orang.";
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $message], 422);
+            }
+
+            return back()->withErrors(['capacity' => $message]);
+        }
+
         // Class Boundary Check: Must be enrolled in this academic class
         $isEnrolled = $user->enrolledClasses()
-            ->where('academic_classes.id', $validated['academic_class_id'])
+            ->where('academic_classes.id', $academicClass->id)
             ->wherePivot('status', 'enrolled')
             ->exists();
 
@@ -474,12 +487,13 @@ class ProjectWebController extends Controller
             return back()->withErrors(['title' => 'Anda sudah tergabung dalam proyek aktif lain. Selesaikan proyek sebelumnya sebelum membuat proyek baru.']);
         }
 
-        $project = DB::transaction(function () use ($validated, $user, $activeCampusId) {
+        $project = DB::transaction(function () use ($validated, $user, $activeCampusId, $academicClass, $requestedCapacity) {
             $slug = Str::slug($validated['title']) . '-' . Str::lower(Str::random(6));
 
             $project = Project::create([
                 'campus_id' => $activeCampusId,
-                'academic_class_id' => $validated['academic_class_id'] ?? null,
+                'academic_class_id' => $academicClass->id,
+                'max_team_size' => $requestedCapacity,
                 'leader_id' => $user->id,
                 'title' => $validated['title'],
                 'slug' => $slug,
@@ -507,7 +521,7 @@ class ProjectWebController extends Controller
                 'type' => TeamType::Project,
                 'name' => $project->title . ' Core Team',
                 'description' => 'Tim proyek ' . $project->title,
-                'capacity' => $validated['capacity'] ?? 5,
+                'capacity' => $requestedCapacity,
             ]);
 
             // Add creator as Team Leader
@@ -647,7 +661,16 @@ class ProjectWebController extends Controller
             abort(403, 'Hanya ketua tim yang dapat memproses lamaran.');
         }
 
-        $application = Application::with(['user', 'role', 'recruitment.team.project'])->findOrFail($applicationId);
+        $application = Application::with(['user', 'role', 'recruitment.team'])->findOrFail($applicationId);
+
+        if ((int) $application->recruitment?->team?->project_id !== (int) $project->id) {
+            abort(404);
+        }
+
+        if ($application->status !== \App\Enums\ApplicationStatus::Pending) {
+            return back()->with('error', 'Lamaran ini sudah diproses.');
+        }
+
         $action = $request->input('action', 'accept'); // 'accept' or 'reject'
 
         try {

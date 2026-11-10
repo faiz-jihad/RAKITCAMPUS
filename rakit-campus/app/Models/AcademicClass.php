@@ -113,10 +113,21 @@ class AcademicClass extends Model
 
     public function hasStudent(User $user): bool
     {
+        $isEnrolled = function ($student): bool {
+            $status = $student->pivot->status ?? 'enrolled';
+
+            return $status === 'enrolled';
+        };
+
         if ($this->relationLoaded('students')) {
-            return $this->students->contains('id', $user->id);
+            return $this->students->contains(
+                fn ($student) => $student->id === $user->id && $isEnrolled($student)
+            );
         }
 
-        return $this->students()->where('user_id', $user->id)->exists();
+        return $this->students()
+            ->where('users.id', $user->id)
+            ->wherePivot('status', 'enrolled')
+            ->exists();
     }
 }

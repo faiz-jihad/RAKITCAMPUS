@@ -166,19 +166,20 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                         )}
 
                         <form onSubmit={submit} className="flex flex-col gap-6">
-                            {/* Kelas Perkuliahan (Jika Terdaftar) */}
-                            {enrolledClasses && enrolledClasses.length > 0 && (
+                            {/* Kelas Perkuliahan — WAJIB pilih kelas */}
+                            {enrolledClasses && enrolledClasses.length > 0 ? (
                                 <div className="p-4 rounded-2xl bg-[#F8FAFC] border border-[#2563EB]/20">
                                     <label className="block text-xs font-bold text-[#2563EB] mb-1.5 flex items-center gap-1.5">
                                         <GraduationCap className="size-4 text-[#2563EB]" />
-                                        <span>Kaitkan ke Kelas Kuliah (Opsional)</span>
+                                        <span>Kelas Perkuliahan <span className="text-rose-500">*</span></span>
                                     </label>
                                     <select
                                         value={data.academic_class_id}
                                         onChange={(e) => setData('academic_class_id', e.target.value)}
+                                        required
                                         className="w-full px-3.5 py-2.5 rounded-xl border border-neutral-200 bg-white text-xs sm:text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/20 focus:border-[#2563EB]"
                                     >
-                                        <option value="">Proyek Mandiri (Bukan Tugas Kelas)</option>
+                                        <option value="">— Pilih kelas perkuliahan —</option>
                                         {enrolledClasses.map((cls) => (
                                             <option key={cls.id} value={cls.id}>
                                                 {cls.name} ({cls.code})
@@ -186,8 +187,22 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                         ))}
                                     </select>
                                     <span className="text-[11px] text-neutral-500 mt-1 block">
-                                        Kalau dikaitkan ke kelas, proyek ini bakal otomatis muncul di dashboard dosen pengampu untuk bimbingan dan penilaian.
+                                        Proyek ini akan muncul di dashboard dosen pengampu untuk bimbingan dan penilaian semester.
                                     </span>
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200">
+                                    <div className="flex items-start gap-3">
+                                        <GraduationCap className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <p className="text-xs font-bold text-amber-800">Belum terdaftar di kelas perkuliahan</p>
+                                            <p className="text-[11px] text-amber-700 mt-1 leading-relaxed">
+                                                Kamu perlu bergabung ke kelas perkuliahan dulu sebelum bisa membuat proyek. Minta kode kelas dari dosen pengampumu, lalu masuk ke halaman{' '}
+                                                <a href="/classes" className="font-bold underline hover:text-amber-900">Kelas Kuliah</a>{' '}
+                                                dan gabung menggunakan kode tersebut.
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             )}
 
@@ -327,7 +342,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 </Link>
                                 <button
                                     type="submit"
-                                    disabled={submitting}
+                                    disabled={submitting || (enrolledClasses.length > 0 && !data.academic_class_id)}
                                     className="px-6 py-2.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-md shadow-[#2563EB]/20 hover:shadow-lg transition disabled:opacity-50 flex items-center gap-2"
                                 >
                                     {submitting ? (

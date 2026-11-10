@@ -217,6 +217,10 @@ export default function ClassShow({
     const [adjustReason, setAdjustReason] = useState<string>('');
     const [submittingAdjust, setSubmittingAdjust] = useState<boolean>(false);
 
+    // Manual assign: dosen pindahkan mahasiswa ke kelompok tertentu
+    const [assignTargetProjectId, setAssignTargetProjectId] = useState<Record<number, number>>({});
+    const [submittingAssign, setSubmittingAssign] = useState<number | null>(null);
+
     const handleAdjustAllocation = () => {
         if (!adjustingAlloc || !adjustProjectId || !adjustReason.trim()) {
             alert('Pilih kelompok tujuan dan isi alasan penyesuaian alokasi.');
@@ -333,6 +337,26 @@ export default function ClassShow({
                 reset_all: resetAll,
             });
         }
+    };
+
+    const handleManualAssignStudent = (studentId: number) => {
+        const targetProjectId = assignTargetProjectId[studentId];
+        if (!targetProjectId) {
+            alert('Pilih kelompok tujuan terlebih dahulu.');
+            return;
+        }
+        setSubmittingAssign(studentId);
+        router.post(
+            `/classes/${academicClass.id}/invite-student`,
+            { student_id: studentId, project_id: targetProjectId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setAssignTargetProjectId((prev) => { const n = { ...prev }; delete n[studentId]; return n; });
+                },
+                onFinish: () => setSubmittingAssign(null),
+            }
+        );
     };
 
     const filteredStudents = students.filter((s) => {
@@ -1052,21 +1076,51 @@ export default function ClassShow({
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                                                 {students.filter((s) => !s.has_team).map((st) => (
-                                                    <div key={st.id} className="p-3 rounded-xl border border-slate-200 bg-white/70 flex items-center gap-2.5">
-                                                        <div className="size-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
-                                                            {st.name.charAt(0)}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <h5 className="text-xs font-bold text-slate-900 truncate">{st.name}</h5>
-                                                            <p className="text-[10px] text-slate-400 font-mono">{st.student_number}</p>
-                                                            <div className="flex flex-wrap gap-1 mt-1">
-                                                                {st.skills.slice(0, 2).map((sk, idx) => (
-                                                                    <span key={idx} className="text-[9px] bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200 font-medium">
-                                                                        {sk}
-                                                                    </span>
-                                                                ))}
+                                                    <div key={st.id} className="p-3 rounded-xl border border-slate-200 bg-white/70 flex flex-col gap-2.5">
+                                                        <div className="flex items-center gap-2.5">
+                                                            <div className="size-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
+                                                                {st.name.charAt(0)}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h5 className="text-xs font-bold text-slate-900 truncate">{st.name}</h5>
+                                                                <p className="text-[10px] text-slate-400 font-mono">{st.student_number}</p>
+                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                    {st.skills.slice(0, 2).map((sk, idx) => (
+                                                                        <span key={idx} className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-medium">
+                                                                            {sk}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
                                                             </div>
                                                         </div>
+
+                                                        {/* Manual assign ke kelompok */}
+                                                        {projects.length > 0 ? (
+                                                            <div className="flex gap-1.5 items-center">
+                                                                <select
+                                                                    value={assignTargetProjectId[st.id] ?? ''}
+                                                                    onChange={(e) => setAssignTargetProjectId((prev) => ({ ...prev, [st.id]: parseInt(e.target.value, 10) }))}
+                                                                    className="flex-1 px-2 py-1.5 rounded-lg border border-slate-200 bg-white text-[10px] text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-400 focus:border-blue-400"
+                                                                >
+                                                                    <option value="">Pilih kelompok...</option>
+                                                                    {projects.map((p) => (
+                                                                        <option key={p.id} value={p.id}>
+                                                                            {p.title.length > 22 ? p.title.slice(0, 22) + '…' : p.title} ({p.members_count})
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
+                                                                <button
+                                                                    onClick={() => handleManualAssignStudent(st.id)}
+                                                                    disabled={!assignTargetProjectId[st.id] || submittingAssign === st.id}
+                                                                    className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition disabled:opacity-40 cursor-pointer"
+                                                                    title="Tambahkan ke kelompok"
+                                                                >
+                                                                    {submittingAssign === st.id ? '...' : <UserPlus className="size-3.5" />}
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <span className="text-[10px] text-slate-400 italic">Belum ada kelompok dibuat</span>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>

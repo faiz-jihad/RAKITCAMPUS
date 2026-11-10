@@ -26,6 +26,7 @@ use App\Services\Matchmaking\EligibilityService;
 use App\Services\Matchmaking\FairnessAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -115,10 +116,10 @@ class AcademicClassWebController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', AcademicClass::class);
+
         $user = $request->user();
-        $activeCampusId = $user->campusId() 
-            ?? Campus::where('slug', 'polindra')->value('id') 
-            ?? Campus::value('id');
+        $activeCampusId = $user->campusId();
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -171,11 +172,9 @@ class AcademicClassWebController extends Controller
             'guidances.project:id,title',
         ])->findOrFail($id);
 
-        $isLecturer = $academicClass->isLecturer($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($academicClass->campus_id);
+        $this->authorize('view', $academicClass);
 
-        if (!$isLecturer && !$academicClass->hasStudent($user)) {
-            abort(403, 'Anda tidak memiliki akses ke kelas ini karena belum terdaftar sebagai peserta kelas.');
-        }
+        $isLecturer = $user->can('manage', $academicClass) || $user->isCampusAdminOf($academicClass->campus_id);
 
         // Map active project for every student in O(1) time without extra queries
         $projectByUserId = [];
@@ -396,8 +395,8 @@ class AcademicClassWebController extends Controller
             return back()->withErrors(['join_code' => 'Kode kelas tersebut berasal dari kampus lain dan tidak sesuai dengan akun Anda.']);
         }
 
-        if ($user->isLecturer($academicClass->campus_id) || $academicClass->isLecturer($user)) {
-            return back()->withErrors(['join_code' => 'Akun dosen tidak dapat mendaftar sebagai mahasiswa peserta kelas.']);
+        if (! $user->isStudent($academicClass->campus_id)) {
+            return back()->withErrors(['join_code' => 'Hanya mahasiswa pada kampus penyelenggara yang dapat bergabung dengan kode kelas.']);
         }
 
         if (!$user->profile()->exists()) {
@@ -438,9 +437,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu yang dapat menambahkan mahasiswa ke kelas ini.');
-        }
+        $this->authorize('manage', $academicClass);
 
         $validated = $request->validate([
             'student_identifier' => ['required', 'string'],
@@ -451,8 +448,8 @@ class AcademicClassWebController extends Controller
             ->orWhereHas('memberships', fn ($m) => $m->where('student_number', $identifier))
             ->first();
 
-        if (!$studentUser) {
-            return back()->withErrors(['student_identifier' => 'Mahasiswa dengan email atau NIM "' . $identifier . '" tidak ditemukan.']);
+        if (!$studentUser || ! $studentUser->isStudent($academicClass->campus_id)) {
+            return back()->withErrors(['student_identifier' => 'Mahasiswa dengan email atau NIM "' . $identifier . '" tidak ditemukan di kampus ini.']);
         }
 
         if ($academicClass->hasStudent($studentUser)) {
@@ -477,9 +474,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403);
-        }
+        $this->authorize('manage', $academicClass);
 
         $studentUser = User::find($studentId);
         AcademicClassStudent::where('academic_class_id', $id)
@@ -498,9 +493,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403);
-        }
+        $this->authorize('manage', $academicClass);
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -520,6 +513,14 @@ class AcademicClassWebController extends Controller
 
         // If review for specific project, also update project note
         if (!empty($validated['project_id'])) {
+            $projectInClass = Project::where('id', $validated['project_id'])
+                ->where('academic_class_id', $academicClass->id)
+                ->exists();
+
+            if (! $projectInClass) {
+                return back()->withErrors(['project_id' => 'Proyek tersebut bukan bagian dari kelas ini.']);
+            }
+
             Project::where('id', $validated['project_id'])->update([
                 'lecturer_notes' => $validated['content'],
                 'lecturer_evaluation' => 'Disetujui Dosen',
@@ -534,9 +535,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::with(['students.profile.skills', 'projects.team.members'])->findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403);
-        }
+        $this->authorize('manage', $academicClass);
 
         $resetAll = $request->boolean('reset_all');
 
@@ -643,8 +642,12 @@ class AcademicClassWebController extends Controller
 
         $project = Project::with(['team.members.user.profile.skills'])->where('academic_class_id', $academicClass->id)->findOrFail($validated['project_id']);
 
-        if (!$project->isLeader($user) && !$project->team?->hasMember($user)) {
-            abort(403, 'Hanya anggota kelompok yang dapat mengundang rekan.');
+        if (! $user->isStudent($academicClass->campus_id) || ! $academicClass->hasStudent($user)) {
+            abort(403, 'Hanya mahasiswa peserta kelas ini yang dapat mengundang rekan kelompok.');
+        }
+
+        if (! $project->isLeader($user)) {
+            abort(403, 'Hanya ketua kelompok yang dapat menambahkan anggota.');
         }
 
         $team = $project->team;
@@ -653,6 +656,10 @@ class AcademicClassWebController extends Controller
         }
 
         $invitedUser = User::with('profile.skills')->findOrFail($validated['student_id']);
+
+        if (! $invitedUser->isStudent($academicClass->campus_id) || ! $academicClass->hasStudent($invitedUser)) {
+            return back()->with('error', 'Mahasiswa tersebut bukan peserta aktif di kelas ini.');
+        }
 
         // 1. Check if student already in another team in this class
         $alreadyInClassProject = Project::where('academic_class_id', $academicClass->id)
@@ -679,14 +686,32 @@ class AcademicClassWebController extends Controller
             return back()->with('error', $validation['message']);
         }
 
-        TeamMember::create([
-            'team_id' => $team->id,
-            'user_id' => $invitedUser->id,
-            'permission' => TeamPermission::Member,
-            'status' => 'active',
-            'role_name' => 'Anggota (Matchmaking Terverifikasi)',
-            'joined_at' => now(),
-        ]);
+        try {
+            DB::transaction(function () use ($team, $invitedUser, $academicClass) {
+                $lockedTeam = Team::whereKey($team->id)->lockForUpdate()->firstOrFail();
+                $currentCount = TeamMember::where('team_id', $lockedTeam->id)
+                    ->where('status', 'active')
+                    ->lockForUpdate()
+                    ->count();
+
+                if ($currentCount >= $academicClass->target_team_size) {
+                    throw ValidationException::withMessages([
+                        'student_id' => ["Kuota anggota kelompok sudah penuh. Batas dosen adalah {$academicClass->target_team_size} orang."],
+                    ]);
+                }
+
+                TeamMember::create([
+                    'team_id' => $lockedTeam->id,
+                    'user_id' => $invitedUser->id,
+                    'permission' => TeamPermission::Member,
+                    'status' => 'active',
+                    'role_name' => 'Anggota (Matchmaking Terverifikasi)',
+                    'joined_at' => now(),
+                ]);
+            });
+        } catch (ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
 
         return back()->with('success', "Berhasil menambahkan {$invitedUser->name} ke dalam kelompok {$team->name}. {$validation['message']}");
     }
@@ -699,9 +724,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu yang berwenang menjalankan simulasi alokasi tim.');
-        }
+        $this->authorize('manage', $academicClass);
 
         $session = $this->allocationService->simulateClassAllocation($academicClass, $user);
 
@@ -716,9 +739,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (!$academicClass->isLecturer($user) && !$user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu yang berwenang menyetujui alokasi tim.');
-        }
+        $this->authorize('manage', $academicClass);
 
         $session = MatchingSession::where('academic_class_id', $academicClass->id)->findOrFail($sessionId);
 
@@ -738,9 +759,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (! $academicClass->isLecturer($user) && ! $user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu yang berwenang mengubah alokasi simulasi.');
-        }
+        $this->authorize('manage', $academicClass);
 
         $session = MatchingSession::where('academic_class_id', $academicClass->id)->findOrFail($sessionId);
         $allocation = MatchingAllocation::with('user')->where('matching_session_id', $session->id)->findOrFail($allocationId);
@@ -781,9 +800,7 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if (! $academicClass->isLecturer($user) && ! $user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu utama atau admin yang dapat menambahkan dosen tim pengajar.');
-        }
+        $this->authorize('manage', $academicClass);
 
         $validated = $request->validate([
             'lecturer_identifier' => ['required', 'string', 'max:150'],
@@ -794,8 +811,8 @@ class AcademicClassWebController extends Controller
             ->orWhere('id', is_numeric($validated['lecturer_identifier']) ? (int) $validated['lecturer_identifier'] : 0)
             ->first();
 
-        if (! $lecturer) {
-            return back()->withErrors(['lecturer_identifier' => 'Dosen dengan email atau ID tersebut tidak ditemukan.']);
+        if (! $lecturer || ! $lecturer->isLecturer($academicClass->campus_id)) {
+            return back()->withErrors(['lecturer_identifier' => 'Akun tersebut bukan dosen aktif pada kampus penyelenggara kelas.']);
         }
 
         if ($lecturer->id === $academicClass->lecturer_id || $academicClass->coLecturers()->where('users.id', $lecturer->id)->exists()) {
@@ -819,8 +836,10 @@ class AcademicClassWebController extends Controller
         $user = $request->user();
         $academicClass = AcademicClass::findOrFail($id);
 
-        if ($academicClass->lecturer_id !== $user->id && ! $user->isPlatformAdmin()) {
-            abort(403, 'Hanya dosen pengampu utama yang dapat menghapus dosen tim pengajar.');
+        if ($academicClass->lecturer_id !== $user->id || ! $user->isLecturer($academicClass->campus_id)) {
+            if (! $user->isPlatformAdmin()) {
+                abort(403, 'Hanya dosen pengampu utama yang dapat menghapus dosen tim pengajar.');
+            }
         }
 
         $academicClass->coLecturers()->detach($lecturerId);
