@@ -241,23 +241,26 @@ class CompetitionWebController extends Controller
 
         // User's submitted applications (for MinSatu "Pengajuan" tab)
         $myApplications = $user ? Application::where('user_id', $user->id)
-            ->whereHas('recruitment.team.competitionParticipation')
-            ->with(['recruitment.team.competitionParticipation.competition', 'recruitment.team.leader.profile'])
+            ->whereHas('recruitment.team.participations')
+            ->with(['recruitment.team.participations.competition', 'recruitment.team.leader.profile'])
             ->latest()
             ->get()
-            ->map(fn ($app) => [
-                'id' => $app->id,
-                'status' => $app->status instanceof ApplicationStatus ? $app->status->value : $app->status,
-                'role_name' => $app->role_name,
-                'message' => $app->message,
-                'contact_phone' => $app->contact_phone,
-                'created_at' => $app->created_at?->toIso8601String(),
-                'team_name' => $app->recruitment?->team?->name ?? 'Tim Kompetisi',
-                'competition_name' => $app->recruitment?->team?->competitionParticipation?->competition?->name ?? 'Kompetisi',
-                'organizer' => $app->recruitment?->team?->competitionParticipation?->competition?->organizer,
-                'leader_name' => $app->recruitment?->team?->leader?->name,
-                'participation_id' => $app->recruitment?->team?->competitionParticipation?->id,
-            ]) : collect();
+            ->map(function ($app) {
+                $participation = $app->recruitment?->team?->participations?->first();
+                return [
+                    'id' => $app->id,
+                    'status' => $app->status instanceof ApplicationStatus ? $app->status->value : $app->status,
+                    'role_name' => $app->role_name,
+                    'message' => $app->message,
+                    'contact_phone' => $app->contact_phone,
+                    'created_at' => $app->created_at?->toIso8601String(),
+                    'team_name' => $app->recruitment?->team?->name ?? 'Tim Kompetisi',
+                    'competition_name' => $participation?->competition?->name ?? 'Kompetisi',
+                    'organizer' => $participation?->competition?->organizer,
+                    'leader_name' => $app->recruitment?->team?->leader?->name,
+                    'participation_id' => $participation?->id,
+                ];
+            }) : collect();
 
         // User's teams (for MinSatu "Timku" tab)
         $myTeams = $user ? CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {

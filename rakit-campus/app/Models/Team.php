@@ -56,6 +56,16 @@ class Team extends Model
         return $this->hasMany(CompetitionParticipation::class);
     }
 
+    public function competitionParticipation(): HasOne
+    {
+        return $this->hasOne(CompetitionParticipation::class);
+    }
+
+    public function competitionParticipations(): HasMany
+    {
+        return $this->hasMany(CompetitionParticipation::class);
+    }
+
     public function tasks(): HasMany
     {
         return $this->hasMany(Task::class);
