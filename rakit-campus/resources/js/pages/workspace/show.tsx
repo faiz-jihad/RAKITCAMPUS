@@ -79,6 +79,15 @@ export default function WorkspaceShow({
     const [targetColumn, setTargetColumn] = useState('todo');
     const [submitting, setSubmitting] = useState(false);
 
+    // Trello-style Drag & Drop state
+    const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+    const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+
+    // Trello-style Inline Quick Add Card per column
+    const [inlineAddingCol, setInlineAddingCol] = useState<string | null>(null);
+    const [inlineTitle, setInlineTitle] = useState('');
+    const [inlineSubmitting, setInlineSubmitting] = useState(false);
+
     // AI Agent orchestrating state
     const [orchestrating, setOrchestrating] = useState(false);
     const [aiFeedback, setAiFeedback] = useState<string | null>(null);
@@ -320,6 +329,112 @@ export default function WorkspaceShow({
         }
     };
 
+    // Trello Quick Add
+    const handleQuickAdd = async (colKey: string) => {
+        if (!inlineTitle.trim() || !team.id) return;
+
+        const tempId = Date.now();
+        const newTempTask = {
+            id: tempId,
+            title: inlineTitle.trim(),
+            description: null,
+            priority: 'medium',
+            status: colKey,
+            created_at: new Date().toISOString(),
+        };
+
+        setKanban((prev: any) => ({
+            ...prev,
+            [colKey]: [...(prev[colKey] || []), newTempTask],
+        }));
+
+        const submittedTitle = inlineTitle.trim();
+        setInlineTitle('');
+        setInlineSubmitting(true);
+
+        try {
+            const res = await fetch(`/workspace/${team.id}/tasks`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({
+                    title: submittedTitle,
+                    status: colKey,
+                    priority: 'medium',
+                }),
+            });
+
+            const json = await res.json();
+            if (res.ok && json.data) {
+                setKanban((prev: any) => ({
+                    ...prev,
+                    [colKey]: (prev[colKey] || []).map((t: any) => (t.id === tempId ? json.data : t)),
+                }));
+            } else if (!res.ok) {
+                setKanban((prev: any) => ({
+                    ...prev,
+                    [colKey]: (prev[colKey] || []).filter((t: any) => t.id !== tempId),
+                }));
+                alert(json.message || 'Gagal menambahkan kartu.');
+            }
+        } catch {
+            setKanban((prev: any) => ({
+                ...prev,
+                [colKey]: (prev[colKey] || []).filter((t: any) => t.id !== tempId),
+            }));
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setInlineSubmitting(false);
+        }
+    };
+
+    // Trello Drag and Drop handlers
+    const handleDragStart = (e: React.DragEvent, taskId: number, fromCol: string) => {
+        setDraggedTaskId(taskId);
+        e.dataTransfer.setData('application/json', JSON.stringify({ taskId, fromCol }));
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent, colKey: string) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverCol !== colKey) {
+            setDragOverCol(colKey);
+        }
+    };
+
+    const handleDragLeave = (e: React.DragEvent, colKey: string) => {
+        if (dragOverCol === colKey) {
+            setDragOverCol(null);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent, targetCol: string) => {
+        e.preventDefault();
+        setDragOverCol(null);
+        setDraggedTaskId(null);
+
+        const dataStr = e.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+
+        try {
+            const { taskId, fromCol } = JSON.parse(dataStr);
+            if (fromCol === targetCol) return;
+
+            const task = (kanban as any)[fromCol]?.find((t: any) => t.id === taskId);
+            if (!task) return;
+
+            handleMoveStatus(task, targetCol);
+        } catch {
+            // ignore
+        }
+    };
+
     // Lecturer Save Evaluation
     const handleSaveEvaluation = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -362,17 +477,17 @@ export default function WorkspaceShow({
     };
 
     const columns = [
-        { key: 'todo', label: 'To Do', badgeColor: 'bg-blue-100 text-blue-700' },
-        { key: 'in_progress', label: 'In Process', badgeColor: 'bg-indigo-100 text-indigo-700' },
-        { key: 'in_review', label: 'In Review', badgeColor: 'bg-amber-100 text-amber-800' },
-        { key: 'completed', label: 'Completed', badgeColor: 'bg-emerald-100 text-emerald-800' },
+        { key: 'todo', label: 'To Do', colorDot: 'bg-slate-400', badgeColor: 'bg-slate-200 text-slate-700' },
+        { key: 'in_progress', label: 'In Process', colorDot: 'bg-blue-500', badgeColor: 'bg-blue-100 text-blue-700' },
+        { key: 'in_review', label: 'In Review', colorDot: 'bg-amber-500', badgeColor: 'bg-amber-100 text-amber-800' },
+        { key: 'completed', label: 'Completed', colorDot: 'bg-emerald-500', badgeColor: 'bg-emerald-100 text-emerald-800' },
     ];
 
-    const priorityBadge: Record<string, { label: string; cls: string }> = {
-        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200' },
-        high: { label: 'High Priority', cls: 'bg-amber-50 text-amber-700 border-amber-200' },
-        medium: { label: 'Standard', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-        low: { label: 'Low', cls: 'bg-slate-100 text-slate-600 border-slate-200' },
+    const priorityBadge: Record<string, { label: string; cls: string; dot: string }> = {
+        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200', dot: 'bg-rose-500' },
+        high: { label: 'High Priority', cls: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500' },
+        medium: { label: 'Standard', cls: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+        low: { label: 'Low', cls: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
     };
 
     const filterTasks = (list: any[]) => {
@@ -722,111 +837,150 @@ export default function WorkspaceShow({
                         </div>
                     </div>
 
-                    {/* 4. KANBAN BOARD 4 COLUMNS */}
+                    {/* 4. KANBAN BOARD 4 COLUMNS (Trello Style) */}
                     {activeView === 'board' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-start">
                             {columns.map((col) => {
                                 const tasks = filterTasks((kanban as any)[col.key] || []);
+                                const isDragTarget = dragOverCol === col.key;
+                                const isAddingHere = inlineAddingCol === col.key;
 
                                 return (
                                     <div
                                         key={col.key}
-                                        className="bg-[#F8F6FE]/70 border border-purple-100/80 rounded-3xl p-4 flex flex-col min-h-[520px] transition"
+                                        onDragOver={(e) => handleDragOver(e, col.key)}
+                                        onDragLeave={(e) => handleDragLeave(e, col.key)}
+                                        onDrop={(e) => handleDrop(e, col.key)}
+                                        className={`rounded-2xl p-3 flex flex-col gap-2.5 min-h-[480px] transition-all duration-150 ${
+                                            isDragTarget
+                                                ? 'bg-blue-50/90 border-2 border-dashed border-blue-400 ring-2 ring-blue-500/20'
+                                                : 'bg-[#F1F2F4] border border-slate-200/80 shadow-2xs'
+                                        }`}
                                     >
                                         {/* Column Header */}
-                                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-purple-100/80">
+                                        <div className="flex items-center justify-between px-1.5 py-1">
                                             <div className="flex items-center gap-2">
-                                                <h3 className="text-xs font-bold text-neutral-900 tracking-tight">
+                                                <span className={`size-2 rounded-full ${col.colorDot}`} />
+                                                <h3 className="text-xs font-bold text-slate-800 tracking-tight">
                                                     {col.label}
                                                 </h3>
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badgeColor}`}>
                                                     {tasks.length}
                                                 </span>
+                                                <button
+                                                    onClick={() => {
+                                                        setInlineAddingCol(col.key);
+                                                        setInlineTitle('');
+                                                    }}
+                                                    className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-slate-200/60 transition cursor-pointer"
+                                                    title={`Tambah kartu ke ${col.label}`}
+                                                >
+                                                    <Plus className="size-3.5" />
+                                                </button>
                                             </div>
-
-                                            <button
-                                                onClick={() => {
-                                                    setTargetColumn(col.key);
-                                                    setTaskModalOpen(true);
-                                                }}
-                                                className="p-1 rounded-full text-neutral-400 hover:text-[#2563EB] hover:bg-white transition"
-                                                title={`Tambah tugas ke ${col.label}`}
-                                            >
-                                                <Plus className="size-4" />
-                                            </button>
                                         </div>
 
-                                        {/* Cards Container */}
-                                        <div className="flex flex-col gap-3 flex-1">
+                                        {/* Cards Stack */}
+                                        <div className="flex flex-col gap-2.5 flex-1">
+                                            {tasks.length === 0 && !isAddingHere && (
+                                                <div className="h-28 flex flex-col items-center justify-center p-3 text-center border border-dashed border-slate-300 rounded-xl text-slate-400">
+                                                    <span className="text-[11px] font-medium">
+                                                        Belum ada kartu di kolom ini
+                                                    </span>
+                                                    <button
+                                                        onClick={() => {
+                                                            setInlineAddingCol(col.key);
+                                                            setInlineTitle('');
+                                                        }}
+                                                        className="mt-1 text-[11px] text-blue-600 font-bold hover:underline cursor-pointer"
+                                                    >
+                                                        + Tambah kartu
+                                                    </button>
+                                                </div>
+                                            )}
+
                                             {tasks.map((task: any) => {
                                                 const priority = priorityBadge[task.priority] || priorityBadge.medium;
+                                                const isBeingDragged = draggedTaskId === task.id;
 
                                                 return (
                                                     <div
                                                         key={task.id}
-                                                        className="bg-white border border-neutral-200/80 rounded-2xl p-4 shadow-xs hover:shadow-md hover:border-purple-200 transition group relative flex flex-col justify-between"
+                                                        draggable
+                                                        onDragStart={(e) => handleDragStart(e, task.id, col.key)}
+                                                        onClick={() => handleOpenEditModal(task)}
+                                                        className={`group bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer relative flex flex-col gap-2 select-none ${
+                                                            isBeingDragged ? 'opacity-40 scale-95 border-blue-400' : ''
+                                                        }`}
                                                     >
-                                                        <div>
-                                                            {/* Priority Chip & Actions */}
-                                                            <div className="flex items-center justify-between gap-2 mb-2">
-                                                                <span
-                                                                    className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${priority.cls}`}
+                                                        {/* Priority Chip & Actions */}
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span
+                                                                className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.cls}`}
+                                                            >
+                                                                <span className={`size-1.5 rounded-full ${priority.dot}`} />
+                                                                <span>{priority.label}</span>
+                                                            </span>
+
+                                                            <div className="flex items-center gap-1">
+                                                                <button
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleOpenEditModal(task);
+                                                                    }}
+                                                                    className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100"
+                                                                    title="Edit Kartu"
                                                                 >
-                                                                    {priority.label}
-                                                                </span>
+                                                                    <Edit3 className="size-3" />
+                                                                </button>
 
-                                                                <div className="flex items-center gap-1">
-                                                                    {/* Edit button */}
-                                                                    <button
-                                                                        onClick={() => handleOpenEditModal(task)}
-                                                                        className="p-1 rounded text-neutral-400 hover:text-[#2563EB] hover:bg-neutral-50 transition"
-                                                                        title="Edit Tugas"
-                                                                    >
-                                                                        <Edit3 className="size-3" />
-                                                                    </button>
-
-                                                                    {/* Quick shift status select */}
-                                                                    <select
-                                                                        value={task.status}
-                                                                        onChange={(e) => handleMoveStatus(task, e.target.value)}
-                                                                        className="text-[10px] font-semibold bg-neutral-50 border border-neutral-200/80 rounded-full px-2 py-0.5 text-neutral-600 focus:outline-none focus:ring-1 focus:ring-[#2563EB] cursor-pointer"
-                                                                    >
-                                                                        <option value="todo">To Do</option>
-                                                                        <option value="in_progress">In Process</option>
-                                                                        <option value="in_review">In Review</option>
-                                                                        <option value="completed">Completed</option>
-                                                                    </select>
-                                                                </div>
+                                                                {/* Quick shift status select */}
+                                                                <select
+                                                                    value={task.status}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={(e) => {
+                                                                        e.stopPropagation();
+                                                                        handleMoveStatus(task, e.target.value);
+                                                                    }}
+                                                                    className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer"
+                                                                >
+                                                                    <option value="todo">To Do</option>
+                                                                    <option value="in_progress">In Process</option>
+                                                                    <option value="in_review">In Review</option>
+                                                                    <option value="completed">Completed</option>
+                                                                </select>
                                                             </div>
-
-                                                            {/* Task Title */}
-                                                            <h4 className="text-xs font-bold text-neutral-900 leading-snug">
-                                                                {task.title}
-                                                            </h4>
-
-                                                            {/* Task Description */}
-                                                            {task.description && (
-                                                                <p className="text-[11px] text-neutral-500 mt-1.5 line-clamp-2 leading-relaxed">
-                                                                    {task.description}
-                                                                </p>
-                                                            )}
                                                         </div>
 
+                                                        {/* Task Title */}
+                                                        <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
+                                                            {task.title}
+                                                        </h4>
+
+                                                        {/* Task Description */}
+                                                        {task.description && (
+                                                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                                                {task.description}
+                                                            </p>
+                                                        )}
+
                                                         {/* Card Footer: Assignee & Milestone Sprint */}
-                                                        <div className="mt-3.5 pt-2.5 border-t border-neutral-100 flex items-center justify-between text-[11px]">
-                                                            <div className="flex items-center gap-1.5 text-neutral-600">
-                                                                <div className="size-5 rounded-full bg-[#181135] text-white text-[9px] font-bold flex items-center justify-center">
+                                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] mt-1">
+                                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                                <div className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
                                                                     {task.assignee?.name
                                                                         ? task.assignee.name.substring(0, 1).toUpperCase()
                                                                         : '?'}
                                                                 </div>
-                                                                <span className="truncate max-w-[100px] text-[10px] font-medium">
-                                                                    {task.assignee?.name || 'Unassigned'}
+                                                                <span className="truncate max-w-[90px] text-[10px] font-medium text-slate-700">
+                                                                    {task.assignee?.name?.split(' ')[0] || 'Unassigned'}
                                                                 </span>
                                                             </div>
 
                                                             {task.milestone && (
-                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] font-semibold truncate max-w-[110px]">
+                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[100px]">
                                                                     {task.milestone.title?.split(':')[0] || task.milestone.title}
                                                                 </span>
                                                             )}
@@ -835,23 +989,60 @@ export default function WorkspaceShow({
                                                 );
                                             })}
 
-                                            {tasks.length === 0 && (
-                                                <div className="flex-1 flex flex-col items-center justify-center p-6 text-center border border-dashed border-purple-200/60 rounded-2xl">
-                                                    <span className="text-xs text-neutral-400 font-medium">
-                                                        Belum ada tugas di kolom ini
-                                                    </span>
-                                                    <button
-                                                        onClick={() => {
-                                                            setTargetColumn(col.key);
-                                                            setTaskModalOpen(true);
+                                            {/* Inline Card Composer (Trello Style) */}
+                                            {isAddingHere && (
+                                                <div className="bg-white rounded-xl p-3 border border-blue-400 shadow-sm flex flex-col gap-2 animate-in fade-in">
+                                                    <textarea
+                                                        autoFocus
+                                                        value={inlineTitle}
+                                                        onChange={(e) => setInlineTitle(e.target.value)}
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                                e.preventDefault();
+                                                                handleQuickAdd(col.key);
+                                                            }
+                                                            if (e.key === 'Escape') {
+                                                                setInlineAddingCol(null);
+                                                            }
                                                         }}
-                                                        className="mt-2 text-[11px] text-[#2563EB] font-semibold hover:underline"
-                                                    >
-                                                        + Buat tugas
-                                                    </button>
+                                                        placeholder="Masukkan judul untuk kartu ini..."
+                                                        rows={2}
+                                                        className="w-full text-xs text-slate-900 border-0 p-0 focus:outline-none focus:ring-0 resize-none placeholder:text-slate-400"
+                                                    />
+                                                    <div className="flex items-center justify-between pt-1 border-t border-slate-100">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <button
+                                                                onClick={() => handleQuickAdd(col.key)}
+                                                                disabled={inlineSubmitting || !inlineTitle.trim()}
+                                                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                                                            >
+                                                                {inlineSubmitting ? 'Menyimpan...' : 'Tambah Kartu'}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setInlineAddingCol(null)}
+                                                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                                                            >
+                                                                <X className="size-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Column Bottom "+ Add a card" button (Trello Signature) */}
+                                        {!isAddingHere && (
+                                            <button
+                                                onClick={() => {
+                                                    setInlineAddingCol(col.key);
+                                                    setInlineTitle('');
+                                                }}
+                                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 transition w-full text-left cursor-pointer"
+                                            >
+                                                <Plus className="size-4 text-slate-500" />
+                                                <span>Tambah kartu</span>
+                                            </button>
+                                        )}
                                     </div>
                                 );
                             })}

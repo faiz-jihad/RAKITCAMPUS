@@ -91,6 +91,12 @@ export default function CompetitionWorkspace({
         assignee_id: '',
     });
 
+    // Trello Kanban drag and inline add state
+    const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
+    const [dragOverCol, setDragOverCol] = useState<string | null>(null);
+    const [inlineAddingCol, setInlineAddingCol] = useState<string | null>(null);
+    const [inlineTitle, setInlineTitle] = useState('');
+
     const docForm = useForm({
         required_document_key: 'proposal',
         competition_round_id: '' as string | number,
@@ -194,9 +200,63 @@ export default function CompetitionWorkspace({
     };
 
     const handleUpdateTaskStatus = (taskId: number, status: string) => {
-        router.patch(route('competitions.tasks.update', [participation.id, taskId]), {
-            status,
-        });
+        router.patch(
+            route('competitions.tasks.update', [participation.id, taskId]),
+            { status },
+            { preserveScroll: true }
+        );
+    };
+
+    const handleQuickAddTask = (colKey: string) => {
+        if (!inlineTitle.trim()) return;
+        router.post(
+            route('competitions.tasks.create', participation.id),
+            {
+                title: inlineTitle.trim(),
+                status: colKey,
+                priority: 'medium',
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setInlineTitle('');
+                    setInlineAddingCol(null);
+                },
+            }
+        );
+    };
+
+    const handleDragStart = (e: React.DragEvent, taskId: number, fromCol: string) => {
+        setDraggedTaskId(taskId);
+        e.dataTransfer.setData('application/json', JSON.stringify({ taskId, fromCol }));
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleDragOver = (e: React.DragEvent, colKey: string) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverCol !== colKey) setDragOverCol(colKey);
+    };
+
+    const handleDragLeave = (e: React.DragEvent, colKey: string) => {
+        if (dragOverCol === colKey) setDragOverCol(null);
+    };
+
+    const handleDrop = (e: React.DragEvent, targetCol: string) => {
+        e.preventDefault();
+        setDragOverCol(null);
+        setDraggedTaskId(null);
+
+        const dataStr = e.dataTransfer.getData('application/json');
+        if (!dataStr) return;
+
+        try {
+            const { taskId, fromCol } = JSON.parse(dataStr);
+            if (fromCol === targetCol) return;
+            handleUpdateTaskStatus(taskId, targetCol);
+        } catch {
+            // ignore
+        }
     };
 
     const handleUploadDoc = (e: React.FormEvent) => {
@@ -721,17 +781,22 @@ export default function CompetitionWorkspace({
                         </div>
                     )}
 
-                    {/* TAB CONTENT 2: KANBAN TASKS */}
+                    {/* TAB CONTENT 2: KANBAN TASKS (Trello Style) */}
                     {activeTab === 'kanban' && (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                                    Papan Tugas & Timeline Persiapan
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                        Papan Tugas & Timeline Persiapan (Trello Style)
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                        {participation.team?.tasks?.length || 0} Kartu
+                                    </span>
+                                </div>
                                 {isMember && (
                                     <button
                                         onClick={() => setTaskModalOpen(true)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                     >
                                         <Plus className="size-3.5" />
                                         <span>Tambah Tugas</span>
@@ -739,57 +804,187 @@ export default function CompetitionWorkspace({
                                 )}
                             </div>
 
-                            {/* 4-Column Kanban Board */}
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                {(['todo', 'in_progress', 'in_review', 'completed'] as const).map((columnKey) => {
-                                    const colTasks = participation.team?.tasks?.filter((t: any) => t.status === columnKey) || [];
-                                    const colLabels: Record<string, string> = {
-                                        todo: 'Belum Dimulai',
-                                        in_progress: 'Sedang Dikerjakan',
-                                        in_review: 'Ulasan / Review',
-                                        completed: 'Selesai',
-                                    };
+                            {/* 4-Column Trello Kanban Board */}
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                                {(
+                                    [
+                                        { key: 'todo', label: 'Belum Dimulai (To Do)', dot: 'bg-slate-400', badge: 'bg-slate-200 text-slate-700' },
+                                        { key: 'in_progress', label: 'Sedang Dikerjakan', dot: 'bg-blue-500', badge: 'bg-blue-100 text-blue-700' },
+                                        { key: 'in_review', label: 'Ulasan & QA', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-800' },
+                                        { key: 'completed', label: 'Selesai (Done)', dot: 'bg-emerald-500', badge: 'bg-emerald-100 text-emerald-800' },
+                                    ] as const
+                                ).map((col) => {
+                                    const colTasks = participation.team?.tasks?.filter((t: any) => t.status === col.key) || [];
+                                    const isDragTarget = dragOverCol === col.key;
+                                    const isAddingHere = inlineAddingCol === col.key;
 
                                     return (
-                                        <div key={columnKey} className="glass-card rounded-2xl p-4 bg-white/85 flex flex-col gap-3 min-h-[360px]">
-                                            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                                                <span className="text-xs font-bold text-slate-700 capitalize">
-                                                    {colLabels[columnKey]}
-                                                </span>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                        <div
+                                            key={col.key}
+                                            onDragOver={(e) => handleDragOver(e, col.key)}
+                                            onDragLeave={(e) => handleDragLeave(e, col.key)}
+                                            onDrop={(e) => handleDrop(e, col.key)}
+                                            className={`rounded-2xl p-3 flex flex-col gap-2.5 min-h-[420px] transition-all duration-150 ${
+                                                isDragTarget
+                                                    ? 'bg-blue-50/90 border-2 border-dashed border-blue-400 ring-2 ring-blue-500/20'
+                                                    : 'bg-[#F1F2F4] border border-slate-200/80 shadow-2xs'
+                                            }`}
+                                        >
+                                            <div className="flex items-center justify-between px-1.5 py-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className={`size-2 rounded-full ${col.dot}`} />
+                                                    <span className="text-xs font-bold text-slate-800">
+                                                        {col.label}
+                                                    </span>
+                                                </div>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badge}`}>
                                                     {colTasks.length}
                                                 </span>
                                             </div>
 
-                                            <div className="space-y-2.5 flex-1">
-                                                {colTasks.map((task: any) => (
-                                                    <div
-                                                        key={task.id}
-                                                        className="p-3 rounded-xl bg-white border border-slate-200/90 shadow-2xs space-y-2 hover:border-blue-300 transition"
-                                                    >
-                                                        <div className="text-xs font-bold text-slate-900 leading-snug">{task.title}</div>
-                                                        {task.description && (
-                                                            <p className="text-[11px] text-slate-500 line-clamp-2">{task.description}</p>
+                                            <div className="flex flex-col gap-2.5 flex-1">
+                                                {colTasks.length === 0 && !isAddingHere && (
+                                                    <div className="h-24 flex flex-col items-center justify-center p-3 text-center border border-dashed border-slate-300 rounded-xl text-slate-400">
+                                                        <span className="text-[11px] font-medium">Belum ada kartu</span>
+                                                        {isMember && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setInlineAddingCol(col.key);
+                                                                    setInlineTitle('');
+                                                                }}
+                                                                className="mt-1 text-[11px] text-blue-600 font-bold hover:underline cursor-pointer"
+                                                            >
+                                                                + Tambah kartu
+                                                            </button>
                                                         )}
+                                                    </div>
+                                                )}
 
-                                                        <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400">
-                                                            <span className="capitalize font-semibold text-slate-600">{task.priority}</span>
-                                                            {isMember && (
-                                                                <select
-                                                                    value={task.status}
-                                                                    onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
-                                                                    className="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 font-bold text-slate-700 cursor-pointer"
+                                                {colTasks.map((task: any) => {
+                                                    const isBeingDragged = draggedTaskId === task.id;
+
+                                                    return (
+                                                        <div
+                                                            key={task.id}
+                                                            draggable={isMember}
+                                                            onDragStart={(e) => handleDragStart(e, task.id, col.key)}
+                                                            className={`bg-white rounded-xl p-3.5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing select-none ${
+                                                                isBeingDragged ? 'opacity-40 scale-95 border-blue-400' : ''
+                                                            }`}
+                                                        >
+                                                            {/* Priority Label */}
+                                                            <div className="flex items-center justify-between gap-1">
+                                                                <span
+                                                                    className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${
+                                                                        task.priority === 'urgent'
+                                                                            ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                                            : task.priority === 'high'
+                                                                            ? 'bg-amber-50 text-amber-800 border-amber-200'
+                                                                            : task.priority === 'low'
+                                                                            ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                                                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                    }`}
                                                                 >
-                                                                    <option value="todo">To Do</option>
-                                                                    <option value="in_progress">In Progress</option>
-                                                                    <option value="in_review">In Review</option>
-                                                                    <option value="completed">Done</option>
-                                                                </select>
+                                                                    <span>{task.priority}</span>
+                                                                </span>
+
+                                                                {isMember && (
+                                                                    <select
+                                                                        value={task.status}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
+                                                                        className="text-[10px] bg-slate-50 border border-slate-200 rounded-md px-1 py-0.5 font-bold text-slate-600 cursor-pointer hover:bg-slate-100"
+                                                                    >
+                                                                        <option value="todo">To Do</option>
+                                                                        <option value="in_progress">In Progress</option>
+                                                                        <option value="in_review">In Review</option>
+                                                                        <option value="completed">Done</option>
+                                                                    </select>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
+                                                                {task.title}
+                                                            </div>
+
+                                                            {task.description && (
+                                                                <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                                                    {task.description}
+                                                                </p>
                                                             )}
+
+                                                            <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100 mt-0.5 text-slate-500">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[8px] font-bold flex items-center justify-center">
+                                                                        {task.assignee?.name ? task.assignee.name.substring(0, 1).toUpperCase() : '?'}
+                                                                    </div>
+                                                                    <span className="truncate max-w-[80px]">
+                                                                        {task.assignee?.name?.split(' ')[0] || 'Unassigned'}
+                                                                    </span>
+                                                                </div>
+                                                                {task.due_on && (
+                                                                    <span className="flex items-center gap-1 text-[10px] bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
+                                                                        <Clock className="size-2.5 text-slate-400" />
+                                                                        <span>{task.due_on}</span>
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+
+                                                {/* Inline Composer */}
+                                                {isAddingHere && (
+                                                    <div className="bg-white rounded-xl p-3 border border-blue-400 shadow-sm flex flex-col gap-2">
+                                                        <textarea
+                                                            autoFocus
+                                                            value={inlineTitle}
+                                                            onChange={(e) => setInlineTitle(e.target.value)}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter' && !e.shiftKey) {
+                                                                    e.preventDefault();
+                                                                    handleQuickAddTask(col.key);
+                                                                }
+                                                                if (e.key === 'Escape') {
+                                                                    setInlineAddingCol(null);
+                                                                }
+                                                            }}
+                                                            placeholder="Masukkan judul untuk kartu ini..."
+                                                            rows={2}
+                                                            className="w-full text-xs text-slate-900 border-0 p-0 focus:outline-none focus:ring-0 resize-none placeholder:text-slate-400"
+                                                        />
+                                                        <div className="flex items-center gap-1.5 pt-1 border-t border-slate-100">
+                                                            <button
+                                                                onClick={() => handleQuickAddTask(col.key)}
+                                                                disabled={!inlineTitle.trim()}
+                                                                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                                                            >
+                                                                Tambah Kartu
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setInlineAddingCol(null)}
+                                                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600"
+                                                            >
+                                                                <X className="size-4" />
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )}
                                             </div>
+
+                                            {/* Bottom + Tambah Kartu */}
+                                            {isMember && !isAddingHere && (
+                                                <button
+                                                    onClick={() => {
+                                                        setInlineAddingCol(col.key);
+                                                        setInlineTitle('');
+                                                    }}
+                                                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 transition w-full text-left cursor-pointer"
+                                                >
+                                                    <Plus className="size-4 text-slate-500" />
+                                                    <span>Tambah kartu</span>
+                                                </button>
+                                            )}
                                         </div>
                                     );
                                 })}
