@@ -24,7 +24,13 @@ class EnsureStudentProfileCompleted
 
         // Routes that should always be accessible even with incomplete profile
         $allowedRoutes = [
-            'dashboard',
+            'onboarding',
+            'onboarding.*',
+            'competitions.index',
+            'competitions.show',
+            'projects.index',
+            'projects.show',
+            'matching.index',
             'notifications',
             'notifications.*',
             'portfolio.index',
@@ -45,26 +51,19 @@ class EnsureStudentProfileCompleted
         }
 
         // Check student profile completeness
-        $membership = $user->activeMembership();
-        $profile = $user->profile()->with('skills')->first();
+        $profile = $user->profile()->first();
 
-        $hasNim = $membership && filled($membership->student_number) && !str_starts_with($membership->student_number, 'REG-');
-        $hasDepartment = $profile && filled($profile->department);
-        $hasStudyProgram = $profile && filled($profile->study_program);
-        $hasSkills = $profile && $profile->skills->count() >= 2;
-        $hasAvailability = $profile && filled($profile->availability_hours);
-
-        // If profile is incomplete, redirect to profile settings with friendly notice
-        if (!$hasNim || !$hasDepartment || !$hasStudyProgram || !$hasSkills || !$hasAvailability) {
+        // If profile is not yet onboarded, redirect to 5-step onboarding wizard
+        if (!$profile || !$profile->is_onboarded) {
             if ($request->wantsJson()) {
                 return response()->json([
-                    'message' => 'Lengkapi data profil dan keahlian Anda terlebih dahulu sebelum melanjutkan.',
-                    'redirect' => route('profile.edit', ['mandatory' => 1]),
+                    'message' => 'Lengkapi biodata profil Anda terlebih dahulu sebelum melanjutkan.',
+                    'redirect' => route('onboarding'),
                 ], 403);
             }
 
-            return redirect()->route('profile.edit', ['mandatory' => 1])
-                ->with('info', 'Langkah Awal: Yuk lengkapi data profil, NIM, program studi, dan minimal 2 keahlian kamu terlebih dahulu agar bisa matchmaking dan gabung kelas!');
+            return redirect()->route('onboarding')
+                ->with('info', 'Yuk lengkapi biodata singkatmu agar rekan tim dan ketua lomba dapat mengenalimu!');
         }
 
         return $next($request);

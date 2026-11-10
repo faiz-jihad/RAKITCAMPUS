@@ -239,17 +239,13 @@ export default function CompetitionIndex({
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
                     {/* Header Banner */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8 relative overflow-hidden bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm border border-white/80">
-                        <div className="max-w-3xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-800 text-xs font-bold tracking-wide mb-3 border border-blue-500/20 shadow-2xs">
-                                <Sparkles className="size-3.5 text-blue-600" />
-                                <span>MinSatu Flow • Team Matching & Competition Hub</span>
-                            </div>
-                            <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                                Lomba, Hackathon & Temukan Rekan Tim
+                    <div className="glass-surface rounded-3xl p-6 sm:p-7 relative overflow-hidden bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm border border-white/80">
+                        <div className="max-w-2xl">
+                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                Eksplor Tim & Kompetisi
                             </h1>
-                            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                                Temukan tim kompetisi yang sedang mencari keahlian Anda, atau ajukan diri secara langsung! Hubungi ketua tim melalui WhatsApp, bentuk kontingen terbaik kampus, dan raih prestasi membanggakan.
+                            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                                Cari rekan tim lomba atau ajukan diri ke tim yang sedang membuka lowongan.
                             </p>
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
@@ -258,7 +254,7 @@ export default function CompetitionIndex({
                                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow-md transition cursor-pointer"
                             >
                                 <Plus className="size-4" />
-                                <span>Daftarkan Kompetisi Baru</span>
+                                <span>Daftarkan Lomba</span>
                             </Link>
                         </div>
                     </div>
@@ -295,33 +291,30 @@ export default function CompetitionIndex({
                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <div
                                 onClick={() => setActiveTab('teams')}
-                                className={`glass-card rounded-2xl p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
+                                className={`glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
                                     activeTab === 'teams' ? 'ring-2 ring-blue-500 shadow-md' : 'hover:border-blue-200'
                                 }`}
                             >
-                                <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center justify-between gap-2 mb-1">
                                     <span className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-                                        Tim Merekrut (MinSatu)
+                                        Tim Merekrut
                                     </span>
                                     <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                                         <Users className="size-4" />
                                     </div>
                                 </div>
-                                <div>
-                                    <div className="text-2xl sm:text-3xl font-black text-blue-700 tracking-tight">
-                                        {stats.open_teams_count || openRecruitingTeams.length}
-                                    </div>
-                                    <p className="text-[11px] text-blue-600/80 mt-0.5">Tim aktif membuka lowongan anggota</p>
+                                <div className="text-2xl sm:text-3xl font-black text-blue-700 tracking-tight">
+                                    {stats.open_teams_count || openRecruitingTeams.length}
                                 </div>
                             </div>
 
                             <div
                                 onClick={() => setActiveTab('competitions')}
-                                className={`glass-card rounded-2xl p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
+                                className={`glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
                                     activeTab === 'competitions' ? 'ring-2 ring-blue-500 shadow-md' : 'hover:border-blue-200'
                                 }`}
                             >
-                                <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className="flex items-center justify-between gap-2 mb-1">
                                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
                                         Total Kompetisi
                                     </span>
@@ -329,16 +322,13 @@ export default function CompetitionIndex({
                                         <Trophy className="size-4" />
                                     </div>
                                 </div>
-                                <div>
-                                    <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                        {stats.total}
-                                    </div>
-                                    <p className="text-[11px] text-slate-400 mt-0.5">Tersedia di katalog</p>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                    {stats.total}
                                 </div>
                             </div>
 
-                            <div className="glass-card rounded-2xl p-5 bg-white/85 flex flex-col justify-between">
-                                <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between">
+                                <div className="flex items-center justify-between gap-2 mb-1">
                                     <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
                                         Pendaftaran Buka
                                     </span>
@@ -346,16 +336,13 @@ export default function CompetitionIndex({
                                         <Calendar className="size-4" />
                                     </div>
                                 </div>
-                                <div>
-                                    <div className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
-                                        {stats.open_registration}
-                                    </div>
-                                    <p className="text-[11px] text-emerald-600/80 mt-0.5">Siap menerima pendaftaran tim</p>
+                                <div className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
+                                    {stats.open_registration}
                                 </div>
                             </div>
 
-                            <div className="glass-card rounded-2xl p-5 bg-white/85 flex flex-col justify-between">
-                                <div className="flex items-center justify-between gap-2 mb-2">
+                            <div className="glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between">
+                                <div className="flex items-center justify-between gap-2 mb-1">
                                     <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">
                                         Partisipasi Saya
                                     </span>
@@ -363,17 +350,14 @@ export default function CompetitionIndex({
                                         <Award className="size-4" />
                                     </div>
                                 </div>
-                                <div>
-                                    <div className="text-2xl sm:text-3xl font-black text-amber-800 tracking-tight">
-                                        {stats.my_participations}
-                                    </div>
-                                    <p className="text-[11px] text-amber-600/80 mt-0.5">Riwayat keikutsertaan tim</p>
+                                <div className="text-2xl sm:text-3xl font-black text-amber-800 tracking-tight">
+                                    {stats.my_participations}
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Main MinSatu Dual-Tab Switcher */}
+                    {/* Dual-Tab Switcher */}
                     <div className="flex items-center gap-3 p-1.5 bg-slate-200/80 rounded-2xl w-fit">
                         <button
                             onClick={() => {
@@ -387,7 +371,7 @@ export default function CompetitionIndex({
                             }`}
                         >
                             <Users className="size-4 text-blue-600" />
-                            <span>Eksplor Tim / Cari Rekan (MinSatu)</span>
+                            <span>Eksplor Tim</span>
                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold">
                                 {openRecruitingTeams.length}
                             </span>
@@ -405,7 +389,7 @@ export default function CompetitionIndex({
                             }`}
                         >
                             <Trophy className="size-4 text-amber-600" />
-                            <span>Katalog Semua Kompetisi</span>
+                            <span>Katalog Lomba</span>
                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-extrabold">
                                 {competitions.total}
                             </span>
@@ -584,10 +568,10 @@ export default function CompetitionIndex({
                                                         </div>
                                                     )}
 
-                                                    {/* Required Roles Badges (MinSatu Style) */}
+                                                    {/* Required Roles Badges */}
                                                     <div className="mt-4">
                                                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                                                            Peran yang Dibutuhkan:
+                                                            Kebutuhan:
                                                         </span>
                                                         {roles.length > 0 ? (
                                                             <div className="flex flex-wrap gap-1.5">
@@ -607,7 +591,7 @@ export default function CompetitionIndex({
                                                         ) : (
                                                             <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
                                                                 <Briefcase className="size-3 text-slate-400" />
-                                                                <span>Semua Peran Terbuka (Hacker/Hipster/Hustler)</span>
+                                                                <span>Semua peran terbuka</span>
                                                             </span>
                                                         )}
                                                     </div>
@@ -615,9 +599,9 @@ export default function CompetitionIndex({
                                                     {/* Capacity Progress Bar */}
                                                     <div className="mt-4 pt-3 border-t border-slate-100">
                                                         <div className="flex items-center justify-between text-[11px] font-bold mb-1">
-                                                            <span className="text-slate-500">Kapasitas Formasi:</span>
+                                                            <span className="text-slate-500">Kapasitas</span>
                                                             <span className="text-slate-900">
-                                                                {membersCount} / {maxCap} Mahasiswa
+                                                                {membersCount} / {maxCap} Anggota
                                                             </span>
                                                         </div>
                                                         <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">

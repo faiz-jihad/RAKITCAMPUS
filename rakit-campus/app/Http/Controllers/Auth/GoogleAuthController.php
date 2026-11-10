@@ -135,6 +135,12 @@ class GoogleAuthController extends Controller
         Auth::login($user, remember: true);
         $request->session()->regenerate();
 
+        $profile = $user->profile;
+        if (!$user->isLecturer() && !$user->isPlatformAdmin() && (!$profile || !$profile->is_onboarded)) {
+            return redirect()->route('onboarding')
+                ->with('success', "Selamat datang, {$user->name}! Silakan lengkapi biodata singkatmu.");
+        }
+
         return redirect()->intended(route('dashboard'))
             ->with('success', "Selamat datang, {$user->name}! Anda berhasil masuk melalui Akun Google.");
     }

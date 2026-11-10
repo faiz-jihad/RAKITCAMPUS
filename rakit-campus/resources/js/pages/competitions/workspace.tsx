@@ -552,7 +552,7 @@ export default function CompetitionWorkspace({
                             }`}
                         >
                             <UserPlus className="size-4" />
-                            <span>Pelamar Tim (MinSatu)</span>
+                            <span>Pelamar Tim</span>
                             {incomingApplications.filter((a: any) => a.status === 'pending').length > 0 ? (
                                 <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
                                     {incomingApplications.filter((a: any) => a.status === 'pending').length} Baru
@@ -573,7 +573,7 @@ export default function CompetitionWorkspace({
                             }`}
                         >
                             <FolderKanban className="size-4" />
-                            <span>Kanban Tugas ({participation.team?.tasks?.length || 0})</span>
+                            <span>Tugas ({participation.team?.tasks?.length || 0})</span>
                         </button>
 
                         <button
@@ -871,11 +871,11 @@ export default function CompetitionWorkspace({
                                         <div className="flex items-center gap-2">
                                             <Briefcase className="size-4 text-purple-600" />
                                             <h3 className="text-sm font-bold text-slate-900">
-                                                Lowongan Peran yang Dibutuhkan ({recruitmentRoles.length})
+                                                Posisi yang Dibutuhkan ({recruitmentRoles.length})
                                             </h3>
                                         </div>
                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Tentukan spesialisasi yang dicari tim (Hacker/Developer, Hipster/UI-UX, Hustler/Bisnis, Peneliti) agar muncul di pencarian MinSatu
+                                            Tentukan peran dan keahlian yang dicari tim.
                                         </p>
                                     </div>
 
@@ -885,7 +885,7 @@ export default function CompetitionWorkspace({
                                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
                                         >
                                             <Plus className="size-3.5" />
-                                            <span>Tambah Lowongan Peran</span>
+                                            <span>Tambah Posisi</span>
                                         </button>
                                     )}
                                 </div>
@@ -1008,12 +1008,9 @@ export default function CompetitionWorkspace({
                                     <div className="flex items-center gap-2">
                                         <UserPlus className="size-4 text-blue-600" />
                                         <h3 className="text-sm font-bold text-slate-900">
-                                            Daftar Pelamar Masuk ({incomingApplications.length})
+                                            Pelamar Masuk ({incomingApplications.length})
                                         </h3>
                                     </div>
-                                    <span className="text-xs font-semibold text-slate-500">
-                                        MinSatu Flow
-                                    </span>
                                 </div>
 
                                 {incomingApplications.length === 0 ? (
@@ -1092,7 +1089,7 @@ export default function CompetitionWorkspace({
                                                         <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
                                                             <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
                                                                 <MessageSquare className="size-3 text-blue-600" />
-                                                                <span>Pesan Pengenalan & Motivasi:</span>
+                                                                <span>Pesan:</span>
                                                             </div>
                                                             <p className="font-medium italic">"{app.message}"</p>
                                                         </div>
@@ -1108,7 +1105,7 @@ export default function CompetitionWorkspace({
                                                                 className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 underline"
                                                             >
                                                                 <Globe className="size-3.5" />
-                                                                <span>Lihat Portofolio / GitHub</span>
+                                                                <span>Portofolio</span>
                                                                 <ExternalLink className="size-3" />
                                                             </a>
                                                         )}
@@ -1128,9 +1125,8 @@ export default function CompetitionWorkspace({
                                                         )}
                                                     </div>
 
-                                                    {/* Action Buttons: WhatsApp Direct Connect & Decision */}
+                                                    {/* Action Buttons */}
                                                     <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
-                                                        {/* MinSatu WhatsApp Direct Chat Button */}
                                                         {waUrl ? (
                                                             <a
                                                                 href={waUrl}
@@ -1139,7 +1135,7 @@ export default function CompetitionWorkspace({
                                                                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                                             >
                                                                 <Phone className="size-3.5" />
-                                                                <span>Hubungi via WhatsApp ({phone})</span>
+                                                                <span>WhatsApp ({phone})</span>
                                                                 <ExternalLink className="size-3 text-emerald-200" />
                                                             </a>
                                                         ) : (
@@ -1162,7 +1158,7 @@ export default function CompetitionWorkspace({
                                                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                                                 >
                                                                     <CheckCircle2 className="size-3.5" />
-                                                                    <span>Terima Jadi Anggota</span>
+                                                                    <span>Terima</span>
                                                                 </button>
                                                             </div>
                                                         )}
@@ -1182,7 +1178,7 @@ export default function CompetitionWorkspace({
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                        Papan Tugas & Timeline Persiapan (Trello Style)
+                                        Papan Tugas
                                     </span>
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                                         {participation.team?.tasks?.length || 0} Kartu

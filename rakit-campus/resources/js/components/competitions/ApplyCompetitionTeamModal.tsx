@@ -133,14 +133,11 @@ export default function ApplyCompetitionTeamModal({
                             <Sparkles className="size-5" />
                         </div>
                         <div>
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider mb-1">
-                                MinSatu Team Application
-                            </div>
                             <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                Ajukan Diri Bergabung ke Tim
+                                Ajukan Diri ke Tim
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Tim <strong>{teamData.teamName}</strong> • {teamData.competitionName}
+                                {teamData.teamName} • {teamData.competitionName}
                             </p>
                         </div>
                     </div>
@@ -254,25 +251,18 @@ export default function ApplyCompetitionTeamModal({
 
                     {/* WhatsApp Contact */}
                     <div>
-                        <label className="text-xs font-bold text-slate-800 flex items-center justify-between mb-1.5">
-                            <span className="flex items-center gap-1.5">
-                                <Phone className="size-3.5 text-emerald-600" />
-                                <span>Nomor WhatsApp Aktif</span>
-                            </span>
-                            <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-semibold">
-                                MinSatu Direct Connect
-                            </span>
+                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5 mb-1.5">
+                            <Phone className="size-3.5 text-emerald-600" />
+                            <span>Nomor WhatsApp Aktif</span>
+                            <span className="text-rose-500">*</span>
                         </label>
                         <input
                             type="text"
-                            placeholder="Contoh: 08123456789 atau +628123456789"
+                            placeholder="08123456789"
                             value={whatsappNumber}
                             onChange={(e) => setWhatsappNumber(e.target.value)}
                             className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600"
                         />
-                        <p className="text-[11px] text-slate-400 mt-1">
-                            Ketua tim ({teamData.leaderName || 'Ketua'}) dapat menghubungi Anda secara langsung via tombol WhatsApp di Workspace tim.
-                        </p>
                     </div>
 
                     {/* Portfolio / GitHub Link */}

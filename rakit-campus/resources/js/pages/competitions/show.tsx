@@ -451,11 +451,8 @@ export default function CompetitionShow({
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                             <UserPlus className="size-4 text-blue-600" />
-                                            <span>Tim yang Sedang Merekrut Anggota ({openTeams.length})</span>
+                                            <span>Tim yang Membuka Lowongan ({openTeams.length})</span>
                                         </h3>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">
-                                            Mahasiswa antar program studi dapat bergabung untuk melengkapi formasi kompetisi
-                                        </p>
                                     </div>
                                     <span className="text-[11px] font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
                                         Student-Led Open
@@ -862,7 +859,7 @@ export default function CompetitionShow({
                                             <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
                                                 <span className="flex items-center gap-1.5">
                                                     <Briefcase className="size-3.5 text-blue-600" />
-                                                    <span>Peran yang Ingin Direkrut (MinSatu Flow)</span>
+                                                    <span>Peran yang Dibutuhkan</span>
                                                 </span>
                                                 <span className="text-[10px] text-slate-400 font-normal">Opsional</span>
                                             </label>

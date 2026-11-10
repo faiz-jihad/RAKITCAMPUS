@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\CampusRole;
+use App\Http\Controllers\OnboardingWebController;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
@@ -31,6 +32,12 @@ Route::get('/projects/{id}', [ProjectWebController::class, 'show'])->name('proje
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
 Route::get('/competitions/{id}', [CompetitionWebController::class, 'show'])->name('competitions.show')->whereNumber('id');
 Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
+    Route::post('/onboarding', [OnboardingWebController::class, 'store'])->name('onboarding.store');
+    Route::post('/onboarding/skip', [OnboardingWebController::class, 'skip'])->name('onboarding.skip');
+});
 
 Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');

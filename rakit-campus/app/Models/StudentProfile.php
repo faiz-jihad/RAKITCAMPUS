@@ -21,6 +21,7 @@ class StudentProfile extends Model
         'interests', 'preferred_roles',
         'availability_hours', 'availability_note', 'collaboration_preferences',
         'visibility', 'show_email', 'portfolio_public', 'open_to_invites',
+        'is_onboarded', 'academic_status', 'batch_year', 'headline',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class StudentProfile extends Model
             'show_email' => 'boolean',
             'portfolio_public' => 'boolean',
             'open_to_invites' => 'boolean',
+            'is_onboarded' => 'boolean',
             'semester' => 'integer',
             'availability_hours' => 'integer',
         ];

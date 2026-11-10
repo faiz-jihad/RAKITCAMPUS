@@ -437,15 +437,12 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                     <div>
                         <div className="flex items-center gap-2">
                             <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                                Papan Tugas Kanban Tim (Trello Style)
+                                Papan Tugas Tim
                             </h3>
                             <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
                                 {completedCount}/{totalCount} Selesai
                             </span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Geser dan lepas (drag & drop) kartu tugas antar kolom untuk memperbarui progres tim secara instan.
-                        </p>
                     </div>
                 </div>
 
