@@ -91,6 +91,14 @@ class CompetitionWebController extends Controller
             $query->where('level', $request->input('level'));
         }
 
+        if ($request->filled('type')) {
+            $query->where('competition_type', $request->input('type'));
+        }
+
+        if ($request->filled('format')) {
+            $query->where('competition_type', 'like', '%' . $request->input('format') . '%');
+        }
+
         if ($request->filled('search')) {
             $search = '%' . $request->input('search') . '%';
             $query->where(function ($q) use ($search) {
@@ -268,6 +276,59 @@ class CompetitionWebController extends Controller
                 'max_size' => $p->competition?->max_team_size,
             ]) : collect();
 
+        // Bookmarked competitions
+        $bookmarkedIds = $user ? Bookmark::where('user_id', $user->id)
+            ->where('bookmarkable_type', Competition::class)
+            ->pluck('bookmarkable_id')
+            ->all() : [];
+
+        $savedCompetitions = !empty($bookmarkedIds)
+            ? Competition::whereIn('id', $bookmarkedIds)
+                ->with(['campus:id,name'])
+                ->orderBy('registration_deadline', 'asc')
+                ->get()
+            : collect();
+
+        // Featured & Upcoming Deadlines
+        $featuredCompetitions = Competition::visibleTo($user)
+            ->where('registration_deadline', '>=', now())
+            ->latest('created_at')
+            ->take(4)
+            ->get();
+
+        $upcomingDeadlines = Competition::visibleTo($user)
+            ->where('registration_deadline', '>=', now())
+            ->orderBy('registration_deadline', 'asc')
+            ->take(5)
+            ->get();
+
+        // Personalized recommendations based on student skills and faculty
+        $userSkills = $user?->profile?->skills?->pluck('name')->toArray() ?? [];
+        $recommendedQuery = Competition::visibleTo($user)
+            ->where('registration_deadline', '>=', now());
+
+        if (!empty($userSkills)) {
+            $recommendedCompetitions = (clone $recommendedQuery)
+                ->whereHas('skills', function ($sq) use ($userSkills) {
+                    $sq->whereIn('name', $userSkills);
+                })
+                ->take(6)
+                ->get();
+        } else {
+            $recommendedCompetitions = collect();
+        }
+
+        if ($recommendedCompetitions->isEmpty()) {
+            $recommendedCompetitions = (clone $recommendedQuery)->latest()->take(6)->get();
+        }
+
+        // Category counts
+        $categoryCounts = Competition::visibleTo($user)
+            ->select('category', DB::raw('count(*) as count'))
+            ->groupBy('category')
+            ->pluck('count', 'category')
+            ->all();
+
         // Calculate statistics for header cards
         $stats = [
             'total' => Competition::visibleTo($user)->count(),
@@ -276,6 +337,7 @@ class CompetitionWebController extends Controller
             'open_teams_count' => $openRecruitingTeams->count(),
             'total_needed_slots' => $totalNeededSlots,
             'my_participations' => $myTeams->count(),
+            'saved_count' => count($bookmarkedIds),
         ];
 
         // Active participation if user has one
@@ -306,8 +368,14 @@ class CompetitionWebController extends Controller
             'totalNeededSlots' => $totalNeededSlots,
             'myApplications' => $myApplications,
             'myTeams' => $myTeams,
+            'bookmarkedIds' => $bookmarkedIds,
+            'savedCompetitions' => $savedCompetitions,
+            'featuredCompetitions' => $featuredCompetitions,
+            'upcomingDeadlines' => $upcomingDeadlines,
+            'recommendedCompetitions' => $recommendedCompetitions,
+            'categoryCounts' => $categoryCounts,
             'currentUserInfo' => $currentUserInfo,
-            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role']),
+            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format']),
             'categories' => CompetitionCategory::values(),
             'statuses' => CompetitionStatus::values(),
             'levels' => ['local', 'regional', 'national', 'international'],
