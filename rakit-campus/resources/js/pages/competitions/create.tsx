@@ -21,12 +21,6 @@ interface Props {
     types: string[];
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Beranda', href: '/' },
-    { title: 'Lomba & Kompetisi', href: '/competitions' },
-    { title: 'Daftarkan Kompetisi Baru', href: '/competitions/create' },
-];
-
 export default function CompetitionCreate({ categories, levels, types }: Props) {
     const { data, setData, post, processing, errors } = useForm({
         name: '',
