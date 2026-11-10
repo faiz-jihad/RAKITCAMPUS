@@ -76,6 +76,14 @@ class AcademicClassSeeder extends Seeder
             ]
         );
 
+        // Attach demo lecturer budi@polindra.ac.id as co-lecturer so 1-Klik Dosen sees active classes & teams
+        $demoBudi = User::where('email', 'budi@polindra.ac.id')->first();
+        if ($demoBudi && $demoBudi->id !== $lecturer->id) {
+            $academicClass->coLecturers()->syncWithoutDetaching([
+                $demoBudi->id => ['role' => 'co_lecturer'],
+            ]);
+        }
+
         // 3. Create Sample Students
         $studentsData = [
             ['name' => 'Ahmad Fauzan', 'nim' => '2105001', 'prodi' => 'Teknik Informatika', 'skills' => ['Laravel', 'MySQL', 'Docker']],

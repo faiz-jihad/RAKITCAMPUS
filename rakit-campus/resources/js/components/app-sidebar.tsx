@@ -12,48 +12,81 @@ export function AppSidebar() {
     const isCampusAdmin = auth?.user?.campus?.role === 'campus_admin' || auth?.user?.is_platform_admin;
     const isLecturer = auth?.user?.is_lecturer || auth?.user?.campus?.role === 'lecturer' || auth?.user?.role === 'lecturer';
 
-    const mainNavItems: NavItem[] = [
-        {
-            title: isLecturer ? 'Dashboard Dosen' : 'Dashboard',
-            url: '/dashboard',
-            icon: LayoutGrid,
-        },
-        {
-            title: isLecturer ? 'Kelola Kelas' : 'Kelas Kuliah',
-            url: '/classes',
-            icon: GraduationCap,
-        },
-        {
-            title: 'Cari Proyek',
-            url: '/projects',
-            icon: FolderKanban,
-        },
-        {
-            title: 'Lomba & Kompetisi',
-            url: '/competitions',
-            icon: Trophy,
-        },
-        {
-            title: 'Ruang Kerja Tim',
-            url: '/workspace',
-            icon: Kanban,
-        },
-        {
-            title: 'Cari Teman Tim',
-            url: '/matching',
-            icon: Sparkles,
-        },
-        {
-            title: 'Portofolio Saya',
-            url: '/portfolio',
-            icon: Award,
-        },
-        {
-            title: 'Notifikasi',
-            url: '/notifications',
-            icon: Bell,
-        },
-    ];
+    const mainNavItems: NavItem[] = isLecturer
+        ? [
+              {
+                  title: 'Dashboard Dosen',
+                  url: '/dashboard',
+                  icon: LayoutGrid,
+              },
+              {
+                  title: 'Kelola Kelas',
+                  url: '/classes',
+                  icon: GraduationCap,
+              },
+              {
+                  title: 'Proyek Bimbingan',
+                  url: '/projects',
+                  icon: FolderKanban,
+              },
+              {
+                  title: 'Lomba & Kompetisi',
+                  url: '/competitions',
+                  icon: Trophy,
+              },
+              {
+                  title: 'Ruang Kerja Tim',
+                  url: '/workspace',
+                  icon: Kanban,
+              },
+              {
+                  title: 'Notifikasi',
+                  url: '/notifications',
+                  icon: Bell,
+              },
+          ]
+        : [
+              {
+                  title: 'Dashboard',
+                  url: '/dashboard',
+                  icon: LayoutGrid,
+              },
+              {
+                  title: 'Kelas Kuliah',
+                  url: '/classes',
+                  icon: GraduationCap,
+              },
+              {
+                  title: 'Cari Proyek',
+                  url: '/projects',
+                  icon: FolderKanban,
+              },
+              {
+                  title: 'Lomba & Kompetisi',
+                  url: '/competitions',
+                  icon: Trophy,
+              },
+              {
+                  title: 'Ruang Kerja Tim',
+                  url: '/workspace',
+                  icon: Kanban,
+              },
+              {
+                  title: 'Cari Teman Tim',
+                  url: '/matching',
+                  icon: Sparkles,
+              },
+              {
+                  title: 'Portofolio Saya',
+                  url: '/portfolio',
+                  icon: Award,
+              },
+              {
+                  title: 'Notifikasi',
+                  url: '/notifications',
+                  icon: Bell,
+              },
+          ];
 
     if (isCampusAdmin) {
         mainNavItems.push({
@@ -89,7 +122,7 @@ export function AppSidebar() {
             <SidebarContent>
                 <NavMain items={mainNavItems} />
 
-                {/* Role Switcher Pill for Testing / Demonstration */}
+                {/* Account Mode Status Badge */}
                 {auth?.user && (
                     <div className="px-3.5 py-3 mx-2 my-2 rounded-2xl bg-slate-100/70 border border-slate-200/80 backdrop-blur-sm text-xs">
                         <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -110,18 +143,20 @@ export function AppSidebar() {
                                 )}
                             </span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mb-2 leading-tight">
+                        <p className="text-[11px] text-slate-500 leading-tight">
                             {isLecturer
                                 ? 'Akses kelola kelas, bagi kelompok, dan bimbingan proyek.'
                                 : 'Akses kelas kuliah, matchmaking kelompok, dan proyek tim.'}
                         </p>
-                        <button
-                            onClick={() => switchRole(isLecturer ? 'student' : 'lecturer')}
-                            className="w-full py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 font-bold text-[11px] border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer"
-                        >
-                            <Repeat className="size-3 text-slate-400" />
-                            <span>Ganti ke Akun {isLecturer ? 'Mahasiswa' : 'Dosen'}</span>
-                        </button>
+                        {isCampusAdmin && (
+                            <button
+                                onClick={() => switchRole(isLecturer ? 'student' : 'lecturer')}
+                                className="w-full mt-2.5 py-1.5 px-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 font-bold text-[11px] border border-slate-200 shadow-2xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                            >
+                                <Repeat className="size-3 text-slate-400" />
+                                <span>Ganti ke Akun {isLecturer ? 'Mahasiswa' : 'Dosen'} (Admin)</span>
+                            </button>
+                        )}
                     </div>
                 )}
             </SidebarContent>

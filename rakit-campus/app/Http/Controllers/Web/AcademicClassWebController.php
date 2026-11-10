@@ -14,6 +14,7 @@ use App\Models\AcademicClassGuidance;
 use App\Models\AcademicClassStudent;
 use App\Models\Campus;
 use App\Models\Project;
+use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
@@ -45,27 +46,61 @@ class AcademicClassWebController extends Controller
             ?? Campus::where('slug', 'polindra')->value('id') 
             ?? Campus::value('id');
 
-        $isLecturer = $user->isLecturer($activeCampusId) || $user->isPlatformAdmin() || $request->input('view_as') === 'lecturer';
+        $isLecturer = $user->isLecturer($activeCampusId) || $user->isPlatformAdmin();
 
         // Classes taught by this user (if lecturer or admin)
-        $taughtClasses = AcademicClass::where('campus_id', $activeCampusId)
-            ->where(function ($q) use ($user) {
-                if (!$user->isPlatformAdmin()) {
-                    $q->where('lecturer_id', $user->id);
-                }
-            })
-            ->with(['lecturer:id,name,email'])
-            ->withCount(['students', 'projects'])
-            ->latest()
-            ->get();
+        $taughtClasses = $isLecturer
+            ? AcademicClass::where('campus_id', $activeCampusId)
+                ->where(function ($q) use ($user) {
+                    if (!$user->isPlatformAdmin()) {
+                        $q->where('lecturer_id', $user->id)
+                          ->orWhereHas('coLecturers', fn ($cl) => $cl->where('users.id', $user->id));
+                    }
+                })
+                ->with(['lecturer:id,name,email'])
+                ->withCount(['students', 'projects'])
+                ->latest()
+                ->get()
+            : collect();
 
         // Classes student is enrolled in
         $enrolledClasses = $user->enrolledClasses()
             ->where('academic_classes.campus_id', $activeCampusId)
-            ->with(['lecturer:id,name,email'])
+            ->with([
+                'lecturer:id,name,email',
+                'projects.team.members' => fn ($q) => $q->where('status', 'active'),
+            ])
             ->withCount(['students', 'projects'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($c) use ($user) {
+                $myProject = $c->projects->first(function ($p) use ($user) {
+                    return $p->team && $p->team->members->contains('user_id', $user->id);
+                });
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'code' => $c->code,
+                    'join_code' => $c->join_code,
+                    'study_program' => $c->study_program,
+                    'academic_year' => $c->academic_year,
+                    'semester' => $c->semester,
+                    'description' => $c->description,
+                    'target_team_size' => $c->target_team_size,
+                    'status' => $c->status,
+                    'students_count' => $c->students_count,
+                    'projects_count' => $c->projects_count,
+                    'lecturer' => $c->lecturer,
+                    'team' => ($myProject && $myProject->team) ? [
+                        'id' => $myProject->team->id,
+                        'name' => $myProject->team->name,
+                        'members_count' => $myProject->team->members->count(),
+                        'target_size' => $myProject->team->capacity ?? $c->target_team_size,
+                        'project_title' => $myProject->title,
+                    ] : null,
+                ];
+            });
 
         return Inertia::render('classes/index', [
             'taughtClasses' => $taughtClasses,
@@ -138,12 +173,16 @@ class AcademicClassWebController extends Controller
 
         $isLecturer = $academicClass->isLecturer($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($academicClass->campus_id);
 
+        if (!$isLecturer && !$academicClass->hasStudent($user)) {
+            abort(403, 'Anda tidak memiliki akses ke kelas ini karena belum terdaftar sebagai peserta kelas.');
+        }
+
         // Map active project for every student in O(1) time without extra queries
         $projectByUserId = [];
         foreach ($academicClass->projects as $p) {
             if ($p->team && $p->team->relationLoaded('members')) {
                 foreach ($p->team->members as $tm) {
-                    if ($tm->status === 'active') {
+                    if (($tm->status ?? 'active') === 'active') {
                         $projectByUserId[$tm->user_id] = [
                             'id' => $p->id,
                             'title' => $p->title,
@@ -153,6 +192,7 @@ class AcademicClassWebController extends Controller
                 }
             }
         }
+        $classProjectUserIds = array_keys($projectByUserId);
 
         $studentsData = $academicClass->students->map(function ($s) use ($projectByUserId, $academicClass) {
             $userProject = $projectByUserId[$s->id] ?? null;
@@ -182,18 +222,32 @@ class AcademicClassWebController extends Controller
         $peerMatches = collect();
         $myClassProject = null;
 
-        if ($user) {
-            $myClassProject = $academicClass->projects->first(fn ($p) => $p->team?->hasMember($user));
-            $userProfile = $user->profile()->with('skills')->first();
-            if ($userProfile) {
-                $peerMatches = $this->matchingService->rankClassmatesForStudent(
-                    $userProfile,
-                    $academicClass->students,
-                    $classProjectUserIds,
-                    $myClassProject?->team,
-                    $academicClass->target_team_size
+        if ($user && !$isLecturer) {
+            $myClassProject = $academicClass->projects->first(function ($p) use ($user) {
+                return $p->team && $p->team->members->contains(
+                    fn ($tm) => $tm->user_id === $user->id && ($tm->status ?? 'active') === 'active'
                 );
+            });
+
+            $userProfile = $user->profile()->with('skills')->first();
+            if (!$userProfile) {
+                $userProfile = StudentProfile::firstOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'campus_id' => $academicClass->campus_id,
+                        'slug' => Str::slug($user->name) . '-' . Str::random(4),
+                    ]
+                );
+                $userProfile->loadMissing('skills');
             }
+
+            $peerMatches = $this->matchingService->rankClassmatesForStudent(
+                $userProfile,
+                $academicClass->students,
+                $classProjectUserIds,
+                $myClassProject?->team,
+                $academicClass->target_team_size
+            );
         }
 
         // Calculate class balance and anti-ketimpangan stats
@@ -235,6 +289,7 @@ class AcademicClassWebController extends Controller
                 'target_team_size' => $academicClass->target_team_size,
                 'status' => $academicClass->status,
                 'lecturer' => $academicClass->lecturer,
+                'co_lecturers' => $academicClass->coLecturers,
                 'campus' => $academicClass->campus,
             ],
             'classRules' => [
@@ -314,30 +369,65 @@ class AcademicClassWebController extends Controller
     {
         $user = $request->user();
         $validated = $request->validate([
-            'join_code' => ['required', 'string', 'max:10'],
+            'join_code' => ['required', 'string', 'min:4', 'max:12'],
+        ], [
+            'join_code.required' => 'Kode kelas wajib diisi.',
+            'join_code.min' => 'Kode kelas tidak valid (minimal 4 karakter).',
+            'join_code.max' => 'Kode kelas terlalu panjang (maksimal 12 karakter).',
         ]);
 
         $code = strtoupper(trim($validated['join_code']));
+        if ($code === '') {
+            return back()->withErrors(['join_code' => 'Kode kelas tidak valid.']);
+        }
+
         $academicClass = AcademicClass::where('join_code', $code)->first();
 
         if (!$academicClass) {
-            return back()->withErrors(['join_code' => 'Kode kelas tidak ditemukan. Periksa kembali 6 digit kode dari dosen Anda.']);
+            return back()->withErrors(['join_code' => 'Kode kelas tidak ditemukan. Periksa kembali kode unik dari dosen Anda.']);
         }
 
-        // Check if already enrolled
-        if ($academicClass->hasStudent($user)) {
-            return redirect()->route('classes.show', $academicClass->id)
-                ->with('info', 'Anda sudah terdaftar di kelas ' . $academicClass->name);
+        if ($academicClass->status !== 'active') {
+            return back()->withErrors(['join_code' => 'Kelas ' . $academicClass->name . ' sudah tidak aktif atau telah ditutup.']);
         }
 
-        // Enroll student
-        AcademicClassStudent::create([
-            'academic_class_id' => $academicClass->id,
-            'user_id' => $user->id,
-            'student_number' => $user->activeMembership()?->student_number ?? ('NIM-' . $user->id),
-            'status' => 'enrolled',
-            'enrolled_at' => now(),
-        ]);
+        $userCampusId = $user->campusId();
+        if ($userCampusId && $academicClass->campus_id !== $userCampusId) {
+            return back()->withErrors(['join_code' => 'Kode kelas tersebut berasal dari kampus lain dan tidak sesuai dengan akun Anda.']);
+        }
+
+        if ($user->isLecturer($academicClass->campus_id) || $academicClass->isLecturer($user)) {
+            return back()->withErrors(['join_code' => 'Akun dosen tidak dapat mendaftar sebagai mahasiswa peserta kelas.']);
+        }
+
+        if (!$user->profile()->exists()) {
+            return back()->withErrors(['join_code' => 'Profil mahasiswa Anda belum tersedia. Silakan lengkapi Pengaturan Profil terlebih dahulu.']);
+        }
+
+        // Prevent duplicate enrollment
+        $alreadyEnrolled = AcademicClassStudent::where('academic_class_id', $academicClass->id)
+            ->where('user_id', $user->id)
+            ->where('status', 'enrolled')
+            ->exists();
+
+        if ($alreadyEnrolled) {
+            return back()->withErrors(['join_code' => 'Anda sudah tergabung di kelas ' . $academicClass->name . '.']);
+        }
+
+        // Enroll student atomically without creating duplicate pivot records
+        DB::transaction(function () use ($academicClass, $user) {
+            AcademicClassStudent::updateOrCreate(
+                [
+                    'academic_class_id' => $academicClass->id,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'student_number' => $user->activeMembership()?->student_number ?? ('NIM-' . $user->id),
+                    'status' => 'enrolled',
+                    'enrolled_at' => now(),
+                ]
+            );
+        });
 
         return redirect()->route('classes.show', $academicClass->id)
             ->with('success', 'Berhasil bergabung dengan kelas ' . $academicClass->name . '!');

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/react';
-import { CheckCircle2, Search, ShieldAlert, ShieldCheck, UserCheck, XCircle } from 'lucide-react';
+import { CheckCircle2, GraduationCap, Search, ShieldAlert, ShieldCheck, UserCheck, XCircle } from 'lucide-react';
 import { useState } from 'react';
 
 interface StudentItem {
@@ -73,6 +73,13 @@ export default function AdminStudents({ students, filters }: Props) {
         return meta?.content || '';
     };
 
+    const handleRoleChange = (membershipId: number, targetRole: 'student' | 'lecturer') => {
+        if (!confirm(`Ubah peran anggota ini menjadi ${targetRole === 'lecturer' ? 'Dosen' : 'Mahasiswa'}?`)) return;
+        router.patch(`/admin/memberships/${membershipId}/role`, { role: targetRole }, {
+            preserveScroll: true,
+        });
+    };
+
     const handleVerify = async (membershipId: number, newStatus: 'verified' | 'rejected') => {
         if (!confirm(`Apakah Anda yakin ingin mengubah status menjadi ${newStatus}?`)) return;
 
@@ -91,7 +98,7 @@ export default function AdminStudents({ students, filters }: Props) {
             });
 
             if (res.ok) {
-                router.reload({ preserveScroll: true });
+                router.reload();
             } else {
                 const data = await res.json();
                 alert(data.message || 'Gagal memproses verifikasi.');
@@ -247,6 +254,15 @@ export default function AdminStudents({ students, filters }: Props) {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRoleChange(item.id, 'lecturer')}
+                                                        title="Beri Otorisasi Peran Dosen"
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+                                                    >
+                                                        <GraduationCap className="size-3.5" />
+                                                        Jadikan Dosen
+                                                    </button>
                                                     {item.verification_status !== 'verified' && (
                                                         <button
                                                             type="button"

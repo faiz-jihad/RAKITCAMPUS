@@ -7,10 +7,12 @@ use App\Enums\MembershipStatus;
 use App\Enums\TaskStatus;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AcademicClass;
 use App\Models\ActivityLog;
 use App\Models\Campus;
 use App\Models\CampusMembership;
 use App\Models\Competition;
+use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Models\Task;
 use App\Models\Team;
@@ -46,6 +48,112 @@ class DashboardWebController extends Controller
             }
         }
         $membership?->loadMissing('campus');
+        $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
+
+        $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
+            ->latest('registration_deadline')
+            ->take(3)
+            ->get();
+
+        if ($isLecturer) {
+            $taughtClassModels = AcademicClass::query()
+                ->where(function ($q) use ($user) {
+                    $q->where('lecturer_id', $user->id)
+                      ->orWhereHas('coLecturers', fn ($cl) => $cl->where('users.id', $user->id));
+                })
+                ->withCount(['students', 'projects'])
+                ->latest()
+                ->get();
+
+            $taughtClasses = $taughtClassModels->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'code' => $c->code,
+                'join_code' => $c->join_code,
+                'academic_year' => $c->academic_year,
+                'semester' => $c->semester,
+                'students_count' => $c->students_count,
+                'projects_count' => $c->projects_count,
+            ]);
+
+            $taughtClassIds = $taughtClassModels->pluck('id');
+            $guidedProjectModels = $taughtClassIds->isNotEmpty()
+                ? Project::whereIn('academic_class_id', $taughtClassIds)
+                    ->with([
+                        'academicClass:id,name,code',
+                        'leader:id,name',
+                        'team.members.user:id,name',
+                        'team.tasks:id,team_id,status',
+                    ])
+                    ->latest()
+                    ->take(6)
+                    ->get()
+                : collect();
+
+            $guidedProjects = $guidedProjectModels->map(function ($p) {
+                $totalTasks = $p->team ? $p->team->tasks->count() : 0;
+                $doneTasks = $p->team ? $p->team->tasks->where('status', TaskStatus::Completed)->count() : 0;
+
+                return [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'status' => $p->status?->value ?? 'recruiting',
+                    'progress' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($p->progress ?? 0),
+                    'class_id' => $p->academic_class_id,
+                    'class_name' => $p->academicClass?->name,
+                    'class_code' => $p->academicClass?->code,
+                    'leader_name' => $p->leader?->name,
+                    'team_id' => $p->team?->id,
+                    'team_name' => $p->team?->name,
+                    'members_count' => $p->team ? $p->team->members->count() : 0,
+                    'done_tasks' => $doneTasks,
+                    'total_tasks' => $totalTasks,
+                ];
+            });
+
+            $guidedTeamIds = $guidedProjectModels->pluck('team.id')->filter();
+            $recentActivities = $guidedTeamIds->isNotEmpty()
+                ? ActivityLog::whereIn('team_id', $guidedTeamIds)
+                    ->with(['actor:id,name', 'team:id,name'])
+                    ->latest()
+                    ->take(6)
+                    ->get()
+                : collect();
+
+            return Inertia::render('dashboard', [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $membership?->role?->value ?? 'lecturer',
+                    'is_lecturer' => true,
+                    'campus' => $membership?->campus?->name ?? 'Politeknik Negeri Indramayu',
+                    'major' => 'Dosen Pengampu & Pembimbing',
+                    'nim' => $membership?->student_number,
+                    'availability' => null,
+                    'skills' => [],
+                ],
+                'stats' => [
+                    'my_teams_count' => 0,
+                    'pending_tasks_count' => 0,
+                    'recommended_matches_count' => 0,
+                    'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
+                    'taught_classes_count' => $taughtClasses->count(),
+                    'total_students_count' => $taughtClasses->sum('students_count'),
+                    'total_guided_projects_count' => $taughtClasses->sum('projects_count'),
+                    'enrolled_classes_count' => 0,
+                ],
+                'myTeams' => [],
+                'myTasks' => [],
+                'recommendedProjects' => [],
+                'upcomingCompetitions' => $upcomingCompetitions,
+                'recentActivities' => $recentActivities,
+                'profileCompletion' => null,
+                'taughtClasses' => $taughtClasses,
+                'guidedProjects' => $guidedProjects,
+                'enrolledClasses' => [],
+            ]);
+        }
 
         $profile = $user->profile()->with(['skills', 'campus'])->first();
         if (!$profile) {
@@ -55,7 +163,7 @@ class DashboardWebController extends Controller
                 [
                     'campus_id' => $campusId,
                     'slug' => Str::slug($user->name) . '-' . Str::random(4),
-                    'headline' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Kampus'),
+                    'bio' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Kampus'),
                 ]
             );
             $profile->loadMissing(['skills', 'campus']);
@@ -108,13 +216,7 @@ class DashboardWebController extends Controller
             ? $this->matchingService->recommendProjectsForStudent($profile, 3)
             : collect();
 
-        // 4. Upcoming competitions
-        $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
-            ->latest('registration_deadline')
-            ->take(3)
-            ->get();
-
-        // 5. Recent Activity Logs in user's teams
+        // 4. Recent Activity Logs in user's teams
         $teamIds = $myTeams->pluck('id');
         $recentActivities = ActivityLog::whereIn('team_id', $teamIds)
             ->with(['actor:id,name', 'team:id,name'])
@@ -122,21 +224,7 @@ class DashboardWebController extends Controller
             ->take(6)
             ->get();
 
-        // 6. Lecturer & Class Management Data
-        $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
-        $taughtClasses = $isLecturer
-            ? $user->taughtClasses()->withCount(['students', 'projects'])->latest()->get()->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'code' => $c->code,
-                'join_code' => $c->join_code,
-                'academic_year' => $c->academic_year,
-                'semester' => $c->semester,
-                'students_count' => $c->students_count,
-                'projects_count' => $c->projects_count,
-            ])
-            : collect();
-
+        // 5. Enrolled Classes for Student
         $enrolledClasses = $user->enrolledClasses()->withCount(['students', 'projects'])->latest()->get()->map(fn ($c) => [
             'id' => $c->id,
             'name' => $c->name,
@@ -147,15 +235,15 @@ class DashboardWebController extends Controller
             'projects_count' => $c->projects_count,
         ]);
 
-        // 7. Summary metrics
+        // 6. Summary metrics
         $stats = [
             'my_teams_count' => $myTeams->count(),
             'pending_tasks_count' => $myTasks->count(),
             'recommended_matches_count' => $recommendedProjects->count(),
             'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
-            'taught_classes_count' => $taughtClasses->count(),
-            'total_students_count' => $taughtClasses->sum('students_count'),
-            'total_guided_projects_count' => $taughtClasses->sum('projects_count'),
+            'taught_classes_count' => 0,
+            'total_students_count' => 0,
+            'total_guided_projects_count' => 0,
             'enrolled_classes_count' => $enrolledClasses->count(),
         ];
 
@@ -164,12 +252,12 @@ class DashboardWebController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $membership?->role?->value ?? ($isLecturer ? 'lecturer' : 'student'),
-                'is_lecturer' => $isLecturer,
+                'role' => $membership?->role?->value ?? 'student',
+                'is_lecturer' => false,
                 'campus' => $membership?->campus?->name ?? 'Politeknik Negeri Indramayu',
-                'major' => $profile?->major ?? 'Teknik Informatika',
-                'nim' => $profile?->nim,
-                'availability' => $profile?->availability_status?->value ?? 'available_for_team',
+                'major' => $profile?->study_program ?? $profile?->department ?? $profile?->major ?? 'Teknik Informatika',
+                'nim' => $membership?->student_number ?? $profile?->nim,
+                'availability' => $profile?->availability_status?->value ?? ($profile?->availability_hours ? $profile->availability_hours . ' jam/minggu' : 'available_for_team'),
                 'skills' => $profile?->skills ?? [],
             ],
             'stats' => $stats,
@@ -179,7 +267,8 @@ class DashboardWebController extends Controller
             'upcomingCompetitions' => $upcomingCompetitions,
             'recentActivities' => $recentActivities,
             'profileCompletion' => $profile?->completion() ?? ['percent' => 85, 'missing' => []],
-            'taughtClasses' => $taughtClasses,
+            'taughtClasses' => [],
+            'guidedProjects' => [],
             'enrolledClasses' => $enrolledClasses,
         ]);
     }

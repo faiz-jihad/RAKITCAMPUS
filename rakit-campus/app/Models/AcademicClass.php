@@ -113,6 +113,10 @@ class AcademicClass extends Model
 
     public function hasStudent(User $user): bool
     {
+        if ($this->relationLoaded('students')) {
+            return $this->students->contains('id', $user->id);
+        }
+
         return $this->students()->where('user_id', $user->id)->exists();
     }
 }

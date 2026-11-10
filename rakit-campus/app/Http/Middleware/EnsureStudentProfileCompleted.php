@@ -24,6 +24,12 @@ class EnsureStudentProfileCompleted
 
         // Routes that should always be accessible even with incomplete profile
         $allowedRoutes = [
+            'dashboard',
+            'notifications',
+            'notifications.*',
+            'portfolio.index',
+            'workspace.index',
+            'classes.index',
             'profile.edit',
             'profile.update',
             'profile.destroy',

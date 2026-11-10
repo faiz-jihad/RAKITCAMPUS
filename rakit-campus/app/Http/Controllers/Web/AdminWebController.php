@@ -11,6 +11,7 @@ use App\Models\CampusMembership;
 use App\Models\Competition;
 use App\Models\Project;
 use App\Models\Team;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -108,5 +109,36 @@ class AdminWebController extends Controller
             'students' => $students,
             'filters' => $request->only(['search', 'status']),
         ]);
+    }
+
+    /**
+     * Update a user's campus role (e.g. promoting student to lecturer or vice-versa).
+     * Restricted strictly to Campus Admins and Platform Admins.
+     */
+    public function updateMemberRole(Request $request, int $membershipId): RedirectResponse
+    {
+        $user = $request->user();
+        $membership = $user->activeMembership();
+
+        if (!$user->isPlatformAdmin() && (!$membership || $membership->role !== CampusRole::CampusAdmin)) {
+            abort(403, 'Akses terbatas untuk Administrator Kampus.');
+        }
+
+        $targetMembership = CampusMembership::findOrFail($membershipId);
+
+        if (!$user->isPlatformAdmin() && $targetMembership->campus_id !== $membership->campus_id) {
+            abort(403, 'Anda tidak memiliki hak akses untuk kampus ini.');
+        }
+
+        $validated = $request->validate([
+            'role' => ['required', 'string', 'in:student,lecturer,campus_admin'],
+        ]);
+
+        $newRole = CampusRole::from($validated['role']);
+        $targetMembership->update([
+            'role' => $newRole,
+        ]);
+
+        return back()->with('success', 'Peran anggota ' . $targetMembership->user?->name . ' berhasil diubah menjadi: ' . $newRole->label());
     }
 }

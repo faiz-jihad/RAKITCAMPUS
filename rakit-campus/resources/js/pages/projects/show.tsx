@@ -50,8 +50,11 @@ interface Props {
     isBookmarked: boolean;
     isLeader: boolean;
     isLecturer?: boolean;
+    isLecturerAccount?: boolean;
     isMember: boolean;
     userHasActiveProject?: boolean;
+    myApplication?: any;
+    eligibility?: { eligible: boolean; reason: string | null };
     canEdit: boolean;
     applications?: any[];
     livingProposal?: any;
@@ -83,8 +86,11 @@ export default function ProjectShow({
     isBookmarked: initialBookmarked,
     isLeader,
     isLecturer = false,
+    isLecturerAccount = false,
     isMember,
     userHasActiveProject = false,
+    myApplication = null,
+    eligibility = { eligible: false, reason: null },
     canEdit,
     applications: initialApplications = [],
     livingProposal,
@@ -105,7 +111,10 @@ export default function ProjectShow({
     receivedInvitations = [],
     canAccessWorkspace = false,
 }: Props) {
-    const [activeTab, setActiveTab] = useState<string>('overview');
+    const initialTabParam = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('tab')
+        : null;
+    const [activeTab, setActiveTab] = useState<string>(initialTabParam || 'overview');
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [applications, setApplications] = useState(initialApplications);
     const [applyingRole, setApplyingRole] = useState<any>(null);
@@ -438,16 +447,27 @@ export default function ProjectShow({
                                     </button>
                                 )}
 
-                                {/* Apply button for students without active project */}
-                                {!isMember && !isLecturer && project.has_capacity && project.status === 'recruiting' && !userHasActiveProject && (
-                                    <a
-                                        href="#recruitment-section"
-                                        onClick={() => setActiveTab('members')}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                                    >
-                                        <Send className="size-4" />
-                                        <span>Lamar Bergabung ke Tim</span>
-                                    </a>
+                                {/* Apply button for eligible students */}
+                                {!isMember && !isLecturer && !isLecturerAccount && project.status === 'recruiting' && (
+                                    myApplication ? (
+                                        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                                            <Clock className="size-3.5" />
+                                            <span>Lamaran {myApplication.status === 'pending' ? 'Sedang Ditinjau' : myApplication.status}</span>
+                                        </span>
+                                    ) : project.has_capacity && !userHasActiveProject && eligibility?.eligible !== false ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setActiveTab('members');
+                                                const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
+                                                setApplyingRole(firstRole);
+                                            }}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                        >
+                                            <Send className="size-4" />
+                                            <span>Gabung Tim / Lamar Posisi</span>
+                                        </button>
+                                    ) : null
                                 )}
                             </div>
                         </div>
@@ -872,6 +892,93 @@ export default function ProjectShow({
                                 </div>
                             </div>
 
+                            {/* Open Recruitment Roles & Join Team Section */}
+                            {project.status === 'recruiting' && (
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                                        <div>
+                                            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                                <Briefcase className="size-5 text-emerald-600" />
+                                                <span>Rekrutmen Terbuka & Posisi Tim</span>
+                                            </h3>
+                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                Pilih posisi yang sesuai dengan keahlian kamu untuk mengajukan diri bergabung ke kelompok ini.
+                                            </p>
+                                        </div>
+                                        {project.has_capacity ? (
+                                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start">
+                                                Slot Tim Tersedia
+                                            </span>
+                                        ) : (
+                                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 self-start">
+                                                Kapasitas Penuh
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {myApplication && (
+                                        <div className="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-3">
+                                            <div>
+                                                <strong className="block">Status Lamaran Kamu: {myApplication.status === 'pending' ? 'Menunggu Persetujuan Ketua Tim' : myApplication.status}</strong>
+                                                <span className="text-amber-800">Posisi yang dilamar: {myApplication.role?.name || 'Anggota Tim'}</span>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!isMember && !isLecturer && !isLecturerAccount && !myApplication && eligibility && !eligibility.eligible && eligibility.reason && (
+                                        <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
+                                            <Lock className="size-4 text-rose-600 mt-0.5 shrink-0" />
+                                            <span>{eligibility.reason}</span>
+                                        </div>
+                                    )}
+
+                                    {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 ? (
+                                        <div className="flex flex-col gap-3">
+                                            {project.team.recruitment.roles.map((role: any) => (
+                                                <div
+                                                    key={role.id}
+                                                    className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                                >
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-slate-900">{role.name}</h4>
+                                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                                            Kebutuhan: {role.slots || 1} slot • {role.requirements || 'Keahlian teknis relevan dengan proyek'}
+                                                        </p>
+                                                    </div>
+
+                                                    {!isMember && !isLecturer && !isLecturerAccount && !myApplication && project.has_capacity && eligibility?.eligible !== false && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setApplyingRole(role)}
+                                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs self-start sm:self-auto shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                                                        >
+                                                            <Send className="size-3" />
+                                                            <span>Lamar Posisi Ini</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <p className="text-xs text-slate-600">
+                                                Tim ini masih membuka pendaftaran anggota pengembang baru.
+                                            </p>
+                                            {!isMember && !isLecturer && !isLecturerAccount && !myApplication && project.has_capacity && eligibility?.eligible !== false && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setApplyingRole({ id: null, name: 'Anggota Tim Pengembang' })}
+                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                                                >
+                                                    <Send className="size-3" />
+                                                    <span>Gabung Tim</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
                             {/* Leader Incoming Applications */}
                             {isLeader && applications.length > 0 && (
                                 <div className="glass-card rounded-2xl p-6 shadow-xs">
@@ -1062,6 +1169,67 @@ export default function ProjectShow({
                     )}
                 </div>
             </div>
+
+            {/* APPLY ROLE MODAL */}
+            {applyingRole && (
+                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
+                        <div className="flex items-start justify-between">
+                            <div>
+                                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block mb-1">
+                                    Lamaran Posisi Tim
+                                </span>
+                                <h3 className="text-lg font-bold text-slate-900">
+                                    Lamar sebagai {applyingRole.name}
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Kirim pesan perkenalan singkat kepada ketua tim proyek {project.title}.
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setApplyingRole(null)}
+                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleApply} className="flex flex-col gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    Pesan Singkat & Portofolio Relevan *
+                                </label>
+                                <textarea
+                                    value={applyMessage}
+                                    onChange={(e) => setApplyMessage(e.target.value)}
+                                    placeholder="Jelaskan keahlian, pengalaman relevan, atau kontribusi yang ingin Anda berikan..."
+                                    required
+                                    rows={4}
+                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setApplyingRole(null)}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={submitting}
+                                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                >
+                                    {submitting ? 'Mengirim...' : 'Kirim Lamaran'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

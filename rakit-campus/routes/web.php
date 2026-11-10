@@ -126,9 +126,12 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/co-lecturers', [AcademicClassWebController::class, 'addCoLecturer'])->name('classes.co-lecturers.add');
     Route::delete('/classes/{id}/co-lecturers/{lecturerId}', [AcademicClassWebController::class, 'removeCoLecturer'])->name('classes.co-lecturers.remove');
 
-    // Quick Role Switcher for Testing (Mahasiswa <-> Dosen)
+    // Quick Role Switcher for Testing (Restricted to Campus / Platform Admin)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {
         $user = $request->user();
+        if (!$user->isCampusAdmin() && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya administrator yang berwenang mengubah peran akun.');
+        }
         $targetRole = $request->input('role', 'lecturer');
         $membership = $user->activeMembership();
         if ($membership) {
@@ -141,6 +144,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::prefix('admin')->group(function () {
         Route::get('/', [AdminWebController::class, 'index'])->name('admin.index');
         Route::get('/students', [AdminWebController::class, 'students'])->name('admin.students');
+        Route::patch('/memberships/{id}/role', [AdminWebController::class, 'updateMemberRole'])->name('admin.memberships.role');
         Route::get('/notifications', [AdminNotificationWebController::class, 'index'])->name('admin.notifications.index');
         Route::post('/notifications/send-test', [AdminNotificationWebController::class, 'sendTestEmail'])->name('admin.notifications.send-test');
         Route::post('/notifications/retry/{id}', [AdminNotificationWebController::class, 'retryLog'])->name('admin.notifications.retry');

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BookOpen,
@@ -34,6 +34,19 @@ interface AcademicClass {
     students_count: number;
     projects_count: number;
     lecturer?: { id: number; name: string; email: string };
+    
+    // Tambahan properti baru untuk mendukung tampilan kartu detail mahasiswa
+    subject_code?: string;
+    sks?: number;
+    class_name?: string;
+    team?: {
+        name: string;
+        members_count: number;
+        target_size: number;
+        project_title?: string;
+        status_label?: string;
+        status_color?: string;
+    } | null;
 }
 
 interface Props {
@@ -49,6 +62,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [], isLecturer = false, campus }: Props) {
+    const { flash } = usePage().props as any;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
@@ -133,43 +147,61 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                         </div>
                     </div>
 
-                    {/* Join Class Box for Students */}
-                    <div className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="max-w-xl">
-                            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 mb-1">
-                                <Key className="size-3.5" />
-                                <span>Gabung Kelas Menggunakan Kode</span>
-                            </div>
-                            <h3 className="text-base font-bold text-slate-900">
-                                Punya Kode Gabung Kelas dari Dosen?
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                Masukkan 6 digit kode unik yang diberikan dosen pengampu untuk otomatis bergabung ke dalam daftar mahasiswa kelas dan kelompok proyek.
-                            </p>
+                    {flash?.success && (
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-800">
+                            {flash.success}
                         </div>
+                    )}
+                    {flash?.info && (
+                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-medium text-blue-800">
+                            {flash.info}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700">
+                            {flash.error}
+                        </div>
+                    )}
 
-                        <form onSubmit={handleJoinClass} className="flex items-center gap-2 w-full md:w-auto shrink-0">
-                            <input
-                                type="text"
-                                maxLength={8}
-                                placeholder="Contoh: RKC821"
-                                value={joinData.join_code}
-                                onChange={(e) => setJoinData('join_code', e.target.value.toUpperCase())}
-                                required
-                                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-xs sm:text-sm font-mono uppercase tracking-wider font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-36 sm:w-44 text-center"
-                            />
-                            <button
-                                type="submit"
-                                disabled={joinProcessing}
-                                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
-                            >
-                                {joinProcessing ? 'Mengecek...' : 'Gabung Kelas'}
-                            </button>
-                        </form>
-                    </div>
+                    {/* Join Class Box for Students */}
+                    {!isLecturer && (
+                        <div className="glass-card rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div className="max-w-xl">
+                                <div className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 mb-1">
+                                    <Key className="size-3.5" />
+                                    <span>Gabung Kelas Menggunakan Kode</span>
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Punya Kode Gabung Kelas dari Dosen?
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    Masukkan 6 digit kode unik yang diberikan dosen pengampu untuk otomatis bergabung ke dalam daftar mahasiswa kelas dan kelompok proyek.
+                                </p>
+                            </div>
+
+                            <form onSubmit={handleJoinClass} className="flex items-center gap-2 w-full md:w-auto shrink-0">
+                                <input
+                                    type="text"
+                                    maxLength={12}
+                                    placeholder="Contoh: TI2A26"
+                                    value={joinData.join_code}
+                                    onChange={(e) => setJoinData('join_code', e.target.value.toUpperCase())}
+                                    required
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white/80 text-xs sm:text-sm font-mono uppercase tracking-wider font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-36 sm:w-44 text-center"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={joinProcessing}
+                                    className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                                >
+                                    {joinProcessing ? 'Mengecek...' : 'Gabung Kelas'}
+                                </button>
+                            </form>
+                        </div>
+                    )}
 
                     {joinErrors.join_code && (
-                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700">
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700">
                             {joinErrors.join_code}
                         </div>
                     )}
@@ -293,12 +325,23 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
 
                     {/* SECTION: ENROLLED CLASSES (STUDENT) */}
                     <div className="flex flex-col gap-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
                                 <Users className="size-4 text-blue-600" />
                                 <h2 className="text-base font-bold text-slate-900">
                                     Kelas yang Anda Ikuti ({enrolledClasses.length})
                                 </h2>
+                            </div>
+
+                            {/* Tombol Filter & Ubah Tampilan */}
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <button className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center gap-1.5 cursor-pointer">
+                                    <span>Ubah Tampilan (Isi / Kosong)</span>
+                                </button>
+                                <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 text-xs font-semibold">
+                                    <span className="px-3 py-1 rounded-lg bg-white text-slate-900 shadow-xs">Semua ({enrolledClasses.length})</span>
+                                    <span className="px-3 py-1 text-slate-500 hover:text-slate-900 cursor-pointer">Semester Ini</span>
+                                </div>
                             </div>
                         </div>
 
@@ -307,51 +350,113 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                 Anda belum terdaftar di kelas perkuliahan mana pun. Masukkan kode gabung kelas dari dosen Anda di atas.
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {enrolledClasses.map((cls) => (
-                                    <div
-                                        key={cls.id}
-                                        className="glass-card rounded-2xl p-6 flex flex-col justify-between gap-5"
-                                    >
-                                        <div>
-                                            <div className="flex items-start justify-between gap-2 mb-2">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
-                                                    {cls.code}
-                                                </span>
-                                                <span className="text-[11px] text-slate-400">
-                                                    {cls.academic_year}
-                                                </span>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-5">
+                                {enrolledClasses.map((cls) => {
+                                    const hasTeam = cls.team !== null && cls.team !== undefined;
+                                    const membersCount = cls.team?.members_count || 0;
+                                    const targetSize = cls.target_team_size || 4;
+                                    const progressPercentage = Math.min(100, (membersCount / targetSize) * 100);
+
+                                    return (
+                                        <div
+                                            key={cls.id}
+                                            className="glass-card rounded-2xl p-6 flex flex-col justify-between gap-5 bg-white/80 border border-slate-200/80 shadow-xs hover:shadow-md transition"
+                                        >
+                                            <div className="flex flex-col gap-3">
+                                                {/* Top Meta: Kode Mata Kuliah, SKS, Nama Kelas, & Badge Status */}
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
+                                                            {cls.subject_code || cls.code}
+                                                        </span>
+                                                        {cls.sks && (
+                                                            <span className="text-[11px] font-semibold text-slate-500">
+                                                                • {cls.sks} SKS
+                                                            </span>
+                                                        )}
+                                                        <span className="text-[11px] font-semibold text-slate-500">
+                                                            • {cls.class_name || cls.name}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Badge Status Tim */}
+                                                    <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full border ${
+                                                        cls.team?.status_color || (hasTeam ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200')
+                                                    }`}>
+                                                        {cls.team?.status_label || (hasTeam ? 'Tim Lengkap' : 'Belum Ada Tim')}
+                                                    </span>
+                                                </div>
+
+                                                {/* Nama Mata Kuliah & Dosen */}
+                                                <div>
+                                                    <h3 className="text-base font-bold text-slate-900">
+                                                        {cls.name}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1">
+                                                        <Users className="size-3 text-slate-400" />
+                                                        <span>Dosen: <span className="font-semibold text-slate-800">{cls.lecturer?.name || 'Dosen Pengampu'}</span></span>
+                                                    </p>
+                                                </div>
+
+                                                {/* Kotak Informasi Tim / Matchmaking */}
+                                                {hasTeam ? (
+                                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col gap-2.5">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="font-bold text-slate-800">
+                                                                Tim: {cls.team?.name}
+                                                            </span>
+                                                            <span className="font-mono font-bold text-slate-600">
+                                                                {membersCount} / {targetSize} Anggota
+                                                            </span>
+                                                        </div>
+                                                        {/* Progress Bar Anggota */}
+                                                        <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
+                                                            <div 
+                                                                className="bg-blue-600 h-full rounded-full transition-all duration-500" 
+                                                                style={{ width: `${progressPercentage}%` }}
+                                                            />
+                                                        </div>
+                                                        {cls.team?.project_title && (
+                                                            <p className="text-[11px] text-slate-500 truncate">
+                                                                <span className="font-semibold text-slate-700">Proyek:</span> {cls.team.project_title}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs flex flex-col gap-1.5">
+                                                        <span className="font-bold text-amber-800 flex items-center gap-1">
+                                                            ⚠️ Belum Terdaftar di Tim Manapun
+                                                        </span>
+                                                        <p className="text-[11px] text-amber-700 leading-relaxed">
+                                                            Cari rekan tim yang membutuhkan keahlian Anda atau bentuk tim mandiri sebelum deadline penutupan.
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <h3 className="text-base font-bold text-slate-900">
-                                                {cls.name}
-                                            </h3>
-                                            <p className="text-xs text-slate-500 mt-1">
-                                                Dosen: <span className="font-semibold text-slate-800">{cls.lecturer?.name || 'Dosen Pengampu'}</span>
-                                            </p>
-
-                                            <div className="flex items-center gap-4 mt-4 pt-4 border-t border-slate-100 text-xs text-slate-600">
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    <Users className="size-3.5 text-slate-400" />
-                                                    <span>{cls.students_count} Teman Sekelas</span>
-                                                </span>
-                                                <span>•</span>
-                                                <span className="inline-flex items-center gap-1.5">
-                                                    <FolderKanban className="size-3.5 text-slate-400" />
-                                                    <span>{cls.projects_count} Proyek Tim</span>
-                                                </span>
+                                            {/* Action Button Bawah */}
+                                            <div className="pt-2">
+                                                {hasTeam ? (
+                                                    <Link
+                                                        href={`/classes/${cls.id}`}
+                                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition"
+                                                    >
+                                                        <span>Buka Kelas & Tim</span>
+                                                        <ArrowRight className="size-3.5" />
+                                                    </Link>
+                                                ) : (
+                                                    <Link
+                                                        href={`/classes/${cls.id}?tab=smart_group`}
+                                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition"
+                                                    >
+                                                        <span>Cari Rekan / Gabung Tim</span>
+                                                        <ArrowRight className="size-3.5" />
+                                                    </Link>
+                                                )}
                                             </div>
                                         </div>
-
-                                        <Link
-                                            href={`/classes/${cls.id}`}
-                                            className="w-full py-2.5 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-600 hover:text-white hover:border-transparent text-xs font-bold flex items-center justify-center gap-1.5 transition"
-                                        >
-                                            <span>Lihat Kelas & Rekan Tim</span>
-                                            <ArrowRight className="size-3.5" />
-                                        </Link>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -499,7 +604,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                 </button>
                             </div>
                         </form>
-                    </div>
+                    </div> 
                 </div>
             )}
         </AppLayout>

@@ -75,21 +75,30 @@ class DemoAccountSeeder extends Seeder
             ]
         );
 
+        // 2b. Demo Lecturer (matches 1-Klik Dosen on /login and README)
+        $demoLecturer = User::updateOrCreate(
+            ['email' => 'budi@polindra.ac.id'],
+            [
+                'name' => 'Budi Santoso, M.Kom.',
+                'password' => $passwordHash,
+                'is_platform_admin' => false,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        CampusMembership::updateOrCreate(
+            ['campus_id' => $polindra->id, 'user_id' => $demoLecturer->id],
+            [
+                'role' => CampusRole::Lecturer,
+                'status' => MembershipStatus::Active,
+                'verification_status' => VerificationStatus::Verified,
+                'student_number' => 'NIDN-0412088101',
+                'verified_at' => now(),
+            ]
+        );
+
         // 3. Demo Students
         $demoStudents = [
-            [
-                'email' => 'budi@polindra.ac.id',
-                'name' => 'Budi Santoso',
-                'nim' => '2201091',
-                'dept' => 'Teknik Informatika',
-                'program' => 'Teknik Informatika',
-                'semester' => 5,
-                'bio' => 'IoT Engineer & Project Leader. Fokus pada solusi embedded system dan smart devices.',
-                'skills' => ['IoT' => 5, 'Python' => 4, 'C++' => 4, 'Arduino' => 5, 'Team Leadership' => 5, 'Git' => 4],
-                'interests' => ['Smart Agriculture', 'IoT', 'Hardware'],
-                'preferred_roles' => ['Project Leader', 'IoT Engineer'],
-                'availability' => 20,
-            ],
             [
                 'email' => 'siti@polindra.ac.id',
                 'name' => 'Siti Rahma',
@@ -181,7 +190,7 @@ class DemoAccountSeeder extends Seeder
         }
 
         // 4. Create / Ensure Primary Demo Project: Smart Waste Management
-        $leader = $users['budi@polindra.ac.id'];
+        $leader = $users['agus@polindra.ac.id'];
         $project = Project::updateOrCreate(
             ['title' => 'Smart Waste Management IoT Polindra'],
             [

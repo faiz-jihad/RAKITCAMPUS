@@ -53,6 +53,7 @@ interface Props {
     recentActivities: any[];
     profileCompletion?: { percent: number; missing: string[] };
     taughtClasses?: any[];
+    guidedProjects?: any[];
     enrolledClasses?: any[];
 }
 
@@ -73,6 +74,7 @@ export default function Dashboard({
     recentActivities = [],
     profileCompletion,
     taughtClasses = [],
+    guidedProjects = [],
     enrolledClasses = [],
 }: Props) {
     const isLecturer = user?.role === 'lecturer' || user?.is_lecturer;
@@ -142,8 +144,8 @@ export default function Dashboard({
                                 <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5 flex-wrap">
                                     <span>{user?.campus || 'Politeknik Negeri Indramayu'}</span>
                                     <span className="text-slate-300">•</span>
-                                    <span>{user?.major || 'Teknik Informatika'}</span>
-                                    {user?.availability && (
+                                    <span>{isLecturer ? 'Dosen Pengampu & Pembimbing' : (user?.major || 'Teknik Informatika')}</span>
+                                    {!isLecturer && user?.availability && (
                                         <>
                                             <span className="text-slate-300">•</span>
                                             <span className="text-emerald-600 font-medium capitalize">
@@ -383,61 +385,169 @@ export default function Dashboard({
                         {/* LEFT 8 COLUMNS: MAIN WORKFLOWS */}
                         <div className="lg:col-span-8 flex flex-col gap-6">
 
-                            {/* SECTION A: LECTURER CLASSES (IF LECTURER) */}
-                            {isLecturer && taughtClasses.length > 0 && (
-                                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
-                                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-                                        <div>
-                                            <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                                <GraduationCap className="size-4 text-slate-700" />
-                                                <span>Daftar Kelas yang Diampu</span>
-                                            </h2>
-                                            <p className="text-xs text-slate-500 mt-0.5">Daftar kelas aktif semester ini beserta kode gabung dan kelompok mahasiswa.</p>
-                                        </div>
-                                        <Link href="/classes" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
-                                            Lihat Semua &rarr;
-                                        </Link>
-                                    </div>
-
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                                        {taughtClasses.map((cls: any) => (
-                                             <div
-                                                key={cls.id}
-                                                className="p-4 border border-slate-200 rounded-xl hover:border-slate-300 transition flex flex-col justify-between bg-slate-50/40"
-                                            >
-                                                <div>
-                                                    <div className="flex items-center justify-between gap-2 mb-2">
-                                                        <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
-                                                            {cls.code}
-                                                        </span>
-                                                        <span className="text-xs text-slate-500">
-                                                            Kode Gabung: <strong className="font-mono text-slate-900">{cls.join_code}</strong>
-                                                        </span>
-                                                    </div>
-                                                    <h3 className="text-sm font-semibold text-slate-900">{cls.name}</h3>
-                                                    <p className="text-xs text-slate-500 mt-0.5">
-                                                        T.A {cls.academic_year} • Semester {cls.semester}
-                                                    </p>
-                                                </div>
-
-                                                <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                                                    <div className="text-slate-600">
-                                                        <strong>{cls.students_count}</strong> Mahasiswa • <strong>{cls.projects_count}</strong> Kelompok
-                                                    </div>
-                                                    <Link
-                                                        href={`/classes/${cls.id}`}
-                                                        className="font-semibold text-indigo-600 hover:text-indigo-800 transition"
-                                                    >
-                                                        Kelola &rarr;
-                                                    </Link>
-                                                </div>
+                            {/* SECTION A: LECTURER CLASSES & GUIDED PROJECTS (IF LECTURER) */}
+                            {isLecturer && (
+                                <>
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+                                        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                                            <div>
+                                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                    <GraduationCap className="size-4 text-slate-700" />
+                                                    <span>Daftar Kelas yang Diampu</span>
+                                                </h2>
+                                                <p className="text-xs text-slate-500 mt-0.5">Daftar kelas aktif semester ini beserta kode gabung dan kelompok mahasiswa.</p>
                                             </div>
-                                        ))}
+                                            <Link href="/classes" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                                                Lihat Semua &rarr;
+                                            </Link>
+                                        </div>
+
+                                        {taughtClasses.length === 0 ? (
+                                            <div className="text-center py-10 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                                <GraduationCap className="size-8 text-slate-400 mx-auto mb-2" />
+                                                <h3 className="text-xs font-semibold text-slate-800">Belum ada kelas kuliah yang Anda ampu</h3>
+                                                <p className="text-xs text-slate-500 mt-1 mb-4 max-w-sm mx-auto">
+                                                    Buat kelas kuliah baru untuk membagikan kode gabung dan membagi kelompok proyek mahasiswa secara otomatis.
+                                                </p>
+                                                <Link
+                                                    href="/classes"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition"
+                                                >
+                                                    <Plus className="size-3.5" />
+                                                    <span>Kelola / Buat Kelas</span>
+                                                </Link>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                                {taughtClasses.map((cls: any) => (
+                                                    <div
+                                                        key={cls.id}
+                                                        className="p-4 border border-slate-200 rounded-xl hover:border-slate-300 transition flex flex-col justify-between bg-slate-50/40"
+                                                    >
+                                                        <div>
+                                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                                                <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-700">
+                                                                    {cls.code}
+                                                                </span>
+                                                                <span className="text-xs text-slate-500">
+                                                                    Kode Gabung: <strong className="font-mono text-slate-900">{cls.join_code}</strong>
+                                                                </span>
+                                                            </div>
+                                                            <h3 className="text-sm font-semibold text-slate-900">{cls.name}</h3>
+                                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                                T.A {cls.academic_year} • Semester {cls.semester}
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                                                            <div className="text-slate-600">
+                                                                <strong>{cls.students_count}</strong> Mahasiswa • <strong>{cls.projects_count}</strong> Kelompok
+                                                            </div>
+                                                            <Link
+                                                                href={`/classes/${cls.id}`}
+                                                                className="font-semibold text-indigo-600 hover:text-indigo-800 transition"
+                                                            >
+                                                                Kelola &rarr;
+                                                            </Link>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
+
+                                    <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
+                                        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                                            <div>
+                                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                    <FolderKanban className="size-4 text-slate-700" />
+                                                    <span>Kelompok Proyek Bimbingan</span>
+                                                </h2>
+                                                <p className="text-xs text-slate-500 mt-0.5">Pantau perkembangan proyek, proposal, dan progres tugas tim mahasiswa di kelas Anda.</p>
+                                            </div>
+                                            <Link href="/workspace" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
+                                                Ruang Kerja &rarr;
+                                            </Link>
+                                        </div>
+
+                                        {guidedProjects.length === 0 ? (
+                                            <div className="text-center py-8 px-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                                <Kanban className="size-7 text-slate-400 mx-auto mb-1.5" />
+                                                <p className="text-xs font-semibold text-slate-700">Belum ada kelompok proyek aktif</p>
+                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                    Buka menu Kelola Kelas untuk membentuk tim mahasiswa atau jalankan Auto Group.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                                {guidedProjects.map((proj: any) => (
+                                                    <div
+                                                        key={proj.id}
+                                                        className="border border-slate-200 rounded-xl p-4 hover:border-slate-300 transition flex flex-col justify-between bg-white"
+                                                    >
+                                                        <div>
+                                                            <div className="flex items-center justify-between gap-2 mb-1.5">
+                                                                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                                                    {proj.class_code || 'Kelas'}
+                                                                </span>
+                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600 uppercase">
+                                                                    {proj.status}
+                                                                </span>
+                                                            </div>
+                                                            <h3 className="text-sm font-bold text-slate-900 line-clamp-1">{proj.title}</h3>
+                                                            <p className="text-xs text-slate-500 mt-0.5">
+                                                                {proj.team_name || 'Tim Proyek'} • Ketua: <strong className="text-slate-700">{proj.leader_name || '-'}</strong>
+                                                            </p>
+
+                                                            <div className="mt-3">
+                                                                <div className="flex justify-between text-xs text-slate-500 mb-1">
+                                                                    <span>Progres Tugas</span>
+                                                                    <span className="font-semibold text-slate-800">
+                                                                        {proj.done_tasks} / {proj.total_tasks} ({proj.progress}%)
+                                                                    </span>
+                                                                </div>
+                                                                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                                                                    <div
+                                                                        className="bg-blue-600 h-2 rounded-full transition-all"
+                                                                        style={{ width: `${Math.min(100, proj.progress)}%` }}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                            <span className="text-slate-500 flex items-center gap-1">
+                                                                <Users className="size-3.5 text-slate-400" />
+                                                                {proj.members_count} Anggota
+                                                            </span>
+                                                            <div className="flex items-center gap-3">
+                                                                <Link
+                                                                    href={`/projects/${proj.id}`}
+                                                                    className="font-semibold text-slate-600 hover:text-slate-900 transition"
+                                                                >
+                                                                    Detail
+                                                                </Link>
+                                                                {proj.team_id && (
+                                                                    <Link
+                                                                        href={`/workspace/${proj.team_id}`}
+                                                                        className="font-semibold text-indigo-600 hover:text-indigo-800 transition flex items-center gap-1"
+                                                                    >
+                                                                        <span>Pantau</span>
+                                                                        <ArrowRight className="size-3" />
+                                                                    </Link>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
                             )}
 
-                            {/* SECTION B: ACTIVE TEAMS & WORKSPACES */}
+                            {/* SECTION B: ACTIVE TEAMS & WORKSPACES (STUDENT) */}
+                            {!isLecturer && (
                             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
                                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                                     <div>
@@ -540,6 +650,7 @@ export default function Dashboard({
                                     </div>
                                 )}
                             </div>
+                            )}
 
                             {/* SECTION C: STUDENT ENROLLED CLASSES (IF STUDENT) */}
                             {!isLecturer && enrolledClasses.length > 0 && (
@@ -587,7 +698,8 @@ export default function Dashboard({
                                 </div>
                             )}
 
-                            {/* SECTION D: MY PRIORITY KANBAN TASKS */}
+                            {/* SECTION D: MY PRIORITY KANBAN TASKS (STUDENT) */}
+                            {!isLecturer && (
                             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs">
                                 <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                                     <div>
@@ -654,12 +766,47 @@ export default function Dashboard({
                                     </div>
                                 )}
                             </div>
+                            )}
                         </div>
 
                         {/* RIGHT 4 COLUMNS: DISCOVERY & RADAR */}
                         <div className="lg:col-span-4 flex flex-col gap-6">
 
-                            {/* WIDGET 1: SMART MATCHING AI RADAR */}
+                            {/* WIDGET 1: LECTURER QUICK ACTIONS OR STUDENT SMART MATCHING AI RADAR */}
+                            {isLecturer ? (
+                                <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
+                                    <div className="pb-3 border-b border-slate-100 mb-3.5">
+                                        <h3 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                            <GraduationCap className="size-3.5 text-blue-600" />
+                                            <span>Panel Bimbingan Dosen</span>
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500">Akses cepat manajemen kelas dan evaluasi mahasiswa</p>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
+                                        <Link
+                                            href="/classes"
+                                            className="p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition flex items-center justify-between text-xs font-semibold text-slate-800"
+                                        >
+                                            <span>Kelola Kelas & Bagi Kelompok</span>
+                                            <ArrowRight className="size-3.5 text-slate-400" />
+                                        </Link>
+                                        <Link
+                                            href="/workspace"
+                                            className="p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition flex items-center justify-between text-xs font-semibold text-slate-800"
+                                        >
+                                            <span>Pantau Ruang Kerja Mahasiswa</span>
+                                            <ArrowRight className="size-3.5 text-slate-400" />
+                                        </Link>
+                                        <Link
+                                            href="/projects"
+                                            className="p-3 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/40 transition flex items-center justify-between text-xs font-semibold text-slate-800"
+                                        >
+                                            <span>Tinjau Proyek & Proposal</span>
+                                            <ArrowRight className="size-3.5 text-slate-400" />
+                                        </Link>
+                                    </div>
+                                </div>
+                            ) : (
                             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
                                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3.5">
                                     <div>
@@ -709,6 +856,7 @@ export default function Dashboard({
                                     </div>
                                 )}
                             </div>
+                            )}
 
                             {/* WIDGET 2: UPCOMING COMPETITIONS */}
                             <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs">
@@ -718,7 +866,9 @@ export default function Dashboard({
                                             <Trophy className="size-3.5 text-amber-600" />
                                             <span>Lomba & Kompetisi Kampus</span>
                                         </h3>
-                                        <p className="text-[11px] text-slate-500">Asah bakat dan raih prestasi bareng tim</p>
+                                        <p className="text-[11px] text-slate-500">
+                                            {isLecturer ? 'Pantau jadwal kompetisi untuk pembinaan tim mahasiswa' : 'Asah bakat dan raih prestasi bareng tim'}
+                                        </p>
                                     </div>
                                     <Link href="/competitions" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition">
                                         Semua &rarr;

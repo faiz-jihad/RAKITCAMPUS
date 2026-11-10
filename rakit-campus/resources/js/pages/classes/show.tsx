@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -44,6 +44,7 @@ interface Student {
     study_program: string;
     semester: number;
     has_team: boolean;
+    availability_hours?: number;
     project?: { id: number; title: string; role_name: string } | null;
     skills: string[];
     enrolled_at: string;
@@ -169,6 +170,7 @@ interface Props {
         allocations: Array<{
             id: number;
             user: { id: number; name: string; email: string };
+            project_id?: number;
             project: { id: number; title: string };
             recruitmentRole?: { id: number; name: string };
             score: number;
@@ -191,7 +193,16 @@ export default function ClassShow({
     fairnessMetrics,
     latestSimulation = null,
 }: Props) {
-    const [tab, setTab] = useState<'students' | 'projects' | 'smart_group' | 'guidances' | 'fairness'>('students');
+    const { flash } = usePage().props as any;
+    const initialTabParam = typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('tab')
+        : null;
+    const validTabs = ['students', 'projects', 'smart_group', 'guidances', 'fairness'] as const;
+    const initialTab = validTabs.includes(initialTabParam as any)
+        ? (initialTabParam as typeof validTabs[number])
+        : 'students';
+
+    const [tab, setTab] = useState<'students' | 'projects' | 'smart_group' | 'guidances' | 'fairness'>(initialTab);
     const [studentFilter, setStudentFilter] = useState<'all' | 'without_team' | 'with_team'>('all');
     const [searchStudent, setSearchStudent] = useState('');
     const [copiedCode, setCopiedCode] = useState(false);
@@ -349,6 +360,22 @@ export default function ClassShow({
                 <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-sky-100/50 blur-[100px]" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
+
+                    {flash?.success && (
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-800">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.info && (
+                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-medium text-blue-800">
+                            {flash.info}
+                        </div>
+                    )}
+                    {flash?.error && (
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700">
+                            {flash.error}
+                        </div>
+                    )}
 
                     {/* HERO HEADER: Modern Frosted Glass Card */}
                     <div className="glass-surface rounded-3xl p-6 sm:p-7 relative overflow-hidden">
@@ -1481,7 +1508,7 @@ export default function ClassShow({
                                                                             <button
                                                                                 onClick={() => {
                                                                                     setAdjustingAlloc(alloc);
-                                                                                    setAdjustProjectId(alloc.project_id || academicClass.projects[0]?.id || 0);
+                                                                                    setAdjustProjectId(alloc.project_id || alloc.project?.id || projects[0]?.id || 0);
                                                                                     setAdjustReason('');
                                                                                 }}
                                                                                 className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-[10px] font-bold transition cursor-pointer"
@@ -1750,7 +1777,7 @@ export default function ClassShow({
                                     onChange={(e) => setAdjustProjectId(Number(e.target.value))}
                                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800"
                                 >
-                                    {academicClass.projects.map((p) => (
+                                    {projects.map((p) => (
                                         <option key={p.id} value={p.id}>
                                             {p.title}
                                         </option>
