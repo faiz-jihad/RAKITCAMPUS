@@ -12,6 +12,7 @@ use App\Http\Controllers\Web\NotificationWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
 use App\Http\Controllers\Web\ProjectProposalWebController;
 use App\Http\Controllers\Web\ProjectWebController;
+use App\Http\Controllers\Web\SitemapWebController;
 use App\Http\Controllers\Web\WorkspaceWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +20,8 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitemap');
 
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
