@@ -1,13 +1,13 @@
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
+    Bell,
     Calendar,
     Globe,
     Image as ImageIcon,
     Info,
     Link as LinkIcon,
+    Settings,
     ShieldAlert,
     Sparkles,
     Trophy,
@@ -59,14 +59,83 @@ export default function CompetitionCreate({ categories, levels, types }: Props) 
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Daftarkan Kompetisi Baru — RAKIT Campus" />
+        <div className="min-h-screen bg-[#eceff3] p-3 sm:p-5 lg:p-7 font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+            <Head title="Daftarkan Kompetisi Baru — RakitCampus" />
 
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
-                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-amber-100/40 blur-[100px]" />
+            {/* Giant Smooth Rounded Container matching Dashboard */}
+            <div className="mx-auto max-w-[1400px] bg-[#fbfcfd] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-7 lg:p-9 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-slate-200/60 space-y-6">
+                {/* 1. TOP NAVBAR */}
+                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                    <Link href="/dashboard" className="flex items-center gap-2.5 group">
+                        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:bg-blue-700 transition">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2.5" />
+                                <circle cx="18" cy="8.5" r="2.5" />
+                                <circle cx="18" cy="15.5" r="2.5" />
+                                <circle cx="12" cy="19" r="2.5" />
+                                <circle cx="6" cy="15.5" r="2.5" />
+                                <circle cx="6" cy="8.5" r="2.5" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </div>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">
+                            RakitCampus
+                        </span>
+                    </Link>
 
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
+                    <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70">
+                        <Link
+                            href="/dashboard"
+                            className="px-5 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                        >
+                            Dashboard
+                        </Link>
+                        <Link
+                            href="/competitions"
+                            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold bg-[#2563eb] text-white shadow-sm transition"
+                        >
+                            Lomba
+                        </Link>
+                        <Link
+                            href="/competitions?tab=my_competitions&subtab=teams"
+                            className="px-4 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                        >
+                            Tim Saya
+                        </Link>
+                        <Link
+                            href="/workspace"
+                            className="px-4 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                        >
+                            Task Board
+                        </Link>
+                    </nav>
+
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/settings/profile"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+                            title="Pengaturan"
+                        >
+                            <Settings className="w-5 h-5 stroke-[1.75]" />
+                        </Link>
+                        <Link
+                            href="/notifications"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative transition"
+                            title="Notifikasi"
+                        >
+                            <Bell className="w-5 h-5 stroke-[1.75]" />
+                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                        </Link>
+                        <Link
+                            href="/settings/profile"
+                            className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center ring-2 ring-slate-100 shadow-2xs overflow-hidden"
+                        >
+                            FA
+                        </Link>
+                    </div>
+                </header>
+
+                <div className="max-w-4xl mx-auto pt-2 flex flex-col gap-6">
                     {/* Header Row */}
                     <div className="flex items-center justify-between">
                         <Link
@@ -406,6 +475,6 @@ export default function CompetitionCreate({ categories, levels, types }: Props) 
                     </form>
                 </div>
             </div>
-        </AppLayout>
+        </div>
     );
 }

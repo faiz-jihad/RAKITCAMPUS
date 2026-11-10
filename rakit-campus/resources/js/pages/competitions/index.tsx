@@ -342,175 +342,167 @@ export default function CompetitionIndex({
     ];
 
     return (
-        <div className="min-h-screen bg-[#FAF9F5] text-slate-900 font-sans pb-24 selection:bg-blue-100 selection:text-blue-900">
+        <div className="min-h-screen bg-[#eceff3] p-3 sm:p-5 lg:p-7 font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             <Head title="Competition Hub — RakitCampus" />
 
-            {/* TOP NAVBAR */}
-            <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-3 flex items-center justify-between">
-                {/* Brand Logo */}
-                <Link href="/competitions" className="flex items-center gap-2 group">
-                    <div className="size-7 text-blue-600 flex items-center justify-center">
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                            <path d="M4 4h10l6 6v10H4V4z" />
-                        </svg>
-                    </div>
-                    <span className="font-black text-xl tracking-tight text-slate-900">
-                        rakit<span className="text-blue-600">campus</span>
-                    </span>
-                </Link>
-
-                {/* Main Navigation Capsule */}
-                <nav className="hidden md:inline-flex items-center gap-1 bg-[#182232] rounded-full p-1 shadow-sm">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('teams')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                            activeTab === 'teams'
-                                ? 'bg-white text-slate-900 shadow-xs'
-                                : 'text-slate-300 hover:text-white'
-                        }`}
-                    >
-                        Cari Tim
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('explore')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                            activeTab === 'explore'
-                                ? 'bg-white text-slate-900 shadow-xs'
-                                : 'text-slate-300 hover:text-white'
-                        }`}
-                    >
-                        Eksplor Lomba
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('categories')}
-                        className={`px-3 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                            activeTab === 'categories'
-                                ? 'bg-white text-slate-900 shadow-xs'
-                                : 'text-slate-300 hover:text-white'
-                        }`}
-                    >
-                        Kategori
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('my_competitions')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
-                            activeTab === 'my_competitions'
-                                ? 'bg-white text-slate-900 shadow-xs'
-                                : 'text-slate-300 hover:text-white'
-                        }`}
-                    >
-                        <span>Lomba Saya</span>
-                        {(bookmarkedIds.length > 0 || myApplications.length > 0 || myTeams.length > 0) && (
-                            <span className="size-1.5 rounded-full bg-blue-400" />
-                        )}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('recommendations')}
-                        className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
-                            activeTab === 'recommendations'
-                                ? 'bg-white text-slate-900 shadow-xs'
-                                : 'text-slate-300 hover:text-white'
-                        }`}
-                    >
-                        Rekomendasi
-                    </button>
-                </nav>
-
-                {/* Right Actions: + Bikin Tim & Avatar */}
-                <div className="flex items-center gap-3">
-                    <Link
-                        href={route('competitions.create')}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                    >
-                        <Plus className="size-3.5" />
-                        <span>Bikin Tim</span>
+            {/* Giant Smooth Rounded Container matching Dashboard */}
+            <div className="mx-auto max-w-[1400px] bg-[#fbfcfd] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-7 lg:p-9 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-slate-200/60">
+                {/* 1. TOP NAVBAR (Unified Across Dashboard & Competition Hub) */}
+                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                    {/* Brand Logo */}
+                    <Link href="/dashboard" className="flex items-center gap-2.5 group">
+                        <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:bg-blue-700 transition">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2.5" />
+                                <circle cx="18" cy="8.5" r="2.5" />
+                                <circle cx="18" cy="15.5" r="2.5" />
+                                <circle cx="12" cy="19" r="2.5" />
+                                <circle cx="6" cy="15.5" r="2.5" />
+                                <circle cx="6" cy="8.5" r="2.5" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                        </div>
+                        <span className="text-xl font-bold tracking-tight text-slate-900">
+                            RakitCampus
+                        </span>
                     </Link>
 
-                    {currentUserInfo ? (
+                    {/* Navigation Capsule / Pills */}
+                    <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70">
                         <Link
-                            href={route('onboarding')}
-                            title="Lengkapi Biodata / Profil"
-                            className="size-9 rounded-full bg-white border border-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center hover:border-blue-400 transition cursor-pointer shadow-xs"
+                            href="/dashboard"
+                            className="px-5 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                        >
+                            Dashboard
+                        </Link>
+                        <Link
+                            href="/competitions"
+                            className="px-5 py-2 rounded-full text-xs sm:text-sm font-semibold bg-[#2563eb] text-white shadow-sm transition"
+                        >
+                            Lomba
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActiveTab('my_competitions');
+                                setMySubTab('teams');
+                            }}
+                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition cursor-pointer ${
+                                activeTab === 'my_competitions' && mySubTab === 'teams'
+                                    ? 'bg-[#2563eb] text-white shadow-sm'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Tim Saya
+                        </button>
+                        <Link
+                            href="/workspace"
+                            className="px-4 py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition"
+                        >
+                            Task Board
+                        </Link>
+                    </nav>
+
+                    {/* Right User Actions */}
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href="/settings/profile"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+                            title="Pengaturan"
+                        >
+                            <Settings className="w-5 h-5 stroke-[1.75]" />
+                        </Link>
+                        <Link
+                            href="/notifications"
+                            className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative transition"
+                            title="Notifikasi"
+                        >
+                            <Bell className="w-5 h-5 stroke-[1.75]" />
+                            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                        </Link>
+                        <Link
+                            href={currentUserInfo ? "/settings/profile" : "/login"}
+                            className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-500 text-white font-bold text-xs flex items-center justify-center ring-2 ring-slate-100 shadow-2xs overflow-hidden"
+                            title={currentUserInfo?.name || "Profil"}
                         >
                             {userInitials}
                         </Link>
-                    ) : (
-                        <Link
-                            href={route('login')}
-                            className="text-xs font-bold text-slate-700 hover:text-slate-900 px-2"
+                    </div>
+                </header>
+
+                {/* 2. SUB-NAVIGATION & ACTION TOOLBAR (Dashboard Style) */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-6 mb-4">
+                    {/* View Switcher Pills */}
+                    <div className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('teams')}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                                activeTab === 'teams'
+                                    ? 'bg-white text-slate-900 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
                         >
-                            Masuk
-                        </Link>
-                    )}
-                </div>
-            </header>
+                            Cari Tim
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('explore')}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                                activeTab === 'explore'
+                                    ? 'bg-white text-slate-900 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Eksplor Lomba
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('categories')}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                                activeTab === 'categories'
+                                    ? 'bg-white text-slate-900 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Kategori
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('my_competitions')}
+                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
+                                activeTab === 'my_competitions'
+                                    ? 'bg-white text-slate-900 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <span>Lomba Saya</span>
+                            {(bookmarkedIds.length > 0 || myApplications.length > 0 || myTeams.length > 0) && (
+                                <span className="size-1.5 rounded-full bg-blue-600" />
+                            )}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('recommendations')}
+                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
+                                activeTab === 'recommendations'
+                                    ? 'bg-white text-slate-900 shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            Rekomendasi
+                        </button>
+                    </div>
 
-            {/* Mobile Navigation Bar */}
-            <div className="md:hidden max-w-6xl mx-auto px-4 pt-2">
-                <div className="bg-[#182232] rounded-2xl p-1 flex items-center justify-around shadow-sm text-xs font-bold">
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('teams')}
-                        className={`px-2.5 py-1.5 rounded-xl transition ${
-                            activeTab === 'teams' ? 'bg-white text-slate-900' : 'text-slate-300'
-                        }`}
+                    {/* Right CTA Button */}
+                    <Link
+                        href={route('competitions.create')}
+                        className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-full px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition self-start sm:self-auto shrink-0"
                     >
-                        Cari Tim
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('explore')}
-                        className={`px-2.5 py-1.5 rounded-xl transition ${
-                            activeTab === 'explore' ? 'bg-white text-slate-900' : 'text-slate-300'
-                        }`}
-                    >
-                        Lomba
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('categories')}
-                        className={`px-2.5 py-1.5 rounded-xl transition ${
-                            activeTab === 'categories' ? 'bg-white text-slate-900' : 'text-slate-300'
-                        }`}
-                    >
-                        Kategori
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('my_competitions')}
-                        className={`px-2.5 py-1.5 rounded-xl transition ${
-                            activeTab === 'my_competitions' ? 'bg-white text-slate-900' : 'text-slate-300'
-                        }`}
-                    >
-                        Lomba Saya
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setActiveTab('recommendations')}
-                        className={`px-2.5 py-1.5 rounded-xl transition ${
-                            activeTab === 'recommendations' ? 'bg-white text-slate-900' : 'text-slate-300'
-                        }`}
-                    >
-                        Match
-                    </button>
+                        <Plus className="w-4 h-4 stroke-[2.5]" />
+                        <span>Bikin Tim</span>
+                    </Link>
                 </div>
-            </div>
-
-            {/* Refresh link matching MinSatu */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-end pt-2">
-                <button
-                    type="button"
-                    onClick={() => router.get('/competitions', { tab: activeTab })}
-                    className="text-[11px] text-slate-400 hover:text-slate-600 transition cursor-pointer"
-                >
-                    Muat ulang
-                </button>
-            </div>
 
             {/* MAIN CONTENT */}
             <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 space-y-8">
@@ -1769,17 +1761,26 @@ export default function CompetitionIndex({
                 currentUserInfo={currentUserInfo}
             />
 
-            {/* FOOTER */}
-            <footer className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 mt-16 border-t border-slate-200/70 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <p className="max-w-md leading-relaxed text-slate-500">
-                    rakitcampus adalah ekosistem kolaborasi dan informasi kompetisi mahasiswa. Kontak kamu dijaga dan baru dibuka ke rekan tim saat kamu mengajukan diri atau berdiskusi.
-                </p>
-                <div className="flex items-center gap-4 text-slate-600 font-medium shrink-0">
-                    <a href="#" className="hover:text-slate-900">Tentang Kami</a>
-                    <a href="#" className="hover:text-slate-900">Kebijakan Privasi</a>
-                    <a href="#" className="hover:text-slate-900">Syarat & Ketentuan</a>
-                </div>
-            </footer>
+                {/* FOOTER */}
+                <footer className="pt-16 mt-16 border-t border-slate-200/70 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="max-w-md leading-relaxed text-slate-500">
+                        rakitcampus adalah ekosistem kolaborasi dan informasi kompetisi mahasiswa. Kontak kamu dijaga dan baru dibuka ke rekan tim saat kamu mengajukan diri atau berdiskusi.
+                    </p>
+                    <div className="flex items-center gap-4 text-slate-600 font-medium shrink-0">
+                        <a href="#" className="hover:text-slate-900">Tentang Kami</a>
+                        <a href="#" className="hover:text-slate-900">Kebijakan Privasi</a>
+                        <a href="#" className="hover:text-slate-900">Syarat & Ketentuan</a>
+                    </div>
+                </footer>
+            </div>
+
+            {/* MinSatu Apply Modal */}
+            <ApplyCompetitionTeamModal
+                isOpen={applyModalOpen}
+                onClose={() => setApplyModalOpen(false)}
+                teamData={selectedTeamData}
+                currentUserInfo={currentUserInfo}
+            />
         </div>
     );
 }
