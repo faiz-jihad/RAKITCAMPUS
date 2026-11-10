@@ -1,27 +1,21 @@
 import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
-import AppLayout from '@/layouts/app-layout';
-import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowRight,
-    Award,
+    ArrowUpRight,
     Briefcase,
     Calendar,
-    CheckCircle2,
     Clock,
-    Globe,
+    FolderKanban,
     MessageSquare,
     Plus,
     Search,
-    ShieldCheck,
-    Sparkles,
-    Trophy,
     User,
     Users,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface Competition {
     id: number;
@@ -31,8 +25,6 @@ interface Competition {
     description: string;
     category: string;
     level?: string;
-    competition_type?: string;
-    scope: string;
     registration_deadline: string | null;
     min_team_size: number;
     max_team_size: number;
@@ -99,6 +91,30 @@ interface RecruitingTeam {
     } | null;
 }
 
+interface MyApplication {
+    id: number;
+    status: string;
+    role_name: string;
+    message?: string;
+    contact_phone?: string;
+    created_at?: string;
+    team_name: string;
+    competition_name: string;
+    organizer?: string;
+    leader_name?: string;
+    participation_id?: number;
+}
+
+interface MyTeam {
+    id: number;
+    stage: string;
+    team_name?: string;
+    competition_name?: string;
+    is_leader: boolean;
+    members_count: number;
+    max_size?: number;
+}
+
 interface Props {
     competitions: {
         data: Competition[];
@@ -107,6 +123,9 @@ interface Props {
         total: number;
     };
     openRecruitingTeams?: RecruitingTeam[];
+    totalNeededSlots?: number;
+    myApplications?: MyApplication[];
+    myTeams?: MyTeam[];
     currentUserInfo?: {
         id?: number;
         name?: string;
@@ -133,52 +152,41 @@ interface Props {
         open_registration: number;
         national_international: number;
         open_teams_count: number;
+        total_needed_slots?: number;
         my_participations: number;
     };
     activeParticipation?: any;
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Beranda', href: '/' },
-    { title: 'Lomba & Kompetisi', href: '/competitions' },
-];
-
 export default function CompetitionIndex({
     competitions,
     openRecruitingTeams = [],
+    totalNeededSlots = 2,
+    myApplications = [],
+    myTeams = [],
     currentUserInfo,
     categories,
-    statuses,
-    levels = ['local', 'regional', 'national', 'international'],
     filters,
-    stats,
-    activeParticipation,
 }: Props) {
-    const [activeTab, setActiveTab] = useState<'teams' | 'competitions'>(
-        (filters.tab as 'teams' | 'competitions') || 'teams'
+    const [activeTab, setActiveTab] = useState<'teams' | 'applications' | 'my_teams'>(
+        (filters.tab as any) || 'teams'
     );
 
-    // MinSatu Team Explorer Filter States
+    // Filter States
     const [teamSearch, setTeamSearch] = useState(filters.team_search || '');
     const [teamCategory, setTeamCategory] = useState(filters.team_category || '');
     const [teamRole, setTeamRole] = useState(filters.team_role || '');
-
-    // Competitions Catalog Filter States
-    const [search, setSearch] = useState(filters.search || '');
-    const [category, setCategory] = useState(filters.category || '');
-    const [status, setStatus] = useState(filters.status || '');
-    const [level, setLevel] = useState(filters.level || '');
 
     // MinSatu Apply Modal State
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
-    const handleTeamFilterSubmit = (e?: React.FormEvent) => {
+    const handleFilterSubmit = (e?: React.FormEvent) => {
         if (e) e.preventDefault();
         router.get(
             '/competitions',
             {
-                tab: 'teams',
+                tab: activeTab,
                 team_search: teamSearch,
                 team_category: teamCategory,
                 team_role: teamRole,
@@ -187,24 +195,11 @@ export default function CompetitionIndex({
         );
     };
 
-    const handleCatalogSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(
-            '/competitions',
-            { tab: 'competitions', search, category, status, level },
-            { preserveState: true }
-        );
-    };
-
-    const handleCatalogFilterChange = (cat: string, stat: string, lvl: string) => {
-        setCategory(cat);
-        setStatus(stat);
-        setLevel(lvl);
-        router.get(
-            '/competitions',
-            { tab: 'competitions', search, category: cat, status: stat, level: lvl },
-            { preserveState: true }
-        );
+    const handleResetFilter = () => {
+        setTeamSearch('');
+        setTeamCategory('');
+        setTeamRole('');
+        router.get('/competitions', { tab: activeTab });
     };
 
     const openApplyModal = (part: RecruitingTeam) => {
@@ -219,646 +214,684 @@ export default function CompetitionIndex({
         setApplyModalOpen(true);
     };
 
-    const commonRoleFilters = [
-        { label: 'Semua Peran', value: '' },
-        { label: 'UI/UX Designer', value: 'UI/UX' },
-        { label: 'Frontend / Web', value: 'Frontend' },
-        { label: 'Backend / AI', value: 'Backend' },
-        { label: 'Hustler / Bisnis', value: 'Hustler' },
-        { label: 'Karya Tulis / Riset', value: 'Peneliti' },
+    // User Initials
+    const userInitials = useMemo(() => {
+        if (!currentUserInfo?.name) return 'FA';
+        const parts = currentUserInfo.name.trim().split(/\s+/);
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }, [currentUserInfo]);
+
+    const commonRoleOptions = [
+        'UI/UX',
+        'Frontend',
+        'Backend',
+        'Machine Learning',
+        'Hustler',
+        'Paper',
     ];
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Competition Hub — Cari Rekan Tim & Katalog Kompetisi" />
+        <div className="min-h-screen bg-[#FAF9F5] text-slate-900 font-sans pb-24 selection:bg-blue-100 selection:text-blue-900">
+            <Head title="Cari Rekan Tim Lomba & Hackathon — RakitCampus" />
 
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
-                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-                <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-amber-100/40 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
-                    {/* Header Banner */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-7 relative overflow-hidden bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm border border-white/80">
-                        <div className="max-w-2xl">
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                Eksplor Tim & Kompetisi
-                            </h1>
-                            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                                Cari rekan tim lomba atau ajukan diri ke tim yang sedang membuka lowongan.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                            <Link
-                                href={route('competitions.create')}
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow-md transition cursor-pointer"
-                            >
-                                <Plus className="size-4" />
-                                <span>Daftarkan Lomba</span>
-                            </Link>
-                        </div>
+            {/* TOP NAVBAR (Exact MinSatu Pattern) */}
+            <header className="max-w-6xl mx-auto px-4 sm:px-6 pt-5 pb-3 flex items-center justify-between">
+                {/* Brand Logo */}
+                <Link href="/competitions" className="flex items-center gap-2 group">
+                    <div className="size-7 text-blue-600 flex items-center justify-center">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                            <path d="M4 4h10l6 6v10H4V4z" />
+                        </svg>
                     </div>
+                    <span className="font-black text-xl tracking-tight text-slate-900">
+                        rakit<span className="text-blue-600">campus</span>
+                    </span>
+                </Link>
 
-                    {/* Active Workspace Banner if User is Competing */}
-                    {activeParticipation && (
-                        <div className="glass-card rounded-2xl p-4 sm:p-5 bg-gradient-to-r from-blue-50/90 to-indigo-50/90 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                    <Trophy className="size-5" />
-                                </div>
-                                <div>
-                                    <div className="text-xs font-bold text-blue-900">
-                                        Tim Anda Sedang Berkompetisi di {activeParticipation.competition?.name}
-                                    </div>
-                                    <p className="text-[11px] text-blue-700/80 mt-0.5">
-                                        Nama Tim: <strong>{activeParticipation.team?.name}</strong> • Tahap:{' '}
-                                        <span className="capitalize">{activeParticipation.stage?.replace('_', ' ')}</span>
-                                    </p>
-                                </div>
-                            </div>
-                            <Link
-                                href={route('competitions.workspace', activeParticipation.id)}
-                                className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shrink-0"
-                            >
-                                <span>Buka Workspace Tim</span>
-                                <ArrowRight className="size-3.5" />
-                            </Link>
-                        </div>
-                    )}
+                {/* Dark Navigation Pill (Cari Tim | Pengajuan | Timku) */}
+                <nav className="bg-[#182232] rounded-full p-1 flex items-center gap-1 shadow-sm">
+                    <button
+                        onClick={() => setActiveTab('teams')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer ${
+                            activeTab === 'teams'
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-300 hover:text-white'
+                        }`}
+                    >
+                        Cari Tim
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('applications')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                            activeTab === 'applications'
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-300 hover:text-white'
+                        }`}
+                    >
+                        <span>Pengajuan</span>
+                        {myApplications.length > 0 && (
+                            <span className="size-1.5 rounded-full bg-blue-400" />
+                        )}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('my_teams')}
+                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                            activeTab === 'my_teams'
+                                ? 'bg-white text-slate-900 shadow-xs'
+                                : 'text-slate-300 hover:text-white'
+                        }`}
+                    >
+                        <span>Timku</span>
+                        {myTeams.length > 0 && (
+                            <span className="size-1.5 rounded-full bg-emerald-400" />
+                        )}
+                    </button>
+                </nav>
 
-                    {/* Stats Overview */}
-                    {stats && (
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div
-                                onClick={() => setActiveTab('teams')}
-                                className={`glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
-                                    activeTab === 'teams' ? 'ring-2 ring-blue-500 shadow-md' : 'hover:border-blue-200'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="text-xs font-bold text-blue-700 uppercase tracking-wide">
-                                        Tim Merekrut
-                                    </span>
-                                    <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                        <Users className="size-4" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-blue-700 tracking-tight">
-                                    {stats.open_teams_count || openRecruitingTeams.length}
-                                </div>
-                            </div>
+                {/* Right Actions: + Bikin Tim & Avatar */}
+                <div className="flex items-center gap-3">
+                    <Link
+                        href={route('competitions.create')}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                    >
+                        <Plus className="size-3.5" />
+                        <span>Bikin Tim</span>
+                    </Link>
 
-                            <div
-                                onClick={() => setActiveTab('competitions')}
-                                className={`glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between cursor-pointer transition ${
-                                    activeTab === 'competitions' ? 'ring-2 ring-blue-500 shadow-md' : 'hover:border-blue-200'
-                                }`}
-                            >
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                                        Total Kompetisi
-                                    </span>
-                                    <div className="size-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
-                                        <Trophy className="size-4" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                    {stats.total}
-                                </div>
-                            </div>
-
-                            <div className="glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">
-                                        Pendaftaran Buka
-                                    </span>
-                                    <div className="size-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                        <Calendar className="size-4" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-emerald-700 tracking-tight">
-                                    {stats.open_registration}
-                                </div>
-                            </div>
-
-                            <div className="glass-card rounded-2xl p-4 sm:p-5 bg-white/85 flex flex-col justify-between">
-                                <div className="flex items-center justify-between gap-2 mb-1">
-                                    <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">
-                                        Partisipasi Saya
-                                    </span>
-                                    <div className="size-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                        <Award className="size-4" />
-                                    </div>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-amber-800 tracking-tight">
-                                    {stats.my_participations}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Dual-Tab Switcher */}
-                    <div className="flex items-center gap-3 p-1.5 bg-slate-200/80 rounded-2xl w-fit">
-                        <button
-                            onClick={() => {
-                                setActiveTab('teams');
-                                router.get('/competitions', { tab: 'teams' }, { preserveState: true });
-                            }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                                activeTab === 'teams'
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                            }`}
+                    {currentUserInfo ? (
+                        <Link
+                            href={route('onboarding')}
+                            title="Lengkapi Biodata / Profil"
+                            className="size-9 rounded-full bg-white border border-slate-200 text-slate-900 font-bold text-xs flex items-center justify-center hover:border-blue-400 transition cursor-pointer shadow-xs"
                         >
-                            <Users className="size-4 text-blue-600" />
-                            <span>Eksplor Tim</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-extrabold">
-                                {openRecruitingTeams.length}
-                            </span>
-                        </button>
-
-                        <button
-                            onClick={() => {
-                                setActiveTab('competitions');
-                                router.get('/competitions', { tab: 'competitions' }, { preserveState: true });
-                            }}
-                            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                                activeTab === 'competitions'
-                                    ? 'bg-white text-blue-600 shadow-sm'
-                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                            }`}
+                            {userInitials}
+                        </Link>
+                    ) : (
+                        <Link
+                            href={route('login')}
+                            className="text-xs font-bold text-slate-700 hover:text-slate-900 px-2"
                         >
-                            <Trophy className="size-4 text-amber-600" />
-                            <span>Katalog Lomba</span>
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 font-extrabold">
-                                {competitions.total}
-                            </span>
-                        </button>
-                    </div>
-
-                    {/* TAB 1: MINSATU TEAM EXPLORER */}
-                    {activeTab === 'teams' && (
-                        <div className="space-y-6 animate-in fade-in">
-                            {/* Filter Bar for Teams */}
-                            <div className="glass-card rounded-2xl p-4 bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <form onSubmit={handleTeamFilterSubmit} className="relative w-full md:w-96">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Cari tim, ide proyek, atau nama lomba..."
-                                        value={teamSearch}
-                                        onChange={(e) => setTeamSearch(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition"
-                                    />
-                                </form>
-
-                                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                                    <select
-                                        value={teamCategory}
-                                        onChange={(e) => {
-                                            setTeamCategory(e.target.value);
-                                            router.get(
-                                                '/competitions',
-                                                { tab: 'teams', team_search: teamSearch, team_category: e.target.value, team_role: teamRole },
-                                                { preserveState: true }
-                                            );
-                                        }}
-                                        className="text-xs bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                                    >
-                                        <option value="">Semua Kategori Lomba</option>
-                                        {categories.map((c) => (
-                                            <option key={c} value={c}>
-                                                {c.replace('_', ' ').toUpperCase()}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {(teamSearch || teamCategory || teamRole) && (
-                                        <button
-                                            onClick={() => {
-                                                setTeamSearch('');
-                                                setTeamCategory('');
-                                                setTeamRole('');
-                                                router.get('/competitions', { tab: 'teams' });
-                                            }}
-                                            className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                                        >
-                                            Reset Filter
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Quick Role Badges Pills */}
-                            <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-                                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
-                                    Cari Peran:
-                                </span>
-                                {commonRoleFilters.map((rf) => (
-                                    <button
-                                        key={rf.value}
-                                        onClick={() => {
-                                            setTeamRole(rf.value);
-                                            router.get(
-                                                '/competitions',
-                                                { tab: 'teams', team_search: teamSearch, team_category: teamCategory, team_role: rf.value },
-                                                { preserveState: true }
-                                            );
-                                        }}
-                                        className={`px-3 py-1.5 rounded-full font-bold transition whitespace-nowrap cursor-pointer ${
-                                            teamRole === rf.value
-                                                ? 'bg-blue-600 text-white shadow-xs'
-                                                : 'bg-white border border-slate-200/90 text-slate-700 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {rf.label}
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Open Recruiting Teams Grid */}
-                            {openRecruitingTeams.length === 0 ? (
-                                <div className="glass-card rounded-3xl p-14 text-center bg-white/85 border border-dashed border-slate-300">
-                                    <div className="size-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 shadow-inner">
-                                        <Users className="size-8" />
-                                    </div>
-                                    <h3 className="text-base font-bold text-slate-900">
-                                        Belum Ada Tim yang Sedang Merekrut
-                                    </h3>
-                                    <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
-                                        Jadilah pemimpin tim pertama! Pilih kompetisi dari tab "Katalog Semua Kompetisi", bentuk tim baru, dan buka rekrutmen anggota untuk mengajak rekan se-kampus.
-                                    </p>
-                                    <button
-                                        onClick={() => setActiveTab('competitions')}
-                                        className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
-                                    >
-                                        <span>Lihat Katalog Kompetisi</span>
-                                        <ArrowRight className="size-3.5" />
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                    {openRecruitingTeams.map((part) => {
-                                        const comp = part.competition;
-                                        const team = part.team;
-                                        const roles = team?.recruitment?.roles || [];
-                                        const membersCount = team?.members_count || 1;
-                                        const maxCap = comp.max_team_size || 5;
-                                        const isFull = membersCount >= maxCap;
-
-                                        return (
-                                            <div
-                                                key={part.id}
-                                                className="glass-card rounded-3xl p-6 bg-white/85 hover:bg-white/95 border border-white/80 hover:border-blue-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-5 group relative"
-                                            >
-                                                <div>
-                                                    {/* Top Badges */}
-                                                    <div className="flex items-start justify-between gap-2 mb-3">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
-                                                                {comp.category?.replace('_', ' ') || 'Kompetisi'}
-                                                            </span>
-                                                            {part.category_track && (
-                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700">
-                                                                    Track: {part.category_track}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 shrink-0">
-                                                            <CheckCircle2 className="size-3" />
-                                                            <span>Open Recruitment</span>
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Target Competition Info */}
-                                                    <div className="text-[11px] font-semibold text-slate-500 mb-1 flex items-center gap-1.5">
-                                                        <Trophy className="size-3 text-amber-500 shrink-0" />
-                                                        <Link
-                                                            href={route('competitions.show', comp.id)}
-                                                            className="hover:text-blue-600 transition truncate underline-offset-2 hover:underline"
-                                                        >
-                                                            {comp.name}
-                                                        </Link>
-                                                    </div>
-
-                                                    {/* Team Name */}
-                                                    <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                        {team?.name}
-                                                    </h3>
-
-                                                    {/* Team Description / Tagline */}
-                                                    <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
-                                                        {team?.description || 'Tim kompetisi sedang mempersiapkan karya inovasi terbaik dan mencari rekan anggota.'}
-                                                    </p>
-
-                                                    {/* Team Leader Card */}
-                                                    {team?.leader && (
-                                                        <div className="mt-3.5 p-2.5 rounded-2xl bg-slate-50/90 border border-slate-100 flex items-center gap-2.5">
-                                                            <div className="size-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                                                {team.leader.name.charAt(0)}
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <div className="text-xs font-bold text-slate-900 truncate">
-                                                                    {team.leader.name}
-                                                                </div>
-                                                                <div className="text-[10px] text-slate-500 truncate">
-                                                                    Ketua Tim • {team.leader.study_program || 'Mahasiswa'}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    )}
-
-                                                    {/* Required Roles Badges */}
-                                                    <div className="mt-4">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                                                            Kebutuhan:
-                                                        </span>
-                                                        {roles.length > 0 ? (
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {roles.map((r) => (
-                                                                    <span
-                                                                        key={r.id}
-                                                                        className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 border border-purple-200/70"
-                                                                    >
-                                                                        <Briefcase className="size-3" />
-                                                                        <span>{r.name}</span>
-                                                                        <span className="text-[9px] px-1.5 py-0.2 bg-purple-200/60 text-purple-900 rounded-full font-black">
-                                                                            {r.slots}
-                                                                        </span>
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        ) : (
-                                                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-                                                                <Briefcase className="size-3 text-slate-400" />
-                                                                <span>Semua peran terbuka</span>
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Capacity Progress Bar */}
-                                                    <div className="mt-4 pt-3 border-t border-slate-100">
-                                                        <div className="flex items-center justify-between text-[11px] font-bold mb-1">
-                                                            <span className="text-slate-500">Kapasitas</span>
-                                                            <span className="text-slate-900">
-                                                                {membersCount} / {maxCap} Anggota
-                                                            </span>
-                                                        </div>
-                                                        <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                                            <div
-                                                                className={`h-full rounded-full transition-all duration-300 ${
-                                                                    isFull ? 'bg-amber-500' : 'bg-blue-600'
-                                                                }`}
-                                                                style={{ width: `${Math.min(100, (membersCount / maxCap) * 100)}%` }}
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* MinSatu CTA Action */}
-                                                <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-3">
-                                                    <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                                                        <Calendar className="size-3.5 text-slate-400" />
-                                                        <span>
-                                                            {comp.registration_deadline
-                                                                ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
-                                                                      day: 'numeric',
-                                                                      month: 'short',
-                                                                  })
-                                                                : 'Terbuka'}
-                                                        </span>
-                                                    </div>
-
-                                                    {part.is_leader ? (
-                                                        <Link
-                                                            href={route('competitions.workspace', part.id)}
-                                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
-                                                        >
-                                                            <span>Buka Workspace</span>
-                                                            <ArrowRight className="size-3" />
-                                                        </Link>
-                                                    ) : part.is_member ? (
-                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                                                            <CheckCircle2 className="size-3.5" />
-                                                            <span>Anggota Tim</span>
-                                                        </span>
-                                                    ) : part.my_application ? (
-                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200">
-                                                            <Clock className="size-3.5" />
-                                                            <span>Lamaran Terkirim</span>
-                                                        </span>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => openApplyModal(part)}
-                                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-sm hover:shadow cursor-pointer"
-                                                        >
-                                                            <Sparkles className="size-3.5" />
-                                                            <span>Ajukan Diri</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* TAB 2: COMPETITIONS CATALOG */}
-                    {activeTab === 'competitions' && (
-                        <div className="space-y-6 animate-in fade-in">
-                            {/* Filter Bar */}
-                            <div className="glass-card rounded-2xl p-4 bg-white/85 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <form onSubmit={handleCatalogSearch} className="relative w-full md:w-96">
-                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="Cari nama kompetisi, penyelenggara, topik..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition"
-                                    />
-                                </form>
-
-                                <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-                                    <select
-                                        value={category}
-                                        onChange={(e) => handleCatalogFilterChange(e.target.value, status, level)}
-                                        className="text-xs bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                                    >
-                                        <option value="">Semua Kategori</option>
-                                        {categories.map((c) => (
-                                            <option key={c} value={c}>
-                                                {c.replace('_', ' ').toUpperCase()}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={level}
-                                        onChange={(e) => handleCatalogFilterChange(category, status, e.target.value)}
-                                        className="text-xs bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                                    >
-                                        <option value="">Semua Tingkat</option>
-                                        {levels.map((lvl) => (
-                                            <option key={lvl} value={lvl}>
-                                                {lvl.toUpperCase()}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        value={status}
-                                        onChange={(e) => handleCatalogFilterChange(category, e.target.value, level)}
-                                        className="text-xs bg-white border border-slate-200/90 rounded-xl px-3.5 py-2.5 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                                    >
-                                        <option value="">Semua Status</option>
-                                        {statuses.map((s) => (
-                                            <option key={s} value={s}>
-                                                {s.replace('_', ' ').toUpperCase()}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {(category || status || level || search) && (
-                                        <button
-                                            onClick={() => {
-                                                setSearch('');
-                                                setCategory('');
-                                                setStatus('');
-                                                setLevel('');
-                                                router.get('/competitions', { tab: 'competitions' });
-                                            }}
-                                            className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                                        >
-                                            Reset
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* Competitions Grid */}
-                            {competitions.data.length === 0 ? (
-                                <div className="glass-card rounded-3xl p-14 text-center bg-white/85">
-                                    <div className="size-14 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mx-auto mb-3">
-                                        <Trophy className="size-7" />
-                                    </div>
-                                    <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                                        Tidak Ada Kompetisi yang Ditemukan
-                                    </h3>
-                                    <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
-                                        Coba sesuaikan kata kunci atau bersihkan filter untuk menampilkan lebih banyak daftar kompetisi aktif.
-                                    </p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                    {competitions.data.map((comp) => {
-                                        const formattedDeadline = comp.registration_deadline
-                                            ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
-                                                  day: 'numeric',
-                                                  month: 'short',
-                                                  year: 'numeric',
-                                              })
-                                            : 'Terbuka';
-
-                                        return (
-                                            <div
-                                                key={comp.id}
-                                                className="glass-card rounded-3xl p-6 bg-white/85 hover:bg-white/95 border border-white/85 hover:border-blue-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between gap-5 group"
-                                            >
-                                                <div>
-                                                    <div className="flex items-start justify-between gap-2 mb-3">
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
-                                                                {comp.category?.replace('_', ' ') || 'Kompetisi'}
-                                                            </span>
-                                                            {comp.level && (
-                                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700">
-                                                                    {comp.level}
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                        {comp.verification_status === 'verified' && (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
-                                                                <ShieldCheck className="size-3" />
-                                                                <span>Terverifikasi</span>
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                        <Link href={route('competitions.show', comp.id)}>
-                                                            {comp.name}
-                                                        </Link>
-                                                    </h3>
-
-                                                    <p className="text-xs font-semibold text-slate-500 mt-1">
-                                                        {comp.organizer}
-                                                    </p>
-
-                                                    <p className="text-xs text-slate-600 mt-3 line-clamp-2 leading-relaxed">
-                                                        {comp.description || 'Kompetisi mahasiswa dengan peluang kolaborasi tim berimbang.'}
-                                                    </p>
-
-                                                    {comp.prize_info && (
-                                                        <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 text-[11px] font-semibold border border-amber-200/70">
-                                                            <Trophy className="size-3 text-amber-600" />
-                                                            <span className="truncate max-w-[260px]">{comp.prize_info}</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <div className="border-t border-slate-100 pt-4 flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-4 text-slate-500">
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <Calendar className="size-3.5 text-slate-400" />
-                                                            <span>{formattedDeadline}</span>
-                                                        </span>
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <Users className="size-3.5 text-slate-400" />
-                                                            <span>
-                                                                {comp.min_team_size} - {comp.max_team_size} mhs
-                                                            </span>
-                                                        </span>
-                                                    </div>
-
-                                                    <Link
-                                                        href={route('competitions.show', comp.id)}
-                                                        className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 transition"
-                                                    >
-                                                        <span>Detail</span>
-                                                        <ArrowRight className="size-3.5" />
-                                                    </Link>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-
-                            {/* Pagination */}
-                            {competitions.last_page > 1 && (
-                                <div className="flex items-center justify-center gap-2 pt-6">
-                                    {Array.from({ length: competitions.last_page }).map((_, i) => (
-                                        <Link
-                                            key={i}
-                                            href={`/competitions?tab=competitions&page=${i + 1}&category=${category}&status=${status}&level=${level}&search=${search}`}
-                                            className={`size-8 rounded-xl text-xs font-bold flex items-center justify-center transition ${
-                                                competitions.current_page === i + 1
-                                                    ? 'bg-blue-600 text-white shadow-2xs'
-                                                    : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                                            }`}
-                                        >
-                                            {i + 1}
-                                        </Link>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                            Masuk
+                        </Link>
                     )}
                 </div>
+            </header>
+
+            {/* Refresh link matching screenshot */}
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 flex justify-end">
+                <button
+                    onClick={() => router.get('/competitions')}
+                    className="text-[11px] text-slate-400 hover:text-slate-600 transition cursor-pointer"
+                >
+                    Muat ulang
+                </button>
             </div>
+
+            {/* MAIN CONTAINER */}
+            <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 space-y-8">
+                {/* ========================================================= */}
+                {/* TAB 1: CARI TIM (Exact MinSatu Screenshot Hero & Explorer) */}
+                {/* ========================================================= */}
+                {activeTab === 'teams' && (
+                    <div className="space-y-8">
+                        {/* HERO SECTION (Split 2 Columns) */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-2 sm:py-6">
+                            {/* Left Column: Heading & CTA */}
+                            <div className="lg:col-span-6 space-y-4">
+                                <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+                                    Kurang satu?
+                                    <br />
+                                    <span className="italic font-serif text-blue-600 font-semibold">
+                                        Cari di sini.
+                                    </span>
+                                </h1>
+                                <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
+                                    Cari teman sefrekuensi buat lomba selanjutnya.
+                                </p>
+                                <div className="pt-2">
+                                    <a
+                                        href="#teams-section"
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-blue-600 transition group"
+                                    >
+                                        <span>Cari tim</span>
+                                        <ArrowUpRight className="size-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                    </a>
+                                </div>
+                            </div>
+
+                            {/* Right Column: Signature Royal Blue Team Slots Card */}
+                            <div className="lg:col-span-6">
+                                <div className="bg-[#1E50DE] rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
+                                    {/* Subtle Top Right Mark */}
+                                    <div className="absolute top-5 right-5 text-white/30">
+                                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                                            <path d="M4 4h10l6 6v10H4V4z" />
+                                        </svg>
+                                    </div>
+
+                                    {/* 4 Member Slots Grid */}
+                                    <div className="grid grid-cols-4 gap-2.5 sm:gap-3 pt-2 pb-6">
+                                        {/* Slot 1: Ide */}
+                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
+                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="size-4 text-white" />
+                                            </div>
+                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
+                                                Ide
+                                            </span>
+                                        </div>
+
+                                        {/* Slot 2: Riset */}
+                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
+                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="size-4 text-white" />
+                                            </div>
+                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
+                                                Riset
+                                            </span>
+                                        </div>
+
+                                        {/* Slot 3: Eksekusi */}
+                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
+                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="size-4 text-white" />
+                                            </div>
+                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
+                                                Eksekusi
+                                            </span>
+                                        </div>
+
+                                        {/* Slot 4: White Angled Card "Kamu?" */}
+                                        <div className="bg-white text-blue-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 shadow-lg transform rotate-2 -translate-y-1 text-center">
+                                            <div className="size-7 rounded-full bg-blue-50 flex items-center justify-center">
+                                                <User className="size-4 text-blue-600 stroke-[2.5]" />
+                                            </div>
+                                            <span className="text-[11px] sm:text-xs font-black text-blue-600">
+                                                Kamu?
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Bottom Stats Row Inside Blue Card */}
+                                    <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/15">
+                                        <div>
+                                            <span className="text-[11px] text-white/70 block">
+                                                Lagi buka rekrutmen
+                                            </span>
+                                            <span className="text-xl sm:text-2xl font-black text-white">
+                                                {openRecruitingTeams.length} tim
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span className="text-[11px] text-white/70 block">
+                                                Mereka lagi butuh
+                                            </span>
+                                            <span className="text-xl sm:text-2xl font-black text-white">
+                                                {totalNeededSlots || 2} orang
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* SEARCH & FILTER BAR (Clean White Card) */}
+                        <div
+                            id="teams-section"
+                            className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2.5"
+                        >
+                            <form
+                                onSubmit={handleFilterSubmit}
+                                className="flex-1 flex items-center gap-2 px-3.5 py-2.5 bg-slate-100/70 rounded-xl w-full"
+                            >
+                                <Search className="size-4 text-slate-400 shrink-0" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari lomba, role, atau skill..."
+                                    value={teamSearch}
+                                    onChange={(e) => setTeamSearch(e.target.value)}
+                                    className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
+                                />
+                            </form>
+
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                <select
+                                    value={teamCategory}
+                                    onChange={(e) => {
+                                        setTeamCategory(e.target.value);
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'teams',
+                                                team_search: teamSearch,
+                                                team_category: e.target.value,
+                                                team_role: teamRole,
+                                            },
+                                            { preserveState: true }
+                                        );
+                                    }}
+                                    className="px-3.5 py-2.5 bg-slate-100/70 rounded-xl text-xs font-medium text-slate-700 border-0 focus:ring-0 cursor-pointer"
+                                >
+                                    <option value="">Semua kategori</option>
+                                    {categories.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c.replace('_', ' ').toUpperCase()}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    value={teamRole}
+                                    onChange={(e) => {
+                                        setTeamRole(e.target.value);
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'teams',
+                                                team_search: teamSearch,
+                                                team_category: teamCategory,
+                                                team_role: e.target.value,
+                                            },
+                                            { preserveState: true }
+                                        );
+                                    }}
+                                    className="px-3.5 py-2.5 bg-slate-100/70 rounded-xl text-xs font-medium text-slate-700 border-0 focus:ring-0 cursor-pointer"
+                                >
+                                    <option value="">Semua role</option>
+                                    {commonRoleOptions.map((r) => (
+                                        <option key={r} value={r}>
+                                            {r}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {(teamSearch || teamCategory || teamRole) && (
+                                    <button
+                                        onClick={handleResetFilter}
+                                        className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer shrink-0"
+                                    >
+                                        Hapus filter
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* SECTION HEADER & TEAMS COUNT */}
+                        <div className="flex items-center justify-between pt-2">
+                            <div className="flex items-center gap-2">
+                                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                                    Lagi buka rekrutmen
+                                </h2>
+                                <span className="px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 text-xs font-bold">
+                                    {openRecruitingTeams.length} tim
+                                </span>
+                            </div>
+                            <span className="text-xs text-slate-400 font-medium">
+                                {openRecruitingTeams.length} dari {openRecruitingTeams.length} tim aktif
+                            </span>
+                        </div>
+
+                        {/* OPEN TEAMS GRID (Clean MinSatu Card Layout) */}
+                        {openRecruitingTeams.length === 0 ? (
+                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                <div className="size-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
+                                    <Users className="size-6" />
+                                </div>
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Belum Ada Tim yang Sedang Merekrut
+                                </h3>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
+                                    Bikin tim baru dan buka lowongan untuk mengajak teman se-kampus!
+                                </p>
+                                <Link
+                                    href={route('competitions.create')}
+                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                                >
+                                    <Plus className="size-3.5" />
+                                    <span>Bikin Tim Sekarang</span>
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {openRecruitingTeams.map((part) => {
+                                    const comp = part.competition;
+                                    const team = part.team;
+                                    const roles = team?.recruitment?.roles || [];
+                                    const membersCount = team?.members_count || 1;
+                                    const maxCap = comp.max_team_size || 5;
+
+                                    const formattedDeadline = comp.registration_deadline
+                                        ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          })
+                                        : 'Terbuka';
+
+                                    return (
+                                        <div
+                                            key={part.id}
+                                            className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between gap-5"
+                                        >
+                                            <div>
+                                                {/* Top Row: Category & Deadline */}
+                                                <div className="flex items-start justify-between gap-2 mb-3">
+                                                    <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
+                                                        {comp.category?.replace('_', ' ') || 'HACKATHON'}
+                                                    </span>
+                                                    <div className="text-right">
+                                                        <span className="text-[10px] text-slate-400 block font-medium">
+                                                            Deadline daftar
+                                                        </span>
+                                                        <span className="text-xs font-bold text-slate-800">
+                                                            {formattedDeadline}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Competition Title */}
+                                                <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
+                                                    <Link
+                                                        href={route('competitions.show', comp.id)}
+                                                        className="hover:text-blue-600 transition"
+                                                    >
+                                                        {comp.name}
+                                                    </Link>
+                                                </h3>
+
+                                                {/* Organizer */}
+                                                <p className="text-xs font-semibold text-slate-400 mt-0.5">
+                                                    {comp.organizer || 'Kampus'}
+                                                </p>
+
+                                                {/* Team Info Box */}
+                                                <div className="mt-3.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                                                    <div className="text-xs font-bold text-slate-900">
+                                                        Tim {team?.name}
+                                                    </div>
+                                                    <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
+                                                        {team?.description || 'Tim kompetisi sedang mempersiapkan karya terbaik.'}
+                                                    </p>
+                                                </div>
+
+                                                {/* Roles Badges */}
+                                                <div className="mt-4">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                                                        Kebutuhan:
+                                                    </span>
+                                                    {roles.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {roles.map((r) => (
+                                                                <span
+                                                                    key={r.id}
+                                                                    className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 border border-purple-200/60"
+                                                                >
+                                                                    <Briefcase className="size-3" />
+                                                                    <span>{r.name}</span>
+                                                                    <span className="text-[9px] px-1.5 py-0.2 bg-purple-200/70 text-purple-900 rounded-full font-black">
+                                                                        {r.slots}
+                                                                    </span>
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
+                                                            Semua peran terbuka
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Capacity Bar */}
+                                                <div className="mt-4 pt-3 border-t border-slate-100">
+                                                    <div className="flex items-center justify-between text-[11px] font-bold mb-1">
+                                                        <span className="text-slate-400">Kapasitas</span>
+                                                        <span className="text-slate-900">
+                                                            {membersCount} / {maxCap} Anggota
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full rounded-full bg-blue-600 transition-all"
+                                                            style={{
+                                                                width: `${Math.min(100, (membersCount / maxCap) * 100)}%`,
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Action Button */}
+                                            <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-3">
+                                                {team?.leader && (
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <div className="size-7 rounded-full bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0">
+                                                            {team.leader.name.charAt(0)}
+                                                        </div>
+                                                        <div className="text-xs truncate">
+                                                            <div className="font-bold text-slate-900 truncate">
+                                                                {team.leader.name}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 truncate">
+                                                                {team.leader.study_program || 'Ketua Tim'}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {part.is_leader || part.is_member ? (
+                                                    <Link
+                                                        href={route('competitions.workspace', part.id)}
+                                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs shrink-0"
+                                                    >
+                                                        <span>Workspace</span>
+                                                        <ArrowRight className="size-3" />
+                                                    </Link>
+                                                ) : part.my_application ? (
+                                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200 shrink-0">
+                                                        <Clock className="size-3" />
+                                                        <span>Diajukan</span>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => openApplyModal(part)}
+                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow cursor-pointer shrink-0"
+                                                    >
+                                                        <span>Ajukan Diri</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ========================================================= */}
+                {/* TAB 2: PENGAJUAN (User's Submitted Applications) */}
+                {/* ========================================================= */}
+                {activeTab === 'applications' && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900">
+                                    Pengajuan Saya
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Daftar lamaran ke tim lomba yang sudah kamu kirimkan.
+                                </p>
+                            </div>
+                            <span className="text-xs font-bold text-slate-400">
+                                {myApplications.length} Pengajuan
+                            </span>
+                        </div>
+
+                        {myApplications.length === 0 ? (
+                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                <MessageSquare className="size-10 text-slate-400 mx-auto mb-2" />
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Belum Ada Pengajuan yang Dikirim
+                                </h3>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                                    Eksplor tim di tab "Cari Tim" dan ajukan dirimu ke peran yang cocok!
+                                </p>
+                                <button
+                                    onClick={() => setActiveTab('teams')}
+                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                                >
+                                    <span>Eksplor Tim Sekarang</span>
+                                    <ArrowRight className="size-3.5" />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {myApplications.map((app) => (
+                                    <div
+                                        key={app.id}
+                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                    >
+                                        <div className="space-y-1">
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-sm font-bold text-slate-900">
+                                                    {app.team_name}
+                                                </h4>
+                                                <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                                    Posisi: {app.role_name}
+                                                </span>
+                                                {app.status === 'accepted' ? (
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                                        ✓ Diterima
+                                                    </span>
+                                                ) : app.status === 'rejected' ? (
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                                                        ✗ Ditolak
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                                        Menunggu
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500">
+                                                {app.competition_name} • Ketua: {app.leader_name || 'Ketua Tim'}
+                                            </p>
+                                            {app.message && (
+                                                <p className="text-xs text-slate-600 italic mt-1">
+                                                    "{app.message}"
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {app.participation_id && app.status === 'accepted' && (
+                                            <Link
+                                                href={route('competitions.workspace', app.participation_id)}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0"
+                                            >
+                                                <span>Buka Workspace</span>
+                                                <ArrowRight className="size-3.5" />
+                                            </Link>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ========================================================= */}
+                {/* TAB 3: TIMKU (User's Active Teams & Workspace Links) */}
+                {/* ========================================================= */}
+                {activeTab === 'my_teams' && (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                            <div>
+                                <h2 className="text-xl font-black text-slate-900">
+                                    Tim Saya
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Semua tim kompetisi yang kamu ikuti atau pimpin.
+                                </p>
+                            </div>
+                            <Link
+                                href={route('competitions.create')}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                            >
+                                <Plus className="size-3.5" />
+                                <span>Bikin Tim Baru</span>
+                            </Link>
+                        </div>
+
+                        {myTeams.length === 0 ? (
+                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                <FolderKanban className="size-10 text-slate-400 mx-auto mb-2" />
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Belum Ada Tim Aktif
+                                </h3>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                                    Mulai dengan membentuk tim baru atau bergabung ke tim yang sedang merekrut.
+                                </p>
+                                <div className="mt-4 flex items-center justify-center gap-3">
+                                    <button
+                                        onClick={() => setActiveTab('teams')}
+                                        className="px-4 py-2 rounded-full border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                                    >
+                                        Cari Tim
+                                    </button>
+                                    <Link
+                                        href={route('competitions.create')}
+                                        className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                                    >
+                                        Bikin Tim Baru
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {myTeams.map((team) => (
+                                    <div
+                                        key={team.id}
+                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col justify-between gap-4"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between gap-2">
+                                                <h4 className="text-base font-bold text-slate-900">
+                                                    {team.team_name}
+                                                </h4>
+                                                {team.is_leader ? (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                                        Ketua Tim
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                                        Anggota
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                {team.competition_name}
+                                            </p>
+                                            <div className="mt-2 text-xs text-slate-600">
+                                                Anggota: <strong>{team.members_count}</strong>
+                                                {team.max_size ? ` / ${team.max_size}` : ''} orang
+                                            </div>
+                                        </div>
+
+                                        <Link
+                                            href={route('competitions.workspace', team.id)}
+                                            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
+                                        >
+                                            <span>Buka Workspace Tim</span>
+                                            <ArrowRight className="size-3.5" />
+                                        </Link>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </main>
 
             {/* MinSatu Apply Modal */}
             <ApplyCompetitionTeamModal
@@ -867,6 +900,6 @@ export default function CompetitionIndex({
                 teamData={selectedTeamData}
                 currentUserInfo={currentUserInfo}
             />
-        </AppLayout>
+        </div>
     );
 }

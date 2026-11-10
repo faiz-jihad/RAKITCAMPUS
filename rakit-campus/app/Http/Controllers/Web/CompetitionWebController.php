@@ -216,15 +216,62 @@ class CompetitionWebController extends Controller
             ];
         });
 
+        // Total needed slots across all recruiting teams
+        $totalNeededSlots = $openRecruitingTeams->sum(function ($part) {
+            $roles = $part['team']['recruitment']['roles'] ?? [];
+            if (!empty($roles)) {
+                return collect($roles)->sum('slots');
+            }
+            $max = $part['competition']['max_team_size'] ?? 5;
+            $current = $part['team']['members_count'] ?? 1;
+            return max(1, $max - $current);
+        });
+
+        // User's submitted applications (for MinSatu "Pengajuan" tab)
+        $myApplications = $user ? Application::where('user_id', $user->id)
+            ->whereHas('recruitment.team.competitionParticipation')
+            ->with(['recruitment.team.competitionParticipation.competition', 'recruitment.team.leader.profile'])
+            ->latest()
+            ->get()
+            ->map(fn ($app) => [
+                'id' => $app->id,
+                'status' => $app->status instanceof ApplicationStatus ? $app->status->value : $app->status,
+                'role_name' => $app->role_name,
+                'message' => $app->message,
+                'contact_phone' => $app->contact_phone,
+                'created_at' => $app->created_at?->toIso8601String(),
+                'team_name' => $app->recruitment?->team?->name ?? 'Tim Kompetisi',
+                'competition_name' => $app->recruitment?->team?->competitionParticipation?->competition?->name ?? 'Kompetisi',
+                'organizer' => $app->recruitment?->team?->competitionParticipation?->competition?->organizer,
+                'leader_name' => $app->recruitment?->team?->leader?->name,
+                'participation_id' => $app->recruitment?->team?->competitionParticipation?->id,
+            ]) : collect();
+
+        // User's teams (for MinSatu "Timku" tab)
+        $myTeams = $user ? CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->with(['competition', 'team.leader', 'team.members.user'])
+            ->latest()
+            ->get()
+            ->map(fn ($p) => [
+                'id' => $p->id,
+                'stage' => $p->stage,
+                'team_name' => $p->team?->name,
+                'competition_name' => $p->competition?->name,
+                'is_leader' => $p->team?->leader_id === $user->id,
+                'members_count' => $p->team?->members->count(),
+                'max_size' => $p->competition?->max_team_size,
+            ]) : collect();
+
         // Calculate statistics for header cards
         $stats = [
             'total' => Competition::visibleTo($user)->count(),
             'open_registration' => Competition::visibleTo($user)->where('registration_deadline', '>=', now())->count(),
             'national_international' => Competition::visibleTo($user)->whereIn('level', ['national', 'international'])->count(),
             'open_teams_count' => $openRecruitingTeams->count(),
-            'my_participations' => $user ? CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            })->count() : 0,
+            'total_needed_slots' => $totalNeededSlots,
+            'my_participations' => $myTeams->count(),
         ];
 
         // Active participation if user has one
@@ -252,6 +299,9 @@ class CompetitionWebController extends Controller
         return Inertia::render('competitions/index', [
             'competitions' => $competitions,
             'openRecruitingTeams' => $openRecruitingTeams,
+            'totalNeededSlots' => $totalNeededSlots,
+            'myApplications' => $myApplications,
+            'myTeams' => $myTeams,
             'currentUserInfo' => $currentUserInfo,
             'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role']),
             'categories' => CompetitionCategory::values(),

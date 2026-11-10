@@ -6,8 +6,8 @@ import {
     MessageSquare,
     Phone,
     Send,
-    Sparkles,
     User,
+    Users,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -124,16 +124,16 @@ export default function ApplyCompetitionTeamModal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-in fade-in">
-            <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl relative my-8 border border-slate-100">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 relative my-8">
                 {/* Header */}
                 <div className="flex items-start justify-between border-b border-slate-100 pb-4">
                     <div className="flex items-center gap-3">
-                        <div className="size-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-md shrink-0">
-                            <Sparkles className="size-5" />
+                        <div className="size-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <Users className="size-5" />
                         </div>
                         <div>
-                            <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                            <h3 className="text-base font-bold text-slate-900">
                                 Ajukan Diri ke Tim
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
@@ -143,9 +143,9 @@ export default function ApplyCompetitionTeamModal({
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-slate-400 hover:text-slate-600 p-1 rounded-xl hover:bg-slate-100 transition cursor-pointer"
+                        className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
                     >
-                        <X className="size-5" />
+                        <X className="size-4" />
                     </button>
                 </div>
 
@@ -303,17 +303,17 @@ export default function ApplyCompetitionTeamModal({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-4 py-2.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                            className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
                         >
                             Batal
                         </button>
                         <button
                             type="submit"
                             disabled={submitting}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                         >
                             <Send className="size-3.5" />
-                            <span>{submitting ? 'Mengirim Lamaran...' : 'Kirim Lamaran Tim'}</span>
+                            <span>{submitting ? 'Mengirim...' : 'Kirim Lamaran'}</span>
                         </button>
                     </div>
                 </form>
