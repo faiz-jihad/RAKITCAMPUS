@@ -16,6 +16,7 @@ use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Models\Task;
 use App\Models\Team;
+use App\Models\User;
 use App\Services\MatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -31,6 +32,99 @@ class DashboardWebController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+
+        // 1. Guest / Public Access Mode
+        if (!$user) {
+            $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
+            $campusName = $campus?->name ?? 'Politeknik Negeri Indramayu';
+
+            // Public sample teams
+            $publicTeams = Team::with([
+                'project:id,title,slug,status,category,progress,short_description',
+                'participations.competition:id,name,slug,status,category',
+                'members.user:id,name,email',
+                'tasks:id,team_id,status',
+            ])->latest()->take(4)->get()->map(function ($team) {
+                $totalTasks = $team->tasks->count();
+                $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
+
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'description' => $team->description,
+                    'type' => $team->type?->value ?? 'project',
+                    'is_leader' => false,
+                    'project' => $team->project,
+                    'competition' => $team->participations->first()?->competition,
+                    'members_count' => $team->members->count(),
+                    'members' => $team->members->take(5)->map(fn ($m) => [
+                        'id' => $m->user_id,
+                        'name' => $m->user?->name ?? 'Mahasiswa',
+                        'role' => $m->role_name ?? 'Anggota',
+                    ]),
+                    'total_tasks' => $totalTasks,
+                    'done_tasks' => $doneTasks,
+                    'progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($team->project?->progress ?? 0),
+                ];
+            });
+
+            // Public recommended projects
+            $publicProjects = Project::with(['leader:id,name', 'campus:id,name', 'skills'])
+                ->where('status', 'recruiting')
+                ->orWhere('visibility', 'public')
+                ->latest()
+                ->take(4)
+                ->get();
+
+            // Upcoming competitions
+            $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
+                ->latest('registration_deadline')
+                ->take(3)
+                ->get();
+
+            // Recent activity logs
+            $recentActivities = ActivityLog::with(['actor:id,name', 'team:id,name'])
+                ->latest()
+                ->take(6)
+                ->get();
+
+            $stats = [
+                'my_teams_count' => Team::count(),
+                'pending_tasks_count' => Task::where('status', '!=', TaskStatus::Completed)->count(),
+                'recommended_matches_count' => Project::where('status', 'recruiting')->count(),
+                'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
+                'taught_classes_count' => 0,
+                'total_students_count' => User::count(),
+                'total_guided_projects_count' => Project::count(),
+                'enrolled_classes_count' => 0,
+            ];
+
+            return Inertia::render('dashboard', [
+                'isPublic' => true,
+                'user' => [
+                    'id' => 0,
+                    'name' => 'Tamu (Eksplorasi Publik)',
+                    'email' => 'tamu@polindra.ac.id',
+                    'role' => 'guest',
+                    'is_lecturer' => false,
+                    'campus' => $campusName,
+                    'major' => 'Eksplorasi Kampus',
+                    'nim' => 'GUEST',
+                    'availability' => 'mode_eksplorasi',
+                    'skills' => [],
+                ],
+                'stats' => $stats,
+                'myTeams' => $publicTeams,
+                'myTasks' => collect(),
+                'recommendedProjects' => $publicProjects,
+                'upcomingCompetitions' => $upcomingCompetitions,
+                'recentActivities' => $recentActivities,
+                'profileCompletion' => null,
+                'taughtClasses' => collect(),
+                'enrolledClasses' => collect(),
+            ]);
+        }
+
         $membership = $user->activeMembership();
         if (!$membership) {
             $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();

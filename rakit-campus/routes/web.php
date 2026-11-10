@@ -27,6 +27,7 @@ Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitema
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
 // Public Discovery Hubs (Open for browsing, enriched when authenticated)
+Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
 Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
 Route::get('/projects/{id}', [ProjectWebController::class, 'show'])->name('projects.show')->whereNumber('id');
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
@@ -40,8 +41,6 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::middleware(['auth', 'profile.completed'])->group(function () {
-    Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
-
     // Competition Hub Management, Team Formation & Workspace
     Route::get('/competitions/create', [CompetitionWebController::class, 'create'])->name('competitions.create');
     Route::post('/competitions', [CompetitionWebController::class, 'store'])->name('competitions.store');

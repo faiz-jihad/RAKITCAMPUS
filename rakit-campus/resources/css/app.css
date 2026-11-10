@@ -9,6 +9,8 @@
 @theme {
     --font-sans:
         'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-serif:
+        'Cormorant Infant', 'Playfair Display', Georgia, Cambria, 'Times New Roman', serif;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -189,4 +191,190 @@
         -webkit-backdrop-filter: blur(8px);
         border: 1px solid rgba(255, 255, 255, 0.75);
     }
+
+    @keyframes shimmer {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(100%);
+        }
+    }
+
+    /* Editorial Luxury Hover Blur Pulse Animation (Brief defocus pulse then returns to crisp normal) */
+    @keyframes hoverBlurPulse {
+        0% {
+            opacity: 1;
+            filter: blur(0px);
+        }
+        50% {
+            opacity: 0.8;
+            filter: blur(1.5px);
+        }
+        100% {
+            opacity: 1;
+            filter: blur(0px);
+        }
+    }
+
+    @keyframes hoverBlurPulseSub {
+        0% {
+            opacity: 1;
+            filter: blur(0px);
+        }
+        50% {
+            opacity: 0.75;
+            filter: blur(0.8px);
+        }
+        100% {
+            opacity: 1;
+            filter: blur(0px);
+        }
+    }
+
+    .hover-blur-text {
+        will-change: filter, opacity;
+    }
+    .hover-blur-text:hover {
+        animation: hoverBlurPulse 320ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .group-hover-blur-text {
+        will-change: filter, opacity;
+    }
+    .group:hover .group-hover-blur-text {
+        animation: hoverBlurPulse 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .group-hover-blur-subtext {
+        will-change: filter, opacity;
+    }
+    .group:hover .group-hover-blur-subtext {
+        animation: hoverBlurPulseSub 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Hide scrollbar globally across all browsers while preserving scrollability */
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+        width: 0;
+        height: 0;
+    }
+
+    /* Infinite Dual Marquee Photo Tickers */
+    @keyframes marqueeLeft {
+        0% {
+            transform: translate3d(0, 0, 0);
+        }
+        100% {
+            transform: translate3d(-50%, 0, 0);
+        }
+    }
+
+    @keyframes marqueeRight {
+        0% {
+            transform: translate3d(-50%, 0, 0);
+        }
+        100% {
+            transform: translate3d(0, 0, 0);
+        }
+    }
+
+    .animate-marquee-left {
+        display: flex;
+        width: max-content;
+        animation: marqueeLeft 42s linear infinite;
+    }
+
+    .animate-marquee-right {
+        display: flex;
+        width: max-content;
+        animation: marqueeRight 42s linear infinite;
+    }
+
+    .animate-marquee-left:hover,
+    .animate-marquee-right:hover {
+        animation-play-state: paused;
+    }
+
+    /* Organic Floating Micro-Cards (Magnetic Zero-Gravity) */
+    @keyframes floatCard1 {
+        0%, 100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+        }
+        50% {
+            transform: translate3d(0, -10px, 0) rotate(-1.2deg);
+        }
+    }
+
+    @keyframes floatCard2 {
+        0%, 100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+        }
+        50% {
+            transform: translate3d(0, -12px, 0) rotate(1.4deg);
+        }
+    }
+
+    @keyframes floatCard3 {
+        0%, 100% {
+            transform: translate3d(0, 0, 0) rotate(0deg);
+        }
+        50% {
+            transform: translate3d(0, -9px, 0) rotate(-0.9deg);
+        }
+    }
+
+    .animate-float-card-1 {
+        animation: floatCard1 5.2s ease-in-out infinite;
+        will-change: transform;
+    }
+
+    .animate-float-card-2 {
+        animation: floatCard2 6.5s ease-in-out infinite 0.8s;
+        will-change: transform;
+    }
+
+    .animate-float-card-3 {
+        animation: floatCard3 5.8s ease-in-out infinite 1.6s;
+        will-change: transform;
+    }
+
+    .animate-float-card-1:hover,
+    .animate-float-card-2:hover,
+    .animate-float-card-3:hover {
+        animation-play-state: paused;
+    }
+
+    /* Continuous Subtle Arrow Down Animation */
+    @keyframes arrowDownBounce {
+        0%, 100% {
+            transform: translate3d(0, 0, 0);
+        }
+        50% {
+            transform: translate3d(0, 5px, 0);
+        }
+    }
+
+    .animate-arrow-down-bounce {
+        animation: arrowDownBounce 1.4s ease-in-out infinite;
+        will-change: transform;
+    }
+}
+
+/* Hide main browser scrollbar */
+html,
+body {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
 }

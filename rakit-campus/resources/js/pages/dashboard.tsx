@@ -17,6 +17,7 @@ import {
 import { useState } from 'react';
 
 interface Props {
+    isPublic?: boolean;
     user: {
         id: number;
         name: string;
@@ -51,6 +52,7 @@ interface Props {
 }
 
 export default function Dashboard({
+    isPublic = false,
     user = {} as any,
     stats = {} as any,
     myTeams = [],
