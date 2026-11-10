@@ -109,7 +109,7 @@ class CompetitionWebController extends Controller
                 $q->visibleTo($user);
             })
             ->with([
-                'competition:id,name,slug,organizer,category,level,registration_deadline,min_team_size,max_team_size,cover_image',
+                'competition:id,name,slug,organizer,category,level,registration_deadline,min_team_size,max_team_size,cover_image,official_url,registration_url,competition_type,description',
                 'team.leader.profile',
                 'team.members.user:id,name,avatar',
                 'team.recruitment.roles',
@@ -168,6 +168,10 @@ class CompetitionWebController extends Controller
                     'organizer' => $part->competition->organizer,
                     'category' => $part->competition->category,
                     'level' => $part->competition->level,
+                    'competition_type' => $part->competition->competition_type ?? 'Hybrid',
+                    'official_url' => $part->competition->official_url,
+                    'registration_url' => $part->competition->registration_url,
+                    'description' => $part->competition->description,
                     'registration_deadline' => $part->competition->registration_deadline,
                     'min_team_size' => $part->competition->min_team_size,
                     'max_team_size' => $part->competition->max_team_size,

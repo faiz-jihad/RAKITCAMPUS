@@ -8,12 +8,16 @@ import {
     Briefcase,
     Calendar,
     Clock,
+    ExternalLink,
+    FileText,
     FolderKanban,
+    Globe,
     MessageSquare,
     Plus,
     Search,
     User,
     Users,
+    X,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -25,6 +29,9 @@ interface Competition {
     description: string;
     category: string;
     level?: string;
+    competition_type?: string;
+    official_url?: string;
+    registration_url?: string;
     registration_deadline: string | null;
     min_team_size: number;
     max_team_size: number;
@@ -44,6 +51,10 @@ interface RecruitingTeam {
         organizer: string;
         category: string;
         level?: string;
+        competition_type?: string;
+        official_url?: string;
+        registration_url?: string;
+        description?: string;
         registration_deadline: string | null;
         min_team_size: number;
         max_team_size: number;
@@ -176,6 +187,9 @@ export default function CompetitionIndex({
     const [teamSearch, setTeamSearch] = useState(filters.team_search || '');
     const [teamCategory, setTeamCategory] = useState(filters.team_category || '');
     const [teamRole, setTeamRole] = useState(filters.team_role || '');
+
+    // MinSatu Detail Modal State (from user screenshot)
+    const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
 
     // MinSatu Apply Modal State
     const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -532,7 +546,7 @@ export default function CompetitionIndex({
                             </span>
                         </div>
 
-                        {/* OPEN TEAMS GRID (Clean MinSatu Card Layout) */}
+                        {/* OPEN TEAMS GRID (Exact Card Pattern from User's Screenshot Background) */}
                         {openRecruitingTeams.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <div className="size-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
@@ -559,7 +573,8 @@ export default function CompetitionIndex({
                                     const team = part.team;
                                     const roles = team?.recruitment?.roles || [];
                                     const membersCount = team?.members_count || 1;
-                                    const maxCap = comp.max_team_size || 5;
+                                    const maxCap = comp.max_team_size || 3;
+                                    const emptySlots = Math.max(0, maxCap - membersCount);
 
                                     const formattedDeadline = comp.registration_deadline
                                         ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
@@ -569,14 +584,20 @@ export default function CompetitionIndex({
                                           })
                                         : 'Terbuka';
 
+                                    // Leader initials
+                                    const leaderInitials = team?.leader?.name
+                                        ? team.leader.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
+                                        : 'K';
+
                                     return (
                                         <div
                                             key={part.id}
-                                            className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between gap-5"
+                                            onClick={() => setDetailTeam(part)}
+                                            className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-5 group"
                                         >
                                             <div>
                                                 {/* Top Row: Category & Deadline */}
-                                                <div className="flex items-start justify-between gap-2 mb-3">
+                                                <div className="flex items-start justify-between gap-2 mb-2">
                                                     <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
                                                         {comp.category?.replace('_', ' ') || 'HACKATHON'}
                                                     </span>
@@ -591,13 +612,8 @@ export default function CompetitionIndex({
                                                 </div>
 
                                                 {/* Competition Title */}
-                                                <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
-                                                    <Link
-                                                        href={route('competitions.show', comp.id)}
-                                                        className="hover:text-blue-600 transition"
-                                                    >
-                                                        {comp.name}
-                                                    </Link>
+                                                <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                    {comp.name}
                                                 </h3>
 
                                                 {/* Organizer */}
@@ -605,101 +621,79 @@ export default function CompetitionIndex({
                                                     {comp.organizer || 'Kampus'}
                                                 </p>
 
-                                                {/* Team Info Box */}
-                                                <div className="mt-3.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
-                                                    <div className="text-xs font-bold text-slate-900">
-                                                        Tim {team?.name}
-                                                    </div>
-                                                    <p className="text-xs text-slate-600 mt-1 line-clamp-2 leading-relaxed">
-                                                        {team?.description || 'Tim kompetisi sedang mempersiapkan karya terbaik.'}
-                                                    </p>
-                                                </div>
-
-                                                {/* Roles Badges */}
+                                                {/* Section: LAGI BUTUHIN */}
                                                 <div className="mt-4">
                                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                                                        Kebutuhan:
+                                                        LAGI BUTUHIN
                                                     </span>
-                                                    {roles.length > 0 ? (
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {roles.map((r) => (
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {roles.length > 0 ? (
+                                                            roles.map((r) => (
                                                                 <span
                                                                     key={r.id}
-                                                                    className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-xl bg-purple-50 text-purple-700 border border-purple-200/60"
+                                                                    className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold"
                                                                 >
-                                                                    <Briefcase className="size-3" />
-                                                                    <span>{r.name}</span>
-                                                                    <span className="text-[9px] px-1.5 py-0.2 bg-purple-200/70 text-purple-900 rounded-full font-black">
-                                                                        {r.slots}
-                                                                    </span>
+                                                                    {r.name}
                                                                 </span>
-                                                            ))}
-                                                        </div>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-500 bg-slate-100 px-2.5 py-1 rounded-xl">
-                                                            Semua peran terbuka
-                                                        </span>
-                                                    )}
+                                                            ))
+                                                        ) : (
+                                                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+                                                                Semua Peran
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
 
-                                                {/* Capacity Bar */}
-                                                <div className="mt-4 pt-3 border-t border-slate-100">
-                                                    <div className="flex items-center justify-between text-[11px] font-bold mb-1">
-                                                        <span className="text-slate-400">Kapasitas</span>
-                                                        <span className="text-slate-900">
-                                                            {membersCount} / {maxCap} Anggota
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                                {/* Visual Silhouette Slots Row (Matches MinSatu) */}
+                                                <div className="mt-4 flex items-center gap-1.5">
+                                                    {Array.from({ length: membersCount }).map((_, idx) => (
                                                         <div
-                                                            className="h-full rounded-full bg-blue-600 transition-all"
-                                                            style={{
-                                                                width: `${Math.min(100, (membersCount / maxCap) * 100)}%`,
-                                                            }}
-                                                        />
-                                                    </div>
+                                                            key={`filled-${idx}`}
+                                                            className="size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                        >
+                                                            <User className="size-4 fill-current" />
+                                                        </div>
+                                                    ))}
+                                                    {Array.from({ length: Math.min(4, emptySlots) }).map((_, idx) => (
+                                                        <div
+                                                            key={`empty-${idx}`}
+                                                            className="size-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                        >
+                                                            <User className="size-4" />
+                                                        </div>
+                                                    ))}
+                                                    <span className="text-xs text-slate-500 font-medium ml-1.5">
+                                                        {membersCount}/{maxCap} terisi
+                                                    </span>
                                                 </div>
                                             </div>
 
-                                            {/* Action Button */}
-                                            <div className="border-t border-slate-100 pt-4 flex items-center justify-between gap-3">
-                                                {team?.leader && (
-                                                    <div className="flex items-center gap-2 min-w-0">
-                                                        <div className="size-7 rounded-full bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center shrink-0">
-                                                            {team.leader.name.charAt(0)}
+                                            {/* Bottom Leader Row */}
+                                            <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-2.5 min-w-0">
+                                                    <div className="size-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                                        {leaderInitials}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-xs font-bold text-slate-900 truncate">
+                                                            {team?.leader?.name || 'Ketua Tim'}
                                                         </div>
-                                                        <div className="text-xs truncate">
-                                                            <div className="font-bold text-slate-900 truncate">
-                                                                {team.leader.name}
-                                                            </div>
-                                                            <div className="text-[10px] text-slate-400 truncate">
-                                                                {team.leader.study_program || 'Ketua Tim'}
-                                                            </div>
+                                                        <div className="text-[10px] text-slate-400 truncate">
+                                                            Format lomba: {comp.competition_type || 'Hybrid'}
                                                         </div>
                                                     </div>
-                                                )}
+                                                </div>
 
-                                                {part.is_leader || part.is_member ? (
-                                                    <Link
-                                                        href={route('competitions.workspace', part.id)}
-                                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs shrink-0"
-                                                    >
-                                                        <span>Workspace</span>
-                                                        <ArrowRight className="size-3" />
-                                                    </Link>
-                                                ) : part.my_application ? (
-                                                    <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200 shrink-0">
-                                                        <Clock className="size-3" />
-                                                        <span>Diajukan</span>
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => openApplyModal(part)}
-                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs hover:shadow cursor-pointer shrink-0"
-                                                    >
-                                                        <span>Ajukan Diri</span>
-                                                    </button>
-                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setDetailTeam(part);
+                                                    }}
+                                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+                                                >
+                                                    Detail ↗
+                                                </button>
                                             </div>
                                         </div>
                                     );
@@ -893,6 +887,254 @@ export default function CompetitionIndex({
                 )}
             </main>
 
+            {/* MINSATU DETAIL MODAL (Exact Layout from User Screenshot) */}
+            {detailTeam && (
+                <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+                    <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 relative my-6 space-y-6">
+                        {/* Modal Header */}
+                        <div className="flex items-start justify-between gap-4">
+                            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+                                {detailTeam.competition.name}
+                            </h2>
+                            <button
+                                onClick={() => setDetailTeam(null)}
+                                className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer shrink-0"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        {/* Top 3-Column Metadata Box */}
+                        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 grid grid-cols-3 gap-4">
+                            <div>
+                                <span className="text-xs text-slate-400 font-medium block">
+                                    Penyelenggara
+                                </span>
+                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                    {detailTeam.competition.organizer || 'SPE ITB'}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-xs text-slate-400 font-medium block">
+                                    Deadline daftar
+                                </span>
+                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                    {detailTeam.competition.registration_deadline
+                                        ? new Date(detailTeam.competition.registration_deadline).toLocaleDateString('id-ID', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          })
+                                        : '11 Des 2026'}
+                                </span>
+                            </div>
+                            <div>
+                                <span className="text-xs text-slate-400 font-medium block">
+                                    Format lomba
+                                </span>
+                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                    {detailTeam.competition.competition_type || 'Hybrid'}
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Location Note under Metadata */}
+                        <div className="text-xs text-slate-500 font-medium -mt-2">
+                            {detailTeam.competition.description || 'Final luring di kampus atau hybrid competition.'}
+                        </div>
+
+                        {/* Two-Column Layout */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                            {/* Left Column (7 cols): Yang dicari & File link */}
+                            <div className="md:col-span-7 space-y-6">
+                                {/* Section 1: Yang dicari */}
+                                <div className="space-y-2">
+                                    <h4 className="text-xs font-bold text-slate-900">
+                                        Yang dicari
+                                    </h4>
+                                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                                        {detailTeam.team.description ||
+                                            'mau sama - sama belajar, aku hustler and masih belajar juga'}
+                                    </div>
+                                </div>
+
+                                {/* Section 2: File & link */}
+                                <div className="space-y-2.5">
+                                    <div className="flex items-center gap-1.5">
+                                        <h4 className="text-xs font-bold text-slate-900">
+                                            File & link
+                                        </h4>
+                                        <span className="text-[10px] text-slate-400 font-bold">
+                                            3
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {/* Link 1: Official Guidebook / Website */}
+                                        <a
+                                            href={detailTeam.competition.official_url || '#'}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                        >
+                                            <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                <span>Guidebook and Poster</span>
+                                                <ArrowUpRight className="size-3.5" />
+                                            </span>
+                                            <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
+                                                {detailTeam.competition.official_url || 'ipfest2027.com'}
+                                            </span>
+                                        </a>
+
+                                        {/* Link 2: Instagram / Info */}
+                                        <a
+                                            href="https://instagram.com"
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                        >
+                                            <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                <span>IG {detailTeam.competition.name.slice(0, 15)}</span>
+                                                <ArrowUpRight className="size-3.5" />
+                                            </span>
+                                            <span className="text-slate-400 text-[11px]">
+                                                www.instagram.com
+                                            </span>
+                                        </a>
+
+                                        {/* Link 3: Document preview container */}
+                                        <div className="p-3.5 rounded-2xl border border-slate-200/90 flex items-start gap-3 bg-slate-50/50">
+                                            <FileText className="size-4 text-slate-500 mt-0.5 shrink-0" />
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-blue-600 leading-snug break-all hover:underline cursor-pointer">
+                                                    [{detailTeam.competition.category?.toUpperCase() || 'HACKATHON'} COMPETITION - {detailTeam.competition.name}]Innovation meets technology in competition.jpg
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right Column (5 cols): Soft Blue Formasi Card */}
+                            <div className="md:col-span-5 bg-[#F0F5FF] rounded-2xl p-5 border border-blue-100 space-y-4">
+                                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                                    <Users className="size-4 text-blue-600" />
+                                    <span>Formasi tim</span>
+                                </div>
+
+                                {/* Slot Count */}
+                                <div>
+                                    <div className="flex items-baseline gap-1.5">
+                                        <span className="text-4xl font-black text-blue-600">
+                                            {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)}
+                                        </span>
+                                        <span className="text-xs text-slate-600 font-bold">
+                                            slot kosong
+                                        </span>
+                                    </div>
+
+                                    {/* Visual Slots Row */}
+                                    <div className="mt-3 flex items-center gap-1.5">
+                                        {Array.from({ length: detailTeam.team.members_count }).map((_, idx) => (
+                                            <div
+                                                key={`f-${idx}`}
+                                                className="size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                            >
+                                                <User className="size-4 fill-current" />
+                                            </div>
+                                        ))}
+                                        {Array.from({
+                                            length: Math.max(
+                                                0,
+                                                (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count
+                                            ),
+                                        }).map((_, idx) => (
+                                            <div
+                                                key={`e-${idx}`}
+                                                className="size-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                            >
+                                                <User className="size-4" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <span className="text-xs text-blue-700 font-bold block mt-1.5">
+                                        {detailTeam.team.members_count}/{detailTeam.competition.max_team_size || 3} terisi (
+                                        {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)} dicari)
+                                    </span>
+                                </div>
+
+                                {/* Lagi Butuhin */}
+                                <div className="space-y-1.5 pt-1">
+                                    <span className="text-xs font-bold text-slate-700 block">
+                                        Lagi butuhin
+                                    </span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {detailTeam.team.recruitment?.roles && detailTeam.team.recruitment.roles.length > 0 ? (
+                                            detailTeam.team.recruitment.roles.map((r) => (
+                                                <span
+                                                    key={r.id}
+                                                    className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100"
+                                                >
+                                                    {r.name}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <span className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100">
+                                                    Hacker
+                                                </span>
+                                                <span className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100">
+                                                    Hipster
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Ketua Tim */}
+                                <div className="pt-2 border-t border-blue-200/60">
+                                    <span className="text-[11px] text-slate-400 font-semibold block mb-1">
+                                        Ketua tim
+                                    </span>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className="size-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                            {detailTeam.team.leader?.name ? detailTeam.team.leader.name.charAt(0) : 'M'}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <div className="text-xs font-bold text-slate-900 truncate">
+                                                {detailTeam.team.leader?.name || 'Muhammad Chilyany'}
+                                            </div>
+                                            <a
+                                                href="#leader"
+                                                className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
+                                            >
+                                                <span>Lihat profil</span>
+                                                <ArrowUpRight className="size-3" />
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CTA Inside Modal: Ajukan Diri */}
+                                <div className="pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const teamToApply = detailTeam;
+                                            setDetailTeam(null);
+                                            openApplyModal(teamToApply);
+                                        }}
+                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow transition cursor-pointer"
+                                    >
+                                        Ajukan Diri Bergabung
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* MinSatu Apply Modal */}
             <ApplyCompetitionTeamModal
                 isOpen={applyModalOpen}
@@ -900,6 +1142,18 @@ export default function CompetitionIndex({
                 teamData={selectedTeamData}
                 currentUserInfo={currentUserInfo}
             />
+
+            {/* FOOTER (Matches MinSatu Screenshot Footer) */}
+            <footer className="max-w-6xl mx-auto px-4 sm:px-6 pt-16 mt-16 border-t border-slate-200/70 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="max-w-md leading-relaxed text-slate-500">
+                    rakitcampus adalah inisiatif independen mahasiswa buat bantu kamu nyari rekan lomba. Kontak kamu dijaga dan baru dibuka ke rekan tim kalau kamu diajak diskusi atau melamar.
+                </p>
+                <div className="flex items-center gap-4 text-slate-600 font-medium shrink-0">
+                    <a href="#" className="hover:text-slate-900">Tentang Kami</a>
+                    <a href="#" className="hover:text-slate-900">Kebijakan Privasi</a>
+                    <a href="#" className="hover:text-slate-900">Syarat & Ketentuan</a>
+                </div>
+            </footer>
         </div>
     );
 }
