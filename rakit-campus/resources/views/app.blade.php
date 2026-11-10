@@ -42,45 +42,45 @@
 
         <!-- Structured Data (JSON-LD) for Google & AI Search Engines -->
         <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@graph": [
-                {
-                    "@type": "WebSite",
-                    "@id": "{{ config('app.url') }}/#website",
-                    "url": "{{ config('app.url') }}",
-                    "name": "RAKIT Campus",
-                    "description": "Platform Kolaborasi Mahasiswa, Matchmaking Tim, Manajemen Proyek Akademik, dan Kompetisi Kampus Terintegrasi.",
-                    "publisher": {
-                        "@id": "{{ config('app.url') }}/#organization"
-                    },
-                    "potentialAction": {
-                        "@type": "SearchAction",
-                        "target": "{{ config('app.url') }}/projects?search={search_term_string}",
-                        "query-input": "required name=search_term_string"
-                    }
-                },
-                {
-                    "@type": "EducationalOrganization",
-                    "@id": "{{ config('app.url') }}/#organization",
-                    "name": "RAKIT Campus",
-                    "url": "{{ config('app.url') }}",
-                    "logo": "{{ asset('favicon.png') }}",
-                    "description": "Ekosistem kolaborasi akademik dan kompetisi mahasiswa inter-disiplin."
-                },
-                {
-                    "@type": "SoftwareApplication",
-                    "name": "RAKIT Campus Platform",
-                    "operatingSystem": "All",
-                    "applicationCategory": "EducationalApplication",
-                    "offers": {
-                        "@type": "Offer",
-                        "price": "0",
-                        "priceCurrency": "IDR"
-                    }
-                }
-            ]
-        }
+        {!! json_encode([
+            '@context' => 'https://schema.org',
+            '@graph' => [
+                [
+                    '@type' => 'WebSite',
+                    '@id' => config('app.url') . '/#website',
+                    'url' => config('app.url'),
+                    'name' => 'RAKIT Campus',
+                    'description' => 'Platform Kolaborasi Mahasiswa, Matchmaking Tim, Manajemen Proyek Akademik, dan Kompetisi Kampus Terintegrasi.',
+                    'publisher' => [
+                        '@id' => config('app.url') . '/#organization',
+                    ],
+                    'potentialAction' => [
+                        '@type' => 'SearchAction',
+                        'target' => config('app.url') . '/projects?search={search_term_string}',
+                        'query-input' => 'required name=search_term_string',
+                    ],
+                ],
+                [
+                    '@type' => 'EducationalOrganization',
+                    '@id' => config('app.url') . '/#organization',
+                    'name' => 'RAKIT Campus',
+                    'url' => config('app.url'),
+                    'logo' => asset('favicon.png'),
+                    'description' => 'Ekosistem kolaborasi akademik dan kompetisi mahasiswa inter-disiplin.',
+                ],
+                [
+                    '@type' => 'SoftwareApplication',
+                    'name' => 'RAKIT Campus Platform',
+                    'operatingSystem' => 'All',
+                    'applicationCategory' => 'EducationalApplication',
+                    'offers' => [
+                        '@type' => 'Offer',
+                        'price' => '0',
+                        'priceCurrency' => 'IDR',
+                    ],
+                ],
+            ],
+        ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
         </script>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
