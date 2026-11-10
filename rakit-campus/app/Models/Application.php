@@ -13,6 +13,8 @@ class Application extends Model
         'recruitment_role_id',
         'user_id',
         'message',
+        'contact_phone',
+        'portfolio_url',
         'status',
         'decided_by',
         'decided_at',

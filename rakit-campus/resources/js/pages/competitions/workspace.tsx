@@ -1,3 +1,4 @@
+import { formatWhatsAppUrl } from '@/components/competitions/ApplyCompetitionTeamModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm } from '@inertiajs/react';
@@ -5,6 +6,7 @@ import {
     AlertCircle,
     ArrowLeft,
     Award,
+    Briefcase,
     Calendar,
     CheckCircle2,
     Clock,
@@ -12,16 +14,19 @@ import {
     ExternalLink,
     FileText,
     FolderKanban,
+    Globe,
     GraduationCap,
     History,
     Lock,
     MessageSquare,
+    Phone,
     Plus,
     Send,
     Share2,
     ShieldAlert,
     ShieldCheck,
     Sparkles,
+    Trash2,
     Trophy,
     Upload,
     UserCheck,
@@ -39,6 +44,8 @@ interface Props {
     availableLecturers: any[];
     selectionStages: Record<string, { label: string; order: number }>;
     teamAllocations?: any[];
+    incomingApplications?: any[];
+    recruitmentRoles?: any[];
     rounds?: any[];
     isLeader: boolean;
     isMember: boolean;
@@ -53,13 +60,21 @@ export default function CompetitionWorkspace({
     availableLecturers = [],
     selectionStages,
     teamAllocations = [],
+    incomingApplications = [],
+    recruitmentRoles = [],
     rounds = [],
     isLeader,
     isMember,
     isMentor,
     isAdmin,
 }: Props) {
-    const [activeTab, setActiveTab] = useState<'overview' | 'kanban' | 'rounds' | 'documents' | 'mentoring' | 'results' | 'history'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'rounds' | 'documents' | 'mentoring' | 'results' | 'history'>('overview');
+
+    // MinSatu Roles & Applicants State
+    const [newRoleName, setNewRoleName] = useState('');
+    const [newRoleSlots, setNewRoleSlots] = useState(1);
+    const [newRoleReqs, setNewRoleReqs] = useState('');
+    const [addingRole, setAddingRole] = useState(false);
 
     // Modals
     const [stageModalOpen, setStageModalOpen] = useState(false);
@@ -187,6 +202,49 @@ export default function CompetitionWorkspace({
                 },
             }
         );
+    };
+
+    // MinSatu Flow Handlers
+    const handleAddRecruitmentRole = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newRoleName.trim()) return;
+
+        router.post(
+            `/competition-workspace/${participation.id}/roles`,
+            {
+                name: newRoleName.trim(),
+                slots: newRoleSlots,
+                requirements: newRoleReqs.trim() || null,
+            },
+            {
+                onSuccess: () => {
+                    setNewRoleName('');
+                    setNewRoleSlots(1);
+                    setNewRoleReqs('');
+                    setAddingRole(false);
+                },
+            }
+        );
+    };
+
+    const handleDeleteRecruitmentRole = (roleId: number) => {
+        if (confirm('Hapus lowongan peran ini?')) {
+            router.delete(`/competition-workspace/${participation.id}/roles/${roleId}`);
+        }
+    };
+
+    const handleRespondApplication = (appId: number, action: 'accept' | 'reject') => {
+        const confirmMsg =
+            action === 'accept'
+                ? 'Terima pelamar ini sebagai anggota tim kompetisi?'
+                : 'Tolak lamaran mahasiswa ini?';
+
+        if (confirm(confirmMsg)) {
+            router.post(
+                `/competitions/teams/${participation.id}/applications/${appId}/respond`,
+                { action }
+            );
+        }
     };
 
     const handleCreateTask = (e: React.FormEvent) => {
@@ -484,6 +542,28 @@ export default function CompetitionWorkspace({
                             <span>Anggota Tim & Formasi ({participation.team?.members?.length || 0})</span>
                         </button>
 
+                        {/* MinSatu Applicants Tab */}
+                        <button
+                            onClick={() => setActiveTab('applicants')}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                activeTab === 'applicants'
+                                    ? 'bg-blue-600 text-white shadow-xs'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                            }`}
+                        >
+                            <UserPlus className="size-4" />
+                            <span>Pelamar Tim (MinSatu)</span>
+                            {incomingApplications.filter((a: any) => a.status === 'pending').length > 0 ? (
+                                <span className="px-2 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-black animate-pulse">
+                                    {incomingApplications.filter((a: any) => a.status === 'pending').length} Baru
+                                </span>
+                            ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-slate-200/80 text-slate-700">
+                                    {incomingApplications.length}
+                                </span>
+                            )}
+                        </button>
+
                         <button
                             onClick={() => setActiveTab('kanban')}
                             className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
@@ -777,6 +857,321 @@ export default function CompetitionWorkspace({
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TAB CONTENT: APPLICANTS & RECRUITMENT (MinSatu Flow) */}
+                    {activeTab === 'applicants' && (
+                        <div className="space-y-6 animate-in fade-in">
+                            {/* Lowongan Peran Tim Header & Management */}
+                            <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-4">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <Briefcase className="size-4 text-purple-600" />
+                                            <h3 className="text-sm font-bold text-slate-900">
+                                                Lowongan Peran yang Dibutuhkan ({recruitmentRoles.length})
+                                            </h3>
+                                        </div>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Tentukan spesialisasi yang dicari tim (Hacker/Developer, Hipster/UI-UX, Hustler/Bisnis, Peneliti) agar muncul di pencarian MinSatu
+                                        </p>
+                                    </div>
+
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <button
+                                            onClick={() => setAddingRole(!addingRole)}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+                                        >
+                                            <Plus className="size-3.5" />
+                                            <span>Tambah Lowongan Peran</span>
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Add Role Form Drawer */}
+                                {addingRole && (
+                                    <form
+                                        onSubmit={handleAddRecruitmentRole}
+                                        className="p-4 rounded-2xl bg-purple-50/50 border border-purple-200/80 space-y-3"
+                                    >
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                            <div className="sm:col-span-2">
+                                                <label className="text-xs font-bold text-purple-900 block mb-1">
+                                                    Nama Peran / Posisi <span className="text-rose-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    placeholder="Contoh: UI/UX Designer, Frontend Developer, Pitcher"
+                                                    value={newRoleName}
+                                                    onChange={(e) => setNewRoleName(e.target.value)}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-bold text-purple-900 block mb-1">
+                                                    Jumlah Slot <span className="text-rose-500">*</span>
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min={1}
+                                                    max={10}
+                                                    required
+                                                    value={newRoleSlots}
+                                                    onChange={(e) => setNewRoleSlots(parseInt(e.target.value, 10) || 1)}
+                                                    className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="text-xs font-bold text-purple-900 block mb-1">
+                                                Kualifikasi / Persyaratan Singkat (Opsional)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Contoh: Menguasai Figma, familiar dengan React / Flutter, atau mampu membuat proposal PKM"
+                                                value={newRoleReqs}
+                                                onChange={(e) => setNewRoleReqs(e.target.value)}
+                                                className="w-full px-3 py-2 rounded-xl bg-white border border-purple-200 text-xs focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+                                            />
+                                        </div>
+
+                                        <div className="flex items-center justify-end gap-2 pt-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAddingRole(false)}
+                                                className="px-3.5 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                                            >
+                                                Batal
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="px-4 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold shadow-xs cursor-pointer"
+                                            >
+                                                Simpan Lowongan
+                                            </button>
+                                        </div>
+                                    </form>
+                                )}
+
+                                {/* Roles List */}
+                                {recruitmentRoles.length === 0 ? (
+                                    <div className="text-center py-6 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                                        <Briefcase className="size-6 text-slate-400 mx-auto mb-1.5" />
+                                        <p className="text-xs font-semibold text-slate-700">Belum ada daftar lowongan peran spesifik</p>
+                                        <p className="text-[11px] text-slate-500 mt-0.5">
+                                            Tambahkan posisi seperti Designer, Developer, atau Hustler agar calon rekan dapat melamar posisi tersebut secara tepat.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {recruitmentRoles.map((r: any) => (
+                                            <div
+                                                key={r.id}
+                                                className="p-3.5 rounded-2xl bg-white border border-slate-200/90 shadow-2xs flex items-start justify-between gap-2"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs font-bold text-slate-900">{r.name}</span>
+                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-purple-100 text-purple-800">
+                                                            {r.slots} Slot
+                                                        </span>
+                                                    </div>
+                                                    {r.requirements && (
+                                                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                                                            {r.requirements}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                {isLeader && !participation.is_formation_locked && (
+                                                    <button
+                                                        onClick={() => handleDeleteRecruitmentRole(r.id)}
+                                                        className="text-slate-400 hover:text-rose-600 p-1 rounded-lg hover:bg-rose-50 transition"
+                                                        title="Hapus lowongan peran ini"
+                                                    >
+                                                        <Trash2 className="size-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Daftar Pelamar Masuk (Incoming Applications) */}
+                            <div className="glass-card rounded-3xl p-6 bg-white/85 space-y-4">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                    <div className="flex items-center gap-2">
+                                        <UserPlus className="size-4 text-blue-600" />
+                                        <h3 className="text-sm font-bold text-slate-900">
+                                            Daftar Pelamar Masuk ({incomingApplications.length})
+                                        </h3>
+                                    </div>
+                                    <span className="text-xs font-semibold text-slate-500">
+                                        MinSatu Flow
+                                    </span>
+                                </div>
+
+                                {incomingApplications.length === 0 ? (
+                                    <div className="text-center py-12 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
+                                        <Users className="size-8 text-slate-400 mx-auto mb-2" />
+                                        <p className="text-xs font-bold text-slate-800">Belum Ada Pelamar yang Mengajukan Diri</p>
+                                        <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
+                                            Tim Anda saat ini berstatus terbuka di katalog pencarian rekan kompetisi. Lamaran mahasiswa yang masuk akan muncul di halaman ini lengkap dengan kontak WhatsApp langsung!
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {incomingApplications.map((app: any) => {
+                                            const applicant = app.user;
+                                            const phone = app.contact_phone || applicant?.phone;
+                                            const greeting = `Halo ${applicant?.name || 'Rekan'}, saya ${participation.team?.leader?.name || 'Ketua'} dari tim ${participation.team?.name} untuk kompetisi ${participation.competition?.name}. Saya melihat lamaran Anda untuk peran ${app.role_name}. Bisakah kita ngobrol lebih lanjut mengenai persiapan tim?`;
+                                            const waUrl = phone ? formatWhatsAppUrl(phone, greeting) : null;
+
+                                            return (
+                                                <div
+                                                    key={app.id}
+                                                    className={`p-5 rounded-3xl border transition shadow-2xs space-y-4 ${
+                                                        app.status === 'accepted'
+                                                            ? 'bg-emerald-50/30 border-emerald-200'
+                                                            : app.status === 'rejected'
+                                                            ? 'bg-slate-50 border-slate-200 opacity-70'
+                                                            : 'bg-white border-slate-200/90 hover:border-blue-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                        <div className="flex items-start gap-3">
+                                                            <div className="size-11 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
+                                                                {applicant?.name ? applicant.name.charAt(0) : 'U'}
+                                                            </div>
+                                                            <div>
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="text-sm font-bold text-slate-900">
+                                                                        {applicant?.name || 'Mahasiswa'}
+                                                                    </span>
+                                                                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                                                                        Posisi: {app.role_name}
+                                                                    </span>
+                                                                    {app.status === 'accepted' ? (
+                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                                                                            ✓ Diterima
+                                                                        </span>
+                                                                    ) : app.status === 'rejected' ? (
+                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
+                                                                            ✗ Ditolak
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                                                            Menunggu Keputusan
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+
+                                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                                    {applicant?.study_program || 'Mahasiswa'}
+                                                                    {applicant?.semester ? ` • Semester ${applicant.semester}` : ''}
+                                                                    {applicant?.email ? ` • ${applicant.email}` : ''}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Applied Date */}
+                                                        {app.created_at && (
+                                                            <span className="text-[11px] text-slate-400 shrink-0">
+                                                                Melamar pada {new Date(app.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Applicant Pitch Message */}
+                                                    {app.message && (
+                                                        <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed">
+                                                            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 flex items-center gap-1">
+                                                                <MessageSquare className="size-3 text-blue-600" />
+                                                                <span>Pesan Pengenalan & Motivasi:</span>
+                                                            </div>
+                                                            <p className="font-medium italic">"{app.message}"</p>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Portfolio and Skills */}
+                                                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                                                        {app.portfolio_url && (
+                                                            <a
+                                                                href={app.portfolio_url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1 font-semibold text-blue-600 hover:text-blue-700 underline"
+                                                            >
+                                                                <Globe className="size-3.5" />
+                                                                <span>Lihat Portofolio / GitHub</span>
+                                                                <ExternalLink className="size-3" />
+                                                            </a>
+                                                        )}
+
+                                                        {applicant?.skills && applicant.skills.length > 0 && (
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                <span className="text-[11px] text-slate-400 font-medium">Keahlian:</span>
+                                                                {applicant.skills.slice(0, 5).map((sk: string, i: number) => (
+                                                                    <span
+                                                                        key={i}
+                                                                        className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700"
+                                                                    >
+                                                                        {sk}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Action Buttons: WhatsApp Direct Connect & Decision */}
+                                                    <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                                                        {/* MinSatu WhatsApp Direct Chat Button */}
+                                                        {waUrl ? (
+                                                            <a
+                                                                href={waUrl}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                            >
+                                                                <Phone className="size-3.5" />
+                                                                <span>Hubungi via WhatsApp ({phone})</span>
+                                                                <ExternalLink className="size-3 text-emerald-200" />
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-[11px] text-slate-400 italic">
+                                                                No WhatsApp tidak disertakan
+                                                            </span>
+                                                        )}
+
+                                                        {/* Leader Actions */}
+                                                        {isLeader && app.status === 'pending' && !participation.is_formation_locked && (
+                                                            <div className="flex items-center gap-2">
+                                                                <button
+                                                                    onClick={() => handleRespondApplication(app.id, 'reject')}
+                                                                    className="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-slate-600 hover:text-rose-700 text-xs font-semibold transition cursor-pointer"
+                                                                >
+                                                                    Tolak
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleRespondApplication(app.id, 'accept')}
+                                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                                >
+                                                                    <CheckCircle2 className="size-3.5" />
+                                                                    <span>Terima Jadi Anggota</span>
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}

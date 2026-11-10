@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Web;
 
 use App\Enums\AchievementType;
 use App\Enums\AchievementVerification;
+use App\Enums\ApplicationStatus;
 use App\Enums\CompetitionCategory;
 use App\Enums\CompetitionScope;
 use App\Enums\CompetitionStatus;
 use App\Enums\DeliverableStatus;
+use App\Enums\RecruitmentStatus;
 use App\Enums\RoundStatus;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
@@ -17,6 +19,7 @@ use App\Enums\TeamType;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Achievement;
+use App\Models\Application;
 use App\Models\Bookmark;
 use App\Models\Competition;
 use App\Models\CompetitionAllocation;
@@ -29,6 +32,8 @@ use App\Models\CompetitionSource;
 use App\Models\CompetitionStatusHistory;
 use App\Models\Invitation;
 use App\Models\Project;
+use App\Models\Recruitment;
+use App\Models\RecruitmentRole;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamMember;
@@ -97,11 +102,126 @@ class CompetitionWebController extends Controller
 
         $competitions = $query->paginate(12)->withQueryString();
 
+        // MinSatu-Style Flow: Open recruiting competition teams
+        $recruitingQuery = CompetitionParticipation::where('is_formation_locked', false)
+            ->whereIn('stage', ['recruiting', 'team_formation'])
+            ->whereHas('competition', function ($q) use ($user) {
+                $q->visibleTo($user);
+            })
+            ->with([
+                'competition:id,name,slug,organizer,category,level,registration_deadline,min_team_size,max_team_size,cover_image',
+                'team.leader.profile',
+                'team.members.user:id,name,avatar',
+                'team.recruitment.roles',
+                'team.recruitment.applications' => function ($q) use ($user) {
+                    if ($user) {
+                        $q->where('user_id', $user->id);
+                    }
+                },
+            ])
+            ->latest();
+
+        if ($request->filled('team_search')) {
+            $tSearch = '%' . $request->input('team_search') . '%';
+            $recruitingQuery->where(function ($q) use ($tSearch) {
+                $q->whereHas('team', function ($tq) use ($tSearch) {
+                    $tq->where('name', 'like', $tSearch)
+                       ->orWhere('description', 'like', $tSearch);
+                })->orWhereHas('competition', function ($cq) use ($tSearch) {
+                    $cq->where('name', 'like', $tSearch)
+                       ->orWhere('organizer', 'like', $tSearch);
+                });
+            });
+        }
+
+        if ($request->filled('team_category')) {
+            $recruitingQuery->whereHas('competition', function ($q) use ($request) {
+                $q->where('category', $request->input('team_category'));
+            });
+        }
+
+        if ($request->filled('team_role')) {
+            $roleSearch = '%' . $request->input('team_role') . '%';
+            $recruitingQuery->whereHas('team.recruitment.roles', function ($q) use ($roleSearch) {
+                $q->where('name', 'like', $roleSearch);
+            });
+        }
+
+        $openRecruitingTeams = $recruitingQuery->get()->map(function ($part) use ($user) {
+            $team = $part->team;
+            $myApplication = null;
+            if ($user && $team && $team->recruitment) {
+                $myApplication = $team->recruitment->applications->first();
+            }
+
+            $isMember = $user && $team ? $team->hasMember($user) : false;
+            $isLeader = $user && $team ? $team->isLeader($user) : false;
+
+            return [
+                'id' => $part->id,
+                'stage' => $part->stage,
+                'category_track' => $part->category_track,
+                'competition' => [
+                    'id' => $part->competition->id,
+                    'name' => $part->competition->name,
+                    'slug' => $part->competition->slug,
+                    'organizer' => $part->competition->organizer,
+                    'category' => $part->competition->category,
+                    'level' => $part->competition->level,
+                    'registration_deadline' => $part->competition->registration_deadline,
+                    'min_team_size' => $part->competition->min_team_size,
+                    'max_team_size' => $part->competition->max_team_size,
+                    'cover_image' => $part->competition->cover_image,
+                ],
+                'team' => $team ? [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'description' => $team->description,
+                    'capacity' => $team->capacity,
+                    'leader' => $team->leader ? [
+                        'id' => $team->leader->id,
+                        'name' => $team->leader->name,
+                        'avatar' => $team->leader->avatar,
+                        'study_program' => $team->leader->profile?->study_program ?? 'Mahasiswa',
+                        'phone' => $team->leader->profile?->phone,
+                    ] : null,
+                    'members_count' => $team->members->count(),
+                    'members' => $team->members->map(fn ($m) => [
+                        'id' => $m->id,
+                        'user_id' => $m->user_id,
+                        'name' => $m->user?->name,
+                        'avatar' => $m->user?->avatar,
+                        'role_name' => $m->role_name,
+                    ]),
+                    'recruitment' => $team->recruitment ? [
+                        'id' => $team->recruitment->id,
+                        'title' => $team->recruitment->title,
+                        'description' => $team->recruitment->description,
+                        'status' => $team->recruitment->status,
+                        'roles' => $team->recruitment->roles->map(fn ($r) => [
+                            'id' => $r->id,
+                            'name' => $r->name,
+                            'slots' => $r->slots,
+                            'requirements' => $r->requirements,
+                        ]),
+                    ] : null,
+                ] : null,
+                'is_member' => $isMember,
+                'is_leader' => $isLeader,
+                'my_application' => $myApplication ? [
+                    'id' => $myApplication->id,
+                    'status' => $myApplication->status instanceof ApplicationStatus ? $myApplication->status->value : $myApplication->status,
+                    'message' => $myApplication->message,
+                ] : null,
+            ];
+        });
+
         // Calculate statistics for header cards
         $stats = [
             'total' => Competition::visibleTo($user)->count(),
             'open_registration' => Competition::visibleTo($user)->where('registration_deadline', '>=', now())->count(),
             'national_international' => Competition::visibleTo($user)->whereIn('level', ['national', 'international'])->count(),
+            'open_teams_count' => $openRecruitingTeams->count(),
             'my_participations' => $user ? CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
                 $q->where('user_id', $user->id);
             })->count() : 0,
@@ -119,9 +239,21 @@ class CompetitionWebController extends Controller
                 ->first();
         }
 
+        // Current user contact details for pre-filling application modal
+        $currentUserInfo = $user ? [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->profile?->phone,
+            'portfolio_url' => $user->profile?->portfolio_url,
+            'study_program' => $user->profile?->study_program,
+        ] : null;
+
         return Inertia::render('competitions/index', [
             'competitions' => $competitions,
-            'filters' => $request->only(['search', 'category', 'status', 'level']),
+            'openRecruitingTeams' => $openRecruitingTeams,
+            'currentUserInfo' => $currentUserInfo,
+            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role']),
             'categories' => CompetitionCategory::values(),
             'statuses' => CompetitionStatus::values(),
             'levels' => ['local', 'regional', 'national', 'international'],
@@ -287,12 +419,68 @@ class CompetitionWebController extends Controller
         // Check if user is eligible to participate under flexible policy
         $eligibilityCheck = $user ? $this->unifiedMembershipService->canJoinCompetition($user, null, $competition->id) : ['eligible' => false, 'reason' => 'Silakan login terlebih dahulu.'];
 
-        // Open teams looking for members in this competition
+        // Open teams looking for members in this competition (MinSatu-style)
         $openTeams = $competition->participations()
             ->where('is_formation_locked', false)
             ->whereIn('stage', ['recruiting', 'team_formation'])
-            ->with(['team.leader:id,name', 'team.members.user:id,name'])
-            ->get();
+            ->with([
+                'team.leader.profile',
+                'team.members.user:id,name,avatar',
+                'team.recruitment.roles',
+                'team.recruitment.applications' => function ($q) use ($user) {
+                    if ($user) {
+                        $q->where('user_id', $user->id);
+                    }
+                },
+            ])
+            ->get()
+            ->map(function ($part) use ($user) {
+                $team = $part->team;
+                $myApp = null;
+                if ($user && $team && $team->recruitment) {
+                    $myApp = $team->recruitment->applications->first();
+                }
+                return [
+                    'id' => $part->id,
+                    'stage' => $part->stage,
+                    'category_track' => $part->category_track,
+                    'team' => $team ? [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                        'description' => $team->description,
+                        'capacity' => $team->capacity,
+                        'leader' => $team->leader ? [
+                            'id' => $team->leader->id,
+                            'name' => $team->leader->name,
+                            'avatar' => $team->leader->avatar,
+                            'study_program' => $team->leader->profile?->study_program ?? 'Mahasiswa',
+                            'phone' => $team->leader->profile?->phone,
+                        ] : null,
+                        'members_count' => $team->members->count(),
+                        'members' => $team->members->map(fn ($m) => [
+                            'id' => $m->id,
+                            'user_id' => $m->user_id,
+                            'name' => $m->user?->name,
+                            'avatar' => $m->user?->avatar,
+                            'role_name' => $m->role_name,
+                        ]),
+                        'recruitment' => $team->recruitment ? [
+                            'id' => $team->recruitment->id,
+                            'roles' => $team->recruitment->roles->map(fn ($r) => [
+                                'id' => $r->id,
+                                'name' => $r->name,
+                                'slots' => $r->slots,
+                                'requirements' => $r->requirements,
+                            ]),
+                        ] : null,
+                    ] : null,
+                    'my_application' => $myApp ? [
+                        'id' => $myApp->id,
+                        'status' => $myApp->status instanceof ApplicationStatus ? $myApp->status->value : $myApp->status,
+                        'message' => $myApp->message,
+                    ] : null,
+                ];
+            });
 
         // Available students in same campus for Lecturer-Led allocation
         $isLecturer = $user ? ($user->isLecturer() || $user->isPlatformAdmin()) : false;
@@ -337,6 +525,15 @@ class CompetitionWebController extends Controller
             ->latest()
             ->get() : collect();
 
+        $currentUserInfo = $user ? [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->profile?->phone,
+            'portfolio_url' => $user->profile?->portfolio_url,
+            'study_program' => $user->profile?->study_program,
+        ] : null;
+
         return Inertia::render('competitions/show', [
             'competition' => $competition,
             'isBookmarked' => $isBookmarked,
@@ -344,6 +541,7 @@ class CompetitionWebController extends Controller
             'myLedProjects' => $myLedProjects,
             'eligibilityCheck' => $eligibilityCheck,
             'openTeams' => $openTeams,
+            'currentUserInfo' => $currentUserInfo,
             'isLecturer' => $isLecturer,
             'campusStudents' => $campusStudents,
             'myAllocations' => $myAllocations,
@@ -360,6 +558,7 @@ class CompetitionWebController extends Controller
             'team_name' => ['required', 'string', 'max:100'],
             'category_track' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
+            'roles_needed' => ['nullable', 'string', 'max:255'],
         ]);
 
         $participation = $this->teamFormationService->createTeam($competition, $user, $validated);
@@ -378,6 +577,8 @@ class CompetitionWebController extends Controller
             'team.members.user.profile.skills',
             'team.tasks.creator:id,name',
             'team.recruitment.roles',
+            'team.recruitment.applications.user.profile.skills',
+            'team.recruitment.applications.role',
             'team.invitations.invitee:id,name,email',
             'mentor.lecturerProfile',
             'mentors.user.lecturerProfile',
@@ -436,6 +637,49 @@ class CompetitionWebController extends Controller
             ->latest()
             ->get() : collect();
 
+        // MinSatu Flow: Incoming applicant submissions with contact WhatsApp & portfolios
+        $incomingApplications = ($team && $team->recruitment)
+            ? $team->recruitment->applications->map(function ($app) {
+                $u = $app->user;
+                $phone = $app->contact_phone ?: ($u?->profile?->phone ?: null);
+                return [
+                    'id' => $app->id,
+                    'user_id' => $app->user_id,
+                    'user' => $u ? [
+                        'id' => $u->id,
+                        'name' => $u->name,
+                        'email' => $u->email,
+                        'avatar' => $u->avatar,
+                        'study_program' => $u->profile?->study_program ?? 'Mahasiswa',
+                        'semester' => $u->profile?->semester,
+                        'phone' => $phone,
+                        'portfolio_url' => $app->portfolio_url ?: ($u->profile?->portfolio_url ?: null),
+                        'github_url' => $u->profile?->github_url ?: null,
+                        'linkedin_url' => $u->profile?->linkedin_url ?: null,
+                        'skills' => $u->profile ? $u->profile->skills->pluck('name')->all() : [],
+                    ] : null,
+                    'role_name' => $app->role?->name ?? 'Anggota Tim',
+                    'recruitment_role_id' => $app->recruitment_role_id,
+                    'message' => $app->message,
+                    'status' => $app->status instanceof ApplicationStatus ? $app->status->value : $app->status,
+                    'contact_phone' => $phone,
+                    'portfolio_url' => $app->portfolio_url ?: ($u?->profile?->portfolio_url ?: null),
+                    'created_at' => $app->created_at?->toISOString(),
+                    'decided_at' => $app->decided_at?->toISOString(),
+                    'decision_note' => $app->decision_note,
+                ];
+            })
+            : collect();
+
+        $recruitmentRoles = ($team && $team->recruitment)
+            ? $team->recruitment->roles->map(fn ($r) => [
+                'id' => $r->id,
+                'name' => $r->name,
+                'slots' => $r->slots,
+                'requirements' => $r->requirements,
+            ])
+            : collect();
+
         return Inertia::render('competitions/workspace', [
             'participation' => $participation,
             'readinessScore' => $readinessScore,
@@ -443,6 +687,8 @@ class CompetitionWebController extends Controller
             'availableLecturers' => $availableLecturers,
             'selectionStages' => $selectionStages,
             'teamAllocations' => $teamAllocations,
+            'incomingApplications' => $incomingApplications,
+            'recruitmentRoles' => $recruitmentRoles,
             'rounds' => $participation->competition?->rounds ?? collect(),
             'isLeader' => $isLeader,
             'isMember' => $isMember,
@@ -1078,5 +1324,207 @@ class CompetitionWebController extends Controller
         $this->unifiedMembershipService->withdrawFromTeam($team, $targetMember, $reason);
 
         return back()->with('success', "Keanggotaan {$targetMember->name} dalam tim kompetisi telah berhasil dilepas.");
+    }
+
+    // MinSatu Flow: Student applies to an open recruiting team
+    public function applyTeam(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $participation = CompetitionParticipation::with(['team.members', 'team.recruitment.roles', 'competition'])->findOrFail($participationId);
+        $team = $participation->team;
+
+        if (!$team) {
+            abort(404, 'Tim kompetisi tidak ditemukan.');
+        }
+
+        if ($participation->is_formation_locked) {
+            return back()->with('error', 'Formasi tim ini sudah dikunci dan tidak menerima pelamar baru.');
+        }
+
+        if ($team->hasMember($user)) {
+            return back()->with('error', 'Anda sudah menjadi anggota dalam tim ini.');
+        }
+
+        $maxCapacity = $participation->competition->max_team_size ?? 5;
+        $currentMembersCount = $team->members()->where('status', 'active')->count();
+        if ($currentMembersCount >= $maxCapacity) {
+            return back()->with('error', 'Kapasitas maksimal tim ini sudah terpenuhi.');
+        }
+
+        $validated = $request->validate([
+            'role_name' => ['nullable', 'string', 'max:80'],
+            'recruitment_role_id' => ['nullable', 'exists:recruitment_roles,id'],
+            'message' => ['required', 'string', 'max:1000'],
+            'whatsapp_number' => ['nullable', 'string', 'max:30'],
+            'portfolio_url' => ['nullable', 'url', 'max:255'],
+        ]);
+
+        $campusId = $user->campusId() ?? $team->campus_id;
+        $recruitment = $team->recruitment()->firstOrCreate(
+            ['team_id' => $team->id],
+            [
+                'campus_id' => $campusId,
+                'title' => 'Rekrutmen Tim ' . $team->name,
+                'description' => 'Mencari anggota tim untuk ' . $participation->competition->name,
+                'status' => RecruitmentStatus::Open,
+            ]
+        );
+
+        $roleId = $validated['recruitment_role_id'] ?? null;
+        if (!$roleId && !empty($validated['role_name'])) {
+            $role = $recruitment->roles()->firstOrCreate(
+                ['name' => $validated['role_name']],
+                ['slots' => 1]
+            );
+            $roleId = $role->id;
+        }
+
+        $existing = Application::where('recruitment_id', $recruitment->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($existing && $existing->status === ApplicationStatus::Pending) {
+            return back()->with('error', 'Anda sudah mengirimkan lamaran ke tim ini. Mohon tunggu respon ketua tim.');
+        }
+
+        if ($user->profile) {
+            $profileUpdates = [];
+            if (!empty($validated['whatsapp_number'])) {
+                $profileUpdates['phone'] = $validated['whatsapp_number'];
+            }
+            if (!empty($validated['portfolio_url']) && empty($user->profile->portfolio_url)) {
+                $profileUpdates['portfolio_url'] = $validated['portfolio_url'];
+            }
+            if (!empty($profileUpdates)) {
+                $user->profile->update($profileUpdates);
+            }
+        }
+
+        Application::updateOrCreate(
+            [
+                'recruitment_id' => $recruitment->id,
+                'user_id' => $user->id,
+            ],
+            [
+                'recruitment_role_id' => $roleId,
+                'message' => $validated['message'],
+                'contact_phone' => $validated['whatsapp_number'] ?? ($user->profile?->phone ?? null),
+                'portfolio_url' => $validated['portfolio_url'] ?? ($user->profile?->portfolio_url ?? null),
+                'status' => ApplicationStatus::Pending,
+                'decided_by' => null,
+                'decided_at' => null,
+                'decision_note' => null,
+            ]
+        );
+
+        return back()->with('success', "Lamaran kamu berhasil dikirim ke ketua tim {$team->name}! Ketua tim dapat menghubungi kamu langsung via WhatsApp.");
+    }
+
+    // MinSatu Flow: Team leader responds to applicant (Accept / Reject)
+    public function respondApplication(Request $request, int $participationId, int $applicationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['team.members', 'competition'])->findOrFail($participationId);
+        $team = $participation->team;
+
+        if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
+            abort(403, 'Hanya ketua tim yang dapat memproses lamaran.');
+        }
+
+        $application = Application::with(['user.profile', 'role', 'recruitment'])->findOrFail($applicationId);
+
+        $validated = $request->validate([
+            'action' => ['required', 'in:accept,reject'],
+            'decision_note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        if ($validated['action'] === 'accept') {
+            $roleName = $application->role?->name ?? 'Anggota Tim';
+
+            $this->membershipService->addMemberToCompetitionTeam(
+                $team,
+                $application->user,
+                $roleName,
+                $application->recruitment_role_id
+            );
+
+            $application->update([
+                'status' => ApplicationStatus::Accepted,
+                'decided_by' => $user->id,
+                'decided_at' => now(),
+                'decision_note' => $validated['decision_note'] ?? 'Lamaran diterima oleh ketua tim.',
+            ]);
+
+            return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim {$team->name}!");
+        } else {
+            $application->update([
+                'status' => ApplicationStatus::Rejected,
+                'decided_by' => $user->id,
+                'decided_at' => now(),
+                'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
+            ]);
+
+            return back()->with('success', "Lamaran dari {$application->user->name} telah ditolak.");
+        }
+    }
+
+    // MinSatu Flow: Manage recruiting roles for competition team
+    public function storeRecruitmentRole(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $team = $participation->team;
+
+        if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
+            abort(403, 'Hanya ketua tim yang dapat menambah lowongan peran.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:80'],
+            'slots' => ['required', 'integer', 'min:1', 'max:10'],
+            'requirements' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $campusId = $user->campusId() ?? $team->campus_id;
+        $recruitment = $team->recruitment()->firstOrCreate(
+            ['team_id' => $team->id],
+            [
+                'campus_id' => $campusId,
+                'title' => 'Rekrutmen Tim ' . $team->name,
+                'description' => 'Mencari anggota untuk ' . $participation->competition->name,
+                'status' => RecruitmentStatus::Open,
+            ]
+        );
+
+        $recruitment->roles()->create([
+            'name' => $validated['name'],
+            'slots' => $validated['slots'],
+            'requirements' => $validated['requirements'] ?? null,
+        ]);
+
+        return back()->with('success', "Peran '{$validated['name']}' berhasil ditambahkan ke lowongan tim!");
+    }
+
+    public function deleteRecruitmentRole(Request $request, int $participationId, int $roleId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $team = $participation->team;
+
+        if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
+            abort(403, 'Hanya ketua tim yang dapat menghapus lowongan peran.');
+        }
+
+        $role = RecruitmentRole::where('id', $roleId)
+            ->whereHas('recruitment', fn ($q) => $q->where('team_id', $team->id))
+            ->firstOrFail();
+
+        $role->delete();
+
+        return back()->with('success', 'Lowongan peran berhasil dihapus.');
     }
 }

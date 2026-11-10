@@ -49,6 +49,12 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-invitations/{invitationId}/accept', [CompetitionWebController::class, 'acceptInvitation'])->name('competitions.invitations.accept');
     Route::post('/competition-invitations/{invitationId}/decline', [CompetitionWebController::class, 'declineInvitation'])->name('competitions.invitations.decline');
 
+    // MinSatu Flow: Apply to Recruiting Competition Team & Process Applications
+    Route::post('/competitions/teams/{participationId}/apply', [CompetitionWebController::class, 'applyTeam'])->name('competitions.teams.apply');
+    Route::post('/competitions/teams/{participationId}/applications/{applicationId}/respond', [CompetitionWebController::class, 'respondApplication'])->name('competitions.teams.applications.respond');
+    Route::post('/competition-workspace/{participationId}/roles', [CompetitionWebController::class, 'storeRecruitmentRole'])->name('competitions.roles.store');
+    Route::delete('/competition-workspace/{participationId}/roles/{roleId}', [CompetitionWebController::class, 'deleteRecruitmentRole'])->name('competitions.roles.delete');
+
     // Dedicated Competition Preparation Workspace
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');

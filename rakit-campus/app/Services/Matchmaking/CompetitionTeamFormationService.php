@@ -117,6 +117,33 @@ class CompetitionTeamFormationService
                 $leader->id
             );
 
+            // Initialize Recruitment for MinSatu-style team finder
+            $recruitment = $team->recruitment()->firstOrCreate(
+                ['team_id' => $team->id],
+                [
+                    'campus_id' => $campusId,
+                    'title' => 'Rekrutmen Tim ' . $team->name,
+                    'description' => $data['description'] ?? ("Mencari rekan tim untuk berkolaborasi di " . $competition->name),
+                    'status' => \App\Enums\RecruitmentStatus::Open,
+                ]
+            );
+
+            // If roles were specified in request (e.g. comma-separated or array), populate recruitment roles
+            if (!empty($data['roles_needed'])) {
+                $roleNames = is_array($data['roles_needed'])
+                    ? $data['roles_needed']
+                    : array_map('trim', explode(',', (string) $data['roles_needed']));
+
+                foreach ($roleNames as $roleName) {
+                    if (!empty($roleName)) {
+                        $recruitment->roles()->firstOrCreate(
+                            ['name' => $roleName],
+                            ['slots' => 1]
+                        );
+                    }
+                }
+            }
+
             return $participation;
         });
     }

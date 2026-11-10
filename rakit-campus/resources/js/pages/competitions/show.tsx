@@ -1,3 +1,6 @@
+import ApplyCompetitionTeamModal, {
+    type ApplyTeamData,
+} from '@/components/competitions/ApplyCompetitionTeamModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -5,6 +8,7 @@ import {
     AlertCircle,
     ArrowLeft,
     Bookmark,
+    Briefcase,
     Calendar,
     CheckCircle2,
     Clock,
@@ -29,6 +33,14 @@ interface Props {
     myLedProjects?: any[];
     eligibilityCheck?: { eligible: boolean; reason?: string };
     openTeams?: any[];
+    currentUserInfo?: {
+        id?: number;
+        name?: string;
+        email?: string;
+        phone?: string;
+        portfolio_url?: string;
+        study_program?: string;
+    } | null;
     isLecturer?: boolean;
     campusStudents?: any[];
     myAllocations?: any[];
@@ -41,6 +53,7 @@ export default function CompetitionShow({
     myLedProjects = [],
     eligibilityCheck = { eligible: true },
     openTeams = [],
+    currentUserInfo,
     isLecturer = false,
     campusStudents = [],
     myAllocations = [],
@@ -54,7 +67,12 @@ export default function CompetitionShow({
     const [teamName, setTeamName] = useState('');
     const [categoryTrack, setCategoryTrack] = useState('');
     const [description, setDescription] = useState('');
+    const [rolesNeeded, setRolesNeeded] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    // MinSatu Apply Modal
+    const [applyModalOpen, setApplyModalOpen] = useState(false);
+    const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
     // Allocation Form State
     const [allocStudentId, setAllocStudentId] = useState('');
@@ -102,6 +120,7 @@ export default function CompetitionShow({
             team_name: teamName,
             category_track: categoryTrack || null,
             description: description,
+            roles_needed: rolesNeeded || null,
         };
 
         if (participationMode === 'existing_project' && selectedProjectId) {
@@ -472,8 +491,20 @@ export default function CompetitionShow({
                                                     </div>
                                                     <p className="text-[11px] text-slate-500 mt-1">
                                                         Ketua: <strong className="text-slate-700">{part.team?.leader?.name || 'Mahasiswa'}</strong> • Kapasitas:{' '}
-                                                        {part.team?.members?.length || 0} / {competition.max_team_size || 5} Anggota
+                                                        {part.team?.members_count || part.team?.members?.length || 0} / {competition.max_team_size || 5} Anggota
                                                     </p>
+                                                    {part.team?.recruitment?.roles && part.team.recruitment.roles.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {part.team.recruitment.roles.map((r: any) => (
+                                                                <span
+                                                                    key={r.id}
+                                                                    className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700 border border-purple-200/60"
+                                                                >
+                                                                    {r.name} ({r.slots} slot)
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
 
                                                 <div className="flex items-center gap-2 shrink-0">
@@ -484,12 +515,27 @@ export default function CompetitionShow({
                                                         >
                                                             Workspace Tim
                                                         </Link>
+                                                    ) : part.my_application ? (
+                                                        <span className="px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200">
+                                                            Lamaran Terkirim
+                                                        </span>
                                                     ) : (
                                                         <button
-                                                            onClick={() => alert(`Silakan hubungi ketua tim ${part.team?.leader?.name} untuk meminta undangan bergabung.`)}
-                                                            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer"
+                                                            onClick={() => {
+                                                                setSelectedTeamData({
+                                                                    participationId: part.id,
+                                                                    teamName: part.team?.name || 'Tim Kompetisi',
+                                                                    competitionName: competition.name,
+                                                                    organizer: competition.organizer,
+                                                                    leaderName: part.team?.leader?.name,
+                                                                    roles: part.team?.recruitment?.roles || [],
+                                                                });
+                                                                setApplyModalOpen(true);
+                                                            }}
+                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
                                                         >
-                                                            Hubungi Ketua
+                                                            <Sparkles className="size-3" />
+                                                            <span>Ajukan Diri</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -804,12 +850,32 @@ export default function CompetitionShow({
                                                 Deskripsi Singkat Tim & Sasaran Karya
                                             </label>
                                             <textarea
-                                                rows={3}
+                                                rows={2}
                                                 placeholder="Tuliskan gambaran inovasi yang akan dipersiapkan..."
                                                 value={description}
                                                 onChange={(e) => setDescription(e.target.value)}
                                                 className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
                                             />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                                                <span className="flex items-center gap-1.5">
+                                                    <Briefcase className="size-3.5 text-blue-600" />
+                                                    <span>Peran yang Ingin Direkrut (MinSatu Flow)</span>
+                                                </span>
+                                                <span className="text-[10px] text-slate-400 font-normal">Opsional</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Contoh: UI/UX Designer, Frontend Dev, Hustler (pisahkan koma)"
+                                                value={rolesNeeded}
+                                                onChange={(e) => setRolesNeeded(e.target.value)}
+                                                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                                            />
+                                            <p className="text-[11px] text-slate-400 mt-1">
+                                                Peran ini akan langsung tampil di pencarian rekan tim agar mahasiswa lain dapat melamar.
+                                            </p>
                                         </div>
                                     </>
                                 )}
@@ -1042,6 +1108,14 @@ export default function CompetitionShow({
                         </div>
                     </div>
                 )}
+
+                {/* MinSatu Apply Modal */}
+                <ApplyCompetitionTeamModal
+                    isOpen={applyModalOpen}
+                    onClose={() => setApplyModalOpen(false)}
+                    teamData={selectedTeamData}
+                    currentUserInfo={currentUserInfo}
+                />
             </div>
         </AppLayout>
     );
