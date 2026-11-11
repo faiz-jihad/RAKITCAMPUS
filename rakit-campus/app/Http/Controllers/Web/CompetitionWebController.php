@@ -43,6 +43,7 @@ use App\Services\Matchmaking\CompetitionManagementService;
 use App\Services\Matchmaking\CompetitionMatchmakingService;
 use App\Services\Matchmaking\CompetitionRoundService;
 use App\Services\Matchmaking\CompetitionTeamFormationService;
+use App\Services\Storage\ObjectStorageService;
 use App\Services\Matchmaking\CompetitionVerificationService;
 use App\Services\Matchmaking\EligibilityService;
 use App\Services\Matchmaking\MembershipService;
@@ -598,7 +599,7 @@ class CompetitionWebController extends Controller
 
         $coverImagePath = null;
         if ($request->hasFile('cover_image')) {
-            $coverImagePath = $request->file('cover_image')->store('competitions/covers', 'public');
+            $coverImagePath = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers')['path'];
         }
 
         $competition = DB::transaction(function () use ($validated, $user, $campusId, $isGlobal, $coverImagePath) {
@@ -1299,10 +1300,11 @@ class CompetitionWebController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $originalName = $file->getClientOriginalName();
-            $fileSize = $file->getSize();
-            $mimeType = $file->getMimeType();
-            $path = $file->store('competitions/documents', 'public');
+            $stored = ObjectStorageService::store($file, 'competitions/documents');
+            $originalName = $stored['original_name'];
+            $fileSize = $stored['file_size'];
+            $mimeType = $stored['mime_type'];
+            $path = $stored['path'];
         }
 
         // Calculate latest version for this document key
@@ -1368,7 +1370,7 @@ class CompetitionWebController extends Controller
 
         $certPath = null;
         if ($request->hasFile('certificate')) {
-            $certPath = $request->file('certificate')->store('competitions/certificates', 'public');
+            $certPath = ObjectStorageService::store($request->file('certificate'), 'competitions/certificates')['path'];
         } elseif (!empty($validated['evidence_url'])) {
             $certPath = $validated['evidence_url'];
         }

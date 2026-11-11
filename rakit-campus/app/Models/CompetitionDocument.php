@@ -9,6 +9,26 @@ class CompetitionDocument extends Model
 {
     protected $guarded = ['id'];
 
+    protected $appends = ['file_path', 'file_url'];
+
+    public function getFilePathAttribute(): ?string
+    {
+        if ($this->url) {
+            return $this->url;
+        }
+
+        if ($this->path) {
+            return \App\Services\Storage\ObjectStorageService::url($this->path);
+        }
+
+        return null;
+    }
+
+    public function getFileUrlAttribute(): ?string
+    {
+        return $this->getFilePathAttribute();
+    }
+
     protected function casts(): array
     {
         return [

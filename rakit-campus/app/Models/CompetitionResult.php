@@ -10,6 +10,22 @@ class CompetitionResult extends Model
 {
     protected $guarded = ['id'];
 
+    protected $appends = ['certificate_url'];
+
+    public function getCertificatePathAttribute($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        return \App\Services\Storage\ObjectStorageService::url($value);
+    }
+
+    public function getCertificateUrlAttribute(): ?string
+    {
+        return $this->getCertificatePathAttribute($this->attributes['certificate_path'] ?? null);
+    }
+
     protected function casts(): array
     {
         return [

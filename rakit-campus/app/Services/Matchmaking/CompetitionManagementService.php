@@ -10,6 +10,7 @@ use App\Models\Competition;
 use App\Models\CompetitionSource;
 use App\Models\MatchingAuditLog;
 use App\Models\User;
+use App\Services\Storage\ObjectStorageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -27,7 +28,7 @@ class CompetitionManagementService
 
         $coverImagePath = null;
         if ($coverImage) {
-            $coverImagePath = $coverImage->store('competitions/covers', 'public');
+            $coverImagePath = ObjectStorageService::store($coverImage, 'competitions/covers')['path'];
         }
 
         return DB::transaction(function () use ($data, $creator, $campusId, $isGlobal, $coverImagePath) {
@@ -105,7 +106,7 @@ class CompetitionManagementService
         }
 
         if ($coverImage) {
-            $data['cover_image'] = $coverImage->store('competitions/covers', 'public');
+            $data['cover_image'] = ObjectStorageService::store($coverImage, 'competitions/covers')['path'];
         }
 
         $competition->update($data);

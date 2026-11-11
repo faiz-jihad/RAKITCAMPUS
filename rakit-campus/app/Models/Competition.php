@@ -49,6 +49,20 @@ class Competition extends Model
         ];
     }
 
+    public function getCoverImageAttribute($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        return \App\Services\Storage\ObjectStorageService::url($value);
+    }
+
+    public function getCoverImageUrlAttribute(): ?string
+    {
+        return $this->getCoverImageAttribute($this->attributes['cover_image'] ?? null);
+    }
+
     public function campus(): BelongsTo
     {
         return $this->belongsTo(Campus::class);

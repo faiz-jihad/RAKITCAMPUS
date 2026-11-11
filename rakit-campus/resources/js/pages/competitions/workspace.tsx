@@ -1351,7 +1351,7 @@ export default function CompetitionWorkspace({
                                                     <>
                                                         <span className="text-[10px] text-slate-500 font-mono">v{matchedDoc.version}</span>
                                                         <a
-                                                            href={matchedDoc.file_path || matchedDoc.url}
+                                                            href={matchedDoc.file_path || matchedDoc.file_url || matchedDoc.url || (matchedDoc.path ? (matchedDoc.path.startsWith('http') ? matchedDoc.path : '/storage/' + matchedDoc.path) : '#')}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="font-bold text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
@@ -1415,9 +1415,9 @@ export default function CompetitionWorkspace({
                                                 </div>
 
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    {(doc.file_path || doc.url) && (
+                                                    {(doc.file_path || doc.file_url || doc.url || doc.path) && (
                                                         <a
-                                                            href={doc.file_path || doc.url}
+                                                            href={doc.file_path || doc.file_url || doc.url || (doc.path ? (doc.path.startsWith('http') ? doc.path : '/storage/' + doc.path) : '#')}
                                                             target="_blank"
                                                             rel="noreferrer"
                                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5"

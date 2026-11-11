@@ -10,6 +10,7 @@ services:
     working_dir: /var/www
     volumes:
       - ../rakit-campus:/var/www
+      - ./uploads.ini:/usr/local/etc/php/conf.d/docker-php-uploads.ini:ro
     environment:
       - APP_ENV=production
       - APP_DEBUG=false

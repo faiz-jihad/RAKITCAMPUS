@@ -17,6 +17,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Default Object Storage Disk for Large Files
+    |--------------------------------------------------------------------------
+    |
+    | Disk used for large file uploads (proposals, documents, pitch decks,
+    | certificates, deliverable submissions, and archives).
+    |
+    */
+    'default_object_disk' => env('OBJECT_STORAGE_DISK', 'minio'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |
@@ -54,6 +65,18 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT', false),
+            'throw' => false,
+        ],
+
+        'minio' => [
+            'driver' => 's3',
+            'key' => env('MINIO_KEY', env('AWS_ACCESS_KEY_ID', 'minioadmin')),
+            'secret' => env('MINIO_SECRET', env('AWS_SECRET_ACCESS_KEY', 'minioadminpassword')),
+            'region' => env('MINIO_REGION', env('AWS_DEFAULT_REGION', 'us-east-1')),
+            'bucket' => env('MINIO_BUCKET', env('AWS_BUCKET', 'rakitcampus-files')),
+            'url' => env('MINIO_URL', env('AWS_URL')),
+            'endpoint' => env('MINIO_ENDPOINT', env('AWS_ENDPOINT', 'http://retiva-minio:9000')),
+            'use_path_style_endpoint' => env('MINIO_USE_PATH_STYLE_ENDPOINT', env('AWS_USE_PATH_STYLE_ENDPOINT', true)),
             'throw' => false,
         ],
 

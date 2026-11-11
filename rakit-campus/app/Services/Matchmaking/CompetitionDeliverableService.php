@@ -7,6 +7,7 @@ use App\Models\CompetitionDocument;
 use App\Models\CompetitionParticipation;
 use App\Models\MatchingAuditLog;
 use App\Models\User;
+use App\Services\Storage\ObjectStorageService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
@@ -40,10 +41,11 @@ class CompetitionDeliverableService
         $mimeType = null;
 
         if ($file) {
-            $originalName = $file->getClientOriginalName();
-            $fileSize = $file->getSize();
-            $mimeType = $file->getMimeType();
-            $path = $file->store('competitions/deliverables', 'public');
+            $stored = ObjectStorageService::store($file, 'competitions/deliverables');
+            $originalName = $stored['original_name'];
+            $fileSize = $stored['file_size'];
+            $mimeType = $stored['mime_type'];
+            $path = $stored['path'];
         }
 
         // Auto-increment version for this required document key
