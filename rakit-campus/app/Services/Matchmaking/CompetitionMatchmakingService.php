@@ -77,10 +77,9 @@ class CompetitionMatchmakingService
         $requiredSkillNames = $this->extractRequiredSkills($participation);
 
         // Extract team open roles
-        $openRoles = $team?->recruitment?->roles()
-            ->where('filled_slots', '<', \Illuminate\Support\Facades\DB::raw('total_slots'))
-            ->pluck('name')
-            ->toArray() ?? [];
+        $openRoles = $team?->recruitment?->roles
+            ? $team->recruitment->roles->filter(fn ($role) => $role->vacancies() > 0)->pluck('name')->toArray()
+            : [];
 
         $evaluated = $students->map(function (User $student) use ($participation, $requiredSkillNames, $openRoles, $activeInCompIds) {
             return $this->evaluateStudent($student, $participation, $requiredSkillNames, $openRoles, $activeInCompIds);
