@@ -2,7 +2,7 @@ import Heading from '@/components/heading';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { KeyRound, Palette, Sparkles, User } from 'lucide-react';
+import { KeyRound, LogOut, Palette, Sparkles, User } from 'lucide-react';
 
 const sidebarNavItems = [
     {
@@ -85,6 +85,25 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                     </Link>
                                 );
                             })}
+
+                            <div className="pt-2 mt-2 border-t border-neutral-100">
+                                <Link
+                                    method="post"
+                                    href="/logout"
+                                    as="button"
+                                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition-all cursor-pointer text-left"
+                                >
+                                    <div className="size-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                                        <LogOut className="size-4" />
+                                    </div>
+                                    <div>
+                                        <div className="leading-tight font-bold">Keluar Akun</div>
+                                        <div className="text-[10px] text-rose-400 font-normal mt-0.5">
+                                            Akhiri sesi login di perangkat ini
+                                        </div>
+                                    </div>
+                                </Link>
+                            </div>
                         </div>
                     </aside>
 

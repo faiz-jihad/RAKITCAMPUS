@@ -1907,12 +1907,22 @@ export default function Welcome() {
                         {/* White Rectangular Action Buttons (Adjacent with 4px gap) */}
                         <div className="flex items-center gap-1 self-center">
                             {auth?.user ? (
-                                <Link
-                                    href="/dashboard"
-                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
-                                >
-                                    DASHBOARD
-                                </Link>
+                                <>
+                                    <Link
+                                        href="/dashboard"
+                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                    >
+                                        DASHBOARD
+                                    </Link>
+                                    <Link
+                                        method="post"
+                                        href="/logout"
+                                        as="button"
+                                        className="hover-blur-text border border-white/40 text-white/90 hover:text-white hover:border-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase transition-colors"
+                                    >
+                                        KELUAR
+                                    </Link>
+                                </>
                             ) : (
                                 <>
                                     <Link
@@ -2082,12 +2092,22 @@ export default function Welcome() {
                     {/* Bottom Actions */}
                     <div className="pt-4 flex flex-col gap-2.5">
                         {auth?.user ? (
-                            <Link
-                                href="/dashboard"
-                                className="hover-blur-text w-full bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
-                            >
-                                BUKA DASHBOARD
-                            </Link>
+                            <div className="flex flex-col gap-2">
+                                <Link
+                                    href="/dashboard"
+                                    className="hover-blur-text w-full bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
+                                >
+                                    BUKA DASHBOARD
+                                </Link>
+                                <Link
+                                    method="post"
+                                    href="/logout"
+                                    as="button"
+                                    className="hover-blur-text w-full border border-red-500/50 text-red-400 py-3 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-red-500/10 transition-colors"
+                                >
+                                    KELUAR DARI AKUN
+                                </Link>
+                            </div>
                         ) : (
                             <div className="flex items-center gap-2">
                                 <Link
