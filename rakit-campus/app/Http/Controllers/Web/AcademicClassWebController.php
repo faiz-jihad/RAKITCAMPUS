@@ -410,7 +410,8 @@ class AcademicClassWebController extends Controller
             ->exists();
 
         if ($alreadyEnrolled) {
-            return back()->withErrors(['join_code' => 'Anda sudah tergabung di kelas ' . $academicClass->name . '.']);
+            return redirect()->route('classes.show', $academicClass->id)
+                ->with('info', 'Anda sudah tergabung di kelas ' . $academicClass->name . '.');
         }
 
         // Enroll student atomically without creating duplicate pivot records
