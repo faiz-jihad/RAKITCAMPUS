@@ -9,27 +9,19 @@ import {
     Bookmark,
     Briefcase,
     Calendar,
-    CheckCircle2,
     Clock,
-    Compass,
     Cpu,
     ExternalLink,
     FileText,
-    Filter,
     FolderKanban,
     Globe,
     GraduationCap,
-    Heart,
-    Layers,
     Leaf,
-    MapPin,
     MessageSquare,
     Mic,
     Palette,
     Plus,
     Search,
-    Share2,
-    ShieldCheck,
     Sparkles,
     Terminal,
     TrendingUp,
@@ -64,7 +56,7 @@ interface Competition {
 }
 
 interface RecruitingTeam {
-    id: number; // participation id
+    id: number;
     stage: string;
     category_track?: string;
     competition: {
@@ -216,14 +208,11 @@ export default function CompetitionIndex({
     currentUserInfo,
     categories,
     filters,
-    stats,
 }: Props) {
-    // Main navigation tabs: explore, teams, categories, my_competitions, recommendations
     const [activeTab, setActiveTab] = useState<'explore' | 'teams' | 'categories' | 'my_competitions' | 'recommendations'>(
         (filters.tab as any) || 'explore'
     );
 
-    // Sub-tab for My Competitions
     const [mySubTab, setMySubTab] = useState<'saved' | 'applications' | 'teams'>('saved');
 
     // Filter States for Explore
@@ -245,30 +234,29 @@ export default function CompetitionIndex({
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
-    // 10 Core Academic & Professional Categories (strictly using Lucide icons, ZERO emojis)
+    // 10 Core Academic Categories (Concise text, ZERO emojis)
     const coreCategoryList = [
-        { key: 'technology', name: 'Teknologi & Rekayasa', icon: Terminal, desc: 'Software, IoT, robotika, dan teknologi komputasi.' },
-        { key: 'business_plan', name: 'Bisnis & Kewirausahaan', icon: TrendingUp, desc: 'Model bisnis rintisan, pitch deck, dan inovasi finansial.' },
-        { key: 'research', name: 'Riset & Karya Tulis Ilmiah', icon: GraduationCap, desc: 'Karya tulis ilmiah, PKM, dan penelitian akademik terapan.' },
-        { key: 'innovation', name: 'Inovasi & Produk Terapan', icon: Sparkles, desc: 'Inovasi produk tepat guna dan prototipe solusi nyata kampus.' },
-        { key: 'ui_ux', name: 'Desain & Industri Kreatif', icon: Palette, desc: 'UI/UX design, poster ilmiah, animasi, dan branding.' },
-        { key: 'programming', name: 'Sains Data & AI', icon: Cpu, desc: 'Analisis big data, machine learning, dan competitive programming.' },
-        { key: 'hackathon', name: 'Hackathon & Fast Prototyping', icon: Zap, desc: 'Tantangan intensif membangun prototipe solusi dalam 24-48 jam.' },
-        { key: 'entrepreneurship', name: 'Dampak Sosial & Komunitas', icon: Globe, desc: 'Pemberdayaan masyarakat, SDGs, dan program sosial.' },
-        { key: 'scientific_writing', name: 'Debat & Publik Speaking', icon: Mic, desc: 'Debat parlemen, speech contest, dan komunikasi strategis.' },
-        { key: 'other', name: 'Lingkungan & Keberlanjutan', icon: Leaf, desc: 'Inovasi energi hijau, keberlanjutan lingkungan, dan aksi iklim.' },
+        { key: 'technology', name: 'Teknologi & Rekayasa', icon: Terminal, desc: 'Software, IoT, robotika' },
+        { key: 'business_plan', name: 'Bisnis & Kewirausahaan', icon: TrendingUp, desc: 'Model bisnis, startup pitch' },
+        { key: 'research', name: 'Riset & Karya Ilmiah', icon: GraduationCap, desc: 'Karya tulis ilmiah, PKM' },
+        { key: 'innovation', name: 'Inovasi & Produk', icon: Sparkles, desc: 'Prototipe produk tepat guna' },
+        { key: 'ui_ux', name: 'Desain & Kreatif', icon: Palette, desc: 'UI/UX, animasi, branding' },
+        { key: 'programming', name: 'Sains Data & AI', icon: Cpu, desc: 'Data science, AI, algoritma' },
+        { key: 'hackathon', name: 'Hackathon', icon: Zap, desc: 'Fast prototyping 24-48 jam' },
+        { key: 'entrepreneurship', name: 'Dampak Sosial', icon: Globe, desc: 'SDGs & pemberdayaan sosial' },
+        { key: 'scientific_writing', name: 'Debat & Komunikasi', icon: Mic, desc: 'Debat & public speaking' },
+        { key: 'other', name: 'Lingkungan & Iklim', icon: Leaf, desc: 'Energi hijau & aksi iklim' },
     ];
 
     const commonRoleOptions = [
         'UI/UX Designer',
         'Frontend Developer',
         'Backend Developer',
-        'Machine Learning Engineer',
-        'Hustler / Business Lead',
-        'Researcher / Writer',
+        'Machine Learning',
+        'Hustler / Lead',
+        'Researcher',
     ];
 
-    // Bookmark Toggle
     const handleToggleBookmark = (e: React.MouseEvent, compId: number) => {
         e.stopPropagation();
         router.post(`/competitions/${compId}/bookmark`, {}, { preserveScroll: true });
@@ -332,36 +320,26 @@ export default function CompetitionIndex({
         setApplyModalOpen(true);
     };
 
-    // Spotlight featured entry
     const spotlightComp = featuredCompetitions && featuredCompetitions.length > 0
         ? featuredCompetitions[0]
         : competitions.data && competitions.data.length > 0
         ? competitions.data[0]
         : null;
 
-    // Remaining competitions (excluding spotlight in explore view if featured)
     const catalogCompetitions = competitions.data;
 
     return (
         <AppLayout activeTab="lomba" title="Competition Hub — RakitCampus">
-            <div className="space-y-8">
-                {/* 1. EDITORIAL HEADER SECTION */}
-                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 pb-6 border-b border-slate-200/80">
-                    <div>
-                        <span className="text-[11px] font-bold text-blue-600 tracking-wider uppercase">
-                            Peluang & Prestasi Mahasiswa
-                        </span>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
-                            Competition Hub
-                        </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl leading-relaxed">
-                            Kurasi kompetisi akademik dan inovasi mahasiswa. Temukan partner lomba sefrekuensi dan bangun tim juara lintas disiplin.
-                        </p>
-                    </div>
+            <div className="space-y-6 sm:space-y-8">
+                {/* 1. MINIMAL HEADER SECTION */}
+                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                        Competition Hub
+                    </h1>
 
                     {/* Navigation Pills Bar */}
                     <div className="flex flex-wrap items-center gap-3">
-                        <nav className="inline-flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/70 overflow-x-auto max-w-full">
+                        <nav className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/70 overflow-x-auto max-w-full">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('explore')}
@@ -384,7 +362,7 @@ export default function CompetitionIndex({
                             >
                                 <span>Cari Tim</span>
                                 {openRecruitingTeams.length > 0 && (
-                                    <span className="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
+                                    <span className="px-1.5 py-0.2 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
                                         {openRecruitingTeams.length}
                                     </span>
                                 )}
@@ -438,23 +416,23 @@ export default function CompetitionIndex({
                 </header>
 
                 {/* ========================================================= */}
-                {/* TAB 1: EKSPLOR LOMBA (Editorial Discovery & Catalog)     */}
+                {/* TAB 1: EKSPLOR LOMBA                                     */}
                 {/* ========================================================= */}
                 {activeTab === 'explore' && (
-                    <div className="space-y-8">
-                        {/* ASYMMETRIC SECTION: Spotlight (Left 7) + Upcoming Deadlines (Right 5) */}
+                    <div className="space-y-6 sm:space-y-8">
+                        {/* ASYMMETRIC SECTION: Spotlight (7) + Deadlines (5) */}
                         {spotlightComp && (
-                            <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-                                {/* Spotlight Highlight Entry */}
-                                <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                            <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
+                                {/* Spotlight Entry */}
+                                <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center justify-between gap-3 mb-3">
+                                        <div className="flex items-center justify-between gap-3 mb-2.5">
                                             <div className="flex items-center gap-2">
-                                                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-wider">
-                                                    Sorotan Minggu Ini
+                                                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                                                    Sorotan
                                                 </span>
                                                 <span className="text-[11px] text-slate-400 font-medium">
-                                                    {spotlightComp.level || 'Tingkat Nasional'}
+                                                    {spotlightComp.level || 'Nasional'}
                                                 </span>
                                             </div>
 
@@ -466,79 +444,64 @@ export default function CompetitionIndex({
                                                         ? 'bg-rose-50 border-rose-200 text-rose-600'
                                                         : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-rose-600'
                                                 }`}
-                                                title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus dari Simpanan' : 'Simpan Lomba'}
+                                                title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
                                             >
                                                 <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
                                             </button>
                                         </div>
 
                                         <Link href={`/competitions/${spotlightComp.id}`} className="group block">
-                                            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
+                                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
                                                 {spotlightComp.name}
                                             </h2>
                                         </Link>
 
-                                        <p className="text-xs font-semibold text-slate-500 mt-1">
-                                            Penyelenggara: {spotlightComp.organizer}
+                                        <p className="text-xs font-semibold text-slate-400 mt-1">
+                                            {spotlightComp.organizer}
                                         </p>
 
-                                        <p className="text-xs sm:text-sm text-slate-600 mt-3 line-clamp-3 leading-relaxed">
-                                            {spotlightComp.description || 'Kompetisi mahasiswa terverifikasi untuk mengasah kemampuan teknis, kolaborasi tim, dan menghasilkan karya inovasi nyata.'}
-                                        </p>
+                                        {spotlightComp.description && (
+                                            <p className="text-xs text-slate-600 mt-2 line-clamp-1">
+                                                {spotlightComp.description}
+                                            </p>
+                                        )}
                                     </div>
 
-                                    {/* Spotlight Footer Metadata */}
-                                    <div className="pt-6 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4 text-xs text-slate-600">
-                                            <div>
-                                                <span className="text-[10px] text-slate-400 block font-medium">Deadline Pendaftaran</span>
-                                                <span className="font-bold text-slate-900">
-                                                    {spotlightComp.registration_deadline
-                                                        ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
-                                                              day: 'numeric',
-                                                              month: 'long',
-                                                              year: 'numeric',
-                                                          })
-                                                        : 'Terbuka'}
-                                                </span>
-                                            </div>
-                                            <div className="hidden sm:block h-6 w-px bg-slate-200" />
-                                            <div>
-                                                <span className="text-[10px] text-slate-400 block font-medium">Format Tim</span>
-                                                <span className="font-semibold text-slate-800">
-                                                    {spotlightComp.competition_type === 'individual'
-                                                        ? 'Individu'
-                                                        : `${spotlightComp.min_team_size || 1}-${spotlightComp.max_team_size || 3} Mahasiswa`}
-                                                </span>
-                                            </div>
+                                    {/* Spotlight Footer */}
+                                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+                                        <div className="text-xs text-slate-600">
+                                            <span className="text-[10px] text-slate-400 block font-medium">Deadline Pendaftaran</span>
+                                            <span className="font-bold text-slate-900">
+                                                {spotlightComp.registration_deadline
+                                                    ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
+                                                          day: 'numeric',
+                                                          month: 'short',
+                                                          year: 'numeric',
+                                                      })
+                                                    : 'Terbuka'}
+                                            </span>
                                         </div>
 
                                         <Link
                                             href={`/competitions/${spotlightComp.id}`}
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
                                         >
-                                            <span>Lihat Panduan</span>
+                                            <span>Panduan & Syarat</span>
                                             <ArrowUpRight className="w-3.5 h-3.5" />
                                         </Link>
                                     </div>
                                 </div>
 
-                                {/* Right Side: Upcoming Deadlines List */}
+                                {/* Right Side: Upcoming Deadlines */}
                                 <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                                            <div className="flex items-center gap-2">
-                                                <Clock className="w-4 h-4 text-blue-600" />
-                                                <h3 className="text-sm font-bold text-slate-900">
-                                                    Mendekati Tenggat Waktu
-                                                </h3>
-                                            </div>
-                                            <span className="text-[11px] text-slate-400 font-medium">
-                                                Urutan Terdekat
-                                            </span>
+                                        <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                                            <Clock className="w-4 h-4 text-blue-600" />
+                                            <h3 className="text-sm font-bold text-slate-900">
+                                                Deadline Terdekat
+                                            </h3>
                                         </div>
 
-                                        {/* List items with subtle hairline dividers */}
                                         <div className="divide-y divide-slate-100">
                                             {upcomingDeadlines && upcomingDeadlines.length > 0 ? (
                                                 upcomingDeadlines.slice(0, 4).map((comp) => {
@@ -552,13 +515,13 @@ export default function CompetitionIndex({
                                                         <Link
                                                             key={comp.id}
                                                             href={`/competitions/${comp.id}`}
-                                                            className="py-3 flex items-center justify-between gap-3 group block"
+                                                            className="py-2.5 flex items-center justify-between gap-3 group block"
                                                         >
                                                             <div className="min-w-0 flex-1">
                                                                 <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
                                                                     {comp.name}
                                                                 </h4>
-                                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                                <p className="text-[11px] text-slate-400 truncate">
                                                                     {comp.organizer}
                                                                 </p>
                                                             </div>
@@ -584,7 +547,7 @@ export default function CompetitionIndex({
                                         </div>
                                     </div>
 
-                                    <div className="pt-3 border-t border-slate-100 text-right">
+                                    <div className="pt-2.5 border-t border-slate-100 text-right">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -593,20 +556,20 @@ export default function CompetitionIndex({
                                             }}
                                             className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
                                         >
-                                            Jelajahi Seluruh Direktori &darr;
+                                            Semua Deadline &darr;
                                         </button>
                                     </div>
                                 </div>
                             </section>
                         )}
 
-                        {/* INTEGRATED SEARCH & FILTER BAR */}
-                        <div id="catalog-section" className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-2.5">
-                            <form onSubmit={handleExploreFilterSubmit} className="flex-1 flex items-center gap-2.5 px-3.5 py-2 bg-slate-50 rounded-xl w-full">
+                        {/* SEARCH & FILTERS BAR */}
+                        <div id="catalog-section" className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-2">
+                            <form onSubmit={handleExploreFilterSubmit} className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full">
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Cari judul kompetisi, penyelenggara, atau kata kunci..."
+                                    placeholder="Cari kompetisi atau penyelenggara..."
                                     value={exploreSearch}
                                     onChange={(e) => setExploreSearch(e.target.value)}
                                     className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -619,7 +582,6 @@ export default function CompetitionIndex({
                                 </button>
                             </form>
 
-                            {/* Filters Dropdowns */}
                             <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
                                 <select
                                     value={exploreCategory}
@@ -670,9 +632,9 @@ export default function CompetitionIndex({
                                     <button
                                         type="button"
                                         onClick={handleResetExploreFilter}
-                                        className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                                        className="px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
                                     >
-                                        Reset Filter
+                                        Reset
                                     </button>
                                 )}
                             </div>
@@ -681,33 +643,30 @@ export default function CompetitionIndex({
                         {/* RESULTS HEADER */}
                         <div className="flex items-center justify-between pt-1">
                             <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                                Katalog Kompetisi Aktif
+                                Daftar Kompetisi
                             </h2>
                             <span className="text-xs text-slate-400 font-medium">
-                                Menampilkan {catalogCompetitions.length} dari {competitions.total} kompetisi
+                                {catalogCompetitions.length} kompetisi
                             </span>
                         </div>
 
-                        {/* COMPETITION CATALOG (Structured 2-column editorial layout) */}
+                        {/* COMPETITION CATALOG */}
                         {catalogCompetitions.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <Trophy className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                                 <h3 className="text-sm font-bold text-slate-900">
-                                    Tidak Ada Kompetisi yang Sesuai Filter
+                                    Tidak Ada Kompetisi
                                 </h3>
-                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                    Coba ubah kata kunci pencarian atau reset filter untuk melihat semua kesempatan lomba.
-                                </p>
                                 <button
                                     type="button"
                                     onClick={handleResetExploreFilter}
-                                    className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
+                                    className="mt-3 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
                                 >
-                                    Lihat Semua Kompetisi
+                                    Reset Filter
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                                 {catalogCompetitions.map((comp) => {
                                     const isSaved = bookmarkedIds.includes(comp.id);
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
@@ -723,21 +682,20 @@ export default function CompetitionIndex({
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.id}`)}
-                                            className={`bg-white rounded-2xl p-5 sm:p-6 border transition-all cursor-pointer flex flex-col justify-between gap-4 group ${
+                                            className={`bg-white rounded-2xl p-5 border transition-all cursor-pointer flex flex-col justify-between gap-3 group ${
                                                 isExpired
                                                     ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
                                                     : 'border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md'
                                             }`}
                                         >
                                             <div>
-                                                {/* Top Meta & Bookmark */}
                                                 <div className="flex items-center justify-between gap-2 mb-2">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                                                    <div className="flex items-center gap-2 text-[11px]">
+                                                        <span className="font-bold text-blue-600 uppercase tracking-wider">
                                                             {comp.category?.replace('_', ' ') || 'UMUM'}
                                                         </span>
                                                         <span className="text-slate-300">•</span>
-                                                        <span className="text-[11px] font-medium text-slate-500">
+                                                        <span className="font-medium text-slate-500">
                                                             {comp.level || 'Nasional'}
                                                         </span>
                                                     </div>
@@ -750,34 +708,28 @@ export default function CompetitionIndex({
                                                                 ? 'bg-rose-50 border-rose-200 text-rose-600'
                                                                 : 'bg-white border-slate-200 text-slate-400 hover:text-rose-600'
                                                         }`}
-                                                        title={isSaved ? 'Hapus Simpanan' : 'Simpan Lomba'}
+                                                        title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
                                                     >
                                                         <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
                                                     </button>
                                                 </div>
 
-                                                <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                     {comp.name}
                                                 </h3>
 
-                                                <p className="text-xs font-semibold text-slate-400 mt-1">
+                                                <p className="text-xs font-semibold text-slate-400 mt-0.5">
                                                     {comp.organizer}
                                                 </p>
-
-                                                {comp.description && (
-                                                    <p className="text-xs text-slate-600 mt-2.5 line-clamp-2 leading-relaxed">
-                                                        {comp.description}
-                                                    </p>
-                                                )}
                                             </div>
 
                                             {/* Structured Bottom Info */}
-                                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                                                 <div className="flex items-center gap-3 text-slate-500">
                                                     <div>
-                                                        <span className="text-[10px] text-slate-400 block font-medium">Batas Registrasi</span>
+                                                        <span className="text-[10px] text-slate-400 block font-medium">Deadline</span>
                                                         <span className={`font-bold ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                            {formattedDeadline} {isExpired ? '(Ditutup)' : ''}
+                                                            {formattedDeadline} {isExpired ? '(Tutup)' : ''}
                                                         </span>
                                                     </div>
                                                     <div className="h-5 w-px bg-slate-200" />
@@ -802,79 +754,65 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 2: CARI TIM (MinSatu Signature Collaboration Flow)   */}
+                {/* TAB 2: CARI TIM                                          */}
                 {/* ========================================================= */}
                 {activeTab === 'teams' && (
-                    <div className="space-y-8">
-                        {/* HERO: MinSatu Collaboration Banner */}
-                        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-2 sm:py-4">
-                            <div className="lg:col-span-6 space-y-3">
-                                <span className="text-[11px] font-bold text-blue-600 tracking-wider uppercase">
-                                    MinSatu Matchmaking
-                                </span>
-                                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                                    Kurang satu partner?
-                                    <br />
-                                    <span className="text-blue-600">Temukan di sini.</span>
+                    <div className="space-y-6 sm:space-y-8">
+                        {/* HERO: Team Matchmaking */}
+                        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center py-1 sm:py-2">
+                            <div className="lg:col-span-6 space-y-2">
+                                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                                    Kurang satu partner? <span className="text-blue-600">Cari di sini.</span>
                                 </h2>
-                                <p className="text-xs sm:text-sm text-slate-600 max-w-md leading-relaxed">
-                                    Gabung dengan tim kompetisi kampus yang sedang membuka rekrutmen atau buat tim sendiri dan temukan anggota yang sefrekuensi.
+                                <p className="text-xs sm:text-sm text-slate-500 max-w-sm">
+                                    Temukan rekan sefrekuensi untuk tim kompetisi kampus.
                                 </p>
-                                <div className="pt-2 flex items-center gap-3">
-                                    <a
-                                        href="#recruiting-teams-section"
-                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-blue-600 transition"
-                                    >
-                                        <span>Lihat Tim yang Merekrut</span>
-                                        <ArrowRight className="w-3.5 h-3.5" />
-                                    </a>
-                                </div>
                             </div>
 
-                            {/* Refined Royal Blue Team Slots Card */}
+                            {/* Royal Blue Slots Card */}
                             <div className="lg:col-span-6">
-                                <div className="bg-[#1e40af] rounded-2xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
-                                    <div className="grid grid-cols-4 gap-2.5 sm:gap-3 pb-6">
-                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
-                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="w-3.5 h-3.5 text-white" />
+                                <div className="bg-[#1e40af] rounded-2xl p-5 sm:p-6 text-white shadow-md">
+                                    <div className="grid grid-cols-4 gap-2 sm:gap-2.5 pb-4">
+                                        <div className="bg-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 border border-white/10 text-center">
+                                            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3 h-3 text-white" />
                                             </div>
-                                            <span className="text-[11px] font-medium text-white/90">Ide & Lead</span>
+                                            <span className="text-[10px] font-medium text-white/90">Ide & Lead</span>
                                         </div>
 
-                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
-                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="w-3.5 h-3.5 text-white" />
+                                        <div className="bg-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 border border-white/10 text-center">
+                                            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3 h-3 text-white" />
                                             </div>
-                                            <span className="text-[11px] font-medium text-white/90">Riset</span>
+                                            <span className="text-[10px] font-medium text-white/90">Riset</span>
                                         </div>
 
-                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
-                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="w-3.5 h-3.5 text-white" />
+                                        <div className="bg-white/10 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 border border-white/10 text-center">
+                                            <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3 h-3 text-white" />
                                             </div>
-                                            <span className="text-[11px] font-medium text-white/90">Eksekusi</span>
+                                            <span className="text-[10px] font-medium text-white/90">Eksekusi</span>
                                         </div>
 
-                                        <div className="bg-white text-blue-700 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 shadow-md text-center">
-                                            <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
-                                                <User className="w-3.5 h-3.5 text-blue-700 stroke-[2.5]" />
+                                        <div className="bg-white text-blue-700 rounded-xl p-2.5 flex flex-col items-center justify-center gap-1 shadow-md text-center">
+                                            <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center">
+                                                <User className="w-3 h-3 text-blue-700 stroke-[2.5]" />
                                             </div>
-                                            <span className="text-[11px] font-black text-blue-700">Kamu?</span>
+                                            <span className="text-[10px] font-black text-blue-700">Kamu?</span>
                                         </div>
                                     </div>
 
                                     {/* Bottom Stats */}
                                     <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/15">
                                         <div>
-                                            <span className="text-[11px] text-white/70 block">Membuka Rekrutmen</span>
-                                            <span className="text-xl sm:text-2xl font-bold text-white">
+                                            <span className="text-[10px] text-white/70 block">Membuka Rekrutmen</span>
+                                            <span className="text-lg sm:text-xl font-bold text-white">
                                                 {openRecruitingTeams.length} Tim
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-[11px] text-white/70 block">Posisi Kosong</span>
-                                            <span className="text-xl sm:text-2xl font-bold text-white">
+                                            <span className="text-[10px] text-white/70 block">Posisi Terbuka</span>
+                                            <span className="text-lg sm:text-xl font-bold text-white">
                                                 {totalNeededSlots} Mahasiswa
                                             </span>
                                         </div>
@@ -883,13 +821,13 @@ export default function CompetitionIndex({
                             </div>
                         </section>
 
-                        {/* Search & Filters for Recruiting Teams */}
-                        <div id="recruiting-teams-section" className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2.5">
-                            <form onSubmit={handleTeamFilterSubmit} className="flex-1 flex items-center gap-2 px-3.5 py-2 bg-slate-50 rounded-xl w-full">
+                        {/* Search & Filters */}
+                        <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2">
+                            <form onSubmit={handleTeamFilterSubmit} className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full">
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Cari kompetisi, nama tim, atau peran..."
+                                    placeholder="Cari tim atau peran..."
                                     value={teamSearch}
                                     onChange={(e) => setTeamSearch(e.target.value)}
                                     className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -929,7 +867,7 @@ export default function CompetitionIndex({
                                     <button
                                         type="button"
                                         onClick={handleResetTeamFilter}
-                                        className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer shrink-0"
+                                        className="px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer shrink-0"
                                     >
                                         Reset
                                     </button>
@@ -940,7 +878,7 @@ export default function CompetitionIndex({
                         {/* Section Header */}
                         <div className="flex items-center justify-between pt-1">
                             <h3 className="text-sm font-bold text-slate-900">
-                                Tim yang Sedang Merekrut
+                                Tim yang Merekrut
                             </h3>
                             <span className="text-xs text-slate-400 font-medium">
                                 {openRecruitingTeams.length} tim aktif
@@ -954,19 +892,16 @@ export default function CompetitionIndex({
                                 <h4 className="text-sm font-bold text-slate-900">
                                     Belum Ada Tim yang Sedang Merekrut
                                 </h4>
-                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                    Mulai langkah awal dengan membuat tim kompetisi baru dan buka pendaftaran rekan tim.
-                                </p>
                                 <Link
                                     href={route('competitions.create')}
-                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
+                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    <span>Bikin Tim Sekarang</span>
+                                    <span>Bikin Tim</span>
                                 </Link>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                                 {openRecruitingTeams.map((part) => {
                                     const comp = part.competition;
                                     const team = part.team;
@@ -990,10 +925,10 @@ export default function CompetitionIndex({
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
+                                            className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
                                         >
                                             <div>
-                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                <div className="flex items-start justify-between gap-2 mb-1.5">
                                                     <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
                                                         {comp.category?.replace('_', ' ') || 'HACKATHON'}
                                                     </span>
@@ -1011,9 +946,6 @@ export default function CompetitionIndex({
 
                                                 {/* Roles Needed */}
                                                 <div className="mt-3">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
-                                                        Mencari Peran:
-                                                    </span>
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {roles.length > 0 ? (
                                                             roles.map((r) => (
@@ -1026,28 +958,28 @@ export default function CompetitionIndex({
                                                             ))
                                                         ) : (
                                                             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
-                                                                Terbuka untuk semua role
+                                                                Terbuka semua role
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                {/* Team Slot Progress */}
-                                                <div className="mt-3.5 flex items-center gap-1.5">
+                                                {/* Slot Counter */}
+                                                <div className="mt-3 flex items-center gap-1.5">
                                                     {Array.from({ length: membersCount }).map((_, idx) => (
                                                         <div
                                                             key={`filled-${idx}`}
-                                                            className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                            className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
                                                         >
-                                                            <User className="w-3.5 h-3.5 fill-current" />
+                                                            <User className="w-3 h-3 fill-current" />
                                                         </div>
                                                     ))}
                                                     {Array.from({ length: Math.min(4, emptySlots) }).map((_, idx) => (
                                                         <div
                                                             key={`empty-${idx}`}
-                                                            className="w-6 h-6 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                            className="w-5 h-5 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
                                                         >
-                                                            <User className="w-3 h-3" />
+                                                            <User className="w-2.5 h-2.5" />
                                                         </div>
                                                     ))}
                                                     <span className="text-[11px] text-slate-500 font-medium ml-1">
@@ -1059,7 +991,7 @@ export default function CompetitionIndex({
                                             {/* Bottom Leader */}
                                             <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-3 text-xs">
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                                    <div className="w-6 h-6 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">
                                                         {leaderInitials}
                                                     </div>
                                                     <span className="font-semibold text-slate-800 truncate">
@@ -1068,7 +1000,7 @@ export default function CompetitionIndex({
                                                 </div>
 
                                                 <span className="font-bold text-blue-600">
-                                                    Lihat Formasi ↗
+                                                    Formasi Tim ↗
                                                 </span>
                                             </div>
                                         </div>
@@ -1080,20 +1012,16 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 3: KATEGORI (10 Academic Fields, ZERO Emojis)        */}
+                {/* TAB 3: KATEGORI                                          */}
                 {/* ========================================================= */}
                 {activeTab === 'categories' && (
                     <div className="space-y-6">
                         <div className="pb-3 border-b border-slate-200/80">
                             <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                Bidang & Kategori Kompetisi
+                                Kategori Kompetisi
                             </h2>
-                            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                                Jelajahi peluang prestasi sesuai rumpun keilmuan, minat penelitian, dan keahlian profesional Anda.
-                            </p>
                         </div>
 
-                        {/* Category Grid with subtle borders and Lucide icons */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {coreCategoryList.map((cat) => {
                                 const IconComponent = cat.icon;
@@ -1123,14 +1051,13 @@ export default function CompetitionIndex({
                                                 {cat.name}
                                             </h3>
 
-                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                                 {cat.desc}
                                             </p>
                                         </div>
 
-                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
-                                            <span>Lihat Kompetisi</span>
-                                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
+                                            <span>Lihat ↗</span>
                                         </div>
                                     </div>
                                 );
@@ -1140,11 +1067,10 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 4: LOMBA SAYA (Personalized Tracking & Bookmarks)     */}
+                {/* TAB 4: LOMBA SAYA                                        */}
                 {/* ========================================================= */}
                 {activeTab === 'my_competitions' && (
                     <div className="space-y-6">
-                        {/* Sub-Navigation Tabs */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                             <div className="flex items-center gap-2">
                                 <button
@@ -1167,7 +1093,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Pengajuan Saya ({myApplications.length})
+                                    Pengajuan ({myApplications.length})
                                 </button>
                                 <button
                                     type="button"
@@ -1200,15 +1126,12 @@ export default function CompetitionIndex({
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Kompetisi Tersimpan
                                         </h3>
-                                        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Tandai kompetisi yang ingin kamu ikuti dengan ikon bookmark di tab Eksplor Lomba.
-                                        </p>
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('explore')}
-                                            className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
+                                            className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
                                         >
-                                            Eksplor Lomba Sekarang
+                                            Eksplor Lomba
                                         </button>
                                     </div>
                                 ) : (
@@ -1217,7 +1140,7 @@ export default function CompetitionIndex({
                                             <div
                                                 key={comp.id}
                                                 onClick={() => router.get(`/competitions/${comp.id}`)}
-                                                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
+                                                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
                                             >
                                                 <div>
                                                     <div className="flex items-center justify-between mb-2">
@@ -1228,7 +1151,7 @@ export default function CompetitionIndex({
                                                             type="button"
                                                             onClick={(e) => handleToggleBookmark(e, comp.id)}
                                                             className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 cursor-pointer"
-                                                            title="Hapus dari Simpanan"
+                                                            title="Hapus"
                                                         >
                                                             <Bookmark className="w-3.5 h-3.5 fill-current" />
                                                         </button>
@@ -1241,7 +1164,7 @@ export default function CompetitionIndex({
 
                                                 <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
                                                     <div>
-                                                        <span className="text-[10px] text-slate-400 block font-medium">Batas Registrasi</span>
+                                                        <span className="text-[10px] text-slate-400 block">Deadline</span>
                                                         <span className="font-bold text-slate-800">
                                                             {comp.registration_deadline
                                                                 ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
@@ -1270,15 +1193,12 @@ export default function CompetitionIndex({
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Pengajuan Tim
                                         </h3>
-                                        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Kunjungi tab "Cari Tim" dan ajukan dirimu ke formasi tim yang sesuai keahlianmu.
-                                        </p>
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('teams')}
-                                            className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
+                                            className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                         >
-                                            Cari Tim Sekarang
+                                            Cari Tim
                                         </button>
                                     </div>
                                 ) : (
@@ -1286,7 +1206,7 @@ export default function CompetitionIndex({
                                         {myApplications.map((app) => (
                                             <div
                                                 key={app.id}
-                                                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                             >
                                                 <div>
                                                     <div className="flex items-center gap-2">
@@ -1316,9 +1236,9 @@ export default function CompetitionIndex({
                                                 {app.participation_id && app.status === 'accepted' && (
                                                     <Link
                                                         href={route('competitions.workspace', app.participation_id)}
-                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
+                                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                                                     >
-                                                        <span>Buka Workspace</span>
+                                                        <span>Workspace</span>
                                                         <ArrowRight className="w-3.5 h-3.5" />
                                                     </Link>
                                                 )}
@@ -1338,10 +1258,7 @@ export default function CompetitionIndex({
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Tim Aktif
                                         </h3>
-                                        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Mulai dengan membentuk tim baru atau bergabung ke tim yang sedang membuka rekrutmen.
-                                        </p>
-                                        <div className="mt-4 flex items-center justify-center gap-3">
+                                        <div className="mt-3 flex items-center justify-center gap-3">
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveTab('teams')}
@@ -1353,7 +1270,7 @@ export default function CompetitionIndex({
                                                 href={route('competitions.create')}
                                                 className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                             >
-                                                Bikin Tim Baru
+                                                Bikin Tim
                                             </Link>
                                         </div>
                                     </div>
@@ -1382,7 +1299,7 @@ export default function CompetitionIndex({
                                                     href={route('competitions.workspace', team.id)}
                                                     className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
                                                 >
-                                                    <span>Buka Workspace Tim</span>
+                                                    <span>Workspace Tim</span>
                                                     <ArrowRight className="w-3.5 h-3.5" />
                                                 </Link>
                                             </div>
@@ -1395,17 +1312,14 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 5: REKOMENDASI (Personalized Matchmaking)             */}
+                {/* TAB 5: REKOMENDASI                                       */}
                 {/* ========================================================= */}
                 {activeTab === 'recommendations' && (
                     <div className="space-y-6">
                         <div className="pb-3 border-b border-slate-200/80">
                             <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                Rekomendasi Pintar untuk Profilmu
+                                Rekomendasi
                             </h2>
-                            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                                Dicocokkan berdasarkan latar belakang keilmuan, keahlian portofolio, dan preferensi lomba Anda.
-                            </p>
                         </div>
 
                         {recommendedCompetitions && recommendedCompetitions.length > 0 ? (
@@ -1414,7 +1328,7 @@ export default function CompetitionIndex({
                                     <div
                                         key={comp.id}
                                         onClick={() => router.get(`/competitions/${comp.id}`)}
-                                        className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
+                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
@@ -1430,14 +1344,11 @@ export default function CompetitionIndex({
                                                 {comp.name}
                                             </h3>
                                             <p className="text-xs font-semibold text-slate-400 mt-0.5">{comp.organizer}</p>
-                                            <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
-                                                {comp.description}
-                                            </p>
                                         </div>
 
                                         <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
                                             <span className="text-slate-500 font-medium">{comp.level || 'Nasional'}</span>
-                                            <span className="font-bold text-blue-600">Detail Lomba ↗</span>
+                                            <span className="font-bold text-blue-600">Detail ↗</span>
                                         </div>
                                     </div>
                                 ))}
@@ -1446,14 +1357,11 @@ export default function CompetitionIndex({
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <Sparkles className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                                 <h3 className="text-sm font-bold text-slate-900">
-                                    Lengkapi Profil untuk Rekomendasi Lebih Akurat
+                                    Belum Ada Rekomendasi
                                 </h3>
-                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                    Tambahkan keahlian teknis dan minat riset di halaman pengaturan profil untuk mencocokkan lomba yang paling sesuai.
-                                </p>
                                 <Link
                                     href="/settings/profile"
-                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
+                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                 >
                                     <span>Lengkapi Profil</span>
                                     <ArrowRight className="w-3.5 h-3.5" />
@@ -1470,14 +1378,9 @@ export default function CompetitionIndex({
                     <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 relative my-6 space-y-6">
                         {/* Header */}
                         <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block">
-                                    Detail Formasi Tim
-                                </span>
-                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
-                                    {detailTeam.competition.name}
-                                </h2>
-                            </div>
+                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                                {detailTeam.competition.name}
+                            </h2>
                             <button
                                 type="button"
                                 onClick={() => setDetailTeam(null)}
@@ -1499,7 +1402,7 @@ export default function CompetitionIndex({
                             </div>
                             <div>
                                 <span className="text-xs text-slate-400 font-medium block">
-                                    Deadline daftar
+                                    Deadline
                                 </span>
                                 <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
                                     {detailTeam.competition.registration_deadline
@@ -1513,7 +1416,7 @@ export default function CompetitionIndex({
                             </div>
                             <div>
                                 <span className="text-xs text-slate-400 font-medium block">
-                                    Format lomba
+                                    Format
                                 </span>
                                 <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
                                     {detailTeam.competition.competition_type || 'Umum'}
@@ -1521,28 +1424,23 @@ export default function CompetitionIndex({
                             </div>
                         </div>
 
-                        {/* Location / Note */}
-                        <div className="text-xs text-slate-500 font-medium -mt-2">
-                            {detailTeam.competition.description || 'Informasi detail kompetisi dapat dilihat pada pedoman resmi.'}
-                        </div>
-
                         {/* Two Columns */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                            {/* Left Column (7 cols): Yang dicari & File link */}
-                            <div className="md:col-span-7 space-y-6">
-                                <div className="space-y-2">
+                            {/* Left Column (7 cols): Deskripsi tim & File link */}
+                            <div className="md:col-span-7 space-y-5">
+                                <div className="space-y-1.5">
                                     <h4 className="text-xs font-bold text-slate-900">
-                                        Deskripsi & Tujuan Tim
+                                        Deskripsi Tim
                                     </h4>
-                                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
+                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed font-medium">
                                         {detailTeam.team.description ||
                                             'Mencari rekan tim untuk berkolaborasi dan berkompetisi bersama.'}
                                     </div>
                                 </div>
 
-                                <div className="space-y-2.5">
+                                <div className="space-y-2">
                                     <h4 className="text-xs font-bold text-slate-900">
-                                        Tautan & Informasi Resmi
+                                        Tautan Resmi
                                     </h4>
 
                                     <div className="space-y-2">
@@ -1554,7 +1452,7 @@ export default function CompetitionIndex({
                                                 className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
                                             >
                                                 <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                    <span>Website & Pedoman Resmi</span>
+                                                    <span>Website & Pedoman</span>
                                                     <ArrowUpRight className="w-3.5 h-3.5" />
                                                 </span>
                                                 <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
@@ -1571,7 +1469,7 @@ export default function CompetitionIndex({
                                                 className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
                                             >
                                                 <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                    <span>Portal Registrasi Lomba</span>
+                                                    <span>Portal Registrasi</span>
                                                     <ArrowUpRight className="w-3.5 h-3.5" />
                                                 </span>
                                                 <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
@@ -1586,27 +1484,26 @@ export default function CompetitionIndex({
                                         >
                                             <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1.5">
                                                 <FileText className="w-3.5 h-3.5 text-slate-500" />
-                                                <span>Dokumen & Syarat Lengkap</span>
+                                                <span>Detail Lengkap</span>
                                             </span>
                                             <span className="text-blue-600 font-semibold text-[11px] flex items-center gap-0.5">
-                                                Buka Detail <ArrowUpRight className="w-3 h-3" />
+                                                Buka <ArrowUpRight className="w-3 h-3" />
                                             </span>
                                         </Link>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Right Column (5 cols): Soft Blue Formasi Card */}
+                            {/* Right Column (5 cols): Formasi Card */}
                             <div className="md:col-span-5 bg-blue-50/60 rounded-2xl p-5 border border-blue-100 space-y-4">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
                                     <Users className="w-4 h-4 text-blue-600" />
-                                    <span>Formasi tim</span>
+                                    <span>Formasi Tim</span>
                                 </div>
 
-                                {/* Slot Count */}
                                 <div>
                                     <div className="flex items-baseline gap-1.5">
-                                        <span className="text-4xl font-black text-blue-600">
+                                        <span className="text-3xl font-black text-blue-600">
                                             {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)}
                                         </span>
                                         <span className="text-xs text-slate-600 font-bold">
@@ -1614,14 +1511,13 @@ export default function CompetitionIndex({
                                         </span>
                                     </div>
 
-                                    {/* Visual Slots Row */}
-                                    <div className="mt-3 flex items-center gap-1.5">
+                                    <div className="mt-2.5 flex items-center gap-1.5">
                                         {Array.from({ length: detailTeam.team.members_count }).map((_, idx) => (
                                             <div
                                                 key={`f-${idx}`}
-                                                className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
                                             >
-                                                <User className="w-4 h-4 fill-current" />
+                                                <User className="w-3 h-3 fill-current" />
                                             </div>
                                         ))}
                                         {Array.from({
@@ -1632,36 +1528,35 @@ export default function CompetitionIndex({
                                         }).map((_, idx) => (
                                             <div
                                                 key={`e-${idx}`}
-                                                className="w-7 h-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                className="w-6 h-6 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
                                             >
-                                                <User className="w-4 h-4" />
+                                                <User className="w-2.5 h-2.5" />
                                             </div>
                                         ))}
                                     </div>
-                                    <span className="text-xs text-blue-700 font-bold block mt-1.5">
-                                        {detailTeam.team.members_count}/{detailTeam.competition.max_team_size || 3} terisi (
-                                        {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)} dicari)
+                                    <span className="text-[11px] text-blue-700 font-semibold block mt-1.5">
+                                        {detailTeam.team.members_count}/{detailTeam.competition.max_team_size || 3} terisi
                                     </span>
                                 </div>
 
-                                {/* Lagi Butuhin */}
-                                <div className="space-y-1.5 pt-1">
+                                {/* Peran Dibutuhkan */}
+                                <div className="space-y-1">
                                     <span className="text-xs font-bold text-slate-700 block">
-                                        Lagi butuhin
+                                        Posisi Dicari
                                     </span>
                                     <div className="flex flex-wrap gap-1.5">
                                         {detailTeam.team.recruitment?.roles && detailTeam.team.recruitment.roles.length > 0 ? (
                                             detailTeam.team.recruitment.roles.map((r) => (
                                                 <span
                                                     key={r.id}
-                                                    className="px-2.5 py-1 rounded-md bg-white text-slate-800 text-xs font-semibold shadow-2xs border border-slate-100"
+                                                    className="px-2 py-0.5 rounded-md bg-white text-slate-800 text-[11px] font-semibold shadow-2xs border border-slate-100"
                                                 >
                                                     {r.name}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="px-2.5 py-1 rounded-md bg-white text-slate-600 text-xs font-medium shadow-2xs border border-slate-100">
-                                                Terbuka untuk semua role
+                                            <span className="px-2 py-0.5 rounded-md bg-white text-slate-600 text-[11px] font-medium shadow-2xs border border-slate-100">
+                                                Terbuka semua role
                                             </span>
                                         )}
                                     </div>
@@ -1669,11 +1564,8 @@ export default function CompetitionIndex({
 
                                 {/* Ketua Tim */}
                                 <div className="pt-2 border-t border-blue-200/60">
-                                    <span className="text-[11px] text-slate-400 font-semibold block mb-1">
-                                        Ketua tim
-                                    </span>
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                             {detailTeam.team.leader?.name ? detailTeam.team.leader.name.charAt(0) : 'M'}
                                         </div>
                                         <div className="min-w-0">
@@ -1682,17 +1574,17 @@ export default function CompetitionIndex({
                                             </div>
                                             <Link
                                                 href={`/competitions/${detailTeam.competition.id}`}
-                                                className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
+                                                className="text-[10px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
                                             >
                                                 <span>Lihat halaman lomba</span>
-                                                <ArrowUpRight className="w-3 h-3" />
+                                                <ArrowUpRight className="w-2.5 h-2.5" />
                                             </Link>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* CTA: Ajukan Diri */}
-                                <div className="pt-2">
+                                <div className="pt-1">
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -1700,9 +1592,9 @@ export default function CompetitionIndex({
                                             setDetailTeam(null);
                                             openApplyModal(teamToApply);
                                         }}
-                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                                        className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                                     >
-                                        Ajukan Diri ke Tim Ini
+                                        Ajukan Diri ke Tim
                                     </button>
                                 </div>
                             </div>
