@@ -138,7 +138,7 @@ export default function CompetitionWorkspace({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
         { title: participation.competition?.name || 'Kompetisi', href: `/competitions/${participation.competition?.slug || participation.competition?.id}` },
-        { title: `Workspace: ${participation.team?.name}`, href: `/competitions/${participation.competition?.slug || participation.id}/workspace` },
+        { title: `Workspace: ${participation.team?.name}`, href: `/competition-workspace/${participation.id}` },
     ];
 
     // Handlers
@@ -355,9 +355,6 @@ export default function CompetitionWorkspace({
         }
     };
 
-    // Stage order helper
-    const currentStageOrder = selectionStages[participation.stage]?.order || 1;
-
     // Standard Deliverables List
     const deliverableTemplates = [
         { key: 'proposal', label: 'Proposal / Makalah Proyek', desc: 'Dokumen latar belakang, analisis inovasi, dan perancangan' },
@@ -380,7 +377,7 @@ export default function CompetitionWorkspace({
                 {/* 1. TOP CONTEXT & ACTIONS BAR */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                     <Link
-                        href={route('competitions.show', participation.competition?.slug || participation.competition?.id)}
+                        href={`/competitions/${participation.competition?.slug || participation.competition?.id}`}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
                     >
                         <ArrowLeft className="size-3.5" />
@@ -434,11 +431,11 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 2. WORKSPACE HEADER CARD */}
-                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs">
-                    <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
+                {/* 2. UNIFIED WORKSPACE HEADER (Clean, Professional, Zero Fluff) */}
+                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div className="space-y-2">
-                            {/* Badges */}
+                            {/* Badges Row */}
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
                                     {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}
@@ -446,14 +443,25 @@ export default function CompetitionWorkspace({
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                                     Tingkat {participation.competition?.level || 'Nasional'}
                                 </span>
+                                <button
+                                    type="button"
+                                    onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition ${
+                                        (isLeader || isMentor || isAdmin)
+                                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer'
+                                            : 'bg-amber-50 text-amber-800 border border-amber-200 cursor-default'
+                                    }`}
+                                    title="Klik untuk mengubah tahap seleksi"
+                                >
+                                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
+                                    {(isLeader || isMentor || isAdmin) && <span className="text-[9px] text-amber-600 font-normal">✎</span>}
+                                </button>
                                 {participation.category_track && (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
                                         Jalur: {participation.category_track}
                                     </span>
                                 )}
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
-                                    Tahap: {selectionStages[participation.stage]?.label || participation.stage}
-                                </span>
                                 {participation.is_formation_locked && (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                                         <Lock className="size-3" />
@@ -462,7 +470,7 @@ export default function CompetitionWorkspace({
                                 )}
                             </div>
 
-                            {/* Team Title */}
+                            {/* Team Title & Competition Name */}
                             <div>
                                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {participation.team?.name || 'Tim Mahasiswa'}
@@ -471,10 +479,43 @@ export default function CompetitionWorkspace({
                                     Kompetisi: <strong className="text-slate-800">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
                                 </p>
                             </div>
+
+                            {/* Compact Stats Badges (Replaces Bulky Metric Strip) */}
+                            <div className="flex items-center gap-2.5 sm:gap-3.5 pt-1 text-xs text-slate-500 flex-wrap">
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                                    <Users className="size-3.5 text-blue-600 shrink-0" />
+                                    <span>{participation.team?.members?.length || 0}/{participation.team?.capacity || participation.competition?.max_team_size || 5} Anggota</span>
+                                </span>
+                                <span className="text-slate-300">•</span>
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                                    <FolderKanban className="size-3.5 text-blue-600 shrink-0" />
+                                    <span>{participation.team?.tasks?.length || 0} Tugas</span>
+                                </span>
+                                <span className="text-slate-300">•</span>
+                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                                    <FileText className="size-3.5 text-blue-600 shrink-0" />
+                                    <span>{participation.documents?.length || 0} Berkas</span>
+                                </span>
+                                {typeof readinessScore === 'number' && (
+                                    <>
+                                        <span className="text-slate-300">•</span>
+                                        <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
+                                            <span>Kesiapan:</span>
+                                            <span className="font-bold text-blue-600 font-mono">{readinessScore}%</span>
+                                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden inline-block align-middle">
+                                                <div
+                                                    className="h-full bg-blue-600 rounded-full transition-all"
+                                                    style={{ width: `${readinessScore}%` }}
+                                                />
+                                            </div>
+                                        </span>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
-                        {/* External Portal & Registration Status Button */}
-                        <div className="flex flex-col sm:flex-row lg:flex-col items-start sm:items-center lg:items-end gap-2 shrink-0">
+                        {/* Action Portal Links */}
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
                             {participation.competition?.official_url && (
                                 <a
                                     href={participation.competition.official_url}
@@ -494,128 +535,11 @@ export default function CompetitionWorkspace({
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs"
                                 >
-                                    <span>Portal Registrasi Penyelenggara</span>
+                                    <span>Portal Pendaftaran</span>
                                     <ExternalLink className="size-3 shrink-0" />
                                 </a>
                             )}
                         </div>
-                    </div>
-
-                    {/* Disclaimer Banner: Clear Distinction */}
-                    <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-start sm:items-center gap-2 text-xs text-slate-500">
-                        <CheckCircle2 className="size-4 text-blue-600 shrink-0 mt-0.5 sm:mt-0" />
-                        <p className="leading-relaxed">
-                            Pendaftaran resmi dilakukan di portal eksternal penyelenggara. Workspace internal ini memfasilitasi koordinasi tim, pembagian tugas sprint, review karya pembimbing, dan portofolio prestasi.
-                        </p>
-                    </div>
-                </div>
-
-                {/* 1) METRIC OVERVIEW STRIP (4 Clean Equal Cards) */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
-                            Status Partisipasi
-                        </span>
-                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
-                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
-                                {selectionStages[participation.stage]?.label || participation.stage}
-                            </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
-                                {participation.registration_status === 'registered' ? 'Terdaftar Resmi' : 'Sedang Merencanakan'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
-                            Formasi Anggota
-                        </span>
-                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
-                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
-                                {participation.team?.members?.length || 0} / {participation.team?.capacity || participation.competition?.max_team_size || 5} Mahasiswa
-                            </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
-                                {participation.is_formation_locked ? 'Susunan Terkunci' : 'Terbuka Rekrutmen'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
-                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
-                            Berkas & Dokumen
-                        </span>
-                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
-                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
-                                {participation.documents?.length || 0} Berkas Terkumpul
-                            </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
-                                Proposal, pitch deck, link
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
-                        <div className="flex items-center justify-between shrink-0">
-                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                                Skor Kesiapan
-                            </span>
-                            <span className="text-xs font-bold font-mono text-blue-600">
-                                {readinessScore}%
-                            </span>
-                        </div>
-                        <div className="mt-2 flex-1 flex flex-col justify-end">
-                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                    style={{ width: `${readinessScore}%` }}
-                                />
-                            </div>
-                            <span className="text-[10px] text-slate-400 mt-1 block truncate">
-                                {readinessScore >= 80 ? 'Siap Maju Kompetisi' : readinessScore >= 40 ? 'Progres Berjalan Baik' : 'Tahap Awal Persiapan'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 4. SELECTION STAGES PROGRESS BAR */}
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs">
-                    <div className="flex items-center justify-between mb-3 text-xs">
-                        <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                            <History className="size-3.5 text-blue-600 shrink-0" />
-                            <span>Alur Tahapan Seleksi</span>
-                        </span>
-                        <span className="text-slate-500">
-                            Posisi Saat Ini: <strong className="text-blue-600">{selectionStages[participation.stage]?.label || participation.stage}</strong>
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-none">
-                        {Object.entries(selectionStages)
-                            .filter(([key]) => key !== 'not_selected' && key !== 'withdrawn')
-                            .map(([stageKey, stageInfo], index) => {
-                                const isCurrent = participation.stage === stageKey;
-                                const isPassed = stageInfo.order < currentStageOrder;
-
-                                return (
-                                    <div
-                                        key={stageKey}
-                                        className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
-                                            isCurrent
-                                                ? 'bg-blue-600 text-white shadow-2xs'
-                                                : isPassed
-                                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                                : 'bg-slate-50 text-slate-500 border border-slate-200/70'
-                                        }`}
-                                    >
-                                        <span className={`size-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
-                                            isCurrent ? 'bg-white/25 text-white' : isPassed ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-600'
-                                        }`}>
-                                            {isPassed ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : index + 1}
-                                        </span>
-                                        <span className="whitespace-nowrap">{stageInfo.label}</span>
-                                    </div>
-                                );
-                            })}
                     </div>
                 </div>
 
