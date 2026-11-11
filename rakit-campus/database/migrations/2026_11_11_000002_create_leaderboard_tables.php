@@ -48,11 +48,11 @@ return new class extends Migration
             $table->json('metadata')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'verification_status', 'created_at']);
-            $table->index(['team_id', 'verification_status', 'created_at']);
-            $table->index(['project_id', 'verification_status', 'created_at']);
-            $table->index(['hub', 'verification_status', 'created_at']);
-            $table->index(['source_type', 'source_id']);
+            $table->index(['user_id', 'verification_status', 'created_at'], 'pt_user_ver_idx');
+            $table->index(['team_id', 'verification_status', 'created_at'], 'pt_team_ver_idx');
+            $table->index(['project_id', 'verification_status', 'created_at'], 'pt_proj_ver_idx');
+            $table->index(['hub', 'verification_status', 'created_at'], 'pt_hub_ver_idx');
+            $table->index(['source_type', 'source_id'], 'pt_source_idx');
         });
 
         // 3. Leaderboard Snapshots (for fast retrieval & ranking movement tracking)
