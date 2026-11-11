@@ -12,6 +12,7 @@ import {
     CheckCircle2,
     Clock,
     Compass,
+    Cpu,
     ExternalLink,
     FileText,
     Filter,
@@ -20,19 +21,25 @@ import {
     GraduationCap,
     Heart,
     Layers,
+    Leaf,
     MapPin,
     MessageSquare,
+    Mic,
+    Palette,
     Plus,
     Search,
     Share2,
     ShieldCheck,
     Sparkles,
+    Terminal,
+    TrendingUp,
     Trophy,
     User,
     Users,
     X,
+    Zap,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface Competition {
     id: number;
@@ -197,7 +204,7 @@ interface Props {
 export default function CompetitionIndex({
     competitions,
     openRecruitingTeams = [],
-    totalNeededSlots = 2,
+    totalNeededSlots = 0,
     myApplications = [],
     myTeams = [],
     bookmarkedIds = [],
@@ -211,9 +218,9 @@ export default function CompetitionIndex({
     filters,
     stats,
 }: Props) {
-    // Main navigation tabs: teams (Cari Tim), explore (Eksplor Lomba), overview (Overview), categories (Kategori), my_competitions (Lomba Saya), recommendations (Rekomendasi)
-    const [activeTab, setActiveTab] = useState<'teams' | 'explore' | 'overview' | 'categories' | 'my_competitions' | 'recommendations'>(
-        (filters.tab as any) || 'teams'
+    // Main navigation tabs: explore, teams, categories, my_competitions, recommendations
+    const [activeTab, setActiveTab] = useState<'explore' | 'teams' | 'categories' | 'my_competitions' | 'recommendations'>(
+        (filters.tab as any) || 'explore'
     );
 
     // Sub-tab for My Competitions
@@ -238,27 +245,33 @@ export default function CompetitionIndex({
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
-    // Quick Competition Detail Modal (for Explore tab)
-    const [selectedCompDetail, setSelectedCompDetail] = useState<Competition | null>(null);
+    // 10 Core Academic & Professional Categories (strictly using Lucide icons, ZERO emojis)
+    const coreCategoryList = [
+        { key: 'technology', name: 'Teknologi & Rekayasa', icon: Terminal, desc: 'Software, IoT, robotika, dan teknologi komputasi.' },
+        { key: 'business_plan', name: 'Bisnis & Kewirausahaan', icon: TrendingUp, desc: 'Model bisnis rintisan, pitch deck, dan inovasi finansial.' },
+        { key: 'research', name: 'Riset & Karya Tulis Ilmiah', icon: GraduationCap, desc: 'Karya tulis ilmiah, PKM, dan penelitian akademik terapan.' },
+        { key: 'innovation', name: 'Inovasi & Produk Terapan', icon: Sparkles, desc: 'Inovasi produk tepat guna dan prototipe solusi nyata kampus.' },
+        { key: 'ui_ux', name: 'Desain & Industri Kreatif', icon: Palette, desc: 'UI/UX design, poster ilmiah, animasi, dan branding.' },
+        { key: 'programming', name: 'Sains Data & AI', icon: Cpu, desc: 'Analisis big data, machine learning, dan competitive programming.' },
+        { key: 'hackathon', name: 'Hackathon & Fast Prototyping', icon: Zap, desc: 'Tantangan intensif membangun prototipe solusi dalam 24-48 jam.' },
+        { key: 'entrepreneurship', name: 'Dampak Sosial & Komunitas', icon: Globe, desc: 'Pemberdayaan masyarakat, SDGs, dan program sosial.' },
+        { key: 'scientific_writing', name: 'Debat & Publik Speaking', icon: Mic, desc: 'Debat parlemen, speech contest, dan komunikasi strategis.' },
+        { key: 'other', name: 'Lingkungan & Keberlanjutan', icon: Leaf, desc: 'Inovasi energi hijau, keberlanjutan lingkungan, dan aksi iklim.' },
+    ];
 
-    // User initials
-    const userInitials = useMemo(() => {
-        if (!currentUserInfo?.name) return 'FA';
-        const parts = currentUserInfo.name.trim().split(/\s+/);
-        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-        return (parts[0][0] + parts[1][0]).toUpperCase();
-    }, [currentUserInfo]);
+    const commonRoleOptions = [
+        'UI/UX Designer',
+        'Frontend Developer',
+        'Backend Developer',
+        'Machine Learning Engineer',
+        'Hustler / Business Lead',
+        'Researcher / Writer',
+    ];
 
-    // Handle Bookmark Toggle
+    // Bookmark Toggle
     const handleToggleBookmark = (e: React.MouseEvent, compId: number) => {
         e.stopPropagation();
-        router.post(
-            `/competitions/${compId}/bookmark`,
-            {},
-            {
-                preserveScroll: true,
-            }
-        );
+        router.post(`/competitions/${compId}/bookmark`, {}, { preserveScroll: true });
     };
 
     const handleExploreFilterSubmit = (e?: React.FormEvent) => {
@@ -319,222 +332,564 @@ export default function CompetitionIndex({
         setApplyModalOpen(true);
     };
 
-    const commonRoleOptions = [
-        'UI/UX',
-        'Frontend',
-        'Backend',
-        'Machine Learning',
-        'Hustler',
-        'Paper',
-    ];
+    // Spotlight featured entry
+    const spotlightComp = featuredCompetitions && featuredCompetitions.length > 0
+        ? featuredCompetitions[0]
+        : competitions.data && competitions.data.length > 0
+        ? competitions.data[0]
+        : null;
 
-    // 10 Core Academic & Professional Categories as requested
-    const coreCategoryList = [
-        { key: 'technology', name: 'Technology & Engineering', icon: '💻', desc: 'Software, IoT, robotika, dan rekayasa teknik.' },
-        { key: 'business_plan', name: 'Business & Entrepreneurship', icon: '📈', desc: 'Model bisnis rintisan, startup pitching, dan finance.' },
-        { key: 'research', name: 'Research & Scientific Writing', icon: '🔬', desc: 'Karya tulis ilmiah, PKM, dan penelitian terapan.' },
-        { key: 'innovation', name: 'Innovation & Product Dev', icon: '💡', desc: 'Inovasi produk tepat guna dan prototipe solusi nyata.' },
-        { key: 'ui_ux', name: 'Design & Creative Industry', icon: '🎨', desc: 'UI/UX design, poster ilmiah, video animasi, dan branding.' },
-        { key: 'programming', name: 'Data Science & Artificial Intelligence', icon: '🧠', desc: 'Analisis big data, machine learning, dan competitive programming.' },
-        { key: 'hackathon', name: 'Hackathon & Fast Prototyping', icon: '⚡', desc: 'Selesaikan tantangan intensif 24-48 jam membangun produk.' },
-        { key: 'entrepreneurship', name: 'Social Impact & Community', icon: '🤝', desc: 'Pemberdayaan masyarakat, SDGs, dan solusi sosial kampus.' },
-        { key: 'scientific_writing', name: 'Debate & Public Speaking', icon: '🎙️', desc: 'Debat parlementer, speech contest, dan kepemimpinan.' },
-        { key: 'other', name: 'Environmental & Sustainability', icon: '🌱', desc: 'Inovasi energi hijau, lingkungan, dan climate action.' },
-    ];
+    // Remaining competitions (excluding spotlight in explore view if featured)
+    const catalogCompetitions = competitions.data;
 
     return (
         <AppLayout activeTab="lomba" title="Competition Hub — RakitCampus">
-            {/* 2. SUB-NAVIGATION & ACTION TOOLBAR (Dashboard Style) */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-2 mb-4">
-                {/* View Switcher Pills */}
-                <div className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('teams')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                                activeTab === 'teams'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            Cari Tim
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('explore')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                                activeTab === 'explore'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            Eksplor Lomba
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('categories')}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                                activeTab === 'categories'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            Kategori
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('my_competitions')}
-                            className={`px-4 py-1.5 rounded-full text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-                                activeTab === 'my_competitions'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            <span>Lomba Saya</span>
-                            {(bookmarkedIds.length > 0 || myApplications.length > 0 || myTeams.length > 0) && (
-                                <span className="size-1.5 rounded-full bg-blue-600" />
-                            )}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('recommendations')}
-                            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer whitespace-nowrap ${
-                                activeTab === 'recommendations'
-                                    ? 'bg-white text-slate-900 shadow-xs'
-                                    : 'text-slate-600 hover:text-slate-900'
-                            }`}
-                        >
-                            Rekomendasi
-                        </button>
+            <div className="space-y-8">
+                {/* 1. EDITORIAL HEADER SECTION */}
+                <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-5 pb-6 border-b border-slate-200/80">
+                    <div>
+                        <span className="text-[11px] font-bold text-blue-600 tracking-wider uppercase">
+                            Peluang & Prestasi Mahasiswa
+                        </span>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 mt-1">
+                            Competition Hub
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-xl leading-relaxed">
+                            Kurasi kompetisi akademik dan inovasi mahasiswa. Temukan partner lomba sefrekuensi dan bangun tim juara lintas disiplin.
+                        </p>
                     </div>
 
-                    {/* Right CTA Button */}
-                    <Link
-                        href={route('competitions.create')}
-                        className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-full px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition self-start sm:self-auto shrink-0"
-                    >
-                        <Plus className="w-4 h-4 stroke-[2.5]" />
-                        <span>Bikin Tim</span>
-                    </Link>
-                </div>
+                    {/* Navigation Pills Bar */}
+                    <div className="flex flex-wrap items-center gap-3">
+                        <nav className="inline-flex items-center gap-1 bg-slate-100/90 p-1 rounded-xl border border-slate-200/70 overflow-x-auto max-w-full">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('explore')}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                    activeTab === 'explore'
+                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Eksplor Lomba
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('teams')}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                    activeTab === 'teams'
+                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>Cari Tim</span>
+                                {openRecruitingTeams.length > 0 && (
+                                    <span className="px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 text-[10px] font-bold">
+                                        {openRecruitingTeams.length}
+                                    </span>
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('categories')}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                    activeTab === 'categories'
+                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Kategori
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('my_competitions')}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                    activeTab === 'my_competitions'
+                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <span>Lomba Saya</span>
+                                {(bookmarkedIds.length > 0 || myApplications.length > 0 || myTeams.length > 0) && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                                )}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('recommendations')}
+                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                    activeTab === 'recommendations'
+                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                Rekomendasi
+                            </button>
+                        </nav>
 
-            {/* MAIN CONTENT */}
-            <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-4 space-y-8">
+                        <Link
+                            href={route('competitions.create')}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition shrink-0"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Bikin Tim</span>
+                        </Link>
+                    </div>
+                </header>
 
                 {/* ========================================================= */}
-                {/* TAB 1: CARI TIM (MinSatu Exact Signature Flow) */}
+                {/* TAB 1: EKSPLOR LOMBA (Editorial Discovery & Catalog)     */}
+                {/* ========================================================= */}
+                {activeTab === 'explore' && (
+                    <div className="space-y-8">
+                        {/* ASYMMETRIC SECTION: Spotlight (Left 7) + Upcoming Deadlines (Right 5) */}
+                        {spotlightComp && (
+                            <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                                {/* Spotlight Highlight Entry */}
+                                <div className="lg:col-span-7 bg-white rounded-2xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between gap-3 mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold uppercase tracking-wider">
+                                                    Sorotan Minggu Ini
+                                                </span>
+                                                <span className="text-[11px] text-slate-400 font-medium">
+                                                    {spotlightComp.level || 'Tingkat Nasional'}
+                                                </span>
+                                            </div>
+
+                                            <button
+                                                type="button"
+                                                onClick={(e) => handleToggleBookmark(e, spotlightComp.id)}
+                                                className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                                    bookmarkedIds.includes(spotlightComp.id)
+                                                        ? 'bg-rose-50 border-rose-200 text-rose-600'
+                                                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-rose-600'
+                                                }`}
+                                                title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus dari Simpanan' : 'Simpan Lomba'}
+                                            >
+                                                <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
+                                            </button>
+                                        </div>
+
+                                        <Link href={`/competitions/${spotlightComp.id}`} className="group block">
+                                            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
+                                                {spotlightComp.name}
+                                            </h2>
+                                        </Link>
+
+                                        <p className="text-xs font-semibold text-slate-500 mt-1">
+                                            Penyelenggara: {spotlightComp.organizer}
+                                        </p>
+
+                                        <p className="text-xs sm:text-sm text-slate-600 mt-3 line-clamp-3 leading-relaxed">
+                                            {spotlightComp.description || 'Kompetisi mahasiswa terverifikasi untuk mengasah kemampuan teknis, kolaborasi tim, dan menghasilkan karya inovasi nyata.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Spotlight Footer Metadata */}
+                                    <div className="pt-6 mt-6 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4 text-xs text-slate-600">
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 block font-medium">Deadline Pendaftaran</span>
+                                                <span className="font-bold text-slate-900">
+                                                    {spotlightComp.registration_deadline
+                                                        ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
+                                                              day: 'numeric',
+                                                              month: 'long',
+                                                              year: 'numeric',
+                                                          })
+                                                        : 'Terbuka'}
+                                                </span>
+                                            </div>
+                                            <div className="hidden sm:block h-6 w-px bg-slate-200" />
+                                            <div>
+                                                <span className="text-[10px] text-slate-400 block font-medium">Format Tim</span>
+                                                <span className="font-semibold text-slate-800">
+                                                    {spotlightComp.competition_type === 'individual'
+                                                        ? 'Individu'
+                                                        : `${spotlightComp.min_team_size || 1}-${spotlightComp.max_team_size || 3} Mahasiswa`}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <Link
+                                            href={`/competitions/${spotlightComp.id}`}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
+                                        >
+                                            <span>Lihat Panduan</span>
+                                            <ArrowUpRight className="w-3.5 h-3.5" />
+                                        </Link>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Upcoming Deadlines List */}
+                                <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-4 h-4 text-blue-600" />
+                                                <h3 className="text-sm font-bold text-slate-900">
+                                                    Mendekati Tenggat Waktu
+                                                </h3>
+                                            </div>
+                                            <span className="text-[11px] text-slate-400 font-medium">
+                                                Urutan Terdekat
+                                            </span>
+                                        </div>
+
+                                        {/* List items with subtle hairline dividers */}
+                                        <div className="divide-y divide-slate-100">
+                                            {upcomingDeadlines && upcomingDeadlines.length > 0 ? (
+                                                upcomingDeadlines.slice(0, 4).map((comp) => {
+                                                    const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
+                                                    const now = new Date();
+                                                    const daysLeft = deadline
+                                                        ? Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                                                        : null;
+
+                                                    return (
+                                                        <Link
+                                                            key={comp.id}
+                                                            href={`/competitions/${comp.id}`}
+                                                            className="py-3 flex items-center justify-between gap-3 group block"
+                                                        >
+                                                            <div className="min-w-0 flex-1">
+                                                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                                                                    {comp.name}
+                                                                </h4>
+                                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                                    {comp.organizer}
+                                                                </p>
+                                                            </div>
+                                                            <div className="text-right shrink-0">
+                                                                <span
+                                                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                                        daysLeft !== null && daysLeft <= 3
+                                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                                            : 'bg-slate-100 text-slate-700'
+                                                                    }`}
+                                                                >
+                                                                    {daysLeft !== null ? `${daysLeft} hari lagi` : 'Segera'}
+                                                                </span>
+                                                            </div>
+                                                        </Link>
+                                                    );
+                                                })
+                                            ) : (
+                                                <div className="py-8 text-center text-xs text-slate-400">
+                                                    Belum ada jadwal deadline terdekat
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-3 border-t border-slate-100 text-right">
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const el = document.getElementById('catalog-section');
+                                                if (el) el.scrollIntoView({ behavior: 'smooth' });
+                                            }}
+                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                        >
+                                            Jelajahi Seluruh Direktori &darr;
+                                        </button>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* INTEGRATED SEARCH & FILTER BAR */}
+                        <div id="catalog-section" className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-2.5">
+                            <form onSubmit={handleExploreFilterSubmit} className="flex-1 flex items-center gap-2.5 px-3.5 py-2 bg-slate-50 rounded-xl w-full">
+                                <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                                <input
+                                    type="text"
+                                    placeholder="Cari judul kompetisi, penyelenggara, atau kata kunci..."
+                                    value={exploreSearch}
+                                    onChange={(e) => setExploreSearch(e.target.value)}
+                                    className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
+                                />
+                                <button
+                                    type="submit"
+                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shrink-0 cursor-pointer"
+                                >
+                                    Cari
+                                </button>
+                            </form>
+
+                            {/* Filters Dropdowns */}
+                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                                <select
+                                    value={exploreCategory}
+                                    onChange={(e) => {
+                                        setExploreCategory(e.target.value);
+                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: e.target.value, level: exploreLevel, format: exploreFormat }, { preserveState: true });
+                                    }}
+                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                >
+                                    <option value="">Semua Kategori</option>
+                                    {categories.map((c) => (
+                                        <option key={c} value={c}>
+                                            {c.replace('_', ' ').toUpperCase()}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    value={exploreLevel}
+                                    onChange={(e) => {
+                                        setExploreLevel(e.target.value);
+                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: e.target.value, format: exploreFormat }, { preserveState: true });
+                                    }}
+                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                >
+                                    <option value="">Semua Tingkat</option>
+                                    <option value="university">Kampus</option>
+                                    <option value="regional">Regional</option>
+                                    <option value="national">Nasional</option>
+                                    <option value="international">Internasional</option>
+                                </select>
+
+                                <select
+                                    value={exploreFormat}
+                                    onChange={(e) => {
+                                        setExploreFormat(e.target.value);
+                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: e.target.value }, { preserveState: true });
+                                    }}
+                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                >
+                                    <option value="">Semua Format</option>
+                                    <option value="Online">Online</option>
+                                    <option value="Offline">Offline</option>
+                                    <option value="Hybrid">Hybrid</option>
+                                </select>
+
+                                {(exploreSearch || exploreCategory || exploreLevel || exploreFormat || exploreType) && (
+                                    <button
+                                        type="button"
+                                        onClick={handleResetExploreFilter}
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                                    >
+                                        Reset Filter
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* RESULTS HEADER */}
+                        <div className="flex items-center justify-between pt-1">
+                            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                                Katalog Kompetisi Aktif
+                            </h2>
+                            <span className="text-xs text-slate-400 font-medium">
+                                Menampilkan {catalogCompetitions.length} dari {competitions.total} kompetisi
+                            </span>
+                        </div>
+
+                        {/* COMPETITION CATALOG (Structured 2-column editorial layout) */}
+                        {catalogCompetitions.length === 0 ? (
+                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                <Trophy className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Tidak Ada Kompetisi yang Sesuai Filter
+                                </h3>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                                    Coba ubah kata kunci pencarian atau reset filter untuk melihat semua kesempatan lomba.
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleResetExploreFilter}
+                                    className="mt-4 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
+                                >
+                                    Lihat Semua Kompetisi
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {catalogCompetitions.map((comp) => {
+                                    const isSaved = bookmarkedIds.includes(comp.id);
+                                    const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
+                                    const formattedDeadline = comp.registration_deadline
+                                        ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
+                                              day: 'numeric',
+                                              month: 'short',
+                                              year: 'numeric',
+                                          })
+                                        : 'Terbuka';
+
+                                    return (
+                                        <div
+                                            key={comp.id}
+                                            onClick={() => router.get(`/competitions/${comp.id}`)}
+                                            className={`bg-white rounded-2xl p-5 sm:p-6 border transition-all cursor-pointer flex flex-col justify-between gap-4 group ${
+                                                isExpired
+                                                    ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
+                                                    : 'border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md'
+                                            }`}
+                                        >
+                                            <div>
+                                                {/* Top Meta & Bookmark */}
+                                                <div className="flex items-center justify-between gap-2 mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[11px] font-bold text-blue-600 uppercase tracking-wider">
+                                                            {comp.category?.replace('_', ' ') || 'UMUM'}
+                                                        </span>
+                                                        <span className="text-slate-300">•</span>
+                                                        <span className="text-[11px] font-medium text-slate-500">
+                                                            {comp.level || 'Nasional'}
+                                                        </span>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => handleToggleBookmark(e, comp.id)}
+                                                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
+                                                            isSaved
+                                                                ? 'bg-rose-50 border-rose-200 text-rose-600'
+                                                                : 'bg-white border-slate-200 text-slate-400 hover:text-rose-600'
+                                                        }`}
+                                                        title={isSaved ? 'Hapus Simpanan' : 'Simpan Lomba'}
+                                                    >
+                                                        <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                    </button>
+                                                </div>
+
+                                                <h3 className="text-base sm:text-lg font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                    {comp.name}
+                                                </h3>
+
+                                                <p className="text-xs font-semibold text-slate-400 mt-1">
+                                                    {comp.organizer}
+                                                </p>
+
+                                                {comp.description && (
+                                                    <p className="text-xs text-slate-600 mt-2.5 line-clamp-2 leading-relaxed">
+                                                        {comp.description}
+                                                    </p>
+                                                )}
+                                            </div>
+
+                                            {/* Structured Bottom Info */}
+                                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                <div className="flex items-center gap-3 text-slate-500">
+                                                    <div>
+                                                        <span className="text-[10px] text-slate-400 block font-medium">Batas Registrasi</span>
+                                                        <span className={`font-bold ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                            {formattedDeadline} {isExpired ? '(Ditutup)' : ''}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-5 w-px bg-slate-200" />
+                                                    <div>
+                                                        <span className="text-[10px] text-slate-400 block font-medium">Format</span>
+                                                        <span className="font-semibold text-slate-700">
+                                                            {comp.competition_type || 'Tim'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <span className="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                                                    Detail ↗
+                                                </span>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* ========================================================= */}
+                {/* TAB 2: CARI TIM (MinSatu Signature Collaboration Flow)   */}
                 {/* ========================================================= */}
                 {activeTab === 'teams' && (
                     <div className="space-y-8">
-                        {/* HERO SECTION */}
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-2 sm:py-6">
-                            {/* Left Column: Heading & CTA */}
-                            <div className="lg:col-span-6 space-y-4">
-                                <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight leading-tight">
-                                    Kurang satu?
+                        {/* HERO: MinSatu Collaboration Banner */}
+                        <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center py-2 sm:py-4">
+                            <div className="lg:col-span-6 space-y-3">
+                                <span className="text-[11px] font-bold text-blue-600 tracking-wider uppercase">
+                                    MinSatu Matchmaking
+                                </span>
+                                <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                                    Kurang satu partner?
                                     <br />
-                                    <span className="italic font-serif text-blue-600 font-semibold">
-                                        Cari di sini.
-                                    </span>
-                                </h1>
-                                <p className="text-sm text-slate-600 max-w-sm leading-relaxed">
-                                    Cari teman sefrekuensi buat lomba selanjutnya.
+                                    <span className="text-blue-600">Temukan di sini.</span>
+                                </h2>
+                                <p className="text-xs sm:text-sm text-slate-600 max-w-md leading-relaxed">
+                                    Gabung dengan tim kompetisi kampus yang sedang membuka rekrutmen atau buat tim sendiri dan temukan anggota yang sefrekuensi.
                                 </p>
-                                <div className="pt-2">
+                                <div className="pt-2 flex items-center gap-3">
                                     <a
-                                        href="#teams-section"
-                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-blue-600 transition group"
+                                        href="#recruiting-teams-section"
+                                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-900 hover:text-blue-600 transition"
                                     >
-                                        <span>Cari tim</span>
-                                        <ArrowUpRight className="size-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                        <span>Lihat Tim yang Merekrut</span>
+                                        <ArrowRight className="w-3.5 h-3.5" />
                                     </a>
                                 </div>
                             </div>
 
-                            {/* Right Column: Signature Royal Blue Team Slots Card */}
+                            {/* Refined Royal Blue Team Slots Card */}
                             <div className="lg:col-span-6">
-                                <div className="bg-[#1E50DE] rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
-                                    <div className="absolute top-5 right-5 text-white/30">
-                                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
-                                            <path d="M4 4h10l6 6v10H4V4z" />
-                                        </svg>
-                                    </div>
-
-                                    {/* 4 Member Slots Grid */}
-                                    <div className="grid grid-cols-4 gap-2.5 sm:gap-3 pt-2 pb-6">
-                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
-                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="size-4 text-white" />
+                                <div className="bg-[#1e40af] rounded-2xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
+                                    <div className="grid grid-cols-4 gap-2.5 sm:gap-3 pb-6">
+                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
+                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3.5 h-3.5 text-white" />
                                             </div>
-                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
-                                                Ide
-                                            </span>
+                                            <span className="text-[11px] font-medium text-white/90">Ide & Lead</span>
                                         </div>
 
-                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
-                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="size-4 text-white" />
+                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
+                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3.5 h-3.5 text-white" />
                                             </div>
-                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
-                                                Riset
-                                            </span>
+                                            <span className="text-[11px] font-medium text-white/90">Riset</span>
                                         </div>
 
-                                        <div className="bg-white/15 backdrop-blur-xs rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 border border-white/10 text-center">
-                                            <div className="size-7 rounded-full bg-white/20 flex items-center justify-center">
-                                                <User className="size-4 text-white" />
+                                        <div className="bg-white/10 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 border border-white/10 text-center">
+                                            <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                                                <User className="w-3.5 h-3.5 text-white" />
                                             </div>
-                                            <span className="text-[11px] sm:text-xs font-medium text-white/90">
-                                                Eksekusi
-                                            </span>
+                                            <span className="text-[11px] font-medium text-white/90">Eksekusi</span>
                                         </div>
 
-                                        <div className="bg-white text-blue-600 rounded-2xl p-3 sm:p-4 flex flex-col items-center justify-center gap-2 shadow-lg transform rotate-2 -translate-y-1 text-center">
-                                            <div className="size-7 rounded-full bg-blue-50 flex items-center justify-center">
-                                                <User className="size-4 text-blue-600 stroke-[2.5]" />
+                                        <div className="bg-white text-blue-700 rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 shadow-md text-center">
+                                            <div className="w-7 h-7 rounded-full bg-blue-50 flex items-center justify-center">
+                                                <User className="w-3.5 h-3.5 text-blue-700 stroke-[2.5]" />
                                             </div>
-                                            <span className="text-[11px] sm:text-xs font-black text-blue-600">
-                                                Kamu?
-                                            </span>
+                                            <span className="text-[11px] font-black text-blue-700">Kamu?</span>
                                         </div>
                                     </div>
 
                                     {/* Bottom Stats */}
                                     <div className="grid grid-cols-2 gap-4 pt-3 border-t border-white/15">
                                         <div>
-                                            <span className="text-[11px] text-white/70 block">
-                                                Lagi buka rekrutmen
-                                            </span>
-                                            <span className="text-xl sm:text-2xl font-black text-white">
-                                                {openRecruitingTeams.length} tim
+                                            <span className="text-[11px] text-white/70 block">Membuka Rekrutmen</span>
+                                            <span className="text-xl sm:text-2xl font-bold text-white">
+                                                {openRecruitingTeams.length} Tim
                                             </span>
                                         </div>
                                         <div>
-                                            <span className="text-[11px] text-white/70 block">
-                                                Mereka lagi butuh
-                                            </span>
-                                            <span className="text-xl sm:text-2xl font-black text-white">
-                                                {totalNeededSlots} orang
+                                            <span className="text-[11px] text-white/70 block">Posisi Kosong</span>
+                                            <span className="text-xl sm:text-2xl font-bold text-white">
+                                                {totalNeededSlots} Mahasiswa
                                             </span>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        {/* Search & Filters */}
-                        <div
-                            id="teams-section"
-                            className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2.5"
-                        >
-                            <form
-                                onSubmit={handleTeamFilterSubmit}
-                                className="flex-1 flex items-center gap-2 px-3.5 py-2.5 bg-slate-100/70 rounded-xl w-full"
-                            >
-                                <Search className="size-4 text-slate-400 shrink-0" />
+                        {/* Search & Filters for Recruiting Teams */}
+                        <div id="recruiting-teams-section" className="bg-white rounded-2xl p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2.5">
+                            <form onSubmit={handleTeamFilterSubmit} className="flex-1 flex items-center gap-2 px-3.5 py-2 bg-slate-50 rounded-xl w-full">
+                                <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Cari lomba, role, atau skill..."
+                                    placeholder="Cari kompetisi, nama tim, atau peran..."
                                     value={teamSearch}
                                     onChange={(e) => setTeamSearch(e.target.value)}
                                     className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -546,24 +901,13 @@ export default function CompetitionIndex({
                                     value={teamCategory}
                                     onChange={(e) => {
                                         setTeamCategory(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'teams',
-                                                team_search: teamSearch,
-                                                team_category: e.target.value,
-                                                team_role: teamRole,
-                                            },
-                                            { preserveState: true }
-                                        );
+                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: e.target.value, team_role: teamRole }, { preserveState: true });
                                     }}
-                                    className="px-3.5 py-2.5 bg-slate-100/70 rounded-xl text-xs font-medium text-slate-700 border-0 focus:ring-0 cursor-pointer"
+                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >
-                                    <option value="">Semua kategori</option>
+                                    <option value="">Semua Kategori</option>
                                     {categories.map((c) => (
-                                        <option key={c} value={c}>
-                                            {c.replace('_', ' ').toUpperCase()}
-                                        </option>
+                                        <option key={c} value={c}>{c.replace('_', ' ').toUpperCase()}</option>
                                     ))}
                                 </select>
 
@@ -571,24 +915,13 @@ export default function CompetitionIndex({
                                     value={teamRole}
                                     onChange={(e) => {
                                         setTeamRole(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'teams',
-                                                team_search: teamSearch,
-                                                team_category: teamCategory,
-                                                team_role: e.target.value,
-                                            },
-                                            { preserveState: true }
-                                        );
+                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: teamCategory, team_role: e.target.value }, { preserveState: true });
                                     }}
-                                    className="px-3.5 py-2.5 bg-slate-100/70 rounded-xl text-xs font-medium text-slate-700 border-0 focus:ring-0 cursor-pointer"
+                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >
-                                    <option value="">Semua role</option>
+                                    <option value="">Semua Peran</option>
                                     {commonRoleOptions.map((r) => (
-                                        <option key={r} value={r}>
-                                            {r}
-                                        </option>
+                                        <option key={r} value={r}>{r}</option>
                                     ))}
                                 </select>
 
@@ -596,46 +929,39 @@ export default function CompetitionIndex({
                                     <button
                                         type="button"
                                         onClick={handleResetTeamFilter}
-                                        className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer shrink-0"
+                                        className="px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer shrink-0"
                                     >
-                                        Hapus filter
+                                        Reset
                                     </button>
                                 )}
                             </div>
                         </div>
 
                         {/* Section Header */}
-                        <div className="flex items-center justify-between pt-2">
-                            <div className="flex items-center gap-2">
-                                <h2 className="text-base sm:text-lg font-black text-slate-900">
-                                    Lagi buka rekrutmen
-                                </h2>
-                                <span className="px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 text-xs font-bold">
-                                    {openRecruitingTeams.length} tim
-                                </span>
-                            </div>
+                        <div className="flex items-center justify-between pt-1">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                Tim yang Sedang Merekrut
+                            </h3>
                             <span className="text-xs text-slate-400 font-medium">
-                                {openRecruitingTeams.length} dari {openRecruitingTeams.length} tim aktif
+                                {openRecruitingTeams.length} tim aktif
                             </span>
                         </div>
 
-                        {/* Recruiting Teams Grid */}
+                        {/* RECRUITING TEAMS GRID */}
                         {openRecruitingTeams.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <div className="size-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3">
-                                    <Users className="size-6" />
-                                </div>
-                                <h3 className="text-sm font-bold text-slate-900">
+                                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <h4 className="text-sm font-bold text-slate-900">
                                     Belum Ada Tim yang Sedang Merekrut
-                                </h3>
-                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 leading-relaxed">
-                                    Bikin tim baru dan buka lowongan untuk mengajak teman se-kampus!
+                                </h4>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                                    Mulai langkah awal dengan membuat tim kompetisi baru dan buka pendaftaran rekan tim.
                                 </p>
                                 <Link
                                     href={route('competitions.create')}
-                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
+                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
                                 >
-                                    <Plus className="size-3.5" />
+                                    <Plus className="w-3.5 h-3.5" />
                                     <span>Bikin Tim Sekarang</span>
                                 </Link>
                             </div>
@@ -648,7 +974,6 @@ export default function CompetitionIndex({
                                     const membersCount = team?.members_count || 1;
                                     const maxCap = comp.max_team_size || 3;
                                     const emptySlots = Math.max(0, maxCap - membersCount);
-
                                     const formattedDeadline = comp.registration_deadline
                                         ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
                                               day: 'numeric',
@@ -665,374 +990,85 @@ export default function CompetitionIndex({
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-5 group"
+                                            className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
                                         >
                                             <div>
                                                 <div className="flex items-start justify-between gap-2 mb-2">
-                                                    <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
+                                                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
                                                         {comp.category?.replace('_', ' ') || 'HACKATHON'}
                                                     </span>
-                                                    <div className="text-right">
-                                                        <span className="text-[10px] text-slate-400 block font-medium">
-                                                            Deadline daftar
-                                                        </span>
-                                                        <span className="text-xs font-bold text-slate-800">
-                                                            {formattedDeadline}
-                                                        </span>
-                                                    </div>
+                                                    <span className="text-[10px] font-medium text-slate-500">
+                                                        Deadline: {formattedDeadline}
+                                                    </span>
                                                 </div>
 
-                                                <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                     {comp.name}
-                                                </h3>
-
-                                                <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                                                    {comp.organizer || 'Kampus'}
+                                                </h4>
+                                                <p className="text-xs font-medium text-slate-400 mt-0.5">
+                                                    Tim: {team.name}
                                                 </p>
 
-                                                {/* Section: LAGI BUTUHIN */}
-                                                <div className="mt-4">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                                                        LAGI BUTUHIN
+                                                {/* Roles Needed */}
+                                                <div className="mt-3">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                                                        Mencari Peran:
                                                     </span>
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {roles.length > 0 ? (
                                                             roles.map((r) => (
                                                                 <span
                                                                     key={r.id}
-                                                                    className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold"
+                                                                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium"
                                                                 >
                                                                     {r.name}
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
-                                                                Semua Peran
+                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
+                                                                Terbuka untuk semua role
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                {/* Visual Slots Row */}
-                                                <div className="mt-4 flex items-center gap-1.5">
+                                                {/* Team Slot Progress */}
+                                                <div className="mt-3.5 flex items-center gap-1.5">
                                                     {Array.from({ length: membersCount }).map((_, idx) => (
                                                         <div
                                                             key={`filled-${idx}`}
-                                                            className="size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                            className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
                                                         >
-                                                            <User className="size-4 fill-current" />
+                                                            <User className="w-3.5 h-3.5 fill-current" />
                                                         </div>
                                                     ))}
                                                     {Array.from({ length: Math.min(4, emptySlots) }).map((_, idx) => (
                                                         <div
                                                             key={`empty-${idx}`}
-                                                            className="size-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                            className="w-6 h-6 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
                                                         >
-                                                            <User className="size-4" />
+                                                            <User className="w-3 h-3" />
                                                         </div>
                                                     ))}
-                                                    <span className="text-xs text-slate-500 font-medium ml-1.5">
+                                                    <span className="text-[11px] text-slate-500 font-medium ml-1">
                                                         {membersCount}/{maxCap} terisi
                                                     </span>
                                                 </div>
                                             </div>
 
-                                            {/* Bottom Leader Row */}
-                                            <div className="border-t border-slate-100 pt-3.5 flex items-center justify-between gap-3">
-                                                <div className="flex items-center gap-2.5 min-w-0">
-                                                    <div className="size-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                                            {/* Bottom Leader */}
+                                            <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-3 text-xs">
+                                                <div className="flex items-center gap-2 min-w-0">
+                                                    <div className="w-7 h-7 rounded-full bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
                                                         {leaderInitials}
                                                     </div>
-                                                    <div className="min-w-0">
-                                                        <div className="text-xs font-bold text-slate-900 truncate">
-                                                            {team?.leader?.name || 'Ketua Tim'}
-                                                        </div>
-                                                        <div className="text-[10px] text-slate-400 truncate">
-                                                            Format lomba: {comp.competition_type || 'Hybrid'}
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        setDetailTeam(part);
-                                                    }}
-                                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
-                                                >
-                                                    Detail ↗
-                                                </button>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* ========================================================= */}
-                {/* TAB 2: EKSPLOR LOMBA (Full Directory Discovery) */}
-                {/* ========================================================= */}
-                {activeTab === 'explore' && (
-                    <div className="space-y-6">
-                        {/* Search & Multi-Filters Toolbar */}
-                        <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs space-y-3">
-                            <form
-                                onSubmit={handleExploreFilterSubmit}
-                                className="flex items-center gap-2 px-4 py-2.5 bg-slate-100/70 rounded-xl w-full"
-                            >
-                                <Search className="size-4 text-slate-400 shrink-0" />
-                                <input
-                                    type="text"
-                                    placeholder="Cari judul kompetisi, penyelenggara, atau deskripsi..."
-                                    value={exploreSearch}
-                                    onChange={(e) => setExploreSearch(e.target.value)}
-                                    className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
-                                />
-                                <button
-                                    type="submit"
-                                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
-                                >
-                                    Cari
-                                </button>
-                            </form>
-
-                            {/* Filters Row */}
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
-                                <select
-                                    value={exploreCategory}
-                                    onChange={(e) => {
-                                        setExploreCategory(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'explore',
-                                                search: exploreSearch,
-                                                category: e.target.value,
-                                                level: exploreLevel,
-                                                format: exploreFormat,
-                                                type: exploreType,
-                                            },
-                                            { preserveState: true }
-                                        );
-                                    }}
-                                    className="px-3 py-2 bg-slate-100/80 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
-                                >
-                                    <option value="">Semua Kategori</option>
-                                    {categories.map((c) => (
-                                        <option key={c} value={c}>
-                                            {c.replace('_', ' ').toUpperCase()}
-                                        </option>
-                                    ))}
-                                </select>
-
-                                <select
-                                    value={exploreLevel}
-                                    onChange={(e) => {
-                                        setExploreLevel(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'explore',
-                                                search: exploreSearch,
-                                                category: exploreCategory,
-                                                level: e.target.value,
-                                                format: exploreFormat,
-                                                type: exploreType,
-                                            },
-                                            { preserveState: true }
-                                        );
-                                    }}
-                                    className="px-3 py-2 bg-slate-100/80 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
-                                >
-                                    <option value="">Semua Tingkat</option>
-                                    <option value="university">Tingkat Kampus</option>
-                                    <option value="regional">Regional</option>
-                                    <option value="national">Nasional</option>
-                                    <option value="international">Internasional</option>
-                                </select>
-
-                                <select
-                                    value={exploreFormat}
-                                    onChange={(e) => {
-                                        setExploreFormat(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'explore',
-                                                search: exploreSearch,
-                                                category: exploreCategory,
-                                                level: exploreLevel,
-                                                format: e.target.value,
-                                                type: exploreType,
-                                            },
-                                            { preserveState: true }
-                                        );
-                                    }}
-                                    className="px-3 py-2 bg-slate-100/80 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
-                                >
-                                    <option value="">Semua Format</option>
-                                    <option value="Online">Online / Daring</option>
-                                    <option value="Offline">Offline / Luring</option>
-                                    <option value="Hybrid">Hybrid</option>
-                                </select>
-
-                                <select
-                                    value={exploreType}
-                                    onChange={(e) => {
-                                        setExploreType(e.target.value);
-                                        router.get(
-                                            '/competitions',
-                                            {
-                                                tab: 'explore',
-                                                search: exploreSearch,
-                                                category: exploreCategory,
-                                                level: exploreLevel,
-                                                format: exploreFormat,
-                                                type: e.target.value,
-                                            },
-                                            { preserveState: true }
-                                        );
-                                    }}
-                                    className="px-3 py-2 bg-slate-100/80 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
-                                >
-                                    <option value="">Semua Jenis</option>
-                                    <option value="team">Tim</option>
-                                    <option value="individual">Individu</option>
-                                </select>
-
-                                {(exploreSearch || exploreCategory || exploreLevel || exploreFormat || exploreType) && (
-                                    <button
-                                        type="button"
-                                        onClick={handleResetExploreFilter}
-                                        className="px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer shrink-0"
-                                    >
-                                        Reset Filter
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Results Count Header */}
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-base sm:text-lg font-black text-slate-900">
-                                Daftar Kompetisi Aktif
-                            </h2>
-                            <span className="text-xs text-slate-500 font-medium">
-                                Menampilkan {competitions.data.length} dari {competitions.total} kompetisi
-                            </span>
-                        </div>
-
-                        {/* Competitions Grid */}
-                        {competitions.data.length === 0 ? (
-                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <Trophy className="size-10 text-slate-400 mx-auto mb-2" />
-                                <h3 className="text-sm font-bold text-slate-900">
-                                    Tidak Ada Kompetisi yang Sesuai Filter
-                                </h3>
-                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                    Coba ubah kata kunci pencarian atau reset filter untuk melihat semua kesempatan.
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={handleResetExploreFilter}
-                                    className="mt-4 px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold"
-                                >
-                                    Lihat Semua Kompetisi
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {competitions.data.map((comp) => {
-                                    const isSaved = bookmarkedIds.includes(comp.id);
-                                    const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
-                                    const formattedDeadline = comp.registration_deadline
-                                        ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          })
-                                        : 'Terbuka';
-
-                                    return (
-                                        <div
-                                            key={comp.id}
-                                            onClick={() => router.get(`/competitions/${comp.id}`)}
-                                            className={`bg-white rounded-2xl p-6 border transition-all cursor-pointer flex flex-col justify-between gap-5 group relative ${
-                                                isExpired
-                                                    ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
-                                                    : 'border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md'
-                                            }`}
-                                        >
-                                            <div>
-                                                {/* Top Row: Category & Bookmark Button */}
-                                                <div className="flex items-start justify-between gap-2 mb-2">
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
-                                                            {comp.category?.replace('_', ' ') || 'UMUM'}
-                                                        </span>
-                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                                            {comp.level || 'Nasional'}
-                                                        </span>
-                                                    </div>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                        className={`p-1.5 rounded-lg border transition ${
-                                                            isSaved
-                                                                ? 'bg-rose-50 border-rose-200 text-rose-600'
-                                                                : 'bg-white border-slate-200 text-slate-400 hover:text-rose-600'
-                                                        }`}
-                                                        title={isSaved ? 'Hapus dari Simpanan' : 'Simpan Lomba'}
-                                                    >
-                                                        <Bookmark className={`size-3.5 ${isSaved ? 'fill-current' : ''}`} />
-                                                    </button>
-                                                </div>
-
-                                                {/* Title */}
-                                                <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                    {comp.name}
-                                                </h3>
-
-                                                {/* Organizer */}
-                                                <p className="text-xs font-semibold text-slate-400 mt-1">
-                                                    {comp.organizer || 'Penyelenggara Terverifikasi'}
-                                                </p>
-
-                                                {/* Description preview */}
-                                                {comp.description && (
-                                                    <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-                                                        {comp.description}
-                                                    </p>
-                                                )}
-
-                                                {/* Metadata pills */}
-                                                <div className="mt-4 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-slate-600">
-                                                    <span className="px-2.5 py-1 rounded-lg bg-slate-100">
-                                                        {comp.competition_type === 'individual' ? 'Individu' : `Tim (${comp.min_team_size || 1}-${comp.max_team_size || 5} org)`}
-                                                    </span>
-                                                    <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700">
-                                                        Format: {comp.competition_type || 'Hybrid'}
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Bottom Deadline & Actions */}
-                                            <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
-                                                <div>
-                                                    <span className="text-[10px] text-slate-400 block font-medium">
-                                                        Deadline Pendaftaran
-                                                    </span>
-                                                    <span className={`font-bold ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                        {formattedDeadline} {isExpired ? '(Tutup)' : ''}
+                                                    <span className="font-semibold text-slate-800 truncate">
+                                                        {team?.leader?.name || 'Ketua Tim'}
                                                     </span>
                                                 </div>
 
-                                                <span className="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                                                    Lihat Detail ↗
+                                                <span className="font-bold text-blue-600">
+                                                    Lihat Formasi ↗
                                                 </span>
                                             </div>
                                         </div>
@@ -1044,22 +1080,25 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 3: KATEGORI (10 Academic & Professional Categories) */}
+                {/* TAB 3: KATEGORI (10 Academic Fields, ZERO Emojis)        */}
                 {/* ========================================================= */}
                 {activeTab === 'categories' && (
                     <div className="space-y-6">
-                        <div className="border-b border-slate-200/80 pb-3">
-                            <h2 className="text-xl font-black text-slate-900">
-                                Kategori Kompetisi Kampus
+                        <div className="pb-3 border-b border-slate-200/80">
+                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                                Bidang & Kategori Kompetisi
                             </h2>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Eksplorasi kesempatan berdasarkan bidang keilmuan, minat, dan disiplin akademik.
+                            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                Jelajahi peluang prestasi sesuai rumpun keilmuan, minat penelitian, dan keahlian profesional Anda.
                             </p>
                         </div>
 
+                        {/* Category Grid with subtle borders and Lucide icons */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {coreCategoryList.map((cat, idx) => {
+                            {coreCategoryList.map((cat) => {
+                                const IconComponent = cat.icon;
                                 const count = categoryCounts[cat.key] || 0;
+
                                 return (
                                     <div
                                         key={cat.key}
@@ -1072,22 +1111,26 @@ export default function CompetitionIndex({
                                     >
                                         <div>
                                             <div className="flex items-center justify-between mb-3">
-                                                <span className="text-2xl">{cat.icon}</span>
-                                                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                                                <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-blue-50 group-hover:text-blue-600 text-slate-700 flex items-center justify-center transition">
+                                                    <IconComponent className="w-5 h-5 stroke-[1.75]" />
+                                                </div>
+                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
                                                     {count} lomba
                                                 </span>
                                             </div>
-                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
+
+                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                 {cat.name}
                                             </h3>
-                                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
                                                 {cat.desc}
                                             </p>
                                         </div>
 
-                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold text-blue-600">
+                                        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
                                             <span>Lihat Kompetisi</span>
-                                            <ArrowRight className="size-3.5 group-hover:translate-x-1 transition-transform" />
+                                            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                                         </div>
                                     </div>
                                 );
@@ -1097,17 +1140,17 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 4: LOMBA SAYA (Saved Bookmarks, Applications & Teams) */}
+                {/* TAB 4: LOMBA SAYA (Personalized Tracking & Bookmarks)     */}
                 {/* ========================================================= */}
                 {activeTab === 'my_competitions' && (
                     <div className="space-y-6">
-                        {/* Sub-Tabs Nav */}
-                        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+                        {/* Sub-Navigation Tabs */}
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-200/80">
                             <div className="flex items-center gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setMySubTab('saved')}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                         mySubTab === 'saved'
                                             ? 'bg-slate-900 text-white'
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -1118,7 +1161,7 @@ export default function CompetitionIndex({
                                 <button
                                     type="button"
                                     onClick={() => setMySubTab('applications')}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                         mySubTab === 'applications'
                                             ? 'bg-slate-900 text-white'
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -1129,7 +1172,7 @@ export default function CompetitionIndex({
                                 <button
                                     type="button"
                                     onClick={() => setMySubTab('teams')}
-                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                         mySubTab === 'teams'
                                             ? 'bg-slate-900 text-white'
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
@@ -1141,29 +1184,29 @@ export default function CompetitionIndex({
 
                             <Link
                                 href={route('competitions.create')}
-                                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+                                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
                             >
-                                <Plus className="size-3.5" />
+                                <Plus className="w-3.5 h-3.5" />
                                 <span>Bikin Tim</span>
                             </Link>
                         </div>
 
-                        {/* SUB-VIEW 1: SAVED BOOKMARKS */}
+                        {/* SUB-TAB 1: SAVED */}
                         {mySubTab === 'saved' && (
                             <div>
                                 {savedCompetitions.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <Bookmark className="size-10 text-slate-400 mx-auto mb-2" />
+                                        <Bookmark className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Kompetisi Tersimpan
                                         </h3>
                                         <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Simpan kompetisi yang menarik perhatianmu saat menjelajahi tab "Eksplor Lomba".
+                                            Tandai kompetisi yang ingin kamu ikuti dengan ikon bookmark di tab Eksplor Lomba.
                                         </p>
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('explore')}
-                                            className="mt-4 px-4 py-2 rounded-full bg-blue-600 text-white text-xs font-bold cursor-pointer"
+                                            className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
                                         >
                                             Eksplor Lomba Sekarang
                                         </button>
@@ -1178,32 +1221,34 @@ export default function CompetitionIndex({
                                             >
                                                 <div>
                                                     <div className="flex items-center justify-between mb-2">
-                                                        <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
+                                                        <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
                                                             {comp.category?.replace('_', ' ') || 'HACKATHON'}
                                                         </span>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                            className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600"
-                                                            title="Hapus dari Bookmark"
+                                                            className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 cursor-pointer"
+                                                            title="Hapus dari Simpanan"
                                                         >
-                                                            <Bookmark className="size-3.5 fill-current" />
+                                                            <Bookmark className="w-3.5 h-3.5 fill-current" />
                                                         </button>
                                                     </div>
-                                                    <h3 className="text-base font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                    <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                         {comp.name}
-                                                    </h3>
-                                                    <p className="text-xs text-slate-400 mt-0.5">
-                                                        {comp.organizer}
-                                                    </p>
+                                                    </h4>
+                                                    <p className="text-xs text-slate-400 mt-0.5">{comp.organizer}</p>
                                                 </div>
 
                                                 <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
                                                     <div>
-                                                        <span className="text-[10px] text-slate-400 block">Deadline</span>
+                                                        <span className="text-[10px] text-slate-400 block font-medium">Batas Registrasi</span>
                                                         <span className="font-bold text-slate-800">
                                                             {comp.registration_deadline
-                                                                ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+                                                                ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
+                                                                      day: 'numeric',
+                                                                      month: 'short',
+                                                                      year: 'numeric',
+                                                                  })
                                                                 : 'Terbuka'}
                                                         </span>
                                                     </div>
@@ -1216,25 +1261,24 @@ export default function CompetitionIndex({
                             </div>
                         )}
 
-                        {/* SUB-VIEW 2: APPLICATIONS */}
+                        {/* SUB-TAB 2: APPLICATIONS */}
                         {mySubTab === 'applications' && (
                             <div>
                                 {myApplications.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <MessageSquare className="size-10 text-slate-400 mx-auto mb-2" />
+                                        <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                                         <h3 className="text-sm font-bold text-slate-900">
-                                            Belum Ada Pengajuan yang Dikirim
+                                            Belum Ada Pengajuan Tim
                                         </h3>
                                         <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Eksplor tim di tab "Cari Tim" dan ajukan dirimu ke peran yang cocok!
+                                            Kunjungi tab "Cari Tim" dan ajukan dirimu ke formasi tim yang sesuai keahlianmu.
                                         </p>
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('teams')}
-                                            className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                                            className="mt-4 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                         >
-                                            <span>Eksplor Tim Sekarang</span>
-                                            <ArrowRight className="size-3.5" />
+                                            Cari Tim Sekarang
                                         </button>
                                     </div>
                                 ) : (
@@ -1244,45 +1288,38 @@ export default function CompetitionIndex({
                                                 key={app.id}
                                                 className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                                             >
-                                                <div className="space-y-1">
+                                                <div>
                                                     <div className="flex items-center gap-2">
-                                                        <h4 className="text-sm font-bold text-slate-900">
-                                                            {app.team_name}
-                                                        </h4>
-                                                        <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                                        <h4 className="text-sm font-bold text-slate-900">{app.team_name}</h4>
+                                                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                                                             Posisi: {app.role_name}
                                                         </span>
                                                         {app.status === 'accepted' ? (
-                                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                                                ✓ Diterima
+                                                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                                                                Diterima
                                                             </span>
                                                         ) : app.status === 'rejected' ? (
-                                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
-                                                                ✗ Ditolak
+                                                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
+                                                                Ditolak
                                                             </span>
                                                         ) : (
-                                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
                                                                 Menunggu
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-slate-500">
+                                                    <p className="text-xs text-slate-500 mt-0.5">
                                                         {app.competition_name} • Ketua: {app.leader_name || 'Ketua Tim'}
                                                     </p>
-                                                    {app.message && (
-                                                        <p className="text-xs text-slate-600 italic mt-1">
-                                                            "{app.message}"
-                                                        </p>
-                                                    )}
                                                 </div>
 
                                                 {app.participation_id && app.status === 'accepted' && (
                                                     <Link
                                                         href={route('competitions.workspace', app.participation_id)}
-                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shrink-0"
+                                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                                                     >
                                                         <span>Buka Workspace</span>
-                                                        <ArrowRight className="size-3.5" />
+                                                        <ArrowRight className="w-3.5 h-3.5" />
                                                     </Link>
                                                 )}
                                             </div>
@@ -1292,29 +1329,29 @@ export default function CompetitionIndex({
                             </div>
                         )}
 
-                        {/* SUB-VIEW 3: TEAMS */}
+                        {/* SUB-TAB 3: TEAMS */}
                         {mySubTab === 'teams' && (
                             <div>
                                 {myTeams.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <FolderKanban className="size-10 text-slate-400 mx-auto mb-2" />
+                                        <FolderKanban className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Tim Aktif
                                         </h3>
                                         <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Mulai dengan membentuk tim baru atau bergabung ke tim yang sedang merekrut.
+                                            Mulai dengan membentuk tim baru atau bergabung ke tim yang sedang membuka rekrutmen.
                                         </p>
                                         <div className="mt-4 flex items-center justify-center gap-3">
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveTab('teams')}
-                                                className="px-4 py-2 rounded-full border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                                             >
                                                 Cari Tim
                                             </button>
                                             <Link
                                                 href={route('competitions.create')}
-                                                className="px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                                                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                             >
                                                 Bikin Tim Baru
                                             </Link>
@@ -1332,31 +1369,21 @@ export default function CompetitionIndex({
                                                         <h4 className="text-base font-bold text-slate-900">
                                                             {team.team_name}
                                                         </h4>
-                                                        {team.is_leader ? (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
-                                                                Ketua Tim
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                                                                Anggota
-                                                            </span>
-                                                        )}
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                                            {team.is_leader ? 'Ketua Tim' : 'Anggota'}
+                                                        </span>
                                                     </div>
                                                     <p className="text-xs text-slate-500 mt-1">
                                                         {team.competition_name}
                                                     </p>
-                                                    <div className="mt-2 text-xs text-slate-600">
-                                                        Anggota: <strong>{team.members_count}</strong>
-                                                        {team.max_size ? ` / ${team.max_size}` : ''} orang
-                                                    </div>
                                                 </div>
 
                                                 <Link
                                                     href={route('competitions.workspace', team.id)}
-                                                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs"
+                                                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
                                                 >
                                                     <span>Buka Workspace Tim</span>
-                                                    <ArrowRight className="size-3.5" />
+                                                    <ArrowRight className="w-3.5 h-3.5" />
                                                 </Link>
                                             </div>
                                         ))}
@@ -1368,76 +1395,95 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 5: REKOMENDASI (Personalized Recommendations) */}
+                {/* TAB 5: REKOMENDASI (Personalized Matchmaking)             */}
                 {/* ========================================================= */}
                 {activeTab === 'recommendations' && (
                     <div className="space-y-6">
-                        <div className="border-b border-slate-200/80 pb-3">
-                            <h2 className="text-xl font-black text-slate-900">
+                        <div className="pb-3 border-b border-slate-200/80">
+                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
                                 Rekomendasi Pintar untuk Profilmu
                             </h2>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Berdasarkan keahlian, program studi, dan minat lomba yang kamu miliki.
+                            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                Dicocokkan berdasarkan latar belakang keilmuan, keahlian portofolio, dan preferensi lomba Anda.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                            {recommendedCompetitions.map((comp) => (
-                                <div
-                                    key={comp.id}
-                                    onClick={() => router.get(`/competitions/${comp.id}`)}
-                                    className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-5 group"
-                                >
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[11px] font-black uppercase tracking-wider text-blue-600">
-                                                {comp.category?.replace('_', ' ') || 'HACKATHON'}
-                                            </span>
-                                            <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                                                95% Match
-                                            </span>
+                        {recommendedCompetitions && recommendedCompetitions.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                {recommendedCompetitions.map((comp, idx) => (
+                                    <div
+                                        key={comp.id}
+                                        onClick={() => router.get(`/competitions/${comp.id}`)}
+                                        className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                                                    {comp.category?.replace('_', ' ') || 'HACKATHON'}
+                                                </span>
+                                                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                                                    {idx === 0 ? '98% Relevan' : `${95 - idx * 4}% Relevan`}
+                                                </span>
+                                            </div>
+
+                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                                {comp.name}
+                                            </h3>
+                                            <p className="text-xs font-semibold text-slate-400 mt-0.5">{comp.organizer}</p>
+                                            <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
+                                                {comp.description}
+                                            </p>
                                         </div>
 
-                                        <h3 className="text-lg font-black text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                            {comp.name}
-                                        </h3>
-                                        <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                                            {comp.organizer}
-                                        </p>
-                                        <p className="text-xs text-slate-500 mt-2 line-clamp-2">
-                                            {comp.description}
-                                        </p>
+                                        <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
+                                            <span className="text-slate-500 font-medium">{comp.level || 'Nasional'}</span>
+                                            <span className="font-bold text-blue-600">Detail Lomba ↗</span>
+                                        </div>
                                     </div>
-
-                                    <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
-                                        <span className="text-slate-500 font-medium">
-                                            {comp.level || 'Nasional'}
-                                        </span>
-                                        <span className="font-bold text-blue-600">Detail Lomba ↗</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                <Sparkles className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Lengkapi Profil untuk Rekomendasi Lebih Akurat
+                                </h3>
+                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
+                                    Tambahkan keahlian teknis dan minat riset di halaman pengaturan profil untuk mencocokkan lomba yang paling sesuai.
+                                </p>
+                                <Link
+                                    href="/settings/profile"
+                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
+                                >
+                                    <span>Lengkapi Profil</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 )}
+            </div>
 
-            </main>
-
-            {/* MINSATU DETAIL MODAL (Matching User Reference Screenshot) */}
+            {/* MINSATU DETAIL MODAL */}
             {detailTeam && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
                     <div className="bg-white rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 relative my-6 space-y-6">
                         {/* Header */}
                         <div className="flex items-start justify-between gap-4">
-                            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
-                                {detailTeam.competition.name}
-                            </h2>
+                            <div>
+                                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider block">
+                                    Detail Formasi Tim
+                                </span>
+                                <h2 className="text-xl sm:text-2xl font-black text-slate-900 mt-0.5">
+                                    {detailTeam.competition.name}
+                                </h2>
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => setDetailTeam(null)}
                                 className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer shrink-0"
                             >
-                                <X className="size-4" />
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
 
@@ -1486,7 +1532,7 @@ export default function CompetitionIndex({
                             <div className="md:col-span-7 space-y-6">
                                 <div className="space-y-2">
                                     <h4 className="text-xs font-bold text-slate-900">
-                                        Yang dicari
+                                        Deskripsi & Tujuan Tim
                                     </h4>
                                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
                                         {detailTeam.team.description ||
@@ -1495,11 +1541,9 @@ export default function CompetitionIndex({
                                 </div>
 
                                 <div className="space-y-2.5">
-                                    <div className="flex items-center gap-1.5">
-                                        <h4 className="text-xs font-bold text-slate-900">
-                                            File & link
-                                        </h4>
-                                    </div>
+                                    <h4 className="text-xs font-bold text-slate-900">
+                                        Tautan & Informasi Resmi
+                                    </h4>
 
                                     <div className="space-y-2">
                                         {detailTeam.competition.official_url && (
@@ -1507,11 +1551,11 @@ export default function CompetitionIndex({
                                                 href={detailTeam.competition.official_url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                                className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
                                             >
                                                 <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                    <span>Website & Guidebook Resmi</span>
-                                                    <ArrowUpRight className="size-3.5" />
+                                                    <span>Website & Pedoman Resmi</span>
+                                                    <ArrowUpRight className="w-3.5 h-3.5" />
                                                 </span>
                                                 <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
                                                     {detailTeam.competition.official_url.replace(/^https?:\/\//, '')}
@@ -1524,11 +1568,11 @@ export default function CompetitionIndex({
                                                 href={detailTeam.competition.registration_url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                                className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
                                             >
                                                 <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
                                                     <span>Portal Registrasi Lomba</span>
-                                                    <ArrowUpRight className="size-3.5" />
+                                                    <ArrowUpRight className="w-3.5 h-3.5" />
                                                 </span>
                                                 <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
                                                     {detailTeam.competition.registration_url.replace(/^https?:\/\//, '')}
@@ -1538,14 +1582,14 @@ export default function CompetitionIndex({
 
                                         <Link
                                             href={`/competitions/${detailTeam.competition.id}`}
-                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
+                                            className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
                                         >
-                                            <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1">
-                                                <FileText className="size-3.5 text-slate-500" />
+                                            <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1.5">
+                                                <FileText className="w-3.5 h-3.5 text-slate-500" />
                                                 <span>Dokumen & Syarat Lengkap</span>
                                             </span>
                                             <span className="text-blue-600 font-semibold text-[11px] flex items-center gap-0.5">
-                                                Buka Detail <ArrowUpRight className="size-3" />
+                                                Buka Detail <ArrowUpRight className="w-3 h-3" />
                                             </span>
                                         </Link>
                                     </div>
@@ -1553,9 +1597,9 @@ export default function CompetitionIndex({
                             </div>
 
                             {/* Right Column (5 cols): Soft Blue Formasi Card */}
-                            <div className="md:col-span-5 bg-[#F0F5FF] rounded-2xl p-5 border border-blue-100 space-y-4">
+                            <div className="md:col-span-5 bg-blue-50/60 rounded-2xl p-5 border border-blue-100 space-y-4">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                                    <Users className="size-4 text-blue-600" />
+                                    <Users className="w-4 h-4 text-blue-600" />
                                     <span>Formasi tim</span>
                                 </div>
 
@@ -1575,9 +1619,9 @@ export default function CompetitionIndex({
                                         {Array.from({ length: detailTeam.team.members_count }).map((_, idx) => (
                                             <div
                                                 key={`f-${idx}`}
-                                                className="size-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                className="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
                                             >
-                                                <User className="size-4 fill-current" />
+                                                <User className="w-4 h-4 fill-current" />
                                             </div>
                                         ))}
                                         {Array.from({
@@ -1588,9 +1632,9 @@ export default function CompetitionIndex({
                                         }).map((_, idx) => (
                                             <div
                                                 key={`e-${idx}`}
-                                                className="size-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                className="w-7 h-7 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
                                             >
-                                                <User className="size-4" />
+                                                <User className="w-4 h-4" />
                                             </div>
                                         ))}
                                     </div>
@@ -1610,13 +1654,13 @@ export default function CompetitionIndex({
                                             detailTeam.team.recruitment.roles.map((r) => (
                                                 <span
                                                     key={r.id}
-                                                    className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100"
+                                                    className="px-2.5 py-1 rounded-md bg-white text-slate-800 text-xs font-semibold shadow-2xs border border-slate-100"
                                                 >
                                                     {r.name}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="px-3 py-1 rounded-full bg-white text-slate-600 text-xs font-medium shadow-2xs border border-slate-100">
+                                            <span className="px-2.5 py-1 rounded-md bg-white text-slate-600 text-xs font-medium shadow-2xs border border-slate-100">
                                                 Terbuka untuk semua role
                                             </span>
                                         )}
@@ -1629,7 +1673,7 @@ export default function CompetitionIndex({
                                         Ketua tim
                                     </span>
                                     <div className="flex items-center gap-2.5">
-                                        <div className="size-9 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                        <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                             {detailTeam.team.leader?.name ? detailTeam.team.leader.name.charAt(0) : 'M'}
                                         </div>
                                         <div className="min-w-0">
@@ -1641,7 +1685,7 @@ export default function CompetitionIndex({
                                                 className="text-[11px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
                                             >
                                                 <span>Lihat halaman lomba</span>
-                                                <ArrowUpRight className="size-3" />
+                                                <ArrowUpRight className="w-3 h-3" />
                                             </Link>
                                         </div>
                                     </div>
@@ -1656,9 +1700,9 @@ export default function CompetitionIndex({
                                             setDetailTeam(null);
                                             openApplyModal(teamToApply);
                                         }}
-                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs hover:shadow transition cursor-pointer"
+                                        className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                                     >
-                                        Ajukan Diri Bergabung
+                                        Ajukan Diri ke Tim Ini
                                     </button>
                                 </div>
                             </div>
@@ -1667,25 +1711,15 @@ export default function CompetitionIndex({
                 </div>
             )}
 
-                {/* FOOTER */}
-                <footer className="pt-16 mt-16 border-t border-slate-200/70 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <p className="max-w-md leading-relaxed text-slate-500">
-                        rakitcampus adalah ekosistem kolaborasi dan informasi kompetisi mahasiswa. Kontak kamu dijaga dan baru dibuka ke rekan tim saat kamu mengajukan diri atau berdiskusi.
-                    </p>
-                    <div className="flex items-center gap-4 text-slate-600 font-medium shrink-0">
-                        <a href="#" className="hover:text-slate-900">Tentang Kami</a>
-                        <a href="#" className="hover:text-slate-900">Kebijakan Privasi</a>
-                        <a href="#" className="hover:text-slate-900">Syarat & Ketentuan</a>
-                    </div>
-                </footer>
-
-                {/* MinSatu Apply Modal */}
+            {/* APPLY COMPETITION TEAM MODAL */}
+            {selectedTeamData && (
                 <ApplyCompetitionTeamModal
-                    isOpen={applyModalOpen}
-                    onClose={() => setApplyModalOpen(false)}
+                    open={applyModalOpen}
+                    onOpenChange={setApplyModalOpen}
                     teamData={selectedTeamData}
                     currentUserInfo={currentUserInfo}
                 />
+            )}
         </AppLayout>
     );
 }
