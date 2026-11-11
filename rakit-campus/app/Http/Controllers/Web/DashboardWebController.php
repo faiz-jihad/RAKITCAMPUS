@@ -128,12 +128,11 @@ class DashboardWebController extends Controller
                 ]);
 
             $stats = [
-                'my_teams_count' => Team::count(),
+                'my_teams_count' => Team::where('type', '!=', 'competition')->count(),
                 'pending_tasks_count' => $pendingTasksCount,
                 'completed_tasks_count' => $completedTasksCount,
                 'team_readiness_avg' => 80,
                 'recommended_matches_count' => Project::where('status', 'recruiting')->count(),
-                'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
                 'taught_classes_count' => 0,
                 'total_students_count' => User::count(),
                 'total_guided_projects_count' => Project::count(),
@@ -160,7 +159,6 @@ class DashboardWebController extends Controller
                 'teammates' => $publicPeers,
                 'monthlyActivity' => $monthlyActivity,
                 'recommendedProjects' => $publicProjects,
-                'upcomingCompetitions' => $upcomingCompetitions,
                 'recentActivities' => $recentActivities,
                 'profileCompletion' => null,
                 'taughtClasses' => collect(),
@@ -320,39 +318,38 @@ class DashboardWebController extends Controller
             $profile->loadMissing(['skills', 'campus']);
         }
 
-        // 1. User's Teams & Workspaces
-        $myTeams = Team::where(function ($q) use ($user) {
-            $q->where('leader_id', $user->id)
-              ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id));
-        })->with([
-            'project:id,title,slug,status,category,progress,short_description',
-            'participations.competition:id,name,slug,status,category',
-            'members.user:id,name,email',
-            'tasks:id,team_id,status',
-        ])->latest()->get()->map(function ($team) use ($user) {
-            $totalTasks = $team->tasks->count();
-            $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
-            $isLeader = $team->leader_id === $user->id || $team->isLeader($user);
+        // 1. User's Teams & Workspaces (strictly academic project teams)
+        $myTeams = Team::where('type', '!=', 'competition')
+            ->where(function ($q) use ($user) {
+                $q->where('leader_id', $user->id)
+                  ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id));
+            })->with([
+                'project:id,title,slug,status,category,progress,short_description',
+                'members.user:id,name,email',
+                'tasks:id,team_id,status',
+            ])->latest()->get()->map(function ($team) use ($user) {
+                $totalTasks = $team->tasks->count();
+                $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
+                $isLeader = $team->leader_id === $user->id || $team->isLeader($user);
 
-            return [
-                'id' => $team->id,
-                'name' => $team->name,
-                'description' => $team->description,
-                'type' => $team->type?->value ?? 'project',
-                'is_leader' => $isLeader,
-                'project' => $team->project,
-                'competition' => $team->participations->first()?->competition,
-                'members_count' => $team->members->count(),
-                'members' => $team->members->take(5)->map(fn ($m) => [
-                    'id' => $m->user_id,
-                    'name' => $m->user->name,
-                    'role' => $m->role_name ?? ($m->permission === 'leader' ? 'Leader' : 'Anggota'),
-                ]),
-                'total_tasks' => $totalTasks,
-                'done_tasks' => $doneTasks,
-                'progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($team->project?->progress ?? 0),
-            ];
-        });
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'description' => $team->description,
+                    'type' => 'project',
+                    'is_leader' => $isLeader,
+                    'project' => $team->project,
+                    'members_count' => $team->members->count(),
+                    'members' => $team->members->take(5)->map(fn ($m) => [
+                        'id' => $m->user_id,
+                        'name' => $m->user->name,
+                        'role' => $m->role_name ?? ($m->permission === 'leader' ? 'Leader' : 'Anggota'),
+                    ]),
+                    'total_tasks' => $totalTasks,
+                    'done_tasks' => $doneTasks,
+                    'progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($team->project?->progress ?? 0),
+                ];
+            });
 
         // 2. User's pending tasks across all teams
         $myTasks = Task::where('assignee_id', $user->id)
@@ -423,7 +420,7 @@ class DashboardWebController extends Controller
             ->whereMonth('created_at', $monthDate->month)
             ->count();
 
-            $val = max(15, min(95, ($tasksDone * 20) + ($logs * 10)));
+            $val = ($tasksDone === 0 && $logs === 0) ? 0 : min(100, ($tasksDone * 20) + ($logs * 10));
 
             $monthlyActivity->push([
                 'month' => $monthLabel,
@@ -433,7 +430,7 @@ class DashboardWebController extends Controller
             ]);
         }
 
-        // 8. Real Teammates
+        // 8. Real Teammates (strictly from user's active project teams)
         $realTeammates = collect();
         foreach ($myTeams as $team) {
             foreach ($team['members'] as $m) {
@@ -448,28 +445,6 @@ class DashboardWebController extends Controller
             }
         }
 
-        if ($realTeammates->isEmpty()) {
-            $campusId = $membership?->campus_id ?? $profile?->campus_id;
-            $campusPeers = User::where('id', '!=', $user->id)
-                ->whereHas('memberships', function ($q) use ($campusId) {
-                    if ($campusId) {
-                        $q->where('campus_id', $campusId);
-                    }
-                })
-                ->with('profile')
-                ->take(3)
-                ->get()
-                ->map(function ($peer) use ($membership) {
-                    return [
-                        'id' => $peer->id,
-                        'name' => $peer->name,
-                        'role' => $peer->profile?->headline ?? $peer->profile?->study_program ?? 'Mahasiswa',
-                        'team' => $membership?->campus?->name ?? 'Rekan Kampus',
-                    ];
-                });
-            $realTeammates = $campusPeers;
-        }
-
         // Summary metrics
         $stats = [
             'my_teams_count' => $myTeams->count(),
@@ -477,7 +452,6 @@ class DashboardWebController extends Controller
             'completed_tasks_count' => $completedTasksCount,
             'team_readiness_avg' => $teamReadinessAvg,
             'recommended_matches_count' => $recommendedProjects->count(),
-            'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
             'taught_classes_count' => 0,
             'total_students_count' => 0,
             'total_guided_projects_count' => 0,
@@ -506,7 +480,6 @@ class DashboardWebController extends Controller
             'teammates' => $realTeammates,
             'monthlyActivity' => $monthlyActivity,
             'recommendedProjects' => $recommendedProjects,
-            'upcomingCompetitions' => $upcomingCompetitions,
             'recentActivities' => $recentActivities,
             'profileCompletion' => $profile?->completion() ?? ['percent' => $teamReadinessAvg, 'missing' => []],
             'taughtClasses' => [],

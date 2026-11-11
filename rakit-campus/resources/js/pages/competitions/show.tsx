@@ -64,9 +64,9 @@ export default function CompetitionShow({
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [isParticipateModalOpen, setParticipateModalOpen] = useState(false);
     const [isAllocateModalOpen, setAllocateModalOpen] = useState(false);
+    const setIsAllocateModalOpen = setAllocateModalOpen;
     const [isAddRoundModalOpen, setAddRoundModalOpen] = useState(false);
-    const [participationMode, setParticipationMode] = useState<'new_team' | 'existing_project'>('new_team');
-    const [selectedProjectId, setSelectedProjectId] = useState<string>('');
+    const setIsAddRoundModalOpen = setAddRoundModalOpen;
     const [teamName, setTeamName] = useState('');
     const [categoryTrack, setCategoryTrack] = useState('');
     const [description, setDescription] = useState('');
@@ -125,14 +125,6 @@ export default function CompetitionShow({
             description: description,
             roles_needed: rolesNeeded || null,
         };
-
-        if (participationMode === 'existing_project' && selectedProjectId) {
-            payload.project_id = parseInt(selectedProjectId, 10);
-            const chosenProj = myLedProjects.find((p) => p.id === parseInt(selectedProjectId, 10));
-            if (chosenProj && !teamName) {
-                payload.team_name = chosenProj.title;
-            }
-        }
 
         router.post(route('competitions.participate', competition.id), payload, {
             onFinish: () => setSubmitting(false),
@@ -758,69 +750,20 @@ export default function CompetitionShow({
                                 </div>
                             )}
 
-                            {/* Mode Switcher */}
-                            {myLedProjects.length > 0 && eligibilityCheck.eligible && (
-                                <div className="flex bg-slate-100 p-1 rounded-xl text-xs font-bold">
-                                    <button
-                                        type="button"
-                                        onClick={() => setParticipationMode('new_team')}
-                                        className={`flex-1 py-1.5 rounded-lg transition ${
-                                            participationMode === 'new_team' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500'
-                                        }`}
-                                    >
-                                        Bentuk Tim Baru
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setParticipationMode('existing_project')}
-                                        className={`flex-1 py-1.5 rounded-lg transition ${
-                                            participationMode === 'existing_project' ? 'bg-white text-blue-600 shadow-2xs' : 'text-slate-500'
-                                        }`}
-                                    >
-                                        Tautkan Proyek Saya
-                                    </button>
-                                </div>
-                            )}
-
                             <form onSubmit={handleCreateParticipation} className="space-y-4">
-                                {participationMode === 'existing_project' ? (
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                            Pilih Proyek yang Ingin Diikutsertakan
-                                        </label>
-                                        <select
-                                            value={selectedProjectId}
-                                            onChange={(e) => {
-                                                setSelectedProjectId(e.target.value);
-                                                const p = myLedProjects.find((x) => x.id === parseInt(e.target.value, 10));
-                                                if (p) setTeamName(p.title);
-                                            }}
-                                            required
-                                            className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800"
-                                        >
-                                            <option value="">-- Pilih Proyek Aktif --</option>
-                                            {myLedProjects.map((p) => (
-                                                <option key={p.id} value={p.id}>
-                                                    {p.title} ({p.status})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                                Nama Tim Kompetisi <span className="text-rose-500">*</span>
-                                            </label>
-                                            <input
-                                                type="text"
-                                                required
-                                                placeholder="Contoh: Garuda Tech, Inovasi Cemerlang"
-                                                value={teamName}
-                                                onChange={(e) => setTeamName(e.target.value)}
-                                                className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900"
-                                            />
-                                        </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Nama Tim Kompetisi <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        placeholder="Contoh: Tim Inovasi Cemerlang"
+                                        value={teamName}
+                                        onChange={(e) => setTeamName(e.target.value)}
+                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                                    />
+                                </div>
 
                                         {categoryTracks.length > 0 ? (
                                             <div>
@@ -887,8 +830,6 @@ export default function CompetitionShow({
                                                 Peran ini akan langsung tampil di pencarian rekan tim agar mahasiswa lain dapat melamar.
                                             </p>
                                         </div>
-                                    </>
-                                )}
 
                                 <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                     <button

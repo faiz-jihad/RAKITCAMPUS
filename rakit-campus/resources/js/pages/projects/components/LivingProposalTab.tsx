@@ -87,7 +87,7 @@ export default function LivingProposalTab({
                     methodology,
                     timeline_plan: timelinePlan,
                     budget_estimate: budgetEstimate,
-                    tech_stack: techStackInput.split(',').map((s) => s.trim()).filter(Boolean),
+                    tech_stack: techStackInput.split(',').map((s: string) => s.trim()).filter(Boolean),
                     change_summary: changeSummary,
                 }),
             });

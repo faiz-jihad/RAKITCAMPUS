@@ -224,16 +224,8 @@ export default function AppLayout({
                         </nav>
                     )}
 
-                    {/* Right User Actions & Quick Switch Button */}
+                    {/* Right User Actions */}
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <button
-                            type="button"
-                            onClick={() => setIsGatewayOpen(true)}
-                            className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 transition cursor-pointer"
-                        >
-                            <span>{isCompetitionHub ? 'Pindah ke Proyek' : 'Pindah ke Lomba'}</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
-                        </button>
 
                         <Link
                             href="/settings/profile"

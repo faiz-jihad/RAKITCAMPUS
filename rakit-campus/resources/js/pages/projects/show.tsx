@@ -318,40 +318,35 @@ export default function ProjectShow({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`${project.title} — RAKIT Campus Project Hub`} />
 
-            {/* Modern Frosted Glass Canvas */}
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden font-sans">
-                {/* Natural ambient light diffusion */}
-                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
+            <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                     {/* Top navigation row */}
                     <div className="flex items-center justify-between">
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:border-blue-200 shadow-2xs transition"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Kembali ke Project Hub</span>
+                            <span>Kembali ke Proyek Kelas</span>
                         </Link>
 
                         <div className="flex items-center gap-2">
                             {project.team && (isMember || isLeader || isLecturer) && (
                                 <Link
                                     href={`/workspace/${project.team.id}`}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
                                 >
                                     <FolderKanban className="size-3.5" />
-                                    <span>Buka Workspace Tim</span>
+                                    <span>Workspace Tim</span>
                                 </Link>
                             )}
 
                             <button
                                 onClick={toggleBookmark}
-                                className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl border transition cursor-pointer ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition cursor-pointer ${
                                     bookmarked
                                         ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                                        : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50'
                                 }`}
                             >
                                 <Bookmark className="size-3.5" />
@@ -361,7 +356,7 @@ export default function ProjectShow({
                     </div>
 
                     {/* HERO HEADER: 3 Distinct Status Indicators & Quick Actions */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8">
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                             <div className="max-w-3xl">
                                 <div className="flex flex-wrap items-center gap-2 mb-2">

@@ -612,7 +612,7 @@ export default function CompetitionIndex({
                                         setExploreCategory(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: e.target.value, level: exploreLevel, format: exploreFormat }, { preserveState: true });
                                     }}
-                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
                                 >
                                     <option value="">Semua Kategori</option>
                                     {categories.map((c) => (
@@ -628,7 +628,7 @@ export default function CompetitionIndex({
                                         setExploreLevel(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: e.target.value, format: exploreFormat }, { preserveState: true });
                                     }}
-                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
                                 >
                                     <option value="">Semua Tingkat</option>
                                     <option value="university">Kampus</option>
@@ -643,7 +643,7 @@ export default function CompetitionIndex({
                                         setExploreFormat(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: e.target.value }, { preserveState: true });
                                     }}
-                                    className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
+                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
                                 >
                                     <option value="">Semua Format</option>
                                     <option value="Online">Online</option>

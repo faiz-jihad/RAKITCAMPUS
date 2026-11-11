@@ -62,41 +62,29 @@ export default function CompetitionCreate({ categories, levels, types }: Props) 
     return (
         <AppLayout breadcrumbs={breadcrumbs} activeTab="lomba" title="Daftarkan Kompetisi Baru — RakitCampus">
             <div className="max-w-4xl mx-auto pt-2 flex flex-col gap-6">
-                {/* Header Row */}
-                <div className="flex items-center justify-between">
+                {/* Header */}
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                        Daftarkan Kompetisi Baru
+                    </h1>
+
                     <Link
                         href={route('competitions.index')}
-                        className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:border-blue-200 shadow-2xs transition"
+                        className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition"
                     >
-                        <ArrowLeft className="size-3.5" />
-                        <span>Kembali ke Daftar Kompetisi</span>
+                        Batal
                     </Link>
                 </div>
 
-                    {/* Page Hero */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8 bg-white/85">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-800 text-xs font-bold tracking-wide mb-3 border border-amber-500/20">
-                            <Trophy className="size-3.5 text-amber-600" />
-                            <span>Daftarkan Peluang Prestasi Mahasiswa</span>
+                {/* Main Form */}
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Section 1: Informasi Dasar */}
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+                        <div className="border-b border-slate-100 pb-3">
+                            <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                Informasi Pokok Kompetisi
+                            </h2>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                            Tambah Informasi Kompetisi Baru
-                        </h1>
-                        <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                            Pastikan data kompetisi bersumber dari informasi valid penyelenggara resmi. Kompetisi yang didaftarkan mahasiswa akan melalui peninjauan dosen/admin sebelum terverifikasi secara publik.
-                        </p>
-                    </div>
-
-                    {/* Main Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Section 1: Informasi Dasar */}
-                        <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white/85 space-y-5">
-                            <div className="border-b border-slate-100 pb-3">
-                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-                                    <Sparkles className="size-4 text-blue-600" />
-                                    <span>Informasi Pokok Kompetisi</span>
-                                </h2>
-                            </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
@@ -225,9 +213,9 @@ export default function CompetitionCreate({ categories, levels, types }: Props) 
                         </div>
 
                         {/* Section 2: Jadwal & Hadiah */}
-                        <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white/85 space-y-5">
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
                             <div className="border-b border-slate-100 pb-3">
-                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                                     <Calendar className="size-4 text-emerald-600" />
                                     <span>Timeline Penting & Hadiah</span>
                                 </h2>
@@ -313,9 +301,9 @@ export default function CompetitionCreate({ categories, levels, types }: Props) 
                         </div>
 
                         {/* Section 3: Sumber Resmi & Tautan Validasi */}
-                        <div className="glass-card rounded-3xl p-6 sm:p-8 bg-white/85 space-y-5">
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
                             <div className="border-b border-slate-100 pb-3">
-                                <h2 className="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                                <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
                                     <ShieldAlert className="size-4 text-purple-600" />
                                     <span>Validasi Sumber Informasi & Tautan Resmi</span>
                                 </h2>

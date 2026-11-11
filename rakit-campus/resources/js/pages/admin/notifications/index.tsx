@@ -173,7 +173,7 @@ export default function AdminNotificationsIndex({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => router.reload({ preserveScroll: true })}
+                            onClick={() => router.reload()}
                             className="flex items-center gap-1.5 text-xs"
                         >
                             <RefreshCw className="h-3.5 w-3.5" />

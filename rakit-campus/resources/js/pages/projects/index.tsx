@@ -148,33 +148,21 @@ export default function ProjectIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Project Hub — Temukan & Bangun Proyek Kolaborasi Kampus" />
 
-            <div className="space-y-6 pt-2">
-                {/* Header Banner Surface */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-6 relative overflow-hidden">
-                        <div className="max-w-3xl">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold tracking-wide mb-3">
-                                <Compass className="size-3.5" />
-                                <span>Kolaborasi & Proyek Mahasiswa</span>
-                            </div>
-                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
-                                Cari Proyek Kolaborasi
-                            </h1>
-                            <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                                Temukan ide proyek tugas akhir, kompetisi, riset kampus, atau startup. Bergabung ke tim yang sedang merekrut atau mulai inisiatif proyek baru Anda!
-                            </p>
-                        </div>
+            <div className="space-y-6">
+                {/* Header Section */}
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                        Proyek Kelas
+                    </h1>
 
-                        {/* Top Actions */}
-                        <div className="flex items-center gap-3 shrink-0">
-                            <Link
-                                href="/projects/create"
-                                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
-                            >
-                                <Plus className="size-4" />
-                                <span>Buat Proyek Baru</span>
-                            </Link>
-                        </div>
-                    </div>
+                    <Link
+                        href="/projects/create"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                    >
+                        <Plus className="size-3.5" />
+                        <span>Buat Proyek</span>
+                    </Link>
+                </div>
 
                     {flash?.success && (
                         <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-800">
@@ -188,15 +176,15 @@ export default function ProjectIndex({
                     )}
 
                     {/* Filter and Search Bar */}
-                    <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                        <form onSubmit={handleSearch} className="relative w-full md:w-96">
-                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <form onSubmit={handleSearch} className="relative w-full md:w-80">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Cari judul proyek, topik riset, teknologi..."
+                                placeholder="Cari judul proyek, topik, atau stack..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                                className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                             />
                         </form>
 
@@ -204,7 +192,7 @@ export default function ProjectIndex({
                             <select
                                 value={category}
                                 onChange={(e) => handleFilterChange(e.target.value, status)}
-                                className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-slate-700 font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
                             >
                                 <option value="">Semua Kategori</option>
                                 {categories.map((c) => (
@@ -217,7 +205,7 @@ export default function ProjectIndex({
                             <select
                                 value={status}
                                 onChange={(e) => handleFilterChange(category, e.target.value)}
-                                className="text-xs bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="text-xs bg-slate-50 border border-slate-200/80 rounded-lg px-2.5 py-1.5 text-slate-700 font-medium focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
                             >
                                 <option value="">Semua Status</option>
                                 {statuses.map((s) => (
@@ -235,9 +223,9 @@ export default function ProjectIndex({
                                         setStatus('');
                                         router.get('/projects');
                                     }}
-                                    className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
+                                    className="px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
                                 >
-                                    Reset Filter
+                                    Reset
                                 </button>
                             )}
                         </div>
@@ -245,34 +233,34 @@ export default function ProjectIndex({
 
                     {/* Projects Grid */}
                     {projects.data.length === 0 ? (
-                        <div className="glass-surface rounded-3xl p-10 text-center max-w-lg mx-auto flex flex-col items-center">
-                            <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center mb-4 shadow-2xs">
-                                <FolderKanban className="size-7" />
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center max-w-lg mx-auto flex flex-col items-center">
+                            <div className="size-12 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center mb-3 shadow-2xs">
+                                <FolderKanban className="size-6" />
                             </div>
-                            <h3 className="text-base font-bold text-slate-900">
+                            <h3 className="text-sm font-bold text-slate-900">
                                 Tidak Ada Proyek yang Ditemukan
                             </h3>
                             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                 {search || category || status
-                                    ? 'Coba sesuaikan kata kunci atau bersihkan filter untuk menampilkan lebih banyak proyek.'
-                                    : 'Belum ada proyek yang diterbitkan. Jadilah yang pertama menginisiasi proyek kolaborasi di kampus Anda!'}
+                                    ? 'Coba sesuaikan kata kunci atau reset filter untuk menampilkan proyek lainnya.'
+                                    : 'Belum ada proyek terdaftar di kelas. Mulai dengan membuat proyek baru.'}
                             </p>
                             <Link
                                 href="/projects/create"
-                                className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
+                                className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
                             >
                                 <Plus className="size-3.5" />
                                 <span>Buat Proyek Pertama</span>
                             </Link>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
                                 return (
                                     <div
                                         key={proj.id}
-                                        className="glass-card rounded-2xl p-6 flex flex-col justify-between gap-5 group"
+                                        className="bg-white rounded-xl border border-slate-200/80 hover:border-blue-400 hover:shadow-xs transition p-5 flex flex-col justify-between gap-4 group"
                                     >
                                         <div>
                                             {/* Badges row with clean squircle */}

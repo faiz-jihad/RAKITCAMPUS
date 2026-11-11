@@ -28,60 +28,53 @@ export default function WorkspaceIndex({ teams }: Props) {
         <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
             <Head title="Workspace Tim & Kanban — RAKIT Campus" />
 
-            <div className="space-y-6 pt-2">
+            <div className="space-y-6">
                 {/* Header Row */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 mb-2">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1d3557] tracking-tight">
-                            Workspace & Task Board
-                        </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
-                            Kelola papan Kanban tim, lacak progres sprint, dan koordinasikan tugas anggota secara terstruktur.
-                        </p>
-                    </div>
+                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                        Task Board
+                    </h1>
 
-                    <div className="flex items-center gap-3 shrink-0">
-                        <Link
-                            href="/projects/create"
-                            className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-full px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition"
-                        >
-                            <Plus className="w-4 h-4 stroke-[2.5]" />
-                            <span>Bikin Tim & Proyek</span>
-                        </Link>
-                    </div>
+                    <Link
+                        href="/projects/create"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
+                    >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Buat Proyek</span>
+                    </Link>
                 </div>
 
                 {/* Teams Grid */}
                     {teams.length === 0 ? (
-                        <div className="p-12 text-center glass-card rounded-3xl bg-white/85 max-w-2xl mx-auto w-full">
-                            <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
-                                <Kanban className="size-7" />
+                        <div className="p-10 text-center rounded-xl bg-white border border-slate-200/80 max-w-lg mx-auto w-full shadow-2xs">
+                            <div className="size-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 border border-blue-200/80">
+                                <Kanban className="size-6" />
                             </div>
-                            <h3 className="text-base font-bold text-slate-900">Anda Belum Memiliki Tim Aktif</h3>
-                            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1.5 mb-6 leading-relaxed">
-                                Bergabunglah dengan proyek yang sedang membuka rekrutmen anggota, ikuti kompetisi mahasiswa, atau inisiasi proyek baru bersama rekan kampus Anda.
+                            <h3 className="text-sm font-bold text-slate-900">Belum Ada Tim Proyek Aktif</h3>
+                            <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
+                                Kelola papan kanban tugas proyek kelas Anda bersama tim secara terstruktur.
                             </p>
-                            <div className="flex flex-wrap justify-center gap-3">
+                            <div className="flex flex-wrap justify-center gap-2.5">
                                 <Link
                                     href="/projects"
-                                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-2xs"
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-2xs"
                                 >
-                                    Jelajahi Project Hub
+                                    Jelajahi Proyek Kelas
                                 </Link>
                                 <Link
-                                    href="/competitions"
-                                    className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold transition"
+                                    href="/projects/create"
+                                    className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold transition"
                                 >
-                                    Cari Kompetisi
+                                    + Buat Proyek Baru
                                 </Link>
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                             {teams.map((t: any) => (
                                 <div
                                     key={t.id}
-                                    className="glass-card rounded-3xl p-6 bg-white/85 hover:bg-white/95 border border-white/85 hover:border-blue-200 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between group"
+                                    className="bg-white rounded-xl border border-slate-200/80 hover:border-blue-400 hover:shadow-xs transition p-5 flex flex-col justify-between group"
                                 >
                                     <div>
                                         <div className="flex items-center justify-between gap-2 mb-3">

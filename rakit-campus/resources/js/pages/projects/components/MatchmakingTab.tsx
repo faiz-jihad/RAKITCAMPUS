@@ -25,9 +25,10 @@ interface Props {
     sameClassCandidates: any[];
     classStudents: any[];
     teamOptimization?: any;
+    teamBalance?: any;
     isLeader: boolean;
     isLecturer: boolean;
-    userHasActiveProject: boolean;
+    userHasActiveProject?: boolean;
 }
 
 export default function MatchmakingTab({
