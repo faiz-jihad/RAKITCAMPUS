@@ -18,6 +18,7 @@ interface CurrentUser {
     id: number;
     name: string;
     email: string;
+    nim?: string;
     academic_status: 'tpb' | 'prodi';
     department: string;
     study_program: string;
@@ -53,6 +54,9 @@ export default function OnboardingIndex({
 
     // Form States
     const [name, setName] = useState(currentUser.name || '');
+    const [nim, setNim] = useState(currentUser.nim || '');
+    const [nimError, setNimError] = useState<string | null>(null);
+    const [checkingNim, setCheckingNim] = useState(false);
     const [academicStatus, setAcademicStatus] = useState<'tpb' | 'prodi'>(
         currentUser.academic_status || 'tpb'
     );
@@ -60,7 +64,9 @@ export default function OnboardingIndex({
         currentUser.department || (currentUser.academic_status === 'tpb' ? 'Tahap Persiapan Bersama' : 'Teknologi Informasi')
     );
     const [studyProgram, setStudyProgram] = useState(
-        currentUser.study_program || (currentUser.academic_status === 'tpb' ? 'TPB' : 'D4 Rekayasa Perangkat Lunak')
+        currentUser.study_program && ['Teknik Informatika', 'Rekayasa Perangkat Lunak', 'Sistem Informasi Kota Cerdas', 'Teknologi Rekayasa Komputer'].includes(currentUser.study_program)
+            ? currentUser.study_program
+            : ''
     );
     const [batchYear, setBatchYear] = useState(currentUser.batch_year || '2024');
     const [semester, setSemester] = useState<number>(currentUser.semester || 1);
@@ -69,13 +75,13 @@ export default function OnboardingIndex({
         currentUser.preferred_roles?.[0] || 'Developer'
     );
     const [selectedSkills, setSelectedSkills] = useState<string[]>(
-        currentUser.skills?.length > 0 ? currentUser.skills : ['UI/UX Design', 'Figma']
+        currentUser.skills?.length > 0 ? currentUser.skills : []
     );
     const [customSkillInput, setCustomSkillInput] = useState('');
 
     const [bio, setBio] = useState(currentUser.bio || '');
     const [hasNoExperience, setHasNoExperience] = useState(
-        !currentUser.experience || currentUser.experience.toLowerCase().includes('belum ada')
+        currentUser.experience ? currentUser.experience.toLowerCase().includes('belum ada') : false
     );
     const [experience, setExperience] = useState(
         currentUser.experience || ''
@@ -87,7 +93,7 @@ export default function OnboardingIndex({
 
     // Initials for avatar
     const initials = useMemo(() => {
-        if (!name.trim()) return 'FA';
+        if (!name.trim()) return '-';
         const parts = name.trim().split(/\s+/);
         if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
         return (parts[0][0] + parts[1][0]).toUpperCase();
@@ -95,12 +101,11 @@ export default function OnboardingIndex({
 
     // Subtitle preview
     const previewSubtitle = useMemo(() => {
-        if (academicStatus === 'tpb') {
-            return `TPB • Angkatan ${batchYear || '2024'}`;
+        if (!studyProgram) {
+            return `Angkatan ${batchYear || '2024'}`;
         }
-        const dept = department || studyProgram || 'Fakultas';
-        return `${dept} • Angkatan ${batchYear || '2024'}`;
-    }, [academicStatus, department, studyProgram, batchYear]);
+        return `${studyProgram} • Angkatan ${batchYear || '2024'}`;
+    }, [studyProgram, batchYear]);
 
     // Toggle skill selection
     const toggleSkill = (skill: string) => {
@@ -119,10 +124,67 @@ export default function OnboardingIndex({
         }
     };
 
-    const handleNext = () => {
-        if (step === 1 && !name.trim()) {
-            alert('Silakan masukkan nama lengkap Anda.');
-            return;
+    const checkNimAvailability = async (nimValue: string): Promise<boolean> => {
+        const trimmed = nimValue.trim();
+        if (!trimmed) {
+            setNimError('NIM wajib diisi.');
+            return false;
+        }
+        if (!/^\d+$/.test(trimmed)) {
+            setNimError('NIM hanya boleh berisi angka.');
+            return false;
+        }
+        if (trimmed.length < 7) {
+            setNimError('NIM minimal 7 digit angka.');
+            return false;
+        }
+
+        setCheckingNim(true);
+        try {
+            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+            const res = await fetch('/onboarding/check-nim', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+                body: JSON.stringify({ nim: trimmed }),
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                if (!data.available) {
+                    setNimError(data.message || 'NIM sudah terdaftar oleh mahasiswa lain.');
+                    setCheckingNim(false);
+                    return false;
+                }
+            }
+            setNimError(null);
+            setCheckingNim(false);
+            return true;
+        } catch (err) {
+            setCheckingNim(false);
+            return true;
+        }
+    };
+
+    const handleNext = async () => {
+        if (step === 1) {
+            if (!name.trim()) {
+                alert('Nama lengkap wajib diisi.');
+                return;
+            }
+            const isNimValid = await checkNimAvailability(nim);
+            if (!isNimValid) {
+                return;
+            }
+        }
+        if (step === 2) {
+            if (!studyProgram) {
+                alert('Silakan pilih salah satu Program Studi.');
+                return;
+            }
         }
         if (step < 5) {
             setStep(step + 1);
@@ -147,9 +209,10 @@ export default function OnboardingIndex({
             '/onboarding',
             {
                 name: name.trim(),
-                academic_status: academicStatus,
-                department: academicStatus === 'tpb' ? 'Tahap Persiapan Bersama' : department,
-                study_program: academicStatus === 'tpb' ? 'TPB' : studyProgram,
+                student_number: nim.trim(),
+                academic_status: 'prodi',
+                department: 'Teknik Informatika',
+                study_program: studyProgram,
                 batch_year: batchYear,
                 semester: semester,
                 preferred_roles: [preferredRole],
@@ -160,6 +223,13 @@ export default function OnboardingIndex({
                 phone: phone.trim(),
             },
             {
+                onError: (errors) => {
+                    if (errors.student_number) {
+                        setNimError(errors.student_number);
+                        setStep(1);
+                        alert(errors.student_number);
+                    }
+                },
                 onFinish: () => setSubmitting(false),
             }
         );
@@ -252,91 +322,69 @@ export default function OnboardingIndex({
                                         </span>
                                     </h1>
                                     <p className="text-xs sm:text-sm text-slate-500 mt-2">
-                                        Nama ini muncul di profil dan pengajuan kamu.
+                                        Nama dan NIM ini muncul di profil dan pengajuan kamu.
                                     </p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-semibold text-slate-700 block">
-                                        Nama lengkap
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="Faiz Alba"
-                                        className="w-full px-4 py-3 rounded-2xl border-2 border-blue-500/80 focus:border-blue-600 focus:outline-none text-sm text-slate-900 font-medium transition"
-                                    />
-                                </div>
-
-                                <div className="space-y-2 pt-2">
-                                    <label className="text-xs font-semibold text-slate-700 block">
-                                        Status akademik
-                                    </label>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                        {/* Option 1: Masih TPB */}
-                                        <label
-                                            onClick={() => setAcademicStatus('tpb')}
-                                            className={`p-4 rounded-2xl border-2 cursor-pointer transition flex items-start gap-3 ${
-                                                academicStatus === 'tpb'
-                                                    ? 'border-blue-500 bg-blue-50/20'
-                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                                            }`}
-                                        >
-                                            <div className="pt-0.5">
-                                                <div
-                                                    className={`size-4 rounded-full border flex items-center justify-center ${
-                                                        academicStatus === 'tpb'
-                                                            ? 'border-blue-600 bg-blue-600'
-                                                            : 'border-slate-300'
-                                                    }`}
-                                                >
-                                                    {academicStatus === 'tpb' && (
-                                                        <div className="size-1.5 rounded-full bg-white" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-bold text-slate-900">
-                                                    Masih TPB
-                                                </div>
-                                                <div className="text-xs text-slate-500 mt-0.5">
-                                                    Tahap Persiapan Bersama
-                                                </div>
-                                            </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
+                                            <span>Nama lengkap</span>
+                                            <span className="text-rose-500 font-bold">*</span>
                                         </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Masukkan nama lengkap"
+                                            className="w-full px-4 py-3 rounded-2xl border-2 border-blue-500/80 focus:border-blue-600 focus:outline-none text-sm text-slate-900 font-medium transition"
+                                        />
+                                    </div>
 
-                                        {/* Option 2: Udah punya prodi */}
-                                        <label
-                                            onClick={() => setAcademicStatus('prodi')}
-                                            className={`p-4 rounded-2xl border-2 cursor-pointer transition flex items-start gap-3 ${
-                                                academicStatus === 'prodi'
-                                                    ? 'border-blue-500 bg-blue-50/20'
-                                                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                                            }`}
-                                        >
-                                            <div className="pt-0.5">
-                                                <div
-                                                    className={`size-4 rounded-full border flex items-center justify-center ${
-                                                        academicStatus === 'prodi'
-                                                            ? 'border-blue-600 bg-blue-600'
-                                                            : 'border-slate-300'
-                                                    }`}
-                                                >
-                                                    {academicStatus === 'prodi' && (
-                                                        <div className="size-1.5 rounded-full bg-white" />
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-bold text-slate-900">
-                                                    Udah punya prodi
-                                                </div>
-                                                <div className="text-xs text-slate-500 mt-0.5">
-                                                    Udah milih program studi
-                                                </div>
-                                            </div>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-700 flex items-center justify-between">
+                                            <span className="flex items-center gap-1">
+                                                <span>Nomor Induk Mahasiswa (NIM)</span>
+                                                <span className="text-rose-500 font-bold">*</span>
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-normal">
+                                                {checkingNim ? 'Memeriksa NIM...' : 'Hanya angka'}
+                                            </span>
                                         </label>
+                                        <input
+                                            type="text"
+                                            required
+                                            inputMode="numeric"
+                                            pattern="[0-9]*"
+                                            value={nim}
+                                            onChange={(e) => {
+                                                const cleaned = e.target.value.replace(/\D/g, '');
+                                                setNim(cleaned);
+                                                if (nimError) setNimError(null);
+                                            }}
+                                            onBlur={() => {
+                                                if (nim.trim()) {
+                                                    checkNimAvailability(nim);
+                                                }
+                                            }}
+                                            placeholder="Contoh: 2201092"
+                                            className={`w-full px-4 py-3 rounded-2xl border ${
+                                                nimError
+                                                    ? 'border-rose-500 bg-rose-50/20 focus:border-rose-600'
+                                                    : 'border-slate-200 focus:border-blue-600'
+                                            } focus:outline-none text-sm text-slate-900 font-medium transition`}
+                                        />
+                                        {nimError ? (
+                                            <p className="text-xs text-rose-600 font-medium flex items-center gap-1">
+                                                <span>⚠️</span>
+                                                <span>{nimError}</span>
+                                            </p>
+                                        ) : (
+                                            <p className="text-[11px] text-slate-400">
+                                                NIM resmi mahasiswa Polindra (minimal 7 digit angka).
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -370,35 +418,54 @@ export default function OnboardingIndex({
                                         />
                                     </div>
 
-                                    {academicStatus === 'prodi' && (
-                                        <>
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-slate-700 block">
-                                                    Fakultas / Departemen
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={department}
-                                                    onChange={(e) => setDepartment(e.target.value)}
-                                                    placeholder="Contoh: Teknik Informatika / STEI"
-                                                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:border-blue-500 focus:outline-none text-xs sm:text-sm text-slate-900"
-                                                />
-                                            </div>
-
-                                            <div className="space-y-1.5">
-                                                <label className="text-xs font-semibold text-slate-700 block">
-                                                    Program Studi
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={studyProgram}
-                                                    onChange={(e) => setStudyProgram(e.target.value)}
-                                                    placeholder="Contoh: D4 Rekayasa Perangkat Lunak / S1 Sistem Informasi"
-                                                    className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 focus:border-blue-500 focus:outline-none text-xs sm:text-sm text-slate-900"
-                                                />
-                                            </div>
-                                        </>
-                                    )}
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-semibold text-slate-700 block">
+                                            Pilih Program Studi
+                                        </label>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                            {[
+                                                { id: 'Teknik Informatika', name: 'Teknik Informatika', desc: 'D3 / Sarjana Terapan' },
+                                                { id: 'Rekayasa Perangkat Lunak', name: 'Rekayasa Perangkat Lunak', desc: 'D4 / Sarjana Terapan' },
+                                                { id: 'Sistem Informasi Kota Cerdas', name: 'Sistem Informasi Kota Cerdas', desc: 'D4 / Sarjana Terapan' },
+                                                { id: 'Teknologi Rekayasa Komputer', name: 'Teknologi Rekayasa Komputer', desc: 'D4 / Sarjana Terapan' },
+                                            ].map((prodi) => {
+                                                const isSelected = studyProgram === prodi.id;
+                                                return (
+                                                    <label
+                                                        key={prodi.id}
+                                                        onClick={() => setStudyProgram(prodi.id)}
+                                                        className={`p-3.5 rounded-2xl border-2 cursor-pointer transition flex items-start gap-3 ${
+                                                            isSelected
+                                                                ? 'border-blue-500 bg-blue-50/20 shadow-xs'
+                                                                : 'border-slate-200 hover:border-slate-300 bg-white'
+                                                        }`}
+                                                    >
+                                                        <div className="pt-0.5">
+                                                            <div
+                                                                className={`size-4 rounded-full border flex items-center justify-center ${
+                                                                    isSelected
+                                                                        ? 'border-blue-600 bg-blue-600'
+                                                                        : 'border-slate-300'
+                                                                }`}
+                                                            >
+                                                                {isSelected && (
+                                                                    <div className="size-1.5 rounded-full bg-white" />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-900">
+                                                                {prodi.name}
+                                                            </div>
+                                                            <div className="text-[11px] text-slate-500 mt-0.5">
+                                                                {prodi.desc}
+                                                            </div>
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
 
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="space-y-1.5">
@@ -708,7 +775,7 @@ export default function OnboardingIndex({
                             </div>
                             <div className="min-w-0">
                                 <h4 className="text-base font-bold text-slate-900 leading-snug truncate">
-                                    {name.trim() || 'Faiz Alba'}
+                                    {name.trim() || '-'}
                                 </h4>
                                 <p className="text-xs text-slate-500 truncate mt-0.5">
                                     {previewSubtitle}
@@ -722,7 +789,7 @@ export default function OnboardingIndex({
                                 Bio
                             </span>
                             <p className="text-xs text-slate-700 leading-relaxed">
-                                {bio.trim() || 'Bio kamu muncul di sini.'}
+                                {bio.trim() || '-'}
                             </p>
                         </div>
 
@@ -731,22 +798,22 @@ export default function OnboardingIndex({
                             <span className="text-xs text-slate-500 block">
                                 Skill
                             </span>
-                            <div className="flex flex-wrap gap-1.5">
-                                {selectedSkills.length > 0 ? (
-                                    selectedSkills.map((sk) => (
+                            {selectedSkills.length > 0 ? (
+                                <div className="flex flex-wrap gap-1.5">
+                                    {selectedSkills.map((sk) => (
                                         <span
                                             key={sk}
                                             className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-600 text-[11px] font-semibold"
                                         >
                                             {sk}
                                         </span>
-                                    ))
-                                ) : (
-                                    <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-xs font-medium">
-                                        Skill kamu
-                                    </span>
-                                )}
-                            </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 italic">
+                                    Belum memilih keahlian
+                                </p>
+                            )}
                         </div>
 
                         {/* Experience Section */}
@@ -754,10 +821,10 @@ export default function OnboardingIndex({
                             <span className="text-xs text-slate-500 block">
                                 Pengalaman lomba & proyek
                             </span>
-                            <p className="text-xs font-semibold text-slate-800 leading-relaxed">
-                                {hasNoExperience || !experience.trim()
+                            <p className="text-xs text-slate-700 leading-relaxed">
+                                {hasNoExperience
                                     ? 'Belum ada pengalaman'
-                                    : experience}
+                                    : experience.trim() || '-'}
                             </p>
                         </div>
 

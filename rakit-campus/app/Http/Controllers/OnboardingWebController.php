@@ -26,10 +26,15 @@ class OnboardingWebController extends Controller
     public function show(Request $request): Response
     {
         $user = $request->user();
+        $membership = $user->activeMembership();
         $profile = $user->profile()->with(['skills', 'experiences'])->first();
         $campus = $user->campuses()->first()
             ?? Campus::where('slug', 'polindra')->first()
             ?? Campus::first();
+
+        $initialNim = $membership?->student_number && !str_starts_with($membership->student_number, 'REG-') && !str_starts_with($membership->student_number, 'MHS-')
+            ? $membership->student_number
+            : '';
 
         $popularSkills = [
             'UI/UX Design', 'Figma', 'React', 'Next.js', 'Laravel',
@@ -43,17 +48,21 @@ class OnboardingWebController extends Controller
             ?? $profile?->experiences?->first()?->title
             ?? '';
 
+        // If the initial bio is just placeholder/empty, don't show dummy text
+        $initialBio = $profile?->bio && !str_starts_with($profile->bio, 'Mahasiswa Baru') ? $profile->bio : '';
+
         return Inertia::render('onboarding/index', [
             'currentUser' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'academic_status' => $profile->academic_status ?? 'tpb',
+                'nim' => $initialNim,
+                'academic_status' => $profile->academic_status ?? 'prodi',
                 'department' => $profile->department ?? '',
                 'study_program' => $profile->study_program ?? '',
                 'batch_year' => $profile->batch_year ?? '2024',
                 'semester' => $profile->semester ?? 1,
-                'bio' => $profile->bio ?? '',
+                'bio' => $initialBio,
                 'phone' => $profile->phone ?? '',
                 'portfolio_url' => $profile->portfolio_url ?? '',
                 'preferred_roles' => $profile->preferred_roles ?? [],
@@ -70,14 +79,62 @@ class OnboardingWebController extends Controller
     }
 
     /**
+     * Real-time check if a NIM is already used by another student.
+     */
+    public function checkNim(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $membership = $user->activeMembership();
+        $nim = trim((string) $request->input('nim', ''));
+
+        if (empty($nim)) {
+            return response()->json(['available' => true]);
+        }
+
+        if (!preg_match('/^[0-9]+$/', $nim)) {
+            return response()->json([
+                'available' => false,
+                'message' => 'NIM hanya boleh berisi angka.',
+            ]);
+        }
+
+        $exists = CampusMembership::where('student_number', $nim)
+            ->when($membership, fn ($q) => $q->where('id', '!=', $membership->id))
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'available' => false,
+                'message' => 'NIM ' . $nim . ' sudah terdaftar oleh mahasiswa lain.',
+            ]);
+        }
+
+        return response()->json([
+            'available' => true,
+            'message' => 'NIM dapat digunakan.',
+        ]);
+    }
+
+    /**
      * Save the completed onboarding biodata.
      */
     public function store(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $membership = $user->activeMembership();
+        $currentMembershipId = $membership?->id;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'student_number' => [
+                'required',
+                'string',
+                'regex:/^[0-9]+$/',
+                'min:7',
+                'max:20',
+                \Illuminate\Validation\Rule::unique('campus_memberships', 'student_number')
+                    ->ignore($currentMembershipId),
+            ],
             'academic_status' => 'nullable|string|in:tpb,prodi',
             'department' => 'nullable|string|max:255',
             'study_program' => 'nullable|string|max:255',
@@ -91,6 +148,12 @@ class OnboardingWebController extends Controller
             'experience' => 'nullable|string|max:1000',
             'portfolio_url' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:30',
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'student_number.required' => 'NIM wajib diisi.',
+            'student_number.regex' => 'NIM hanya boleh berisi angka.',
+            'student_number.min' => 'NIM minimal 7 digit angka.',
+            'student_number.unique' => 'NIM ini sudah terdaftar oleh mahasiswa lain. Silakan periksa kembali NIM Anda.',
         ]);
 
         // 1. Update user name
@@ -104,6 +167,8 @@ class OnboardingWebController extends Controller
             ?? Campus::first();
 
         $membership = $user->activeMembership();
+        $customNim = !empty($validated['student_number']) ? trim($validated['student_number']) : null;
+
         if (!$membership && $campus) {
             $membership = CampusMembership::create([
                 'campus_id' => $campus->id,
@@ -111,13 +176,19 @@ class OnboardingWebController extends Controller
                 'role' => CampusRole::Student,
                 'status' => MembershipStatus::Active,
                 'verification_status' => VerificationStatus::Verified,
-                'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
+                'student_number' => $customNim ?? ('MHS-' . substr(abs(crc32($user->email)), 0, 7)),
                 'verified_at' => now(),
             ]);
-        } elseif ($membership && str_starts_with($membership->student_number ?? '', 'REG-')) {
-            $membership->update([
-                'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
-            ]);
+        } elseif ($membership) {
+            if ($customNim) {
+                $membership->update([
+                    'student_number' => $customNim,
+                ]);
+            } elseif (str_starts_with($membership->student_number ?? '', 'REG-')) {
+                $membership->update([
+                    'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
+                ]);
+            }
         }
 
         // 3. Update or create StudentProfile
@@ -172,8 +243,8 @@ class OnboardingWebController extends Controller
             );
         }
 
-        return redirect()->route('competitions.index')
-            ->with('success', 'Biodata berhasil dilengkapi! Selamat mencari rekan tim di Competition Hub.');
+        return redirect()->route('projects.index')
+            ->with('success', 'Biodata berhasil dilengkapi! Selamat mencari dan berkolaborasi di Project Hub.');
     }
 
     /**
@@ -186,6 +257,6 @@ class OnboardingWebController extends Controller
         if ($profile) {
             $profile->update(['is_onboarded' => true]);
         }
-        return redirect()->route('competitions.index');
+        return redirect()->route('projects.index');
     }
 }
