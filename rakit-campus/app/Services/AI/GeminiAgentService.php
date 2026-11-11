@@ -26,7 +26,7 @@ class GeminiAgentService
      */
     protected static function model(): string
     {
-        return config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-2.0-flash');
+        return config('services.gemini.model') ?: env('GEMINI_MODEL', 'gemini-2.5-flash');
     }
 
     /**
@@ -40,7 +40,7 @@ class GeminiAgentService
             return null;
         }
 
-        $modelsToTry = [self::model(), 'gemini-2.0-flash', 'gemini-1.5-flash'];
+        $modelsToTry = [self::model(), 'gemini-2.5-flash', 'gemini-flash-latest', 'gemini-flash-lite-latest'];
         $modelsToTry = array_unique($modelsToTry);
 
         foreach ($modelsToTry as $model) {
