@@ -4,6 +4,7 @@ use App\Enums\CampusRole;
 use App\Http\Controllers\OnboardingWebController;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
+use App\Http\Controllers\Web\Admin\AdminCompetitionWebController;
 use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
 use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
@@ -164,6 +165,13 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         Route::get('/notifications', [AdminNotificationWebController::class, 'index'])->name('admin.notifications.index');
         Route::post('/notifications/send-test', [AdminNotificationWebController::class, 'sendTestEmail'])->name('admin.notifications.send-test');
         Route::post('/notifications/retry/{id}', [AdminNotificationWebController::class, 'retryLog'])->name('admin.notifications.retry');
+
+        // Admin Competitions Management & Deadline/Active Period Controls
+        Route::get('/competitions', [AdminCompetitionWebController::class, 'index'])->name('admin.competitions.index');
+        Route::post('/competitions', [AdminCompetitionWebController::class, 'store'])->name('admin.competitions.store');
+        Route::put('/competitions/{id}', [AdminCompetitionWebController::class, 'update'])->name('admin.competitions.update');
+        Route::patch('/competitions/{id}/status', [AdminCompetitionWebController::class, 'updateStatus'])->name('admin.competitions.status');
+        Route::delete('/competitions/{id}', [AdminCompetitionWebController::class, 'destroy'])->name('admin.competitions.destroy');
     });
 
     // Central Notification Center

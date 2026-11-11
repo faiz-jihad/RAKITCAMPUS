@@ -90,14 +90,19 @@ export function AppSidebar() {
 
     if (isCampusAdmin) {
         mainNavItems.push({
-            title: 'Admin Notifikasi',
-            url: '/admin/notifications',
-            icon: ShieldCheck,
+            title: 'Kelola Kompetisi',
+            url: '/admin/competitions',
+            icon: Trophy,
         });
         mainNavItems.push({
             title: 'Admin Kampus',
             url: '/admin',
             icon: ShieldCheck,
+        });
+        mainNavItems.push({
+            title: 'Admin Notifikasi',
+            url: '/admin/notifications',
+            icon: Bell,
         });
     }
 

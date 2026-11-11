@@ -62,21 +62,40 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
 
             <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
                 {/* Header */}
-                <div className="flex items-center gap-3.5 border-b border-neutral-200 pb-5">
-                    <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-2xs p-1.5 shrink-0 flex items-center justify-center">
-                        <img
-                            src="/images/rakit-mark.png"
-                            alt="RAKIT"
-                            className="size-8 object-contain"
-                        />
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5">
+                    <div className="flex items-center gap-3.5">
+                        <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-2xs p-1.5 shrink-0 flex items-center justify-center">
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="size-8 object-contain"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+                                Panel Administrasi Kampus
+                            </h1>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                                Admin
+                            </span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-                            Panel Administrasi Kampus
-                        </h1>
-                        <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                            Admin
-                        </span>
+
+                    <div className="flex items-center gap-2.5">
+                        <Link
+                            href="/admin/competitions"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
+                        >
+                            <Trophy className="size-3.5" />
+                            <span>Kelola Kompetisi</span>
+                        </Link>
+                        <Link
+                            href="/admin/students"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <Users className="size-3.5" />
+                            <span>Kelola Mahasiswa</span>
+                        </Link>
                     </div>
                 </div>
 
@@ -104,16 +123,19 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                         </span>
                     </div>
 
-                    <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
+                    <Link
+                        href="/admin/competitions"
+                        className="bg-white border border-neutral-200 hover:border-blue-400 rounded-xl p-5 shadow-xs transition group block"
+                    >
                         <div className="flex items-center justify-between text-neutral-500 mb-2">
-                            <span className="text-xs font-semibold uppercase tracking-wider">Kompetisi Terbuka</span>
-                            <Trophy className="size-4 text-amber-500" />
+                            <span className="text-xs font-semibold uppercase tracking-wider group-hover:text-blue-600 transition">Kompetisi Terbuka</span>
+                            <Trophy className="size-4 text-amber-500 group-hover:scale-110 transition-transform" />
                         </div>
                         <div className="text-2xl font-bold text-neutral-900">{stats.active_competitions}</div>
-                        <span className="text-[11px] text-neutral-500 block mt-1">
-                            GEMASTIK & kompetisi terverifikasi
+                        <span className="text-[11px] text-blue-600 font-medium block mt-1">
+                            Atur Masa Aktif & Deadline →
                         </span>
-                    </div>
+                    </Link>
 
                     <div className="bg-white border border-neutral-200 rounded-xl p-5 shadow-xs">
                         <div className="flex items-center justify-between text-neutral-500 mb-2">
