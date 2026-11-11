@@ -256,7 +256,7 @@ export default function Profile({
                                         Mahasiswa Terverifikasi
                                     </span>
                                     <span className="px-3 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-700">
-                                        {campus || 'Politeknik Negeri Indramayu'}
+                                        {campus || 'Perguruan Tinggi'}
                                     </span>
                                     {nim && (
                                         <span className="px-3 py-0.5 rounded-full text-[11px] font-mono bg-purple-50 text-[#2563EB] font-semibold border border-purple-200/60">

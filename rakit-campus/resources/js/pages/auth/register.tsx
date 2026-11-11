@@ -98,7 +98,7 @@ export default function Register() {
 
                     <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700 shadow-2xs">
                         <GraduationCap className="size-3.5 text-blue-600" />
-                        <span>Politeknik Negeri Indramayu</span>
+                        <span>Platform Kolaborasi Kampus</span>
                     </div>
                 </div>
 
@@ -510,7 +510,7 @@ export default function Register() {
 
             {/* Bottom Footer */}
             <footer className="relative z-10 w-full text-center py-5 text-xs text-slate-400 shrink-0">
-                <p>&copy; 2026 RAKIT Campus · Politeknik Negeri Indramayu</p>
+                <p>&copy; {new Date().getFullYear()} RAKIT Campus. All rights reserved.</p>
             </footer>
         </div>
     );

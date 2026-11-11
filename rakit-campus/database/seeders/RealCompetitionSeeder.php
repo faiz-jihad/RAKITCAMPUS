@@ -614,6 +614,7 @@ class RealCompetitionSeeder extends Seeder
             $recruitment = Recruitment::updateOrCreate(
                 ['team_id' => $team->id],
                 [
+                    'campus_id' => $campusId,
                     'title' => 'Open Recruitment: ' . $setup['team_name'],
                     'description' => $setup['description'],
                     'status' => RecruitmentStatus::Open,

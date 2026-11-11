@@ -32,7 +32,6 @@ import {
     Zap,
     X,
 } from 'lucide-react';
-import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { useState } from 'react';
 
 interface Student {

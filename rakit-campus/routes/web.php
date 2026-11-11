@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
 use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
+use App\Http\Controllers\Web\FeedbackWebController;
 use App\Http\Controllers\Web\MatchingWebController;
 use App\Http\Controllers\Web\NotificationWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
@@ -21,6 +22,8 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
+
+Route::post('/feedback', [FeedbackWebController::class, 'store'])->name('feedback.store');
 
 Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitemap');
 

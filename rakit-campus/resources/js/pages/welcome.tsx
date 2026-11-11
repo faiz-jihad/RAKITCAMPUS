@@ -1,5 +1,5 @@
 import { type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
@@ -92,7 +92,7 @@ const photoRowTop = [
     },
     {
         title: 'Workshop Riset & Inovasi',
-        category: 'Politeknik Negeri Indramayu',
+        category: 'Inovasi Digital',
         badge: 'Inovasi Kampus',
         src: 'https://images.unsplash.com/photo-1523580494863-6f3031224c94?auto=format&fit=crop&w=800&q=80',
     },
@@ -155,6 +155,53 @@ export default function Welcome() {
     const laptopCardRef = useRef<HTMLDivElement>(null);
     const phoneCardRef = useRef<HTMLDivElement>(null);
     const showcaseRafRef = useRef<number | null>(null);
+
+    // Feedback & Suggestions state
+    const [feedbackCategory, setFeedbackCategory] = useState('saran_fitur');
+    const [feedbackName, setFeedbackName] = useState('');
+    const [feedbackEmail, setFeedbackEmail] = useState('');
+    const [feedbackMessage, setFeedbackMessage] = useState('');
+    const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+    const [submittingFeedback, setSubmittingFeedback] = useState(false);
+    const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+    const [feedbackError, setFeedbackError] = useState<string | null>(null);
+
+    const handleFeedbackSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!feedbackMessage.trim() || feedbackMessage.trim().length < 5) {
+            setFeedbackError('Pesan masukan minimal 5 karakter.');
+            return;
+        }
+        setFeedbackError(null);
+        setSubmittingFeedback(true);
+
+        router.post(
+            '/feedback',
+            {
+                category: feedbackCategory,
+                name: feedbackName.trim() || (auth?.user?.name ?? null),
+                email: feedbackEmail.trim() || (auth?.user?.email ?? null),
+                message: feedbackMessage.trim(),
+                rating: feedbackRating,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setFeedbackSubmitted(true);
+                    setFeedbackMessage('');
+                    setSubmittingFeedback(false);
+                },
+                onError: (errs) => {
+                    const firstError = Object.values(errs)[0];
+                    setFeedbackError(typeof firstError === 'string' ? firstError : 'Terjadi kendala saat mengirim masukan.');
+                    setSubmittingFeedback(false);
+                },
+                onFinish: () => {
+                    setSubmittingFeedback(false);
+                },
+            }
+        );
+    };
 
     const handleShowcaseMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();
@@ -3503,7 +3550,7 @@ export default function Welcome() {
                                     Rekam Jejak Terverifikasi
                                 </h3>
                                 <p className="mt-2 text-xs sm:text-[13px] text-neutral-400 font-sans leading-relaxed">
-                                    Mahasiswa aktif dan calon kolaborator terdaftar di fase pilot Politeknik Negeri Indramayu.
+                                    Mahasiswa aktif dan calon kolaborator terverifikasi dalam ekosistem kampus.
                                 </p>
                             </div>
                         </div>
@@ -3841,100 +3888,213 @@ export default function Welcome() {
                 </div>
             </section>
 
-            {/* 9. Bottom CTA Section (Interactive Glowing Aurora & Floating Badge Physics) */}
+            {/* 9. Saran & Masukan Sistem */}
             <section 
                 ref={ctaSectionRef} 
-                className="py-24 sm:py-32 relative overflow-hidden select-none bg-gradient-to-b from-[#fbfbfb] to-white"
+                id="feedback"
+                className="py-16 sm:py-24 relative bg-slate-50 border-t border-slate-200/80"
             >
-                {/* Background ambient orbs */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-500/10 blur-3xl rounded-full pointer-events-none" />
-                <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
-
-                <div className="max-w-5xl mx-auto px-4 sm:px-6 relative z-10">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10">
                     <div 
                         ref={ctaCardRef} 
-                        className="group relative bg-gradient-to-br from-[#0e0c24] via-[#16123a] to-[#0c0920] rounded-[32px] sm:rounded-[40px] p-8 sm:p-14 md:p-16 text-white shadow-[0_25px_60px_-15px_rgba(15,10,40,0.4),0_0_50px_rgba(37,99,235,0.15)] border border-white/15 overflow-hidden will-change-transform"
+                        className="bg-white rounded-2xl p-6 sm:p-10 border border-slate-200/80 shadow-xs"
                     >
-                        {/* Dynamic Glowing Aurora Orbs */}
-                        <div className="absolute -top-24 -right-24 w-96 h-96 bg-gradient-to-br from-blue-600/40 via-cyan-500/20 to-transparent blur-3xl rounded-full pointer-events-none animate-pulse duration-1000" />
-                        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-gradient-to-tr from-purple-600/35 via-indigo-500/20 to-transparent blur-3xl rounded-full pointer-events-none" />
-                        
-                        {/* Constellation Grid Overlay */}
-                        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:28px_28px] opacity-10 pointer-events-none" />
-
-                        {/* Interactive Light Beam Sweep on Hover */}
-                        <div className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/[0.04] to-transparent translate-x-[-120%] group-hover:translate-x-[150%] transition-transform duration-1000 ease-out" />
-
-                        {/* Inner Centered Content */}
-                        <div ref={ctaContentRef} className="max-w-2xl mx-auto text-center relative z-10 flex flex-col items-center">
-                            {/* Headline */}
-                            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                                Siap Membangun Tim & Raih Prestasi di Kampus?
-                            </h2>
-
-                            {/* Subtitle */}
-                            <p className="text-xs sm:text-sm md:text-base text-neutral-300 mt-4 max-w-xl leading-relaxed font-sans">
-                                Bergabunglah bersama ratusan mahasiswa Politeknik Negeri Indramayu sekarang juga. Validasi proposal, bentuk tim impian, dan konversi SKS dengan mudah.
-                            </p>
-
-                            {/* Action Buttons */}
-                            <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
-                                <Link
-                                    href={auth?.user ? "/dashboard" : "/register"}
-                                    className="group/btn relative inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs sm:text-sm font-bold px-8 py-4 rounded-full shadow-[0_10px_30px_rgba(37,99,235,0.45)] hover:shadow-[0_15px_40px_rgba(37,99,235,0.6)] transition-all hover:-translate-y-1 overflow-hidden"
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/25 to-white/0 -translate-x-full group-hover/btn:translate-x-full transition-transform duration-700" />
-                                    <span>Daftar Akun Mahasiswa</span>
-                                    <ArrowRight className="size-4 group-hover/btn:translate-x-1 transition-transform" />
-                                </Link>
-
-                                <Link
-                                    href="/login"
-                                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold px-7 py-4 rounded-full border border-white/20 hover:border-white/40 backdrop-blur-md shadow-xs transition-all hover:-translate-y-0.5"
-                                >
-                                    <Sparkles className="size-4 text-blue-300" />
-                                    <span>Masuk Akun Demo</span>
-                                </Link>
+                        <div ref={ctaContentRef}>
+                            {/* Header */}
+                            <div className="text-center max-w-xl mx-auto mb-8">
+                                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                                    Saran & Masukan Sistem
+                                </h2>
+                                <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+                                    Bantu kami mengembangkan RAKIT Campus menjadi platform kolaborasi yang lebih baik. Kami menerima aspirasi fitur, laporan kendala, atau masukan desain dari Anda.
+                                </p>
                             </div>
 
-                            {/* Key Stats Ticker Footnote */}
-                            <div className="mt-8 pt-6 border-t border-white/10 w-full flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-[11px] sm:text-xs text-neutral-400 font-sans">
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="size-3.5 text-blue-400" />
-                                    <span>500+ Mahasiswa Aktif</span>
+                            {feedbackSubmitted ? (
+                                <div className="py-8 text-center flex flex-col items-center">
+                                    <div className="size-12 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mb-3">
+                                        <CheckCircle2 className="size-6" />
+                                    </div>
+                                    <h3 className="text-base font-bold text-slate-900">
+                                        Terima Kasih atas Masukan Anda!
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-1.5 max-w-md leading-relaxed">
+                                        Saran dan masukan Anda telah berhasil tersimpan ke sistem kami. Tim pengembang akan meninjau setiap masukan untuk penyempurnaan berkala.
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setFeedbackSubmitted(false);
+                                            setFeedbackMessage('');
+                                            setFeedbackRating(null);
+                                        }}
+                                        className="mt-6 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                    >
+                                        <span>Kirim Masukan Lain</span>
+                                        <Plus className="size-3.5" />
+                                    </button>
                                 </div>
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="size-3.5 text-blue-400" />
-                                    <span>Gratis Menggunakan Akun Kampus</span>
-                                </div>
-                                <div className="flex items-center gap-1.5">
-                                    <CheckCircle2 className="size-3.5 text-blue-400" />
-                                    <span>Validasi Resmi Dosen</span>
-                                </div>
-                            </div>
+                            ) : (
+                                <form onSubmit={handleFeedbackSubmit} className="space-y-4.5">
+                                    {/* Kategori Masukan */}
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                            Kategori Masukan
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { id: 'saran_fitur', label: 'Saran Fitur Baru' },
+                                                { id: 'antarmuka_ui', label: 'Desain & Tampilan' },
+                                                { id: 'kendala_bug', label: 'Laporan Kendala / Bug' },
+                                                { id: 'performa', label: 'Kecepatan & Performa' },
+                                                { id: 'lainnya', label: 'Lainnya' },
+                                            ].map((cat) => (
+                                                <button
+                                                    key={cat.id}
+                                                    type="button"
+                                                    onClick={() => setFeedbackCategory(cat.id)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer ${
+                                                        feedbackCategory === cat.id
+                                                            ? 'bg-blue-50 border border-blue-600 text-blue-700 font-semibold shadow-2xs'
+                                                            : 'bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+                                                    }`}
+                                                >
+                                                    {cat.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Nama & Email */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">
+                                                Nama Lengkap <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={feedbackName}
+                                                onChange={(e) => setFeedbackName(e.target.value)}
+                                                placeholder={auth?.user?.name || "Nama Anda"}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-700 mb-1">
+                                                Email Kontak <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            </label>
+                                            <input
+                                                type="email"
+                                                value={feedbackEmail}
+                                                onChange={(e) => setFeedbackEmail(e.target.value)}
+                                                placeholder={auth?.user?.email || "email@kampus.ac.id"}
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Rating Pengalaman */}
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-700 mb-1.5">
+                                            Penilaian Kepuasan Sistem <span className="text-slate-400 font-normal">(Opsional)</span>
+                                        </label>
+                                        <div className="flex items-center gap-1.5">
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                <button
+                                                    key={star}
+                                                    type="button"
+                                                    onClick={() => setFeedbackRating(feedbackRating === star ? null : star)}
+                                                    className="p-1.5 rounded-md hover:bg-slate-100 transition cursor-pointer text-slate-300 hover:text-amber-400"
+                                                    title={`${star} dari 5 bintang`}
+                                                >
+                                                    <Star
+                                                        className={`size-4 transition ${
+                                                            (feedbackRating ?? 0) >= star
+                                                                ? 'fill-amber-400 text-amber-400'
+                                                                : 'text-slate-300'
+                                                        }`}
+                                                    />
+                                                </button>
+                                            ))}
+                                            {feedbackRating && (
+                                                <span className="text-[11px] font-semibold text-slate-600 ml-1.5">
+                                                    {feedbackRating} / 5 Bintang
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Pesan Masukan */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1">
+                                            <label className="block text-xs font-medium text-slate-700">
+                                                Detail Saran & Masukan <span className="text-rose-500">*</span>
+                                            </label>
+                                            <span className="text-[10px] text-slate-400">
+                                                {feedbackMessage.length}/2000
+                                            </span>
+                                        </div>
+                                        <textarea
+                                            rows={4}
+                                            required
+                                            value={feedbackMessage}
+                                            onChange={(e) => setFeedbackMessage(e.target.value)}
+                                            placeholder="Tuliskan pengalaman Anda menggunakan sistem, fitur baru yang Anda butuhkan, atau kendala spesifik yang ditemukan..."
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition resize-none leading-relaxed"
+                                        />
+                                        {feedbackError && (
+                                            <p className="text-xs text-rose-600 mt-1 font-medium">{feedbackError}</p>
+                                        )}
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
+                                        <p className="text-[11px] text-slate-500">
+                                            Setiap masukan ditinjau langsung oleh tim pengembang RAKIT Campus.
+                                        </p>
+                                        <button
+                                            type="submit"
+                                            disabled={submittingFeedback || feedbackMessage.trim().length < 5}
+                                            className="inline-flex items-center justify-center gap-1.5 px-4.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                                        >
+                                            {submittingFeedback ? (
+                                                <>
+                                                    <RotateCw className="size-3.5 animate-spin" />
+                                                    <span>Mengirim...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>Kirim Masukan</span>
+                                                    <ArrowRight className="size-3.5" />
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
             </section>
 
             {/* 10. Footer */}
-            <footer className="border-t border-neutral-200 py-12 bg-white">
+            <footer className="border-t border-slate-200/80 py-10 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-2.5">
                         <img src="/images/rakit-mark.png" alt="RAKIT" className="h-6 w-auto object-contain" />
-                        <span className="text-sm font-bold text-neutral-900">
-                            RAKIT Campus • Politeknik Negeri Indramayu
+                        <span className="text-sm font-bold text-slate-900">
+                            RAKIT Campus
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-6 text-xs text-neutral-500">
-                        <Link href="/projects" className="hover:text-neutral-900 transition">Project Hub</Link>
-                        <Link href="/competitions" className="hover:text-neutral-900 transition">Competition Hub</Link>
-                        <Link href="/matching" className="hover:text-neutral-900 transition">Smart Matching</Link>
-                        <Link href="/portfolio" className="hover:text-neutral-900 transition">Portofolio</Link>
+                    <div className="flex items-center gap-6 text-xs text-slate-600 font-medium">
+                        <Link href="/projects" className="hover:text-slate-900 transition">Project Hub</Link>
+                        <Link href="/competitions" className="hover:text-slate-900 transition">Competition Hub</Link>
+                        <Link href="/matching" className="hover:text-slate-900 transition">Smart Matching</Link>
+                        <Link href="/portfolio" className="hover:text-slate-900 transition">Portofolio</Link>
                     </div>
 
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs text-slate-400">
                         &copy; {new Date().getFullYear()} RAKIT Campus. All rights reserved.
                     </p>
                 </div>

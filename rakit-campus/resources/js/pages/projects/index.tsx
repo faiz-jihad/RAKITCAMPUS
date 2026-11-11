@@ -1,5 +1,4 @@
 import AppLayout from '@/layouts/app-layout';
-import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {

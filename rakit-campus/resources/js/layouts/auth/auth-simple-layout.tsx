@@ -31,7 +31,7 @@ export default function AuthSimpleLayout({ children, title, description }: AuthL
                     </Link>
                     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/80 text-[11px] font-medium text-slate-600">
                         <span className="size-1.5 rounded-full bg-blue-600" />
-                        Politeknik Negeri Indramayu
+                        Platform Kolaborasi Kampus
                     </div>
                 </div>
 

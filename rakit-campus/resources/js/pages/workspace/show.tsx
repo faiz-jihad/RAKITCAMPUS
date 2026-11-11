@@ -1,5 +1,4 @@
 import AppLayout from '@/layouts/app-layout';
-import Premium3dIcon from '@/components/ui/premium-3d-icon';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -575,146 +574,146 @@ export default function WorkspaceShow({
                     {/* 1. DOSEN EVALUATION & FEEDBACK PANEL */}
                     {isLecturer ? (
                         /* Panel Input Khusus Dosen */
-                        <div className="bg-gradient-to-r from-[#181135] via-[#231752] to-[#181135] text-white rounded-3xl p-6 sm:p-8 shadow-xl relative overflow-hidden">
-                            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-80 h-80 rounded-full bg-[#2563EB]/20 blur-3xl pointer-events-none" />
-
-                            <div className="relative z-10 flex flex-col gap-6">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
-                                    <div className="flex items-center gap-3">
-                                        <Premium3dIcon icon={GraduationCap} variant="purple" size="md" />
-                                        <div>
-                                            <h2 className="text-base sm:text-lg font-extrabold tracking-tight">
-                                                Evaluasi & Catatan Penilaian Dosen
-                                            </h2>
-                                            <p className="text-xs text-neutral-300 mt-0.5">
-                                                Tinjau progres tugas tim mahasiswa, berikan nilai, dan tulis catatan perbaikan jika ada hal yang perlu direvisi.
-                                            </p>
-                                        </div>
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
+                                <div className="flex items-center gap-3">
+                                    <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                        <GraduationCap className="size-5" />
                                     </div>
-
-                                    {/* Overall Progress Gauge */}
-                                    <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-2xl border border-white/15 self-start sm:self-auto">
-                                        <TrendingUp className="size-4 text-emerald-400" />
-                                        <div className="text-xs">
-                                            <span className="text-neutral-400 block text-[10px]">Progres Penyelesaian</span>
-                                            <span className="font-bold text-white">
-                                                {completedTasksCount} / {totalTasksCount} Tugas ({progressPercent}%)
-                                            </span>
-                                        </div>
+                                    <div>
+                                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                                            Evaluasi & Catatan Penilaian Dosen
+                                        </h2>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Tinjau progres tugas tim mahasiswa, berikan nilai, dan tulis catatan perbaikan.
+                                        </p>
                                     </div>
                                 </div>
 
-                                <form onSubmit={handleSaveEvaluation} className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                                    {/* Grade / Evaluation Status */}
-                                    <div className="md:col-span-4 flex flex-col gap-3">
-                                        <div>
-                                            <label className="block text-xs font-bold text-neutral-200 mb-1.5">
-                                                Nilai / Status Evaluasi Tim *
-                                            </label>
-                                            <input
-                                                type="text"
-                                                value={evalGrade}
-                                                onChange={(e) => setEvalGrade(e.target.value)}
-                                                placeholder="Contoh: 88/100 (A) atau Revisi Tahap 2"
-                                                required
-                                                className="w-full px-3.5 py-2.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#8E84FC]"
-                                            />
-                                        </div>
-
-                                        <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 text-[11px] text-neutral-300 leading-relaxed">
-                                            Nilai dan catatan arahan ini akan langsung tampil di dashboard mahasiswa dan rekap bimbingan kelas.
-                                        </div>
+                                {/* Overall Progress Gauge */}
+                                <div className="flex items-center gap-2.5 bg-slate-50 px-3.5 py-1.5 rounded-lg border border-slate-200/80 self-start sm:self-auto">
+                                    <TrendingUp className="size-4 text-emerald-600" />
+                                    <div className="text-xs">
+                                        <span className="text-slate-400 block text-[10px]">Progres Penyelesaian</span>
+                                        <span className="font-bold text-slate-900">
+                                            {completedTasksCount} / {totalTasksCount} Tugas ({progressPercent}%)
+                                        </span>
                                     </div>
-
-                                    {/* Improvement Notes Textarea */}
-                                    <div className="md:col-span-8 flex flex-col gap-3">
-                                        <div>
-                                            <label className="block text-xs font-bold text-neutral-200 mb-1.5">
-                                                Catatan Arahan & Saran Perbaikan *
-                                            </label>
-                                            <textarea
-                                                value={evalNotes}
-                                                onChange={(e) => setEvalNotes(e.target.value)}
-                                                rows={3}
-                                                placeholder="Tuliskan arahan perbaikan teknis, saran solusi, atau tugas yang wajib direvisi oleh mahasiswa..."
-                                                required
-                                                className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder-neutral-400 text-xs focus:outline-none focus:ring-2 focus:ring-[#8E84FC] leading-relaxed"
-                                            />
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            {evalSavedMsg ? (
-                                                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                                                    <CheckCircle2 className="size-4" />
-                                                    Nilai dan catatan perbaikan berhasil disimpan!
-                                                </span>
-                                            ) : (
-                                                <span className="text-[11px] text-neutral-400">
-                                                    Klik tombol di samping untuk mempublikasikan evaluasi.
-                                                </span>
-                                            )}
-
-                                            <button
-                                                type="submit"
-                                                disabled={savingEval}
-                                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-bold shadow-md shadow-indigo-500/30 transition active:scale-95 disabled:opacity-50"
-                                            >
-                                                <Save className="size-3.5" />
-                                                <span>{savingEval ? 'Menyimpan...' : 'Simpan Nilai & Catatan'}</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </form>
+                                </div>
                             </div>
+
+                            <form onSubmit={handleSaveEvaluation} className="grid grid-cols-1 md:grid-cols-12 gap-5">
+                                <div className="md:col-span-4 flex flex-col gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Nilai / Status Evaluasi Tim <span className="text-rose-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={evalGrade}
+                                            onChange={(e) => setEvalGrade(e.target.value)}
+                                            placeholder="Contoh: 88/100 (A) atau Revisi Tahap 2"
+                                            required
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                        />
+                                    </div>
+
+                                    <div className="p-3 rounded-lg bg-slate-50 border border-slate-200/60 text-[11px] text-slate-500 leading-relaxed">
+                                        Nilai dan catatan arahan ini akan langsung tampil di dashboard mahasiswa dan rekap bimbingan kelas.
+                                    </div>
+                                </div>
+
+                                <div className="md:col-span-8 flex flex-col gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Catatan Arahan & Saran Perbaikan <span className="text-rose-500">*</span>
+                                        </label>
+                                        <textarea
+                                            value={evalNotes}
+                                            onChange={(e) => setEvalNotes(e.target.value)}
+                                            rows={3}
+                                            placeholder="Tuliskan arahan perbaikan teknis, saran solusi, atau tugas yang wajib direvisi oleh mahasiswa..."
+                                            required
+                                            className="w-full p-3 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition resize-none leading-relaxed"
+                                        />
+                                    </div>
+
+                                    <div className="flex items-center justify-between pt-1">
+                                        {evalSavedMsg ? (
+                                            <span className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5">
+                                                <CheckCircle2 className="size-4" />
+                                                Nilai dan catatan berhasil disimpan!
+                                            </span>
+                                        ) : (
+                                            <span className="text-[11px] text-slate-400">
+                                                Klik tombol di samping untuk mempublikasikan evaluasi.
+                                            </span>
+                                        )}
+
+                                        <button
+                                            type="submit"
+                                            disabled={savingEval}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                                        >
+                                            <Save className="size-3.5" />
+                                            <span>{savingEval ? 'Menyimpan...' : 'Simpan Nilai & Catatan'}</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     ) : (
                         /* Tampilan untuk Mahasiswa jika sudah ada penilaian dosen */
                         (project?.lecturer_evaluation || project?.lecturer_notes) && (
-                            <div className="bg-gradient-to-r from-[#FAF8FF] via-white to-[#F6F4FE] border border-purple-200/90 rounded-3xl p-6 shadow-sm">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-purple-100">
+                            <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                                     <div className="flex items-center gap-2.5">
-                                        <Premium3dIcon icon={GraduationCap} variant="purple" size="sm" />
+                                        <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                            <GraduationCap className="size-4" />
+                                        </div>
                                         <div>
-                                            <h3 className="text-xs font-bold text-neutral-900">
+                                            <h3 className="text-xs font-bold text-slate-900">
                                                 Catatan & Nilai dari Dosen Pengampu
                                             </h3>
-                                            <p className="text-[11px] text-neutral-500">
+                                            <p className="text-[11px] text-slate-500">
                                                 Dosen: {project.academicClass?.lecturer?.name || 'Dosen Pembimbing'}
                                             </p>
                                         </div>
                                     </div>
 
                                     {project.lecturer_evaluation && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20 font-bold text-xs">
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 font-semibold text-xs">
                                             <Award className="size-3.5" />
-                                            <span>Nilai / Status: {project.lecturer_evaluation}</span>
+                                            <span>Nilai: {project.lecturer_evaluation}</span>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="mt-3.5 p-4 rounded-2xl bg-white border border-purple-100 text-xs text-neutral-700 leading-relaxed whitespace-pre-line">
-                                    <strong className="block text-neutral-900 mb-1">Catatan Arahan & Tindak Lanjut:</strong>
+                                <div className="mt-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs text-slate-700 leading-relaxed whitespace-pre-line">
+                                    <strong className="block text-slate-900 mb-1">Catatan Arahan & Tindak Lanjut:</strong>
                                     {project.lecturer_notes}
                                 </div>
                             </div>
                         )
                     )}
 
-                    {/* 2. AI PROJECT ORCHESTRATOR & SPRINT ROADMAP (TRELLO-LIKE TIMELINE) */}
-                    <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-7 shadow-sm">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-5 border-b border-neutral-100">
-                            <div className="flex items-center gap-3.5">
-                                <Premium3dIcon icon={Bot} variant="cyan" size="md" />
+                    {/* 2. ROADMAP & JADWAL PENGERJAAN TIM */}
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-2xs">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-3">
+                                <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Bot className="size-5" />
+                                </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h2 className="text-base font-extrabold text-[#0E121B]">
+                                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
                                             Roadmap & Jadwal Pengerjaan Tim
                                         </h2>
-                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#2563EB]/20">
-                                            Jadwal Bertahap
+                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
+                                            Tahapan Sprint
                                         </span>
                                     </div>
-                                    <p className="text-xs text-neutral-500 mt-0.5">
+                                    <p className="text-xs text-slate-500 mt-0.5">
                                         Target pengerjaan bertahap dan pembagian tugas otomatis sesuai keahlian tiap anggota tim.
                                     </p>
                                 </div>
@@ -723,10 +722,10 @@ export default function WorkspaceShow({
                             <button
                                 onClick={handleTriggerAiAgent}
                                 disabled={orchestrating}
-                                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#181135] to-[#2E205E] hover:from-neutral-900 hover:to-neutral-800 text-white rounded-full text-xs font-bold shadow-md shadow-indigo-950/20 transition active:scale-95 disabled:opacity-50 shrink-0"
+                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
                             >
-                                <Wand2 className="size-3.5 text-[#8E84FC]" />
-                                <span>{orchestrating ? 'Lagi nyusun roadmap & bagi tugas...' : 'Bagi Tugas & Roadmap Otomatis (AI)'}</span>
+                                <Wand2 className="size-3.5 text-blue-400" />
+                                <span>{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
                             </button>
                         </div>
 
@@ -1114,11 +1113,13 @@ export default function WorkspaceShow({
                                 <X className="size-4" />
                             </button>
 
-                            <div className="flex items-center gap-2 mb-2">
-                                <Premium3dIcon icon={Kanban} variant="purple" size="sm" />
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Kanban className="size-4" />
+                                </div>
                                 <div>
-                                    <h3 className="text-base font-bold text-neutral-900">Buat Tugas Baru</h3>
-                                    <p className="text-xs text-neutral-500">Papan: {team.name}</p>
+                                    <h3 className="text-base font-bold text-slate-900">Buat Tugas Baru</h3>
+                                    <p className="text-xs text-slate-500">Papan: {team.name}</p>
                                 </div>
                             </div>
 
@@ -1252,11 +1253,13 @@ export default function WorkspaceShow({
                                 <X className="size-4" />
                             </button>
 
-                            <div className="flex items-center gap-2 mb-2">
-                                <Premium3dIcon icon={Edit3} variant="purple" size="sm" />
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Edit3 className="size-4" />
+                                </div>
                                 <div>
-                                    <h3 className="text-base font-bold text-neutral-900">Edit Kartu Tugas</h3>
-                                    <p className="text-xs text-neutral-500">Perbarui rincian atau delegasikan ulang</p>
+                                    <h3 className="text-base font-bold text-slate-900">Edit Kartu Tugas</h3>
+                                    <p className="text-xs text-slate-500">Perbarui rincian atau delegasikan ulang</p>
                                 </div>
                             </div>
 
