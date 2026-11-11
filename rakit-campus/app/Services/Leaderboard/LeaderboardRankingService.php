@@ -72,7 +72,7 @@ class LeaderboardRankingService
             ->get();
 
         $userIds = $scores->pluck('user_id')->all();
-        $users = User::with(['profile', 'campusMemberships.campus'])
+        $users = User::with(['profile', 'campuses'])
             ->whereIn('id', $userIds)
             ->get()
             ->keyBy('id');
@@ -112,7 +112,7 @@ class LeaderboardRankingService
                     'id' => $user->id,
                     'name' => $user->name,
                     'avatar' => $user->avatar,
-                    'campus_name' => $user->campusMemberships->first()?->campus?->name ?? 'Mahasiswa',
+                    'campus_name' => $user->campuses->first()?->name ?? 'Politeknik Negeri Indramayu',
                     'major' => $user->profile?->major ?? 'Informatika',
                     'is_current_user' => $currentUser && $currentUser->id === $user->id,
                 ],
@@ -318,7 +318,7 @@ class LeaderboardRankingService
             ->get();
 
         $userIds = $scores->pluck('user_id')->all();
-        $users = User::with(['profile', 'campusMemberships.campus'])
+        $users = User::with(['profile', 'campuses'])
             ->whereIn('id', $userIds)
             ->get()
             ->keyBy('id');
@@ -350,7 +350,7 @@ class LeaderboardRankingService
                     'id' => $user->id,
                     'name' => $user->name,
                     'avatar' => $user->avatar,
-                    'campus_name' => $user->campusMemberships->first()?->campus?->name ?? 'Mahasiswa',
+                    'campus_name' => $user->campuses->first()?->name ?? 'Politeknik Negeri Indramayu',
                     'major' => $user->profile?->major ?? 'Informatika',
                     'is_current_user' => $currentUser && $currentUser->id === $user->id,
                 ],
@@ -425,7 +425,7 @@ class LeaderboardRankingService
             ->get();
 
         $userIds = $scores->pluck('user_id')->all();
-        $users = User::with(['profile', 'campusMemberships.campus'])
+        $users = User::with(['profile', 'campuses'])
             ->whereIn('id', $userIds)
             ->get()
             ->keyBy('id');
@@ -457,7 +457,7 @@ class LeaderboardRankingService
                     'id' => $user->id,
                     'name' => $user->name,
                     'avatar' => $user->avatar,
-                    'campus_name' => $user->campusMemberships->first()?->campus?->name ?? 'Mahasiswa',
+                    'campus_name' => $user->campuses->first()?->name ?? 'Politeknik Negeri Indramayu',
                     'major' => $user->profile?->major ?? 'Informatika',
                     'is_current_user' => $currentUser && $currentUser->id === $user->id,
                 ],
