@@ -283,7 +283,7 @@ interface Props {
 }
 
 export default function CompetitionIndex({
-    competitions,
+    competitions = { data: [], current_page: 1, last_page: 1, total: 0 },
     openRecruitingTeams = [],
     totalNeededSlots = 0,
     myApplications = [],
@@ -296,16 +296,18 @@ export default function CompetitionIndex({
     upcomingDeadlines = [],
     recommendedCompetitions = [],
     categoryCounts = {},
-    currentUserInfo,
-    categories,
-    filters,
+    currentUserInfo = null,
+    categories = [],
+    filters = {},
 }: Props) {
+    const safeFilters = (Array.isArray(filters) || !filters) ? {} : filters;
+
     const [activeTab, setActiveTab] = useState<'explore' | 'teams' | 'categories' | 'my_competitions' | 'recommendations'>(
-        (filters.tab as any) || 'explore'
+        (safeFilters.tab as any) || 'explore'
     );
 
     const [myLifecycleFilter, setMyLifecycleFilter] = useState<'all' | 'saved' | 'planning' | 'registered' | 'in_progress' | 'completed' | 'withdrawn' | 'applications'>(
-        (filters.my_lifecycle_status as any) || 'all'
+        (safeFilters.my_lifecycle_status as any) || 'all'
     );
 
     // Lifecycle Modals State
@@ -317,18 +319,18 @@ export default function CompetitionIndex({
     const [selectedResultPart, setSelectedResultPart] = useState<any | null>(null);
 
     // Filter States for Explore
-    const [exploreSearch, setExploreSearch] = useState(filters.search || '');
-    const [exploreCategory, setExploreCategory] = useState(filters.category || '');
-    const [exploreLevel, setExploreLevel] = useState(filters.level || '');
-    const [exploreFormat, setExploreFormat] = useState(filters.format || '');
-    const [exploreType, setExploreType] = useState(filters.type || '');
-    const [exploreStatus, setExploreStatus] = useState(filters.status || '');
-    const [exploreSort, setExploreSort] = useState(filters.sort || 'deadline_asc');
+    const [exploreSearch, setExploreSearch] = useState(safeFilters.search || '');
+    const [exploreCategory, setExploreCategory] = useState(safeFilters.category || '');
+    const [exploreLevel, setExploreLevel] = useState(safeFilters.level || '');
+    const [exploreFormat, setExploreFormat] = useState(safeFilters.format || '');
+    const [exploreType, setExploreType] = useState(safeFilters.type || '');
+    const [exploreStatus, setExploreStatus] = useState(safeFilters.status || '');
+    const [exploreSort, setExploreSort] = useState(safeFilters.sort || 'deadline_asc');
 
     // Filter States for Teams
-    const [teamSearch, setTeamSearch] = useState(filters.team_search || '');
-    const [teamCategory, setTeamCategory] = useState(filters.team_category || '');
-    const [teamRole, setTeamRole] = useState(filters.team_role || '');
+    const [teamSearch, setTeamSearch] = useState(safeFilters.team_search || '');
+    const [teamCategory, setTeamCategory] = useState(safeFilters.team_category || '');
+    const [teamRole, setTeamRole] = useState(safeFilters.team_role || '');
 
     // MinSatu Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
@@ -427,13 +429,13 @@ export default function CompetitionIndex({
         setApplyModalOpen(true);
     };
 
+    const catalogCompetitions = competitions?.data || [];
+
     const spotlightComp = featuredCompetitions && featuredCompetitions.length > 0
         ? featuredCompetitions[0]
-        : competitions.data && competitions.data.length > 0
-        ? competitions.data[0]
+        : catalogCompetitions.length > 0
+        ? catalogCompetitions[0]
         : null;
-
-    const catalogCompetitions = competitions.data;
 
     return (
         <AppLayout activeTab="lomba" title="Competition Hub — RakitCampus">
@@ -513,7 +515,7 @@ export default function CompetitionIndex({
                         </nav>
 
                         <Link
-                            href={route('competitions.create')}
+                            href="/competitions/create"
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition shrink-0"
                         >
                             <Plus className="w-3.5 h-3.5" />
@@ -1042,7 +1044,7 @@ export default function CompetitionIndex({
                                     Belum Ada Tim yang Sedang Merekrut
                                 </h4>
                                 <Link
-                                    href={route('competitions.create')}
+                                    href="/competitions/create"
                                     className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
@@ -1314,7 +1316,7 @@ export default function CompetitionIndex({
                             </div>
 
                             <Link
-                                href={route('competitions.create')}
+                                href="/competitions/create"
                                 className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shrink-0"
                             >
                                 <Plus className="w-3.5 h-3.5" />
@@ -1381,7 +1383,7 @@ export default function CompetitionIndex({
 
                                                 {app.participation_id && app.status === 'accepted' && (
                                                     <Link
-                                                        href={route('competitions.workspace', app.participation_id)}
+                                                        href={`/competition-workspace/${app.participation_id}`}
                                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                                                     >
                                                         <span>Workspace Tim</span>
@@ -1682,7 +1684,7 @@ export default function CompetitionIndex({
                                                             )}
 
                                                             <Link
-                                                                href={route('competitions.workspace', part.id)}
+                                                                href={`/competition-workspace/${part.id}`}
                                                                 className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition flex-1 text-center"
                                                             >
                                                                 Workspace
@@ -2010,25 +2012,31 @@ export default function CompetitionIndex({
             )}
 
             {/* TRACK COMPETITION LIFECYCLE MODAL */}
-            <TrackCompetitionModal
-                isOpen={trackModalOpen}
-                onClose={() => setTrackModalOpen(false)}
-                competition={selectedTrackComp}
-            />
+            {trackModalOpen && selectedTrackComp && (
+                <TrackCompetitionModal
+                    isOpen={trackModalOpen}
+                    onClose={() => setTrackModalOpen(false)}
+                    competition={selectedTrackComp}
+                />
+            )}
 
             {/* UPDATE STAGE MODAL */}
-            <UpdateStageModal
-                isOpen={stageModalOpen}
-                onClose={() => setStageModalOpen(false)}
-                participation={selectedStagePart}
-            />
+            {stageModalOpen && selectedStagePart && (
+                <UpdateStageModal
+                    isOpen={stageModalOpen}
+                    onClose={() => setStageModalOpen(false)}
+                    participation={selectedStagePart}
+                />
+            )}
 
             {/* RECORD RESULT MODAL */}
-            <RecordResultModal
-                isOpen={resultModalOpen}
-                onClose={() => setResultModalOpen(false)}
-                participation={selectedResultPart}
-            />
+            {resultModalOpen && selectedResultPart && (
+                <RecordResultModal
+                    isOpen={resultModalOpen}
+                    onClose={() => setResultModalOpen(false)}
+                    participation={selectedResultPart}
+                />
+            )}
         </AppLayout>
     );
 }

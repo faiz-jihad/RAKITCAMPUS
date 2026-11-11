@@ -37,14 +37,14 @@ export default function UpdateStageModal({
     onClose,
     participation,
 }: Props) {
-    if (!isOpen || !participation) return null;
-
-    const [stage, setStage] = useState(participation.stage || 'preparing');
-    const [registrationProof, setRegistrationProof] = useState(participation.external_registration_proof || '');
-    const [submissionProof, setSubmissionProof] = useState(participation.external_submission_proof || '');
+    const [stage, setStage] = useState(participation?.stage || 'preparing');
+    const [registrationProof, setRegistrationProof] = useState(participation?.external_registration_proof || '');
+    const [submissionProof, setSubmissionProof] = useState(participation?.external_submission_proof || '');
     const [notes, setNotes] = useState('');
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    if (!isOpen || !participation) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

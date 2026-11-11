@@ -24,8 +24,6 @@ export default function TrackCompetitionModal({
     competition,
     defaultStatus = 'planning',
 }: Props) {
-    if (!isOpen || !competition) return null;
-
     const [participationMode, setParticipationMode] = useState<'team' | 'solo'>('team');
     const [initialStatus, setInitialStatus] = useState<'planning' | 'registered'>(defaultStatus);
     const [teamName, setTeamName] = useState('');
@@ -35,6 +33,8 @@ export default function TrackCompetitionModal({
     const [redirectTo, setRedirectTo] = useState<'hub' | 'workspace'>('hub');
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    if (!isOpen || !competition) return null;
 
     const categoryTracks: string[] = Array.isArray(competition.category_tracks)
         ? competition.category_tracks

@@ -545,7 +545,7 @@ class CompetitionWebController extends Controller
             'recommendedCompetitions' => $recommendedCompetitions,
             'categoryCounts' => $categoryCounts,
             'currentUserInfo' => $currentUserInfo,
-            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
+            'filters' => (object) $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
             'categories' => CompetitionCategory::values(),
             'statuses' => CompetitionStatus::values(),
             'levels' => ['local', 'regional', 'national', 'international'],

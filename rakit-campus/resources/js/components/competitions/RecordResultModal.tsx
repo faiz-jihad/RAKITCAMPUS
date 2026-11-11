@@ -41,13 +41,11 @@ export default function RecordResultModal({
     onClose,
     participation,
 }: Props) {
-    if (!isOpen || !participation) return null;
-
-    const existingResult = participation.result;
+    const existingResult = participation?.result;
 
     const [outcome, setOutcome] = useState(existingResult?.outcome || '1st_place');
     const [achievementTitle, setAchievementTitle] = useState(
-        existingResult?.achievement_title || `Juara Kompetisi: ${participation.competition?.name || ''}`
+        existingResult?.achievement_title || `Juara Kompetisi: ${participation?.competition?.name || ''}`
     );
     const [rank, setRank] = useState<number | ''>(existingResult?.rank ?? 1);
     const [evidenceUrl, setEvidenceUrl] = useState(
@@ -57,6 +55,8 @@ export default function RecordResultModal({
     const [notes, setNotes] = useState(existingResult?.notes || '');
     const [loading, setLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+    if (!isOpen || !participation) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
