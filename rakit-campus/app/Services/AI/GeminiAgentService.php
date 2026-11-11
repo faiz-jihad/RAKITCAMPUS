@@ -153,6 +153,9 @@ Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saa
             if (isset($parsed['tasks']) && is_array($parsed['tasks']) && count($parsed['tasks']) > 0) {
                 return $parsed;
             }
+            Log::info("Gemini raw response could not be parsed as tasks JSON: " . substr($rawResponse, 0, 500));
+        } else {
+            Log::info("Gemini call returned null for Kanban task generation.");
         }
 
         // Fallback domain-specific tasks if AI service is temporarily unreachable
