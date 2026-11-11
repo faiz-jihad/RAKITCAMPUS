@@ -58,13 +58,12 @@ export default function AppLayout({
     const unreadCount = user?.unread_notifications_count || 0;
 
     return (
-        <div className="min-h-screen bg-[#eceff3] p-3 sm:p-5 lg:p-7 font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             {title && <Head title={title} />}
 
-            {/* Giant Smooth Rounded Container matching Dashboard */}
-            <main className="mx-auto max-w-[1400px] bg-[#fbfcfd] rounded-[2rem] sm:rounded-[2.5rem] p-5 sm:p-7 lg:p-9 shadow-[0_4px_30px_rgba(0,0,0,0.03)] border border-slate-200/60">
-                {/* 1. TOP NAVBAR (Unified Across All Pages) */}
-                <header className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
+            <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 transition-all">
+                <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
                     {/* Brand Logo */}
                     <Link href="/dashboard" className="flex items-center gap-2.5 group">
                         <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:bg-blue-700 transition">
@@ -84,10 +83,10 @@ export default function AppLayout({
                     </Link>
 
                     {/* Navigation Capsule / Pills */}
-                    <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70">
+                    <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
                         <Link
                             href="/dashboard"
-                            className={`px-5 py-2 rounded-full text-xs sm:text-sm font-semibold transition ${
+                            className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
                                 currentTab === 'dashboard'
                                     ? 'bg-[#2563eb] text-white shadow-sm'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -97,7 +96,7 @@ export default function AppLayout({
                         </Link>
                         <Link
                             href="/competitions"
-                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition ${
+                            className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                                 currentTab === 'lomba'
                                     ? 'bg-[#2563eb] text-white shadow-sm'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -107,7 +106,7 @@ export default function AppLayout({
                         </Link>
                         <Link
                             href="/competitions?tab=my_competitions&subtab=teams"
-                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition ${
+                            className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                                 currentTab === 'tim'
                                     ? 'bg-[#2563eb] text-white shadow-sm'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -117,7 +116,7 @@ export default function AppLayout({
                         </Link>
                         <Link
                             href="/workspace"
-                            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition ${
+                            className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
                                 currentTab === 'task'
                                     ? 'bg-[#2563eb] text-white shadow-sm'
                                     : 'text-slate-600 hover:text-slate-900'
@@ -128,7 +127,7 @@ export default function AppLayout({
                     </nav>
 
                     {/* Right User Actions */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <Link
                             href="/settings/profile"
                             className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
@@ -154,11 +153,14 @@ export default function AppLayout({
                             {initials}
                         </Link>
                     </div>
-                </header>
+                </div>
+            </header>
 
+            {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
-                    <div className="flex items-center gap-1.5 pt-4 pb-1 text-xs text-slate-500">
+                    <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
                         {breadcrumbs.map((crumb, idx) => (
                             <React.Fragment key={crumb.href || idx}>
                                 {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-300" />}
@@ -180,7 +182,7 @@ export default function AppLayout({
                 )}
 
                 {/* Page Content */}
-                <div className="pt-2">{children}</div>
+                <div>{children}</div>
             </main>
         </div>
     );
