@@ -18,6 +18,7 @@ import { useState } from 'react';
 
 interface Props {
     achievements: any[];
+    competitionResults?: any[];
     portfolioItems: any[];
     completedProjects: any[];
     profile: any;
@@ -30,6 +31,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function PortfolioIndex({
     achievements,
+    competitionResults = [],
     portfolioItems: initialItems,
     completedProjects,
     profile,
@@ -172,6 +174,82 @@ export default function PortfolioIndex({
                                                 </div>
                                             </div>
                                         ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Competition Results & Achievements Card */}
+                            <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-sm">
+                                <div className="flex items-center justify-between mb-5 pb-3 border-b border-neutral-100">
+                                    <h3 className="text-sm font-bold text-neutral-900 flex items-center gap-2">
+                                        <Trophy className="size-4 text-amber-600" />
+                                        <span>Hasil & Prestasi Kompetisi ({competitionResults.length})</span>
+                                    </h3>
+                                    <span className="text-xs text-neutral-400 font-medium">Competition Hub</span>
+                                </div>
+
+                                {competitionResults.length === 0 ? (
+                                    <div className="p-6 text-center border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
+                                        <Trophy className="size-7 text-neutral-400 mx-auto mb-2 opacity-60" />
+                                        <p className="text-xs font-semibold text-neutral-700">Belum ada hasil kompetisi yang dicatat</p>
+                                        <p className="text-[11px] text-neutral-500 max-w-md mx-auto mt-1">
+                                            Ikuti kompetisi di Competition Hub dan catat capaian atau sertifikat keikutsertaan Anda di sini.
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-3.5">
+                                        {competitionResults.map((res: any) => {
+                                            const comp = res.participation?.competition;
+                                            const isVerified = res.verification_status === 'verified';
+                                            return (
+                                                <div
+                                                    key={res.id}
+                                                    className={`p-4 border rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs ${
+                                                        isVerified
+                                                            ? 'border-emerald-200/80 bg-gradient-to-r from-emerald-50/30 via-white to-white'
+                                                            : 'border-amber-200/80 bg-gradient-to-r from-amber-50/30 via-white to-white'
+                                                    }`}
+                                                >
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-xs font-bold text-neutral-900">
+                                                                {res.achievement_title}
+                                                            </span>
+                                                            <span
+                                                                className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                                                                    isVerified
+                                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                                        : 'bg-amber-100 text-amber-800'
+                                                                }`}
+                                                            >
+                                                                {isVerified ? 'Terverifikasi Kampus' : 'Laporan Mandiri'}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-xs text-neutral-600 mt-1">
+                                                            Kompetisi: <strong className="text-slate-800">{comp?.name || 'Kompetisi'}</strong>
+                                                            {comp?.level ? ` (${comp.level})` : ''} • Tim: {res.participation?.team?.name || 'Mandiri'}
+                                                        </p>
+                                                        {res.notes && (
+                                                            <p className="text-[11px] text-neutral-500 mt-1 italic">
+                                                                "{res.notes}"
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    {res.certificate_path && (
+                                                        <a
+                                                            href={res.certificate_path.startsWith('http') ? res.certificate_path : `/storage/${res.certificate_path}`}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-200 bg-white hover:bg-neutral-50 text-neutral-700 text-xs font-semibold shadow-2xs transition self-start sm:self-center shrink-0"
+                                                        >
+                                                            <span>Lihat Sertifikat</span>
+                                                            <ExternalLink className="size-3" />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 )}
                             </div>

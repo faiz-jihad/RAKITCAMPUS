@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Achievement;
+use App\Models\CompetitionResult;
 use App\Models\ContributionRecord;
 use App\Models\PortfolioItem;
 use App\Models\StudentProfile;
@@ -23,6 +24,13 @@ class PortfolioWebController extends Controller
             ->latest('achieved_on')
             ->get();
 
+        $competitionResults = CompetitionResult::whereHas('participation.team.members', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->with(['participation.competition:id,name,slug,level,category,cover_image,organizer', 'participation.team:id,name', 'verifier:id,name'])
+            ->latest()
+            ->get();
+
         $portfolioItems = PortfolioItem::where('user_id', $user->id)
             ->latest()
             ->get();
@@ -36,6 +44,7 @@ class PortfolioWebController extends Controller
 
         return Inertia::render('portfolio/index', [
             'achievements' => $achievements,
+            'competitionResults' => $competitionResults,
             'portfolioItems' => $portfolioItems,
             'completedProjects' => $completedProjects,
             'profile' => $profile,

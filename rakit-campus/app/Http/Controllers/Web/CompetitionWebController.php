@@ -75,16 +75,24 @@ class CompetitionWebController extends Controller
     {
         $user = $request->user();
         $query = Competition::visibleTo($user)
-            ->with(['sources', 'campus:id,name'])
-            ->orderByRaw('CASE WHEN registration_deadline >= NOW() THEN 0 ELSE 1 END')
-            ->orderBy('registration_deadline', 'asc');
+            ->with(['sources', 'campus:id,name', 'rounds']);
 
         if ($request->filled('category')) {
             $query->where('category', $request->input('category'));
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->input('status'));
+            $statusVal = $request->input('status');
+            if ($statusVal === 'open') {
+                $query->where('registration_deadline', '>=', now());
+            } elseif ($statusVal === 'closing_soon') {
+                $query->where('registration_deadline', '>=', now())
+                      ->where('registration_deadline', '<=', now()->addDays(7));
+            } elseif ($statusVal === 'closed') {
+                $query->where('registration_deadline', '<', now());
+            } else {
+                $query->where('status', $statusVal);
+            }
         }
 
         if ($request->filled('level')) {
@@ -96,7 +104,11 @@ class CompetitionWebController extends Controller
         }
 
         if ($request->filled('format')) {
-            $query->where('competition_type', 'like', '%' . $request->input('format') . '%');
+            $fmt = $request->input('format');
+            $query->where(function ($q) use ($fmt) {
+                $q->where('competition_type', 'like', '%' . $fmt . '%')
+                  ->orWhere('description', 'like', '%' . $fmt . '%');
+            });
         }
 
         if ($request->filled('search')) {
@@ -106,6 +118,16 @@ class CompetitionWebController extends Controller
                   ->orWhere('organizer', 'like', $search)
                   ->orWhere('description', 'like', $search);
             });
+        }
+
+        $sort = $request->input('sort', 'deadline_asc');
+        if ($sort === 'deadline_desc') {
+            $query->orderBy('registration_deadline', 'desc');
+        } elseif ($sort === 'latest') {
+            $query->latest('created_at');
+        } else {
+            $query->orderByRaw('CASE WHEN registration_deadline >= NOW() THEN 0 ELSE 1 END')
+                  ->orderBy('registration_deadline', 'asc');
         }
 
         $competitions = $query->paginate(12)->withQueryString();
@@ -262,22 +284,140 @@ class CompetitionWebController extends Controller
                 ];
             }) : collect();
 
-        // User's teams (for MinSatu "Timku" tab)
-        $myTeams = $user ? CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            })
-            ->with(['competition', 'team.leader', 'team.members.user'])
-            ->latest()
-            ->get()
-            ->map(fn ($p) => [
-                'id' => $p->id,
-                'stage' => $p->stage,
-                'team_name' => $p->team?->name,
-                'competition_name' => $p->competition?->name,
-                'is_leader' => $p->team?->leader_id === $user->id,
-                'members_count' => $p->team?->members->count(),
-                'max_size' => $p->competition?->max_team_size,
-            ]) : collect();
+        // User's full participations with complete 6-stage lifecycle tracking
+        $myParticipations = collect();
+        if ($user) {
+            $rawParticipations = CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->with([
+                    'competition.rounds',
+                    'team.members.user:id,name,avatar',
+                    'team.leader',
+                    'result.verifier:id,name',
+                    'statusHistories',
+                    'documents',
+                ])
+                ->latest()
+                ->get();
+
+            $myParticipations = $rawParticipations->map(function ($p) use ($user) {
+                $comp = $p->competition;
+                $stage = $p->stage;
+                $regStatus = $p->registration_status instanceof \BackedEnum ? $p->registration_status->value : (string) ($p->registration_status ?? 'planning');
+                $progStatus = $p->progress_status instanceof \BackedEnum ? $p->progress_status->value : (string) ($p->progress_status ?? 'preparing');
+
+                // Determine 6-stage lifecycle: saved | planning | registered | in_progress | completed | withdrawn
+                if ($stage === 'withdrawn' || $regStatus === 'withdrawn') {
+                    $lifecycle = 'withdrawn';
+                } elseif ($progStatus === 'finished' || in_array($stage, ['winner', 'not_selected']) || $p->result !== null) {
+                    $lifecycle = 'completed';
+                } elseif (in_array($stage, ['submitted', 'administrative_selection', 'shortlisted', 'finalist', 'final_presentation']) || $progStatus === 'in_competition') {
+                    $lifecycle = 'in_progress';
+                } elseif ($regStatus === 'registered' || $stage === 'registered') {
+                    $lifecycle = 'registered';
+                } else {
+                    $lifecycle = 'planning';
+                }
+
+                // Compute next milestone
+                $nextMilestone = 'Belum ada agenda lanjutan';
+                if ($comp) {
+                    $upcomingRound = $comp->rounds ? $comp->rounds->first(function ($r) {
+                        return $r->ends_at && $r->ends_at >= now();
+                    }) : null;
+
+                    if ($upcomingRound) {
+                        $nextMilestone = "{$upcomingRound->name} (Batas: " . ($upcomingRound->ends_at ? $upcomingRound->ends_at->format('d M Y') : '-') . ")";
+                    } elseif ($comp->registration_deadline && $comp->registration_deadline >= now()) {
+                        $daysLeft = (int) now()->diffInDays($comp->registration_deadline, false);
+                        $nextMilestone = "Batas Pendaftaran: " . $comp->registration_deadline->format('d M Y') . " (" . ($daysLeft >= 0 ? "{$daysLeft} hari lagi" : "Tutup") . ")";
+                    } else {
+                        $nextMilestone = 'Tahap Seleksi / Pengumuman';
+                    }
+                }
+
+                $isLeader = $p->team && $p->team->leader_id === $user->id;
+                $isAdmin = $user->isCampusAdminOf($comp?->campus_id) || $user->isPlatformAdmin();
+
+                return [
+                    'id' => $p->id,
+                    'lifecycle_status' => $lifecycle,
+                    'stage' => $stage,
+                    'stage_label' => $this->getStageLabel($stage),
+                    'registration_status' => $regStatus,
+                    'progress_status' => $progStatus,
+                    'category_track' => $p->category_track,
+                    'external_registration_proof' => $p->external_registration_proof,
+                    'external_submission_proof' => $p->external_submission_proof,
+                    'registered_at' => $p->registered_at?->toIso8601String(),
+                    'is_formation_locked' => (bool) $p->is_formation_locked,
+                    'can_manage' => $isLeader || $isAdmin,
+                    'next_milestone' => $nextMilestone,
+                    'competition' => $comp ? [
+                        'id' => $comp->id,
+                        'name' => $comp->name,
+                        'slug' => $comp->slug,
+                        'organizer' => $comp->organizer,
+                        'category' => $comp->category,
+                        'level' => $comp->level,
+                        'competition_type' => $comp->competition_type ?? 'Hybrid',
+                        'official_url' => $comp->official_url,
+                        'registration_url' => $comp->registration_url,
+                        'registration_deadline' => $comp->registration_deadline?->toIso8601String(),
+                        'cover_image' => $comp->cover_image,
+                        'min_team_size' => $comp->min_team_size,
+                        'max_team_size' => $comp->max_team_size,
+                        'is_urgent' => $comp->registration_deadline && $comp->registration_deadline >= now() && $comp->registration_deadline <= now()->addDays(7),
+                        'is_overdue' => $comp->registration_deadline && $comp->registration_deadline < now(),
+                    ] : null,
+                    'team' => $p->team ? [
+                        'id' => $p->team->id,
+                        'name' => $p->team->name,
+                        'is_leader' => $isLeader,
+                        'members_count' => $p->team->members->count(),
+                        'members' => $p->team->members->map(fn($m) => [
+                            'id' => $m->id,
+                            'user_id' => $m->user_id,
+                            'name' => $m->user?->name,
+                            'avatar' => $m->user?->avatar,
+                            'role_name' => $m->role_name,
+                            'is_me' => $m->user_id === $user->id,
+                        ]),
+                    ] : null,
+                    'result' => $p->result ? [
+                        'id' => $p->result->id,
+                        'outcome' => $p->result->outcome instanceof \BackedEnum ? $p->result->outcome->value : (string) $p->result->outcome,
+                        'outcome_label' => $this->getOutcomeLabel($p->result->outcome),
+                        'achievement_title' => $p->result->achievement_title,
+                        'rank' => $p->result->rank,
+                        'notes' => $p->result->notes,
+                        'certificate_path' => $p->result->certificate_path,
+                        'verification_status' => $p->result->verification_status,
+                        'verifier_name' => $p->result->verifier?->name,
+                        'verified_at' => $p->result->verified_at?->toIso8601String(),
+                    ] : null,
+                    'status_histories' => $p->statusHistories->take(5)->map(fn($h) => [
+                        'id' => $h->id,
+                        'from_stage' => $h->from_stage,
+                        'to_stage' => $h->to_stage,
+                        'notes' => $h->notes,
+                        'created_at' => $h->created_at?->toIso8601String(),
+                    ]),
+                ];
+            });
+        }
+
+        // Backwards compatible $myTeams
+        $myTeams = $myParticipations->map(fn ($p) => [
+            'id' => $p['id'],
+            'stage' => $p['stage'],
+            'team_name' => $p['team']['name'] ?? 'Tim Kompetisi',
+            'competition_name' => $p['competition']['name'] ?? 'Kompetisi',
+            'is_leader' => $p['team']['is_leader'] ?? false,
+            'members_count' => $p['team']['members_count'] ?? 1,
+            'max_size' => $p['competition']['max_team_size'] ?? 5,
+        ]);
 
         // Bookmarked competitions
         $bookmarkedIds = $user ? Bookmark::where('user_id', $user->id)
@@ -287,10 +427,35 @@ class CompetitionWebController extends Controller
 
         $savedCompetitions = !empty($bookmarkedIds)
             ? Competition::whereIn('id', $bookmarkedIds)
-                ->with(['campus:id,name'])
+                ->with(['campus:id,name', 'rounds'])
                 ->orderBy('registration_deadline', 'asc')
                 ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'slug' => $c->slug,
+                    'organizer' => $c->organizer,
+                    'category' => $c->category,
+                    'level' => $c->level,
+                    'competition_type' => $c->competition_type ?? 'Hybrid',
+                    'official_url' => $c->official_url,
+                    'registration_url' => $c->registration_url,
+                    'registration_deadline' => $c->registration_deadline?->toIso8601String(),
+                    'cover_image' => $c->cover_image,
+                    'is_urgent' => $c->registration_deadline && $c->registration_deadline >= now() && $c->registration_deadline <= now()->addDays(7),
+                    'is_overdue' => $c->registration_deadline && $c->registration_deadline < now(),
+                ])
             : collect();
+
+        $lifecycleCounts = [
+            'all' => $myParticipations->count() + count($bookmarkedIds),
+            'saved' => count($bookmarkedIds),
+            'planning' => $myParticipations->where('lifecycle_status', 'planning')->count(),
+            'registered' => $myParticipations->where('lifecycle_status', 'registered')->count(),
+            'in_progress' => $myParticipations->where('lifecycle_status', 'in_progress')->count(),
+            'completed' => $myParticipations->where('lifecycle_status', 'completed')->count(),
+            'withdrawn' => $myParticipations->where('lifecycle_status', 'withdrawn')->count(),
+        ];
 
         // Featured & Upcoming Deadlines
         $featuredCompetitions = Competition::visibleTo($user)
@@ -371,6 +536,8 @@ class CompetitionWebController extends Controller
             'totalNeededSlots' => $totalNeededSlots,
             'myApplications' => $myApplications,
             'myTeams' => $myTeams,
+            'myParticipations' => $myParticipations,
+            'lifecycleCounts' => $lifecycleCounts,
             'bookmarkedIds' => $bookmarkedIds,
             'savedCompetitions' => $savedCompetitions,
             'featuredCompetitions' => $featuredCompetitions,
@@ -378,7 +545,7 @@ class CompetitionWebController extends Controller
             'recommendedCompetitions' => $recommendedCompetitions,
             'categoryCounts' => $categoryCounts,
             'currentUserInfo' => $currentUserInfo,
-            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format']),
+            'filters' => $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
             'categories' => CompetitionCategory::values(),
             'statuses' => CompetitionStatus::values(),
             'levels' => ['local', 'regional', 'national', 'international'],
@@ -659,10 +826,73 @@ class CompetitionWebController extends Controller
             'study_program' => $user->profile?->study_program,
         ] : null;
 
+        // Formatted myParticipation for lifecycle tracking on detail page
+        $myParticipationData = null;
+        if ($myParticipation) {
+            $myParticipation->loadMissing(['team.members.user', 'team.leader', 'result.verifier', 'statusHistories']);
+            $stage = $myParticipation->stage;
+            $regStatus = $myParticipation->registration_status instanceof \BackedEnum ? $myParticipation->registration_status->value : (string) ($myParticipation->registration_status ?? 'planning');
+            $progStatus = $myParticipation->progress_status instanceof \BackedEnum ? $myParticipation->progress_status->value : (string) ($myParticipation->progress_status ?? 'preparing');
+
+            if ($stage === 'withdrawn' || $regStatus === 'withdrawn') {
+                $lifecycle = 'withdrawn';
+            } elseif ($progStatus === 'finished' || in_array($stage, ['winner', 'not_selected']) || $myParticipation->result !== null) {
+                $lifecycle = 'completed';
+            } elseif (in_array($stage, ['submitted', 'administrative_selection', 'shortlisted', 'finalist', 'final_presentation']) || $progStatus === 'in_competition') {
+                $lifecycle = 'in_progress';
+            } elseif ($regStatus === 'registered' || $stage === 'registered') {
+                $lifecycle = 'registered';
+            } else {
+                $lifecycle = 'planning';
+            }
+
+            $isLeader = $myParticipation->team && $myParticipation->team->leader_id === $user->id;
+            $isAdmin = $user->isCampusAdminOf($competition->campus_id) || $user->isPlatformAdmin();
+
+            $myParticipationData = [
+                'id' => $myParticipation->id,
+                'lifecycle_status' => $lifecycle,
+                'stage' => $stage,
+                'stage_label' => $this->getStageLabel($stage),
+                'registration_status' => $regStatus,
+                'progress_status' => $progStatus,
+                'category_track' => $myParticipation->category_track,
+                'external_registration_proof' => $myParticipation->external_registration_proof,
+                'external_submission_proof' => $myParticipation->external_submission_proof,
+                'registered_at' => $myParticipation->registered_at?->toIso8601String(),
+                'can_manage' => $isLeader || $isAdmin,
+                'team' => $myParticipation->team ? [
+                    'id' => $myParticipation->team->id,
+                    'name' => $myParticipation->team->name,
+                    'is_leader' => $isLeader,
+                    'members_count' => $myParticipation->team->members->count(),
+                    'members' => $myParticipation->team->members->map(fn($m) => [
+                        'id' => $m->id,
+                        'name' => $m->user?->name,
+                        'avatar' => $m->user?->avatar,
+                        'role_name' => $m->role_name,
+                        'is_me' => $m->user_id === $user->id,
+                    ]),
+                ] : null,
+                'result' => $myParticipation->result ? [
+                    'id' => $myParticipation->result->id,
+                    'outcome' => $myParticipation->result->outcome instanceof \BackedEnum ? $myParticipation->result->outcome->value : (string) $myParticipation->result->outcome,
+                    'outcome_label' => $this->getOutcomeLabel($myParticipation->result->outcome),
+                    'achievement_title' => $myParticipation->result->achievement_title,
+                    'rank' => $myParticipation->result->rank,
+                    'notes' => $myParticipation->result->notes,
+                    'certificate_path' => $myParticipation->result->certificate_path,
+                    'verification_status' => $myParticipation->result->verification_status,
+                    'verifier_name' => $myParticipation->result->verifier?->name,
+                    'verified_at' => $myParticipation->result->verified_at?->toIso8601String(),
+                ] : null,
+            ];
+        }
+
         return Inertia::render('competitions/show', [
             'competition' => $competition,
             'isBookmarked' => $isBookmarked,
-            'myParticipation' => $myParticipation,
+            'myParticipation' => $myParticipationData,
             'myLedProjects' => $myLedProjects,
             'eligibilityCheck' => $eligibilityCheck,
             'openTeams' => $openTeams,
@@ -680,16 +910,50 @@ class CompetitionWebController extends Controller
 
         $validated = $request->validate([
             'project_id' => ['nullable', 'exists:projects,id'],
-            'team_name' => ['required', 'string', 'max:100'],
+            'team_name' => ['nullable', 'string', 'max:100'],
             'category_track' => ['nullable', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:500'],
             'roles_needed' => ['nullable', 'string', 'max:255'],
+            'initial_status' => ['nullable', 'string', 'in:planning,registered'],
+            'external_registration_proof' => ['nullable', 'string', 'max:255'],
+            'redirect_to' => ['nullable', 'string', 'in:workspace,self,hub'],
         ]);
+
+        if (empty($validated['team_name'])) {
+            $validated['team_name'] = "Tim {$user->name}";
+        }
 
         $participation = $this->teamFormationService->createTeam($competition, $user, $validated);
 
-        return redirect()->route('competitions.workspace', $participation->id)
-            ->with('success', 'Tim kompetisi berhasil dibentuk! Selamat datang di Preparation Workspace.');
+        if (($validated['initial_status'] ?? 'planning') === 'registered') {
+            $participation->update([
+                'registration_status' => 'registered',
+                'stage' => 'registered',
+                'registered_at' => now(),
+                'external_registration_proof' => $validated['external_registration_proof'] ?? null,
+            ]);
+
+            CompetitionStatusHistory::create([
+                'participation_id' => $participation->id,
+                'from_stage' => 'recruiting',
+                'to_stage' => 'registered',
+                'notes' => 'Status pendaftaran resmi dikonfirmasi langsung oleh mahasiswa.',
+                'changed_by' => $user->id,
+            ]);
+        }
+
+        $redirectTo = $validated['redirect_to'] ?? ($request->input('redirect_to') ?? 'hub');
+        if ($redirectTo === 'workspace') {
+            return redirect()->route('competitions.workspace', $participation->id)
+                ->with('success', 'Kompetisi berhasil ditambahkan ke Lomba Saya! Selamat datang di Preparation Workspace.');
+        }
+
+        if ($redirectTo === 'self') {
+            return back()->with('success', "Kompetisi '{$competition->name}' berhasil ditambahkan ke Lomba Saya.");
+        }
+
+        return redirect()->route('competitions.index', ['tab' => 'my_competitions'])
+            ->with('success', "Kompetisi '{$competition->name}' berhasil ditambahkan ke Lomba Saya.");
     }
 
     public function workspaceIndex(Request $request): RedirectResponse
@@ -888,18 +1152,31 @@ class CompetitionWebController extends Controller
         DB::transaction(function () use ($participation, $oldStage, $newStage, $validated, $user) {
             $updateData = ['stage' => $newStage];
 
-            if (!empty($validated['external_registration_proof'])) {
-                $updateData['external_registration_proof'] = $validated['external_registration_proof'];
+            if ($newStage === 'registered' || !empty($validated['external_registration_proof'])) {
                 $updateData['registration_status'] = 'registered';
+                $updateData['registered_at'] = now();
+                if (!empty($validated['external_registration_proof'])) {
+                    $updateData['external_registration_proof'] = $validated['external_registration_proof'];
+                }
             }
-            if (!empty($validated['external_submission_proof'])) {
-                $updateData['external_submission_proof'] = $validated['external_submission_proof'];
+            if ($newStage === 'submitted' || !empty($validated['external_submission_proof'])) {
                 $updateData['submission_status'] = 'submitted';
+                $updateData['submitted_at'] = now();
+                if (!empty($validated['external_submission_proof'])) {
+                    $updateData['external_submission_proof'] = $validated['external_submission_proof'];
+                }
+            }
+
+            if (in_array($newStage, ['submitted', 'administrative_selection', 'shortlisted', 'finalist', 'final_presentation'])) {
+                $updateData['progress_status'] = 'in_competition';
             }
 
             // If terminal stage, update progress_status
             if (in_array($newStage, ['winner', 'not_selected', 'withdrawn'])) {
                 $updateData['progress_status'] = 'finished';
+                if ($newStage === 'withdrawn') {
+                    $updateData['registration_status'] = 'withdrawn';
+                }
             }
 
             $participation->update($updateData);
@@ -1036,10 +1313,11 @@ class CompetitionWebController extends Controller
         $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
 
         $isLeader = $participation->team && $participation->team->isLeader($user);
+        $isMember = $participation->team && $participation->team->hasMember($user);
         $isPrivileged = $user->isCampusAdminOf($participation->competition->campus_id) || $user->isPlatformAdmin() || $user->isLecturer();
 
-        if (!$isLeader && !$isPrivileged) {
-            abort(403, 'Hanya ketua tim atau dosen/admin yang dapat mencatat hasil kompetisi.');
+        if (!$isLeader && !$isMember && !$isPrivileged) {
+            abort(403, 'Hanya anggota/ketua tim atau dosen/admin yang dapat mencatat hasil kompetisi.');
         }
 
         $validated = $request->validate([
@@ -1054,6 +1332,8 @@ class CompetitionWebController extends Controller
         $certPath = null;
         if ($request->hasFile('certificate')) {
             $certPath = $request->file('certificate')->store('competitions/certificates', 'public');
+        } elseif (!empty($validated['evidence_url'])) {
+            $certPath = $validated['evidence_url'];
         }
 
         $this->membershipService->completeCompetition(
@@ -1691,5 +1971,40 @@ class CompetitionWebController extends Controller
         $role->delete();
 
         return back()->with('success', 'Lowongan peran berhasil dihapus.');
+    }
+
+    protected function getStageLabel(string $stage): string
+    {
+        return match ($stage) {
+            'recruiting' => 'Mencari Anggota Tim',
+            'team_formation' => 'Pembentukan Tim',
+            'preparing' => 'Persiapan Berkas & Karya',
+            'registered' => 'Terdaftar Resmi',
+            'submitted' => 'Karya Terkirim',
+            'administrative_selection' => 'Seleksi Administrasi',
+            'shortlisted' => 'Lolos Tahap Awal',
+            'finalist' => 'Finalis Lomba',
+            'final_presentation' => 'Presentasi Final',
+            'winner' => 'Pemenang / Juara',
+            'not_selected' => 'Belum Lolos',
+            'withdrawn' => 'Dibatalkan / Withdrawn',
+            default => ucwords(str_replace('_', ' ', $stage)),
+        };
+    }
+
+    protected function getOutcomeLabel(string|CompetitionOutcome $outcome): string
+    {
+        $val = $outcome instanceof \BackedEnum ? $outcome->value : (string) $outcome;
+        return match ($val) {
+            '1st_place' => 'Juara 1 (Emas)',
+            '2nd_place' => 'Juara 2 (Perak)',
+            '3rd_place' => 'Juara 3 (Perunggu)',
+            'finalist' => 'Finalis Resmi',
+            'special_award' => 'Penghargaan Khusus / Harapan',
+            'participant' => 'Peserta Resmi',
+            'not_selected' => 'Partisipan (Belum Lolos)',
+            'withdrawn' => 'Mengundurkan Diri',
+            default => ucwords(str_replace('_', ' ', $val)),
+        };
     }
 }

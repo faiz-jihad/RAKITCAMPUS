@@ -69,6 +69,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::get('/competition-workspace', [CompetitionWebController::class, 'workspaceIndex'])->name('competitions.workspace.index');
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');
+    Route::match(['post', 'patch'], '/competitions/participations/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.participations.stage');
     Route::post('/competition-workspace/{participationId}/lock-formation', [CompetitionWebController::class, 'lockFormation'])->name('competitions.lock-formation');
     Route::post('/competition-workspace/{participationId}/invite-member', [CompetitionWebController::class, 'inviteCandidate'])->name('competitions.invite-member');
     Route::post('/competition-workspace/{participationId}/send-invitation', [CompetitionWebController::class, 'sendTeamInvitation'])->name('competitions.invitations.send');
@@ -79,6 +80,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-workspace/{participationId}/deliverables/{docId}/review', [CompetitionWebController::class, 'reviewDeliverable'])->name('competitions.deliverables.review');
     Route::post('/competition-workspace/{participationId}/members/{userId}/withdraw', [CompetitionWebController::class, 'withdrawMember'])->name('competitions.members.withdraw');
     Route::post('/competition-workspace/{participationId}/result', [CompetitionWebController::class, 'recordResult'])->name('competitions.result.record');
+    Route::post('/competitions/participations/{participationId}/result', [CompetitionWebController::class, 'recordResult'])->name('competitions.participations.result');
     Route::post('/competition-workspace/{participationId}/result/verify', [CompetitionWebController::class, 'verifyResult'])->name('competitions.result.verify');
     Route::post('/competition-workspace/{participationId}/mentors', [CompetitionWebController::class, 'assignMentor'])->name('competitions.mentors.assign');
     Route::post('/competition-workspace/{participationId}/tasks', [CompetitionWebController::class, 'createTask'])->name('competitions.tasks.create');

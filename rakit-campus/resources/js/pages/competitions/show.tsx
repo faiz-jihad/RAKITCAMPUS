@@ -1,6 +1,9 @@
 import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
+import RecordResultModal from '@/components/competitions/RecordResultModal';
+import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
+import UpdateStageModal from '@/components/competitions/UpdateStageModal';
 import AppLayout from '@/layouts/app-layout';
 import { getCompetitionCover } from '@/lib/competition-cover';
 import { type BreadcrumbItem } from '@/types';
@@ -62,6 +65,9 @@ export default function CompetitionShow({
     myAllocations = [],
 }: Props) {
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
+    const [trackModalOpen, setTrackModalOpen] = useState(false);
+    const [stageModalOpen, setStageModalOpen] = useState(false);
+    const [resultModalOpen, setResultModalOpen] = useState(false);
     const [isParticipateModalOpen, setParticipateModalOpen] = useState(false);
     const [isAllocateModalOpen, setAllocateModalOpen] = useState(false);
     const setIsAllocateModalOpen = setAllocateModalOpen;
@@ -274,6 +280,31 @@ export default function CompetitionShow({
                         </div>
                     )}
 
+                    {/* Clear distinction notice between official registration & internal tracking */}
+                    <div className="bg-blue-50/70 border border-blue-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+                        <div className="flex items-start gap-2.5">
+                            <CheckCircle2 className="size-4 text-blue-600 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-bold text-slate-900">
+                                    Pembedaan Pendaftaran Resmi & Manajemen RAKIT Campus
+                                </p>
+                                <p className="text-slate-600 text-[11px] mt-0.5">
+                                    Pendaftaran resmi kompetisi dikelola langsung di situs resmi penyelenggara. RAKIT Campus digunakan untuk kolaborasi tim, persiapan dokumen, dan pencatatan rekam jejak prestasi.
+                                </p>
+                            </div>
+                        </div>
+                        {competition.registration_url && (
+                            <a
+                                href={competition.registration_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shrink-0 self-start sm:self-auto shadow-xs"
+                            >
+                                <span>Buka Pendaftaran Resmi ↗</span>
+                            </a>
+                        )}
+                    </div>
+
                     {/* Hero Header Card with Visual Banner */}
                     <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
                         {/* Cover Image Banner */}
@@ -410,23 +441,74 @@ export default function CompetitionShow({
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-wrap items-center gap-2.5">
                                 {myParticipation ? (
-                                    <Link
-                                        href={route('competitions.workspace', myParticipation.id)}
-                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition"
-                                    >
-                                        <FolderKanban className="size-4" />
-                                        <span>Masuk ke Preparation Workspace ({myParticipation.team?.name})</span>
-                                    </Link>
+                                    <>
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={`text-xs font-bold px-3 py-1 rounded-xl border ${
+                                                    myParticipation.lifecycle_status === 'completed'
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : myParticipation.lifecycle_status === 'registered'
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                        : myParticipation.lifecycle_status === 'in_progress'
+                                                        ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                                        : myParticipation.lifecycle_status === 'withdrawn'
+                                                        ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                }`}
+                                            >
+                                                Status: {myParticipation.stage_label || myParticipation.stage}
+                                            </span>
+                                        </div>
+
+                                        <Link
+                                            href={route('competitions.workspace', myParticipation.id)}
+                                            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition"
+                                        >
+                                            <FolderKanban className="size-4" />
+                                            <span>Workspace Tim</span>
+                                        </Link>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setStageModalOpen(true)}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                        >
+                                            <Clock className="size-3.5" />
+                                            <span>Update Tahap</span>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => setResultModalOpen(true)}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+                                        >
+                                            <Trophy className="size-3.5" />
+                                            <span>Catat Prestasi</span>
+                                        </button>
+                                    </>
                                 ) : (
-                                    <button
-                                        onClick={() => setParticipateModalOpen(true)}
-                                        className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition cursor-pointer"
-                                    >
-                                        <Trophy className="size-4" />
-                                        <span>Bentuk Tim & Ikuti Kompetisi</span>
-                                    </button>
+                                    <>
+                                        {competition.registration_url && (
+                                            <a
+                                                href={competition.registration_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-xs font-semibold shadow-2xs transition"
+                                            >
+                                                <span>Daftar di Penyelenggara</span>
+                                                <ExternalLink className="size-3.5" />
+                                            </a>
+                                        )}
+                                        <button
+                                            onClick={() => setTrackModalOpen(true)}
+                                            className="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition cursor-pointer"
+                                        >
+                                            <Trophy className="size-4" />
+                                            <span>Ikuti / Catat di Lomba Saya</span>
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         </div>
@@ -1066,6 +1148,27 @@ export default function CompetitionShow({
                     onClose={() => setApplyModalOpen(false)}
                     teamData={selectedTeamData}
                     currentUserInfo={currentUserInfo}
+                />
+
+                {/* Track Competition Lifecycle Modal */}
+                <TrackCompetitionModal
+                    isOpen={trackModalOpen}
+                    onClose={() => setTrackModalOpen(false)}
+                    competition={competition}
+                />
+
+                {/* Update Stage Modal */}
+                <UpdateStageModal
+                    isOpen={stageModalOpen}
+                    onClose={() => setStageModalOpen(false)}
+                    participation={myParticipation}
+                />
+
+                {/* Record Result Modal */}
+                <RecordResultModal
+                    isOpen={resultModalOpen}
+                    onClose={() => setResultModalOpen(false)}
+                    participation={myParticipation}
                 />
         </AppLayout>
     );
