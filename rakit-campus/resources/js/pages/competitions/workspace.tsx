@@ -375,6 +375,8 @@ export default function CompetitionWorkspace({
     ];
 
     const pendingAppsCount = incomingApplications.filter((a: any) => a.status === 'pending').length;
+    const hasInvitations = participation.team?.invitations && participation.team.invitations.length > 0;
+    const hasAllocations = teamAllocations.length > 0;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -438,7 +440,7 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 2. WORKSPACE HEADER CARD (Clean, Professional, Information-First) */}
+                {/* 2. WORKSPACE HEADER CARD */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs">
                     <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-5">
                         <div className="space-y-2">
@@ -486,9 +488,9 @@ export default function CompetitionWorkspace({
                                     rel="noreferrer"
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
                                 >
-                                    <Globe className="size-3.5 text-slate-400" />
+                                    <Globe className="size-3.5 text-slate-400 shrink-0" />
                                     <span>Website Resmi</span>
-                                    <ExternalLink className="size-3 text-slate-400" />
+                                    <ExternalLink className="size-3 text-slate-400 shrink-0" />
                                 </a>
                             )}
                             {participation.competition?.registration_url && (
@@ -499,7 +501,7 @@ export default function CompetitionWorkspace({
                                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs"
                                 >
                                     <span>Portal Registrasi Penyelenggara</span>
-                                    <ExternalLink className="size-3" />
+                                    <ExternalLink className="size-3 shrink-0" />
                                 </a>
                             )}
                         </div>
@@ -514,78 +516,78 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 3. METRIC OVERVIEW STRIP (4 Clean Equal Cards) */}
+                {/* 1) METRIC OVERVIEW STRIP (4 Clean Equal Cards) */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
                             Status Partisipasi
                         </span>
-                        <div className="mt-1">
-                            <span className="text-base font-bold text-slate-900 block truncate">
+                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
+                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
                                 {selectionStages[participation.stage]?.label || participation.stage}
                             </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block">
+                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
                                 {participation.registration_status === 'registered' ? 'Terdaftar Resmi' : 'Sedang Merencanakan'}
                             </span>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
                             Formasi Anggota
                         </span>
-                        <div className="mt-1">
-                            <span className="text-base font-bold text-slate-900 block">
+                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
+                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
                                 {participation.team?.members?.length || 0} / {participation.team?.capacity || participation.competition?.max_team_size || 5} Mahasiswa
                             </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block">
+                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
                                 {participation.is_formation_locked ? 'Susunan Terkunci' : 'Terbuka Rekrutmen'}
                             </span>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block shrink-0">
                             Berkas & Dokumen
                         </span>
-                        <div className="mt-1">
-                            <span className="text-base font-bold text-slate-900 block">
+                        <div className="mt-2 flex-1 flex flex-col justify-end min-w-0">
+                            <span className="text-sm font-bold leading-tight text-slate-900 block truncate">
                                 {participation.documents?.length || 0} Berkas Terkumpul
                             </span>
-                            <span className="text-[11px] text-slate-500 mt-0.5 block">
+                            <span className="text-[11px] text-slate-500 mt-0.5 block truncate">
                                 Proposal, pitch deck, link
                             </span>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col justify-between">
-                        <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs flex flex-col">
+                        <div className="flex items-center justify-between shrink-0">
+                            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                                 Skor Kesiapan
                             </span>
                             <span className="text-xs font-bold font-mono text-blue-600">
                                 {readinessScore}%
                             </span>
                         </div>
-                        <div className="mt-2">
-                            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="mt-2 flex-1 flex flex-col justify-end">
+                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-blue-600 rounded-full transition-all duration-300"
                                     style={{ width: `${readinessScore}%` }}
                                 />
                             </div>
-                            <span className="text-[10px] text-slate-400 mt-1 block">
+                            <span className="text-[10px] text-slate-400 mt-1 block truncate">
                                 {readinessScore >= 80 ? 'Siap Maju Kompetisi' : readinessScore >= 40 ? 'Progres Berjalan Baik' : 'Tahap Awal Persiapan'}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                {/* 4. SELECTION STAGES PROGRESS BAR (Clean Connected Stepper) */}
+                {/* 4. SELECTION STAGES PROGRESS BAR */}
                 <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs">
                     <div className="flex items-center justify-between mb-3 text-xs">
                         <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                            <History className="size-3.5 text-blue-600" />
+                            <History className="size-3.5 text-blue-600 shrink-0" />
                             <span>Alur Tahapan Seleksi</span>
                         </span>
                         <span className="text-slate-500">
@@ -611,7 +613,7 @@ export default function CompetitionWorkspace({
                                                 : 'bg-slate-50 text-slate-500 border border-slate-200/70'
                                         }`}
                                     >
-                                        <span className={`size-4 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                        <span className={`size-4 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${
                                             isCurrent ? 'bg-white/25 text-white' : isPassed ? 'bg-emerald-200 text-emerald-900' : 'bg-slate-200 text-slate-600'
                                         }`}>
                                             {isPassed ? <Check className="w-2.5 h-2.5 stroke-[3]" /> : index + 1}
@@ -623,8 +625,8 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 5. WORKSPACE TABS NAVIGATION */}
-                <div className="border-b border-slate-200 flex items-center gap-1 overflow-x-auto scrollbar-none">
+                {/* 2) WORKSPACE TABS NAVIGATION */}
+                <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none border-b border-slate-200 -mx-1 px-1">
                     {[
                         { id: 'overview', label: 'Tim & Formasi', icon: Users, count: participation.team?.members?.length || 0 },
                         { id: 'applicants', label: 'Pelamar MinSatu', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
@@ -643,23 +645,23 @@ export default function CompetitionWorkspace({
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold transition border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
+                                className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold transition border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
                                     isActive
                                         ? 'border-blue-600 text-blue-600 bg-white'
-                                        : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
+                                        : 'border-transparent text-slate-500 hover:text-slate-800'
                                 }`}
                             >
-                                <Icon className="size-3.5" />
+                                <Icon className="size-3.5 shrink-0" />
                                 <span>{tab.label}</span>
                                 {typeof tab.count === 'number' && (
-                                    <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md min-w-[18px] text-center shrink-0 ${
                                         isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
                                     }`}>
                                         {tab.count}
                                     </span>
                                 )}
                                 {tab.badge && (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-rose-500 text-white font-black animate-pulse">
+                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-rose-500 text-white shrink-0">
                                         {tab.badge}
                                     </span>
                                 )}
@@ -668,17 +670,17 @@ export default function CompetitionWorkspace({
                     })}
                 </div>
 
-                {/* 6. TAB CONTENT: OVERVIEW & TEAM */}
+                {/* 3) TAB CONTENT: OVERVIEW & TEAM */}
                 {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                        {/* Left Main (8 cols): Members List & Allocations */}
-                        <div className="lg:col-span-8 space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
+                        {/* Left Main (lg:col-span-2): Members List & Allocations */}
+                        <div className="lg:col-span-2 space-y-5">
                             {/* Current Members Card */}
                             <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                                     <div>
                                         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                            <Users className="size-4 text-blue-600" />
+                                            <Users className="size-4 text-blue-600 shrink-0" />
                                             <span>Susunan Anggota Tim</span>
                                         </h3>
                                         <p className="text-xs text-slate-400 mt-0.5">
@@ -692,7 +694,7 @@ export default function CompetitionWorkspace({
                                             onClick={() => setActiveTab('applicants')}
                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition cursor-pointer"
                                         >
-                                            <UserPlus className="size-3.5" />
+                                            <UserPlus className="size-3.5 shrink-0" />
                                             <span>Buka Lowongan Peran</span>
                                         </button>
                                     )}
@@ -706,14 +708,14 @@ export default function CompetitionWorkspace({
 
                                         return (
                                             <div key={member.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-3 min-w-0">
                                                     <div className="size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
                                                         {member.user?.name?.charAt(0) || 'U'}
                                                     </div>
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-xs font-bold text-slate-900">{member.user?.name}</span>
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                    <div className="min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="text-xs font-bold text-slate-900 truncate">{member.user?.name}</span>
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                                                                 member.permission === 'leader'
                                                                     ? 'bg-blue-50 text-blue-700 border border-blue-200'
                                                                     : 'bg-slate-100 text-slate-700'
@@ -721,13 +723,13 @@ export default function CompetitionWorkspace({
                                                                 {member.role_name || (member.permission === 'leader' ? 'Ketua Tim' : 'Anggota')}
                                                             </span>
                                                         </div>
-                                                        <p className="text-[11px] text-slate-400 mt-0.5">
+                                                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                                                             NIM: {member.user?.student_profile?.nim || 'Aktif'} • Bergabung: {new Date(member.joined_at || member.created_at).toLocaleDateString('id-ID')}
                                                         </p>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 flex-wrap sm:justify-end">
+                                                <div className="flex items-center gap-2 flex-wrap sm:justify-end shrink-0">
                                                     {member.user?.skills?.slice(0, 2).map((sk: any) => (
                                                         <span key={sk.id} className="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-600 border border-slate-200/80 font-medium">
                                                             {sk.name}
@@ -764,76 +766,81 @@ export default function CompetitionWorkspace({
                                 </div>
                             </div>
 
-                            {/* Sent Invitations */}
-                            {participation.team?.invitations && participation.team.invitations.length > 0 && (
-                                <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
-                                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                        <Send className="size-3.5 text-blue-600" />
-                                        <span>Undangan Terkirim ({participation.team.invitations.length})</span>
-                                    </h4>
+                            {/* Invitations + Allocations (Render wrapper ONLY if either has content) */}
+                            {(hasInvitations || hasAllocations) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {/* Sent Invitations */}
+                                    {hasInvitations && (
+                                        <div className={`bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 ${!hasAllocations ? 'md:col-span-2' : ''}`}>
+                                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Send className="size-3.5 text-blue-600 shrink-0" />
+                                                <span>Undangan Terkirim ({participation.team.invitations.length})</span>
+                                            </h4>
 
-                                    <div className="space-y-2">
-                                        {participation.team.invitations.map((inv: any) => (
-                                            <div
-                                                key={inv.id}
-                                                className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
-                                            >
-                                                <div>
-                                                    <span className="font-bold text-slate-900">{inv.invitee?.name || 'Mahasiswa'}</span>
-                                                    <span className="text-[11px] text-slate-400 ml-1.5">({inv.role_name || 'Anggota'})</span>
-                                                    {inv.message && <p className="text-[11px] text-slate-500 italic mt-0.5">"{inv.message}"</p>}
-                                                </div>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                                    inv.status === 'accepted' ? 'bg-emerald-50 text-emerald-700' : inv.status === 'declined' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
-                                                }`}>
-                                                    {inv.status}
-                                                </span>
+                                            <div className="space-y-2">
+                                                {participation.team.invitations.map((inv: any) => (
+                                                    <div
+                                                        key={inv.id}
+                                                        className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <span className="font-bold text-slate-900 block truncate">{inv.invitee?.name || 'Mahasiswa'}</span>
+                                                            <span className="text-[11px] text-slate-400">({inv.role_name || 'Anggota'})</span>
+                                                            {inv.message && <p className="text-[11px] text-slate-500 italic mt-0.5 truncate">"{inv.message}"</p>}
+                                                        </div>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                            inv.status === 'accepted' ? 'bg-emerald-50 text-emerald-700' : inv.status === 'declined' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
+                                                        }`}>
+                                                            {inv.status}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                        </div>
+                                    )}
 
-                            {/* Lecturer Allocations */}
-                            {teamAllocations.length > 0 && (
-                                <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
-                                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                        <GraduationCap className="size-3.5 text-purple-600" />
-                                        <span>Alokasi Mahasiswa oleh Dosen ({teamAllocations.length})</span>
-                                    </h4>
+                                    {/* Lecturer Allocations */}
+                                    {hasAllocations && (
+                                        <div className={`bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 ${!hasInvitations ? 'md:col-span-2' : ''}`}>
+                                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                                <GraduationCap className="size-3.5 text-purple-600 shrink-0" />
+                                                <span>Alokasi Mahasiswa Dosen ({teamAllocations.length})</span>
+                                            </h4>
 
-                                    <div className="space-y-2">
-                                        {teamAllocations.map((alloc: any) => (
-                                            <div
-                                                key={alloc.id}
-                                                className="p-3 bg-purple-50/40 rounded-xl border border-purple-200/70 flex items-center justify-between gap-3 text-xs"
-                                            >
-                                                <div>
-                                                    <span className="font-bold text-purple-950">{alloc.student?.name}</span>
-                                                    <span className="text-[11px] text-purple-700 ml-1.5">• Peran: {alloc.suggested_role || 'Anggota'}</span>
-                                                    <p className="text-[10px] text-slate-400 mt-0.5">Oleh Dosen: {alloc.lecturer?.name || 'Dosen'}</p>
-                                                </div>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">
-                                                    {alloc.status}
-                                                </span>
+                                            <div className="space-y-2">
+                                                {teamAllocations.map((alloc: any) => (
+                                                    <div
+                                                        key={alloc.id}
+                                                        className="p-3 bg-purple-50/40 rounded-xl border border-purple-200/70 flex items-center justify-between gap-3 text-xs"
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <span className="font-bold text-purple-950 block truncate">{alloc.student?.name}</span>
+                                                            <span className="text-[11px] text-purple-700">• Peran: {alloc.suggested_role || 'Anggota'}</span>
+                                                            <p className="text-[10px] text-slate-400 mt-0.5 truncate">Oleh: {alloc.lecturer?.name || 'Dosen'}</p>
+                                                        </div>
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 shrink-0">
+                                                            {alloc.status}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        {/* Right Sidebar (4 cols): Competition Details & Matchmaking */}
-                        <div className="lg:col-span-4 space-y-6">
+                        {/* Right Sidebar (1 col): Competition Details & Matchmaking */}
+                        <div className="space-y-5">
                             {/* Competition Quick Info */}
                             <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
                                 <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                                     Informasi Lomba
                                 </h4>
-                                <div className="space-y-2 text-xs">
+                                <dl className="space-y-3 text-xs">
                                     <div>
-                                        <span className="text-slate-400 block text-[11px]">Batas Pendaftaran</span>
-                                        <span className="font-bold text-slate-800">
+                                        <dt className="text-[11px] text-slate-400">Batas Pendaftaran</dt>
+                                        <dd className="font-bold text-slate-800 mt-0.5">
                                             {participation.competition?.registration_deadline
                                                 ? new Date(participation.competition.registration_deadline).toLocaleDateString('id-ID', {
                                                       day: 'numeric',
@@ -841,31 +848,31 @@ export default function CompetitionWorkspace({
                                                       year: 'numeric',
                                                   })
                                                 : 'Terbuka'}
-                                        </span>
+                                        </dd>
                                     </div>
                                     <div>
-                                        <span className="text-slate-400 block text-[11px]">Format Tim</span>
-                                        <span className="font-bold text-slate-800">
+                                        <dt className="text-[11px] text-slate-400">Format Tim</dt>
+                                        <dd className="font-bold text-slate-800 mt-0.5">
                                             {participation.competition?.min_team_size || 1} - {participation.competition?.max_team_size || 5} Orang
-                                        </span>
+                                        </dd>
                                     </div>
                                     {participation.competition?.prize_info && (
                                         <div>
-                                            <span className="text-slate-400 block text-[11px]">Total Hadiah</span>
-                                            <span className="font-bold text-emerald-700">{participation.competition.prize_info}</span>
+                                            <dt className="text-[11px] text-slate-400">Total Hadiah</dt>
+                                            <dd className="font-bold text-emerald-700 mt-0.5">{participation.competition.prize_info}</dd>
                                         </div>
                                     )}
-                                </div>
+                                </dl>
                             </div>
 
                             {/* Smart Matchmaking Recommendations */}
                             <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
                                 <div className="flex items-center justify-between">
                                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                        <Sparkles className="size-3.5 text-amber-500" />
+                                        <Sparkles className="size-3.5 text-amber-500 shrink-0" />
                                         <span>Rekomendasi Rekan</span>
                                     </h4>
-                                    <span className="text-[10px] text-slate-400">Matchmaking</span>
+                                    <span className="text-[10px] text-slate-400 shrink-0">Matchmaking</span>
                                 </div>
 
                                 {recommendedCandidates.length === 0 ? (
@@ -874,43 +881,41 @@ export default function CompetitionWorkspace({
                                     </p>
                                 ) : (
                                     <div className="space-y-2.5">
-                                        {recommendedCandidates.slice(0, 4).map((cand: any) => (
+                                        {recommendedCandidates.slice(0, 3).map((cand: any) => (
                                             <div
                                                 key={cand.user.id}
-                                                className="p-3 rounded-xl border border-slate-200/80 hover:border-blue-300 transition space-y-2"
+                                                className="p-3.5 rounded-xl border border-slate-200/80 hover:border-blue-300 transition space-y-2"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
-                                                    <div>
-                                                        <div className="text-xs font-bold text-slate-900">{cand.user.name}</div>
-                                                        <p className="text-[10px] text-slate-400">{cand.explanation}</p>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-xs font-bold text-slate-900 truncate">{cand.user.name}</div>
+                                                        <p className="text-[10px] text-slate-400 truncate">{cand.explanation}</p>
                                                     </div>
-                                                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                                                         {cand.final_score}%
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                                                    <div className="flex items-center gap-1 flex-wrap">
-                                                        {cand.matched_skills?.slice(0, 2).map((sk: string, i: number) => (
-                                                            <span key={i} className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                                                                {sk}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-
-                                                    {isLeader && !participation.is_formation_locked && cand.eligible && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedCandidate(cand);
-                                                                setInviteModalOpen(true);
-                                                            }}
-                                                            className="px-2 py-0.8 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer"
-                                                        >
-                                                            Undang
-                                                        </button>
-                                                    )}
+                                                <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-slate-100">
+                                                    {cand.matched_skills?.slice(0, 2).map((sk: string, i: number) => (
+                                                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                                                            {sk}
+                                                        </span>
+                                                    ))}
                                                 </div>
+
+                                                {isLeader && !participation.is_formation_locked && cand.eligible && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setSelectedCandidate(cand);
+                                                            setInviteModalOpen(true);
+                                                        }}
+                                                        className="w-full py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer"
+                                                    >
+                                                        Undang
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                     </div>
@@ -920,7 +925,7 @@ export default function CompetitionWorkspace({
                     </div>
                 )}
 
-                {/* 7. TAB CONTENT: APPLICANTS & MINSATU RECRUITMENT */}
+                {/* 6) TAB CONTENT: APPLICANTS & MINSATU RECRUITMENT */}
                 {activeTab === 'applicants' && (
                     <div className="space-y-6">
                         {/* Open Roles Section */}
@@ -928,7 +933,7 @@ export default function CompetitionWorkspace({
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <Briefcase className="size-4 text-purple-600" />
+                                        <Briefcase className="size-4 text-purple-600 shrink-0" />
                                         <span>Posisi / Peran yang Dicari Tim ({recruitmentRoles.length})</span>
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-0.5">
@@ -940,7 +945,7 @@ export default function CompetitionWorkspace({
                                     <button
                                         type="button"
                                         onClick={() => setAddingRole(!addingRole)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition cursor-pointer self-start sm:self-auto"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition cursor-pointer self-start sm:self-auto shrink-0"
                                     >
                                         <Plus className="size-3.5" />
                                         <span>Tambah Posisi</span>
@@ -953,7 +958,7 @@ export default function CompetitionWorkspace({
                                 <form onSubmit={handleAddRecruitmentRole} className="p-4 rounded-xl bg-purple-50/50 border border-purple-200 space-y-3">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="sm:col-span-2">
-                                            <label className="text-xs font-bold text-purple-950 block mb-1">
+                                            <label className="block text-xs font-bold text-slate-800 mb-1">
                                                 Nama Peran / Posisi <span className="text-rose-500">*</span>
                                             </label>
                                             <input
@@ -962,11 +967,11 @@ export default function CompetitionWorkspace({
                                                 placeholder="Contoh: UI/UX Designer, Frontend Developer, Pitcher"
                                                 value={newRoleName}
                                                 onChange={(e) => setNewRoleName(e.target.value)}
-                                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-xs focus:ring-1 focus:ring-purple-500"
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs font-bold text-purple-950 block mb-1">
+                                            <label className="block text-xs font-bold text-slate-800 mb-1">
                                                 Jumlah Slot <span className="text-rose-500">*</span>
                                             </label>
                                             <input
@@ -976,13 +981,13 @@ export default function CompetitionWorkspace({
                                                 required
                                                 value={newRoleSlots}
                                                 onChange={(e) => setNewRoleSlots(parseInt(e.target.value, 10) || 1)}
-                                                className="w-full px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-xs focus:ring-1 focus:ring-purple-500"
+                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="text-xs font-bold text-purple-950 block mb-1">
+                                        <label className="block text-xs font-bold text-slate-800 mb-1">
                                             Kualifikasi Singkat (Opsional)
                                         </label>
                                         <input
@@ -990,7 +995,7 @@ export default function CompetitionWorkspace({
                                             placeholder="Contoh: Menguasai Figma, familiar dengan React, atau mampu riset pasar"
                                             value={newRoleReqs}
                                             onChange={(e) => setNewRoleReqs(e.target.value)}
-                                            className="w-full px-3 py-1.5 rounded-lg bg-white border border-purple-200 text-xs focus:ring-1 focus:ring-purple-500"
+                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
                                         />
                                     </div>
 
@@ -998,7 +1003,7 @@ export default function CompetitionWorkspace({
                                         <button
                                             type="button"
                                             onClick={() => setAddingRole(false)}
-                                            className="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
                                         >
                                             Batal
                                         </button>
@@ -1021,36 +1026,37 @@ export default function CompetitionWorkspace({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
                                     {recruitmentRoles.map((r: any) => (
                                         <div
                                             key={r.id}
-                                            className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex items-start justify-between gap-2"
+                                            className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between gap-2.5"
                                         >
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-xs font-bold text-slate-900">{r.name}</span>
-                                                    <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-purple-100 text-purple-800">
-                                                        {r.slots} Slot
-                                                    </span>
+                                            <div className="flex-1 flex flex-col">
+                                                <div className="flex items-start justify-between gap-2">
+                                                    <div className="min-w-0 flex-1">
+                                                        <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
+                                                        <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 mt-1 shrink-0">
+                                                            {r.slots} Slot
+                                                        </span>
+                                                    </div>
+                                                    {isLeader && !participation.is_formation_locked && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteRecruitmentRole(r.id)}
+                                                            className="text-slate-400 hover:text-rose-600 p-1 rounded transition shrink-0"
+                                                            title="Hapus lowongan"
+                                                        >
+                                                            <Trash2 className="size-3.5" />
+                                                        </button>
+                                                    )}
                                                 </div>
                                                 {r.requirements && (
-                                                    <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">
+                                                    <p className="text-[11px] text-slate-500 mt-2 line-clamp-2 flex-1">
                                                         {r.requirements}
                                                     </p>
                                                 )}
                                             </div>
-
-                                            {isLeader && !participation.is_formation_locked && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleDeleteRecruitmentRole(r.id)}
-                                                    className="text-slate-400 hover:text-rose-600 p-1 rounded transition"
-                                                    title="Hapus lowongan"
-                                                >
-                                                    <Trash2 className="size-3.5" />
-                                                </button>
-                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -1061,7 +1067,7 @@ export default function CompetitionWorkspace({
                         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                             <div className="border-b border-slate-100 pb-3">
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <UserPlus className="size-4 text-blue-600" />
+                                    <UserPlus className="size-4 text-blue-600 shrink-0" />
                                     <span>Pelamar Masuk ({incomingApplications.length})</span>
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1088,7 +1094,7 @@ export default function CompetitionWorkspace({
                                         return (
                                             <div
                                                 key={app.id}
-                                                className={`p-4 rounded-xl border transition space-y-3 ${
+                                                className={`p-3.5 rounded-xl border transition space-y-2.5 ${
                                                     app.status === 'accepted'
                                                         ? 'bg-emerald-50/20 border-emerald-200'
                                                         : app.status === 'rejected'
@@ -1096,20 +1102,20 @@ export default function CompetitionWorkspace({
                                                         : 'bg-white border-slate-200 hover:border-blue-300'
                                                 }`}
                                             >
-                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                                                    <div className="flex items-start gap-3">
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                    <div className="flex items-start gap-3 min-w-0">
                                                         <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                                             {applicant?.name ? applicant.name.charAt(0) : 'U'}
                                                         </div>
-                                                        <div>
+                                                        <div className="min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="text-xs font-bold text-slate-900">
+                                                                <span className="text-xs font-bold text-slate-900 truncate">
                                                                     {applicant?.name || 'Mahasiswa'}
                                                                 </span>
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
                                                                     Posisi: {app.role_name}
                                                                 </span>
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                                                                     app.status === 'accepted'
                                                                         ? 'bg-emerald-100 text-emerald-800'
                                                                         : app.status === 'rejected'
@@ -1119,7 +1125,7 @@ export default function CompetitionWorkspace({
                                                                     {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-[11px] text-slate-400 mt-0.5">
+                                                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
                                                                 {applicant?.study_program || 'Mahasiswa'} {applicant?.semester ? `• Semester ${applicant.semester}` : ''}
                                                             </p>
                                                         </div>
@@ -1133,7 +1139,7 @@ export default function CompetitionWorkspace({
                                                 </div>
 
                                                 {app.message && (
-                                                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-700">
+                                                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-700">
                                                         <p className="italic">"{app.message}"</p>
                                                     </div>
                                                 )}
@@ -1144,7 +1150,7 @@ export default function CompetitionWorkspace({
                                                             href={waUrl}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition"
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition shrink-0"
                                                         >
                                                             <Phone className="size-3" />
                                                             <span>Chat WhatsApp ({phone})</span>
@@ -1154,18 +1160,18 @@ export default function CompetitionWorkspace({
                                                     )}
 
                                                     {isLeader && app.status === 'pending' && !participation.is_formation_locked && (
-                                                        <div className="flex items-center gap-1.5">
+                                                        <div className="flex items-center gap-1.5 shrink-0">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleRespondApplication(app.id, 'reject')}
-                                                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition"
+                                                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer"
                                                             >
                                                                 Tolak
                                                             </button>
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleRespondApplication(app.id, 'accept')}
-                                                                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition"
+                                                                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
                                                             >
                                                                 Terima Masuk Tim
                                                             </button>
@@ -1181,13 +1187,13 @@ export default function CompetitionWorkspace({
                     </div>
                 )}
 
-                {/* 8. TAB CONTENT: KANBAN TASKS */}
+                {/* 4) TAB CONTENT: KANBAN TASKS */}
                 {activeTab === 'kanban' && (
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <FolderKanban className="size-4 text-blue-600" />
+                                    <FolderKanban className="size-4 text-blue-600 shrink-0" />
                                     <span>Papan Tugas Sprint Kompetisi</span>
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1207,13 +1213,13 @@ export default function CompetitionWorkspace({
                         </div>
 
                         {/* 4-Column Board */}
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
                             {(
                                 [
-                                    { key: 'todo', label: 'Belum Dimulai', badge: 'bg-slate-200 text-slate-700' },
-                                    { key: 'in_progress', label: 'Sedang Dikerjakan', badge: 'bg-blue-100 text-blue-700' },
-                                    { key: 'in_review', label: 'Review & Ulasan', badge: 'bg-amber-100 text-amber-800' },
-                                    { key: 'completed', label: 'Selesai', badge: 'bg-emerald-100 text-emerald-800' },
+                                    { key: 'todo', label: 'Belum Dimulai', dot: 'bg-slate-400' },
+                                    { key: 'in_progress', label: 'Sedang Dikerjakan', dot: 'bg-blue-500' },
+                                    { key: 'in_review', label: 'Review & Ulasan', dot: 'bg-amber-500' },
+                                    { key: 'completed', label: 'Selesai', dot: 'bg-emerald-500' },
                                 ] as const
                             ).map((col) => {
                                 const colTasks = participation.team?.tasks?.filter((t: any) => t.status === col.key) || [];
@@ -1226,36 +1232,38 @@ export default function CompetitionWorkspace({
                                         onDragOver={(e) => handleDragOver(e, col.key)}
                                         onDragLeave={(e) => handleDragLeave(e, col.key)}
                                         onDrop={(e) => handleDrop(e, col.key)}
-                                        className={`rounded-2xl p-3 flex flex-col gap-2.5 min-h-[380px] transition-all duration-150 ${
+                                        style={{ minHeight: '300px' }}
+                                        className={`rounded-2xl p-2.5 flex flex-col gap-2.5 transition-all duration-150 ${
                                             isDragTarget
                                                 ? 'bg-blue-50/80 border-2 border-dashed border-blue-400'
                                                 : 'bg-slate-100/70 border border-slate-200/80'
                                         }`}
                                     >
-                                        <div className="flex items-center justify-between px-1">
-                                            <span className="text-xs font-bold text-slate-800">{col.label}</span>
-                                            <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md ${col.badge}`}>
+                                        <div className="flex items-center justify-between px-1 shrink-0">
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={`size-2 rounded-full ${col.dot} shrink-0`} />
+                                                <span className="text-xs font-bold text-slate-800">{col.label}</span>
+                                            </div>
+                                            <span className="text-[10px] font-bold text-slate-400">
                                                 {colTasks.length}
                                             </span>
                                         </div>
 
                                         <div className="flex flex-col gap-2 flex-1">
                                             {colTasks.length === 0 && !isAddingHere && (
-                                                <div className="h-20 flex flex-col items-center justify-center p-2 text-center border border-dashed border-slate-300 rounded-xl text-slate-400">
-                                                    <span className="text-[11px]">Belum ada kartu</span>
-                                                    {isMember && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setInlineAddingCol(col.key);
-                                                                setInlineTitle('');
-                                                            }}
-                                                            className="text-[11px] text-blue-600 font-bold hover:underline cursor-pointer mt-1"
-                                                        >
-                                                            + Tambah
-                                                        </button>
-                                                    )}
-                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (isMember) {
+                                                            setInlineAddingCol(col.key);
+                                                            setInlineTitle('');
+                                                        }
+                                                    }}
+                                                    className="flex-1 min-h-[80px] flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition cursor-pointer"
+                                                >
+                                                    <Plus className="size-4 shrink-0" />
+                                                    <span className="text-[10px] font-semibold">Tambah kartu</span>
+                                                </button>
                                             )}
 
                                             {colTasks.map((task: any) => {
@@ -1266,12 +1274,12 @@ export default function CompetitionWorkspace({
                                                         key={task.id}
                                                         draggable={isMember}
                                                         onDragStart={(e) => handleDragStart(e, task.id, col.key)}
-                                                        className={`bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs hover:border-blue-300 transition flex flex-col gap-2 cursor-grab select-none ${
+                                                        className={`bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs hover:border-blue-300 transition flex flex-col gap-2 cursor-grab active:cursor-grabbing select-none ${
                                                             isBeingDragged ? 'opacity-40' : ''
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between gap-1">
-                                                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${
+                                                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0 ${
                                                                 task.priority === 'urgent'
                                                                     ? 'bg-rose-50 text-rose-700'
                                                                     : task.priority === 'high'
@@ -1307,8 +1315,8 @@ export default function CompetitionWorkspace({
                                                         )}
 
                                                         <div className="flex items-center justify-between text-[10px] pt-1.5 border-t border-slate-100 text-slate-400">
-                                                            <span>{task.assignee?.name?.split(' ')[0] || 'Unassigned'}</span>
-                                                            {task.due_on && <span>{task.due_on}</span>}
+                                                            <span className="truncate">{task.assignee?.name?.split(' ')[0] || 'Unassigned'}</span>
+                                                            {task.due_on && <span className="shrink-0">{task.due_on}</span>}
                                                         </div>
                                                     </div>
                                                 );
@@ -1346,16 +1354,16 @@ export default function CompetitionWorkspace({
                                             )}
                                         </div>
 
-                                        {isMember && !isAddingHere && (
+                                        {isMember && !isAddingHere && colTasks.length > 0 && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
                                                     setInlineAddingCol(col.key);
                                                     setInlineTitle('');
                                                 }}
-                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition text-left cursor-pointer"
+                                                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-200 transition text-left cursor-pointer shrink-0"
                                             >
-                                                <Plus className="size-3.5" />
+                                                <Plus className="size-3.5 shrink-0" />
                                                 <span>Tambah kartu</span>
                                             </button>
                                         )}
@@ -1366,14 +1374,14 @@ export default function CompetitionWorkspace({
                     </div>
                 )}
 
-                {/* 9. TAB CONTENT: DOCUMENTS & DELIVERABLES */}
+                {/* 5) TAB CONTENT: DOCUMENTS & DELIVERABLES */}
                 {activeTab === 'documents' && (
                     <div className="space-y-6">
                         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <FileText className="size-4 text-blue-600" />
+                                        <FileText className="size-4 text-blue-600 shrink-0" />
                                         <span>Berkas & Karya Kompetisi</span>
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-0.5">
@@ -1385,7 +1393,7 @@ export default function CompetitionWorkspace({
                                     <button
                                         type="button"
                                         onClick={() => setDocModalOpen(true)}
-                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto"
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
                                     >
                                         <Upload className="size-3.5" />
                                         <span>Unggah Berkas Baru</span>
@@ -1401,57 +1409,57 @@ export default function CompetitionWorkspace({
                                     return (
                                         <div
                                             key={tpl.key}
-                                            className={`p-4 rounded-xl border flex flex-col justify-between gap-3 ${
-                                                matchedDoc ? 'bg-emerald-50/20 border-emerald-200' : 'bg-slate-50 border-slate-200/80'
+                                            className={`rounded-xl border flex flex-col gap-2.5 p-3.5 ${
+                                                matchedDoc ? 'bg-emerald-50/30 border-emerald-200' : 'bg-slate-50 border-slate-200/80'
                                             }`}
                                         >
-                                            <div>
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="text-xs font-bold text-slate-900">{tpl.label}</span>
-                                                    {matchedDoc ? (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md">
-                                                            <Check className="size-3" />
-                                                            <span>Siap</span>
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-200/70 px-2 py-0.5 rounded-md">
-                                                            Belum Ada
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">
-                                                    {tpl.desc}
-                                                </p>
+                                            <div className="flex items-start justify-between gap-2">
+                                                <span className="text-xs font-bold text-slate-900 leading-snug">{tpl.label}</span>
+                                                {matchedDoc ? (
+                                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                                                ) : (
+                                                    <span className="text-[9px] font-semibold text-slate-400 bg-slate-200/70 px-1.5 py-0.5 rounded shrink-0">
+                                                        Kosong
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            {matchedDoc ? (
-                                                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                                                    <span className="text-[10px] text-slate-500 font-mono">v{matchedDoc.version}</span>
-                                                    <a
-                                                        href={matchedDoc.file_path || matchedDoc.url}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="font-bold text-blue-600 hover:underline flex items-center gap-1"
-                                                    >
-                                                        <span>Buka</span>
-                                                        <ExternalLink className="size-3" />
-                                                    </a>
-                                                </div>
-                                            ) : (
-                                                isMember && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            docForm.setData('required_document_key', tpl.key);
-                                                            docForm.setData('name', tpl.label);
-                                                            setDocModalOpen(true);
-                                                        }}
-                                                        className="text-[11px] font-bold text-blue-600 hover:text-blue-700 text-left cursor-pointer"
-                                                    >
-                                                        + Unggah sekarang
-                                                    </button>
-                                                )
-                                            )}
+                                            <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed flex-1">
+                                                {tpl.desc}
+                                            </p>
+
+                                            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                                                {matchedDoc ? (
+                                                    <>
+                                                        <span className="text-[10px] text-slate-500 font-mono">v{matchedDoc.version}</span>
+                                                        <a
+                                                            href={matchedDoc.file_path || matchedDoc.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="font-bold text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+                                                        >
+                                                            <span>Buka</span>
+                                                            <ExternalLink className="size-3 shrink-0" />
+                                                        </a>
+                                                    </>
+                                                ) : (
+                                                    isMember ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                docForm.setData('required_document_key', tpl.key);
+                                                                docForm.setData('name', tpl.label);
+                                                                setDocModalOpen(true);
+                                                            }}
+                                                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 text-left cursor-pointer"
+                                                        >
+                                                            + Unggah sekarang
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-[11px] text-slate-400 italic">Belum diunggah</span>
+                                                    )
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -1468,8 +1476,8 @@ export default function CompetitionWorkspace({
                                         {participation.documents.map((doc: any) => (
                                             <div key={doc.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                                                 <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <FileText className="size-3.5 text-blue-600" />
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <FileText className="size-3.5 text-blue-600 shrink-0" />
                                                         <span className="font-bold text-slate-900">{doc.name}</span>
                                                         <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">v{doc.version}</span>
                                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
@@ -1488,7 +1496,7 @@ export default function CompetitionWorkspace({
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 shrink-0">
                                                     {(doc.file_path || doc.url) && (
                                                         <a
                                                             href={doc.file_path || doc.url}
@@ -1496,7 +1504,7 @@ export default function CompetitionWorkspace({
                                                             rel="noreferrer"
                                                             className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5"
                                                         >
-                                                            <Download className="size-3" />
+                                                            <Download className="size-3 shrink-0" />
                                                             <span>Unduh / Tinjau</span>
                                                         </a>
                                                     )}
@@ -1528,7 +1536,7 @@ export default function CompetitionWorkspace({
                     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                         <div className="border-b border-slate-100 pb-3">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <Clock className="size-4 text-blue-600" />
+                                <Clock className="size-4 text-blue-600 shrink-0" />
                                 <span>Babak & Tahapan Kompetisi ({rounds.length})</span>
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
@@ -1547,11 +1555,11 @@ export default function CompetitionWorkspace({
                                     <div key={rnd.id || i} className="p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <span className="size-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px]">
+                                                <span className="size-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px] shrink-0">
                                                     {rnd.round_number || i + 1}
                                                 </span>
                                                 <span className="font-bold text-slate-900 text-sm">{rnd.name}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                                                     rnd.status === 'active' ? 'bg-blue-50 text-blue-700' : rnd.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
                                                 }`}>
                                                     {rnd.status}
@@ -1560,7 +1568,7 @@ export default function CompetitionWorkspace({
                                             {rnd.description && <p className="text-[11px] text-slate-500 mt-1">{rnd.description}</p>}
                                         </div>
 
-                                        <div className="text-right sm:text-right text-slate-500">
+                                        <div className="text-right sm:text-right text-slate-500 shrink-0">
                                             {rnd.deadline && (
                                                 <span className="font-semibold text-slate-800 block">
                                                     Deadline: {new Date(rnd.deadline).toLocaleDateString('id-ID')}
@@ -1580,7 +1588,7 @@ export default function CompetitionWorkspace({
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <GraduationCap className="size-4 text-blue-600" />
+                                    <GraduationCap className="size-4 text-blue-600 shrink-0" />
                                     <span>Dosen Pembimbing Kompetisi</span>
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1592,7 +1600,7 @@ export default function CompetitionWorkspace({
                                 <button
                                     type="button"
                                     onClick={() => setMentorModalOpen(true)}
-                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shrink-0"
                                 >
                                     {participation.mentor ? 'Ganti Dosen Pembimbing' : 'Tugaskan Dosen Pembimbing'}
                                 </button>
@@ -1602,7 +1610,7 @@ export default function CompetitionWorkspace({
                         {participation.mentor ? (
                             <div className="p-4 rounded-xl bg-purple-50/40 border border-purple-200 space-y-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-11 rounded-xl bg-purple-700 text-white font-bold flex items-center justify-center text-sm">
+                                    <div className="size-11 rounded-xl bg-purple-700 text-white font-bold flex items-center justify-center text-sm shrink-0">
                                         {participation.mentor.name?.charAt(0) || 'D'}
                                     </div>
                                     <div>
@@ -1636,7 +1644,7 @@ export default function CompetitionWorkspace({
                         <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <Trophy className="size-4 text-amber-500" />
+                                    <Trophy className="size-4 text-amber-500 shrink-0" />
                                     <span>Capaian & Prestasi Kompetisi</span>
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
@@ -1648,7 +1656,7 @@ export default function CompetitionWorkspace({
                                 <button
                                     type="button"
                                     onClick={() => setResultModalOpen(true)}
-                                    className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition cursor-pointer"
+                                    className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition cursor-pointer shrink-0"
                                 >
                                     {participation.result ? 'Perbarui Hasil' : 'Catat Hasil Kompetisi'}
                                 </button>
@@ -1660,7 +1668,7 @@ export default function CompetitionWorkspace({
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <Trophy className="size-5 text-amber-600" />
+                                            <Trophy className="size-5 text-amber-600 shrink-0" />
                                             <h4 className="text-base font-extrabold text-slate-900">
                                                 {participation.result.achievement_title || 'Prestasi Kompetisi'}
                                             </h4>
@@ -1671,7 +1679,7 @@ export default function CompetitionWorkspace({
                                         </p>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 shrink-0">
                                         <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${
                                             participation.result.verification_status === 'verified'
                                                 ? 'bg-emerald-100 text-emerald-800'
@@ -1684,7 +1692,7 @@ export default function CompetitionWorkspace({
                                             <button
                                                 type="button"
                                                 onClick={handleVerifyResult}
-                                                className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition"
+                                                className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
                                             >
                                                 Verifikasi Resmi
                                             </button>
@@ -1709,7 +1717,7 @@ export default function CompetitionWorkspace({
                                             rel="noreferrer"
                                             className="font-bold text-amber-900 hover:underline flex items-center gap-1"
                                         >
-                                            <Download className="size-3.5" />
+                                            <Download className="size-3.5 shrink-0" />
                                             <span>Lihat Sertifikat</span>
                                         </a>
                                     )}
@@ -1732,7 +1740,7 @@ export default function CompetitionWorkspace({
                     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                         <div className="border-b border-slate-100 pb-3">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <History className="size-4 text-blue-600" />
+                                <History className="size-4 text-blue-600 shrink-0" />
                                 <span>Riwayat Perubahan Status & Tahapan Seleksi</span>
                             </h3>
                             <p className="text-xs text-slate-500 mt-0.5">
@@ -1773,12 +1781,12 @@ export default function CompetitionWorkspace({
                 )}
             </div>
 
-            {/* MODALS */}
+            {/* 7) MODAL FORMS */}
 
             {/* MODAL 1: UPDATE STAGE */}
             {stageModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Pembaruan Tahap Seleksi</h3>
                             <button type="button" onClick={() => setStageModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -1857,7 +1865,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 2: SEND INVITATION */}
             {inviteModalOpen && selectedCandidate && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Undang Calon Anggota</h3>
                             <button type="button" onClick={() => setInviteModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -1922,7 +1930,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 3: CREATE TASK */}
             {taskModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Tambah Tugas Baru</h3>
                             <button type="button" onClick={() => setTaskModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -2017,7 +2025,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 4: UPLOAD DOCUMENT */}
             {docModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Unggah Berkas / Karya</h3>
                             <button type="button" onClick={() => setDocModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -2100,7 +2108,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 5: REVIEW DOCUMENT */}
             {reviewModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Ulas Berkas Karya</h3>
                             <button type="button" onClick={() => setReviewModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -2157,7 +2165,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 6: ASSIGN MENTOR */}
             {mentorModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-md p-5 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Tugaskan Dosen Pembimbing</h3>
                             <button type="button" onClick={() => setMentorModalOpen(false)} className="text-slate-400 hover:text-slate-600">
@@ -2213,7 +2221,7 @@ export default function CompetitionWorkspace({
             {/* MODAL 7: RECORD RESULT */}
             {resultModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="bg-white rounded-2xl w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <div className="w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                             <h3 className="text-base font-bold text-slate-900">Catat Capaian & Prestasi</h3>
                             <button type="button" onClick={() => setResultModalOpen(false)} className="text-slate-400 hover:text-slate-600">
