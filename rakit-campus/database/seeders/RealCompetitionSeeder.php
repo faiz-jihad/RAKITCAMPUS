@@ -7,6 +7,8 @@ use App\Enums\CompetitionCategory;
 use App\Enums\CompetitionScope;
 use App\Enums\CompetitionStatus;
 use App\Enums\RecruitmentStatus;
+use App\Enums\TeamPermission;
+use App\Enums\TeamStatus;
 use App\Enums\TeamType;
 use App\Enums\VerificationStatus;
 use App\Models\Competition;
@@ -576,7 +578,7 @@ class RealCompetitionSeeder extends Seeder
                     'leader_id' => $leader->id,
                     'description' => $setup['description'],
                     'capacity' => $comp->max_team_size,
-                    'status' => 'recruiting',
+                    'status' => TeamStatus::AwaitingMembers,
                 ]
             );
 
@@ -588,7 +590,7 @@ class RealCompetitionSeeder extends Seeder
                 ],
                 [
                     'role_name' => 'Ketua Tim',
-                    'permission' => 'leader',
+                    'permission' => TeamPermission::Leader,
                     'status' => 'active',
                     'joined_at' => now(),
                 ]
