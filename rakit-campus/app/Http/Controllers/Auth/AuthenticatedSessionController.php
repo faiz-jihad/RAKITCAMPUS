@@ -39,6 +39,8 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('onboarding');
         }
 
+        $request->session()->put('show_hub_selector', true);
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

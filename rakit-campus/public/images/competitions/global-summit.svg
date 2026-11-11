@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="globalGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#451a03" />
+      <stop offset="50%" stop-color="#78350f" />
+      <stop offset="100%" stop-color="#92400e" />
+    </linearGradient>
+    <linearGradient id="goldAccent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+    <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#globalGrad)" />
+
+  <!-- Diagonal rays overlay -->
+  <g stroke="#ffffff" stroke-opacity="0.04" stroke-width="1.5">
+    <line x1="0" y1="0" x2="800" y2="450" />
+    <line x1="200" y1="0" x2="800" y2="300" />
+    <line x1="0" y1="150" x2="600" y2="450" />
+    <line x1="400" y1="0" x2="800" y2="150" />
+    <line x1="0" y1="300" x2="400" y2="450" />
+  </g>
+
+  <!-- Globe Latitudes / Longitudes -->
+  <g transform="translate(560, 225)" fill="none" stroke="#fcd34d" stroke-opacity="0.3" stroke-width="1.5">
+    <circle cx="0" cy="0" r="140" stroke-width="2" stroke-opacity="0.5" />
+    <ellipse cx="0" cy="0" rx="140" ry="60" />
+    <ellipse cx="0" cy="0" rx="140" ry="110" />
+    <ellipse cx="0" cy="0" rx="60" ry="140" />
+    <ellipse cx="0" cy="0" rx="110" ry="140" />
+    <line x1="-140" y1="0" x2="140" y2="0" />
+    <line x1="0" y1="-140" x2="0" y2="140" />
+  </g>
+
+  <!-- Glowing Crown Starburst -->
+  <g transform="translate(560, 150)">
+    <circle cx="0" cy="0" r="14" fill="#fbbf24" filter="url(#goldGlow)" />
+    <circle cx="0" cy="0" r="8" fill="#ffffff" />
+  </g>
+
+  <!-- Badge Graphic -->
+  <g transform="translate(60, 60)">
+    <rect x="0" y="0" width="136" height="28" rx="6" fill="#ffffff" fill-opacity="0.1" stroke="#fbbf24" stroke-width="1" />
+    <text x="68" y="18" fill="#fde68a" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5" text-anchor="middle">GLOBAL SUMMIT</text>
+  </g>
+
+  <!-- Title Watermark -->
+  <text x="60" y="380" fill="#ffffff" fill-opacity="0.9" font-family="system-ui, -apple-system, sans-serif" font-size="28" font-weight="800" letter-spacing="-0.5">Kompetisi & Prestasi Global</text>
+  <text x="60" y="405" fill="#fde68a" fill-opacity="0.8" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="600">Model UN, Debat & Kejuaraan Internasional</text>
+</svg>

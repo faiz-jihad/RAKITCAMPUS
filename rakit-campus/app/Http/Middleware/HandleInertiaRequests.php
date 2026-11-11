@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
+            'show_hub_selector' => (bool) $request->session()->pull('show_hub_selector', false),
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'flash' => [
                 'success' => $request->session()->get('success'),

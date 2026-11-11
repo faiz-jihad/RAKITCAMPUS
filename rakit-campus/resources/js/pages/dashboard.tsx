@@ -80,6 +80,7 @@ export default function Dashboard({
     myTasks = [],
     teammates = [],
     monthlyActivity = [],
+    recommendedProjects = [],
     upcomingCompetitions = [],
     profileCompletion,
 }: Props) {
@@ -395,181 +396,161 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* Card 4: Deadline Terdekat */}
+                {/* Card 4: Tugas & Milestone Proyek */}
                 <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[220px]">
                     <div className="flex items-center justify-between mb-2">
                         <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                            Deadline Terdekat
+                            Tugas Proyek
                         </h2>
                         <Link
-                            href="/competitions?tab=explore"
+                            href="/workspace"
                             className="text-slate-400 hover:text-slate-600 transition"
-                            title="Semua Lomba"
+                            title="Buka Task Board"
                         >
                             <MoreHorizontal className="w-4 h-4" />
                         </Link>
                     </div>
 
-                    {upcomingCompetitions && upcomingCompetitions.length > 0 ? (
+                    {myTasks && myTasks.length > 0 ? (
                         <div className="space-y-2.5">
-                            {upcomingCompetitions.slice(0, 2).map((comp: any, idx: number) => {
-                                const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
-                                const now = new Date();
-                                const daysLeft = deadline
-                                    ? Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-                                    : 0;
-
-                                return (
-                                    <Link
-                                        key={comp.id || idx}
-                                        href={`/competitions/${comp.id}`}
-                                        className="p-2 rounded-xl bg-slate-50/70 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between gap-3 group transition block"
-                                    >
-                                        <div className="flex items-center gap-2.5 min-w-0">
-                                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-slate-200">
-                                                <img
-                                                    src={getCompetitionCover(comp)}
-                                                    alt={comp.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition"
-                                                />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate transition" title={comp.name}>
-                                                    {comp.name}
-                                                </p>
-                                                <span className="text-[10px] text-slate-400 font-medium">
-                                                    {deadline
-                                                        ? deadline.toLocaleDateString('id-ID', {
-                                                              day: 'numeric',
-                                                              month: 'short',
-                                                              year: 'numeric',
-                                                          })
-                                                        : 'Terbuka'}
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                                            daysLeft <= 7
-                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                                : 'bg-blue-50 text-blue-700 border border-blue-100'
-                                        }`}>
-                                            {daysLeft > 0 ? `${daysLeft} hari` : 'Hari ini'}
+                            {myTasks.slice(0, 3).map((task: any, idx: number) => (
+                                <Link
+                                    key={task.id || idx}
+                                    href="/workspace"
+                                    className="p-2.5 rounded-xl bg-slate-50/70 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between gap-3 group transition block"
+                                >
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate transition">
+                                            {task.title}
+                                        </p>
+                                        <span className="text-[10px] text-slate-400 font-medium">
+                                            {task.due_date ? `Batas: ${new Date(task.due_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}` : 'Tugas Proyek Aktif'}
                                         </span>
-                                    </Link>
-                                );
-                            })}
+                                    </div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 shrink-0">
+                                        {task.status || 'Aktif'}
+                                    </span>
+                                </Link>
+                            ))}
                         </div>
                     ) : (
                         <div className="py-6 text-center text-xs text-slate-400">
-                            Belum ada kompetisi dengan deadline terdekat
+                            Semua tugas proyek saat ini telah selesai
                         </div>
                     )}
 
                     <div className="pt-2 text-right">
                         <Link
-                            href="/competitions?tab=explore"
+                            href="/workspace"
                             className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition"
                         >
-                            Lihat Semua Jadwal &rarr;
+                            Buka Task Board &rarr;
                         </Link>
                     </div>
                 </div>
             </div>
 
-            {/* 3.5 CURATED FEATURED COMPETITIONS SECTION (Lomba Pilihan Mahasiswa) */}
-            {upcomingCompetitions && upcomingCompetitions.length > 0 && (
-                <section className="mb-6">
-                    <div className="flex items-center justify-between mb-3.5">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                                Lomba Pilihan Mahasiswa
-                            </h2>
-                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
-                                Terverifikasi
-                            </span>
+            {/* 3.5 SEPARATION BANNER: JUMP TO COMPETITION HUB */}
+            <section className="mb-6">
+                <div className="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent rounded-2xl p-4 sm:p-5 border border-amber-200/80 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-300/80 flex items-center justify-center shrink-0">
+                            <AnimatedIcon name="trophy" size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-xs sm:text-sm font-bold text-amber-950">
+                                Ingin Mencari Info Kompetisi & Partner Lomba?
+                            </h3>
+                            <p className="text-[11px] sm:text-xs text-amber-800/80 mt-0.5">
+                                Akses Competition Hub untuk ratusan katalog kompetisi terverifikasi dan MinSatu Matchmaking.
+                            </p>
+                        </div>
+                    </div>
+                    <Link
+                        href="/competitions"
+                        className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition shadow-xs whitespace-nowrap shrink-0 flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <span>Buka Competition Hub</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
+            </section>
+
+            {/* 3.6 REKOMENDASI PROYEK AKADEMIK (Project Hub) */}
+            <section className="mb-6">
+                <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                            Proyek Akademik & Kolaborasi
+                        </h2>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
+                            Project Hub
+                        </span>
+                    </div>
+                    <Link
+                        href="/projects"
+                        className="text-xs font-bold text-blue-600 hover:text-blue-700 transition flex items-center gap-1"
+                    >
+                        <span>Eksplor Semua Proyek</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
+                </div>
+
+                {recommendedProjects && recommendedProjects.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                        {recommendedProjects.slice(0, 3).map((proj: any) => (
+                            <Link
+                                key={proj.id}
+                                href={`/projects/${proj.id}`}
+                                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between group"
+                            >
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-100">
+                                            {proj.category || 'AKADEMIK'}
+                                        </span>
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                            {proj.status === 'recruiting' ? 'Buka Rekrutmen' : 'Aktif'}
+                                        </span>
+                                    </div>
+                                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2">
+                                        {proj.title}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                                        {proj.short_description || 'Proyek kolaborasi terpadu mahasiswa untuk living proposal dan tugas akademik.'}
+                                    </p>
+                                </div>
+
+                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs mt-4">
+                                    <span className="text-[11px] text-slate-400 font-medium">
+                                        {proj.leader?.name || 'Mahasiswa'}
+                                    </span>
+                                    <span className="font-bold text-blue-600 flex items-center gap-0.5">
+                                        Detail Proyek ↗
+                                    </span>
+                                </div>
+                            </Link>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-gradient-to-r from-blue-50/70 via-white to-indigo-50/70 rounded-2xl p-6 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div className="space-y-1 text-center sm:text-left">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                Mulai Proyek Akademik Baru
+                            </h3>
+                            <p className="text-xs text-slate-500 max-w-lg">
+                                Buat ruang kerja living proposal untuk tugas akhir, UTS/UAS, dan bentuk tim yang seimbang.
+                            </p>
                         </div>
                         <Link
-                            href="/competitions"
-                            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition flex items-center gap-1"
+                            href="/projects/create"
+                            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs whitespace-nowrap cursor-pointer"
                         >
-                            <span>Eksplor Semua Lomba</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
+                            + Buat Proyek Baru
                         </Link>
                     </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-                        {upcomingCompetitions.slice(0, 3).map((comp: any) => {
-                            const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
-                            const now = new Date();
-                            const daysLeft = deadline
-                                ? Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-                                : null;
-
-                            return (
-                                <Link
-                                    key={comp.id}
-                                    href={`/competitions/${comp.id}`}
-                                    className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between group"
-                                >
-                                    {/* Cover Image Banner */}
-                                    <div className="relative h-36 w-full overflow-hidden bg-slate-900">
-                                        <img
-                                            src={getCompetitionCover(comp)}
-                                            alt={comp.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20" />
-
-                                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                                            <span className="px-2 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
-                                                {comp.category?.replace('_', ' ') || 'LOMBA'}
-                                            </span>
-                                            <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
-                                                {comp.level || 'Nasional'}
-                                            </span>
-                                        </div>
-
-                                        {daysLeft !== null && (
-                                            <div className="absolute bottom-2 right-2.5">
-                                                <span
-                                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md ${
-                                                        daysLeft <= 7
-                                                            ? 'bg-rose-500/90 text-white'
-                                                            : 'bg-black/50 text-white'
-                                                    }`}
-                                                >
-                                                    {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Card Content */}
-                                    <div className="p-4 flex-1 flex flex-col justify-between gap-3">
-                                        <div>
-                                            <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-1">
-                                                {comp.name}
-                                            </h3>
-                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5 truncate">
-                                                {comp.organizer}
-                                            </p>
-                                        </div>
-
-                                        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
-                                            <span className="text-[11px] font-medium text-slate-500">
-                                                {comp.competition_type || 'Tim'}
-                                            </span>
-                                            <span className="font-bold text-blue-600 flex items-center gap-0.5">
-                                                Detail ↗
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
+                )}
+            </section>
 
             {/* 4. BOTTOM CARDS ROW (3 CARDS: 1fr - 2fr - 1fr) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">

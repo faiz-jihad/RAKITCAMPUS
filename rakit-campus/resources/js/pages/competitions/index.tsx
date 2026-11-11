@@ -3,6 +3,7 @@ import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
 import AppLayout from '@/layouts/app-layout';
+import { getCompetitionCover } from '@/lib/competition-cover';
 import { Head, Link, router } from '@inertiajs/react';
 import {
     ArrowRight,
@@ -193,16 +194,6 @@ interface Props {
     };
     activeParticipation?: any;
 }
-
-const getCompetitionCover = (comp: any) => {
-    if (comp?.cover_image) return comp.cover_image;
-    const cat = (comp?.category || '').toLowerCase();
-    if (cat.includes('iot')) return '/images/competitions/iot-challenge.svg';
-    if (cat.includes('hackathon')) return '/images/competitions/hackathon-camp.svg';
-    if (cat.includes('business') || cat.includes('pkm') || cat.includes('kewirausahaan')) return '/images/competitions/pkm-k.svg';
-    if (cat.includes('design') || cat.includes('ui')) return '/images/competitions/uiux-sprint.svg';
-    return '/images/competitions/gemastik-ai.svg';
-};
 
 export default function CompetitionIndex({
     competitions,

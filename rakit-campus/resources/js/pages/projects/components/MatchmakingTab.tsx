@@ -264,8 +264,9 @@ export default function MatchmakingTab({
                                                     </span>
                                                     <div className="flex flex-wrap gap-1">
                                                         {cand.matched_skills.map((s: string, si: number) => (
-                                                            <span key={si} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                                ✓ {s}
+                                                            <span key={si} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 inline-flex items-center gap-1">
+                                                                <Check className="w-3 h-3 stroke-[2.5]" />
+                                                                <span>{s}</span>
                                                             </span>
                                                         ))}
                                                     </div>

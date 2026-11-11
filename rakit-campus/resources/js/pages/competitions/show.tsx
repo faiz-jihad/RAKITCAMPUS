@@ -2,6 +2,7 @@ import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
 import AppLayout from '@/layouts/app-layout';
+import { getCompetitionCover } from '@/lib/competition-cover';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -281,55 +282,70 @@ export default function CompetitionShow({
                         </div>
                     )}
 
-                    {/* Hero Header Card */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-10 bg-white/85 relative overflow-hidden">
-                        <div className="flex flex-wrap items-center gap-2 mb-4">
-                            <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
-                                {competition.category?.replace('_', ' ')}
-                            </span>
-                            {competition.level && (
-                                <span className="text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-slate-100 text-slate-700">
-                                    Tingkat: {competition.level}
+                    {/* Hero Header Card with Visual Banner */}
+                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden">
+                        {/* Cover Image Banner */}
+                        <div className="relative h-48 sm:h-64 w-full overflow-hidden bg-slate-900">
+                            <img
+                                src={getCompetitionCover(competition)}
+                                alt={competition.name}
+                                className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/40 to-black/30" />
+
+                            {/* Floating badges on banner */}
+                            <div className="absolute top-4 left-4 sm:top-6 sm:left-6 flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-black uppercase tracking-wider px-3 py-1 rounded-lg bg-blue-600/95 backdrop-blur-md text-white shadow-xs">
+                                    {competition.category?.replace('_', ' ')}
                                 </span>
-                            )}
-                            {competition.verification_status === 'verified' ? (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                                    <ShieldCheck className="size-3.5" />
-                                    <span>Terverifikasi Resmi</span>
+                                {competition.level && (
+                                    <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-lg bg-black/40 backdrop-blur-md text-white border border-white/10">
+                                        Tingkat: {competition.level}
+                                    </span>
+                                )}
+                                {competition.verification_status === 'verified' ? (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-emerald-600/90 backdrop-blur-md px-3 py-1 rounded-lg">
+                                        <ShieldCheck className="size-3.5" />
+                                        <span>Terverifikasi Resmi</span>
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-amber-600/90 backdrop-blur-md px-3 py-1 rounded-lg">
+                                        <Clock className="size-3.5" />
+                                        <span>Menunggu Verifikasi</span>
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 right-4 sm:right-6">
+                                <span className="text-xs font-semibold text-slate-300 block mb-1">
+                                    Penyelenggara: <strong className="text-white">{competition.organizer}</strong>
                                 </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
-                                    <Clock className="size-3.5" />
-                                    <span>Menunggu Verifikasi</span>
-                                </span>
-                            )}
-                            <span className="text-xs text-slate-500 ml-auto hidden sm:inline-block">
-                                Penyelenggara: <strong className="text-slate-800">{competition.organizer}</strong>
-                            </span>
+                                <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-white leading-tight drop-shadow-sm">
+                                    {competition.name}
+                                </h1>
+                            </div>
                         </div>
 
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 leading-tight">
-                            {competition.name}
-                        </h1>
+                        {/* Card Details Body */}
+                        <div className="p-6 sm:p-8">
+                            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-4xl">
+                                {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
+                            </p>
 
-                        <p className="text-xs sm:text-sm text-slate-600 mt-3 leading-relaxed max-w-4xl">
-                            {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
-                        </p>
-
-                        {/* Category Tracks Pills */}
-                        {categoryTracks.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-2 mt-4">
-                                <span className="text-[11px] font-bold text-slate-500">Kategori / Jalur:</span>
-                                {categoryTracks.map((trk, i) => (
-                                    <span
-                                        key={i}
-                                        className="text-[11px] font-semibold px-2.5 py-0.5 bg-blue-50/60 border border-blue-200/60 text-blue-800 rounded-md"
-                                    >
-                                        {trk}
-                                    </span>
-                                ))}
-                            </div>
-                        )}
+                            {/* Category Tracks Pills */}
+                            {categoryTracks.length > 0 && (
+                                <div className="flex flex-wrap items-center gap-2 mt-4">
+                                    <span className="text-[11px] font-bold text-slate-500">Kategori / Jalur:</span>
+                                    {categoryTracks.map((trk, i) => (
+                                        <span
+                                            key={i}
+                                            className="text-[11px] font-semibold px-2.5 py-0.5 bg-blue-50/60 border border-blue-200/60 text-blue-800 rounded-md"
+                                        >
+                                            {trk}
+                                        </span>
+                                    ))}
+                                </div>
+                            )}
 
                         {/* Meta Highlights Bar */}
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8 pt-6 border-t border-slate-100">
@@ -423,6 +439,7 @@ export default function CompetitionShow({
                             </div>
                         </div>
                     </div>
+                </div>
 
                     {/* Main Content Layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

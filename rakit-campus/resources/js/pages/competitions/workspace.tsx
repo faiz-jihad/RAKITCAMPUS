@@ -8,6 +8,7 @@ import {
     Award,
     Briefcase,
     Calendar,
+    Check,
     CheckCircle2,
     Clock,
     Download,
@@ -515,7 +516,7 @@ export default function CompetitionWorkspace({
                                             }`}
                                         >
                                             <span className="size-5 rounded-full flex items-center justify-center text-[10px] font-black bg-white/20">
-                                                {isPassed ? '✓' : index + 1}
+                                                {isPassed ? <Check className="w-3 h-3 stroke-[2.5]" /> : index + 1}
                                             </span>
                                             <span>{stageInfo.label}</span>
                                         </div>
@@ -1050,12 +1051,14 @@ export default function CompetitionWorkspace({
                                                                         Posisi: {app.role_name}
                                                                     </span>
                                                                     {app.status === 'accepted' ? (
-                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                                                            ✓ Diterima
+                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 inline-flex items-center gap-1">
+                                                                            <Check className="w-3 h-3 stroke-[2.5]" />
+                                                                            <span>Diterima</span>
                                                                         </span>
                                                                     ) : app.status === 'rejected' ? (
-                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800">
-                                                                            ✗ Ditolak
+                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 inline-flex items-center gap-1">
+                                                                            <X className="w-3 h-3 stroke-[2.5]" />
+                                                                            <span>Ditolak</span>
                                                                         </span>
                                                                     ) : (
                                                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">

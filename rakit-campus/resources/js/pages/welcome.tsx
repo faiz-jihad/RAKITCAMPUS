@@ -1923,7 +1923,7 @@ export default function Welcome() {
                             className="h-[38px] w-[46px] bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition-colors shadow-sm cursor-pointer"
                             aria-label="Tutup Menu"
                         >
-                            <span className="text-base font-bold leading-none">✕</span>
+                            <X className="w-5 h-5 stroke-[2]" />
                         </button>
                     </div>
 

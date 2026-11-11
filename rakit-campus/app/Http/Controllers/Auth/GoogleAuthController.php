@@ -141,6 +141,8 @@ class GoogleAuthController extends Controller
                 ->with('success', "Selamat datang, {$user->name}! Silakan lengkapi biodata singkatmu.");
         }
 
+        $request->session()->put('show_hub_selector', true);
+
         return redirect()->intended(route('dashboard'))
             ->with('success', "Selamat datang, {$user->name}! Anda berhasil masuk melalui Akun Google.");
     }
@@ -207,6 +209,8 @@ class GoogleAuthController extends Controller
 
         Auth::login($user, remember: true);
         $request->session()->regenerate();
+
+        $request->session()->put('show_hub_selector', true);
 
         return redirect()->intended(route('dashboard'))
             ->with('success', 'Berhasil masuk dengan akun demo Google Student.');
