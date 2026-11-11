@@ -41,6 +41,7 @@ Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
+    Route::post('/onboarding/check-nim', [OnboardingWebController::class, 'checkNim'])->name('onboarding.check-nim');
     Route::post('/onboarding', [OnboardingWebController::class, 'store'])->name('onboarding.store');
     Route::post('/onboarding/skip', [OnboardingWebController::class, 'skip'])->name('onboarding.skip');
 });

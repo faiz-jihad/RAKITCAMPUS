@@ -117,7 +117,7 @@ class DashboardWebController extends Controller
             }
 
             // Real campus peers
-            $publicPeers = User::with(['profile:id,user_id,study_program,headline'])
+            $publicPeers = User::with(['profile:id,user_id,study_program,bio'])
                 ->take(3)
                 ->get()
                 ->map(fn ($p) => [
