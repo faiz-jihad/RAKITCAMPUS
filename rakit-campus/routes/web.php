@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
 use App\Http\Controllers\Web\FeedbackWebController;
+use App\Http\Controllers\Web\LeaderboardWebController;
 use App\Http\Controllers\Web\MatchingWebController;
 use App\Http\Controllers\Web\NotificationWebController;
 use App\Http\Controllers\Web\PortfolioWebController;
@@ -128,6 +129,15 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::patch('/workspace/{teamId}/tasks/{taskId}', [WorkspaceWebController::class, 'updateTask'])->name('workspace.tasks.update');
     Route::delete('/workspace/{teamId}/tasks/{taskId}', [WorkspaceWebController::class, 'deleteTask'])->name('workspace.tasks.delete');
     Route::post('/workspace/{teamId}/evaluation', [WorkspaceWebController::class, 'saveEvaluation'])->name('workspace.evaluation.save');
+
+    // Continuous Leaderboard System (Overall, Project Hub, Competition Hub, Admin)
+    Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('leaderboard.index');
+    Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
+    Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
+    Route::get('/leaderboard/admin', [LeaderboardWebController::class, 'adminIndex'])->name('leaderboard.admin');
+    Route::patch('/leaderboard/admin/rules/{id}', [LeaderboardWebController::class, 'updateRule'])->name('leaderboard.rules.update');
+    Route::post('/leaderboard/admin/adjust', [LeaderboardWebController::class, 'adjustPoints'])->name('leaderboard.admin.adjust');
+    Route::post('/leaderboard/admin/recalculate', [LeaderboardWebController::class, 'recalculate'])->name('leaderboard.admin.recalculate');
 
     // Portfolio
     Route::get('/portfolio', [PortfolioWebController::class, 'index'])->name('portfolio.index');

@@ -353,6 +353,16 @@ export default function AppLayout({
                                 >
                                     Workspace
                                 </Link>
+                                <Link
+                                    href="/leaderboard?hub=competition"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/leaderboard')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Leaderboard
+                                </Link>
                             </nav>
                         ) : (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
@@ -385,6 +395,16 @@ export default function AppLayout({
                                     }`}
                                 >
                                     Workspace
+                                </Link>
+                                <Link
+                                    href="/leaderboard?hub=project"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/leaderboard')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Leaderboard
                                 </Link>
                                 <Link
                                     href="/projects/create"
