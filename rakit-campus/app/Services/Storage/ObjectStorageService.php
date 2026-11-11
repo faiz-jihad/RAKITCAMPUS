@@ -128,6 +128,18 @@ class ObjectStorageService
             return $path;
         }
 
+        $cleanPath = ltrim($path, '/');
+
+        // Application static public assets (images, static banners, avatars, bundles)
+        if (
+            str_starts_with($cleanPath, 'images/') ||
+            str_starts_with($cleanPath, 'assets/') ||
+            str_starts_with($cleanPath, 'build/') ||
+            str_starts_with($cleanPath, 'storage/')
+        ) {
+            return asset($cleanPath);
+        }
+
         $disk = $diskName ?? self::diskName();
 
         // Custom configured MinIO public URL or reverse proxy endpoint
