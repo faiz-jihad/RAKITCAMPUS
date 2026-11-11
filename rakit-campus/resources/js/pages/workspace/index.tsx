@@ -30,14 +30,19 @@ export default function WorkspaceIndex({ teams }: Props) {
 
             <div className="space-y-6">
                 {/* Header Row */}
-                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                        Task Board
-                    </h1>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            Workspace Proyek & Tim
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">
+                            Pusat kolaborasi tim, pengelolaan papan Kanban tugas, dan pemantauan milestone proyek kelas.
+                        </p>
+                    </div>
 
                     <Link
                         href="/projects/create"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition self-start sm:self-auto"
                     >
                         <Plus className="w-3.5 h-3.5" />
                         <span>Buat Proyek</span>
@@ -159,7 +164,7 @@ export default function WorkspaceIndex({ teams }: Props) {
                                             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl text-xs font-bold shadow-2xs transition"
                                         >
                                             <Kanban className="size-3.5" />
-                                            <span>Buka Kanban</span>
+                                            <span>Buka Workspace Tim</span>
                                             <ArrowRight className="size-3" />
                                         </Link>
                                     </div>

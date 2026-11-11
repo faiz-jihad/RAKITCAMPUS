@@ -123,7 +123,7 @@ export default function Dashboard({
                         href="/workspace"
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
                     >
-                        <span>Task Board</span>
+                        <span>Workspace Tim</span>
                         <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
                     </Link>
                 </div>
@@ -263,7 +263,7 @@ export default function Dashboard({
                                 href="/workspace"
                                 className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
                             >
-                                Buka Task Board →
+                                Buka Workspace Tim →
                             </Link>
                         </div>
 

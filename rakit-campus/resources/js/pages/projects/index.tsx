@@ -149,18 +149,32 @@ export default function ProjectIndex({
 
             <div className="space-y-6">
                 {/* Header Section */}
-                <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                        Proyek Kelas
-                    </h1>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+                    <div>
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            Proyek Kelas
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">
+                            Eksplorasi ide proyek berbasis perkuliahan, cari rekan kolaborator, dan bangun portofolio tim.
+                        </p>
+                    </div>
 
-                    <Link
-                        href="/projects/create"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-                    >
-                        <Plus className="size-3.5" />
-                        <span>Buat Proyek</span>
-                    </Link>
+                    <div className="flex items-center gap-2 self-start sm:self-auto">
+                        <Link
+                            href="/workspace"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <FolderKanban className="size-3.5 text-blue-600" />
+                            <span>Workspace Tim</span>
+                        </Link>
+                        <Link
+                            href="/projects/create"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                        >
+                            <Plus className="size-3.5" />
+                            <span>Buat Proyek</span>
+                        </Link>
+                    </div>
                 </div>
 
                     {flash?.success && (
@@ -337,10 +351,14 @@ export default function ProjectIndex({
                                             <div className="flex items-center gap-2 shrink-0">
                                                 {proj.status === 'recruiting' && !isLecturer && (
                                                     proj.is_member ? (
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold">
-                                                            <CheckCircle2 className="size-3" />
-                                                            <span>Anggota</span>
-                                                        </span>
+                                                        <Link
+                                                            href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs"
+                                                            title="Buka Workspace Tim Proyek"
+                                                        >
+                                                            <FolderKanban className="size-3" />
+                                                            <span>Workspace Tim</span>
+                                                        </Link>
                                                     ) : proj.has_applied ? (
                                                         <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
                                                             <span>Sudah Melamar</span>

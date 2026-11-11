@@ -384,7 +384,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Task Board
+                                    Workspace
                                 </Link>
                                 <Link
                                     href="/projects/create"
