@@ -77,8 +77,12 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-workspace/{participationId}/send-invitation', [CompetitionWebController::class, 'sendTeamInvitation'])->name('competitions.invitations.send');
     Route::post('/competition-workspace/{participationId}/formation/approve', [CompetitionWebController::class, 'approveFormation'])->name('competitions.formation.approve');
     Route::post('/competition-workspace/{participationId}/documents', [CompetitionWebController::class, 'uploadDocument'])->name('competitions.documents.upload');
+    Route::post('/competition-workspace/{participationId}/documents/{docId}/replace', [CompetitionWebController::class, 'replaceDocument'])->name('competitions.documents.replace');
+    Route::delete('/competition-workspace/{participationId}/documents/{docId}', [CompetitionWebController::class, 'deleteDocument'])->name('competitions.documents.delete');
     Route::post('/competition-workspace/{participationId}/documents/{docId}/review', [CompetitionWebController::class, 'reviewDocument'])->name('competitions.documents.review');
     Route::post('/competition-workspace/{participationId}/deliverables', [CompetitionWebController::class, 'submitDeliverable'])->name('competitions.deliverables.submit');
+    Route::post('/competition-workspace/{participationId}/deliverables/{docId}/replace', [CompetitionWebController::class, 'replaceDocument'])->name('competitions.deliverables.replace');
+    Route::delete('/competition-workspace/{participationId}/deliverables/{docId}', [CompetitionWebController::class, 'deleteDocument'])->name('competitions.deliverables.delete');
     Route::post('/competition-workspace/{participationId}/deliverables/{docId}/review', [CompetitionWebController::class, 'reviewDeliverable'])->name('competitions.deliverables.review');
     Route::post('/competition-workspace/{participationId}/members/{userId}/withdraw', [CompetitionWebController::class, 'withdrawMember'])->name('competitions.members.withdraw');
     Route::post('/competition-workspace/{participationId}/result', [CompetitionWebController::class, 'recordResult'])->name('competitions.result.record');

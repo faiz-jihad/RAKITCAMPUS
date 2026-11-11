@@ -352,7 +352,7 @@ export default function ProjectIndex({
                                                 {proj.status === 'recruiting' && !isLecturer && (
                                                     proj.is_member ? (
                                                         <Link
-                                                            href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
+                                                            href={(proj.team as any)?.id ? `/workspace/${(proj.team as any).id}` : '/workspace'}
                                                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs"
                                                             title="Buka Workspace Tim Proyek"
                                                         >

@@ -1351,6 +1351,149 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Ulasan dokumen berhasil disimpan.');
     }
 
+    public function deleteDocument(Request $request, int $participationId, int $docId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
+
+        $isLeader = $participation->team && $participation->team->isLeader($user);
+        $isUploader = (int)$document->uploaded_by === (int)$user->id;
+        $isPrivileged = $user->isCampusAdminOf($participation->competition->campus_id) || $user->isPlatformAdmin();
+
+        if (!$isLeader && !$isUploader && !$isPrivileged) {
+            abort(403, 'Hanya pengunggah berkas, ketua tim, atau admin yang dapat menghapus berkas ini.');
+        }
+
+        $docName = $document->name;
+        $filePath = $document->path;
+
+        // Delete physical file from object storage if present
+        if (!empty($filePath)) {
+            try {
+                ObjectStorageService::delete($filePath);
+            } catch (\Throwable $e) {
+                \Log::warning("Failed to delete physical file from storage: {$filePath}. Error: " . $e->getMessage());
+            }
+        }
+
+        $document->delete();
+
+        return back()->with('success', "Berkas '{$docName}' berhasil dihapus.");
+    }
+
+    public function replaceDocument(Request $request, int $participationId, int $docId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
+
+        $isLeader = $participation->team && $participation->team->isLeader($user);
+        $isUploader = (int)$document->uploaded_by === (int)$user->id;
+        $isMember = $participation->team && $participation->team->hasMember($user);
+        $isPrivileged = $user->isCampusAdminOf($participation->competition->campus_id) || $user->isPlatformAdmin();
+
+        if (!$isLeader && !$isUploader && !$isMember && !$isPrivileged) {
+            abort(403, 'Hanya anggota tim yang dapat memperbarui berkas.');
+        }
+
+        $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:255'],
+            'file' => ['nullable', 'file', 'max:20480'], // max 20MB
+            'url' => ['nullable', 'url', 'max:255'],
+            'mode' => ['nullable', 'string', 'in:replace,new_version'],
+        ]);
+
+        if (!$request->hasFile('file') && empty($validated['url'])) {
+            throw ValidationException::withMessages([
+                'file' => ['Silakan pilih berkas pengganti baru atau masukkan URL tautan berkas.'],
+            ]);
+        }
+
+        $mode = $validated['mode'] ?? 'replace';
+        $name = !empty($validated['name']) ? $validated['name'] : $document->name;
+
+        $newPath = null;
+        $originalName = null;
+        $fileSize = 0;
+        $mimeType = null;
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $folder = str_starts_with($document->path ?? '', 'competitions/deliverables') ? 'competitions/deliverables' : 'competitions/documents';
+            $stored = ObjectStorageService::store($file, $folder);
+            $originalName = $stored['original_name'];
+            $fileSize = $stored['file_size'];
+            $mimeType = $stored['mime_type'];
+            $newPath = $stored['path'];
+        }
+
+        if ($mode === 'new_version') {
+            $nextVersion = CompetitionDocument::where('participation_id', $participation->id)
+                ->where('required_document_key', $document->required_document_key)
+                ->max('version') ?? $document->version;
+
+            $newDoc = CompetitionDocument::create([
+                'participation_id' => $participation->id,
+                'competition_round_id' => $document->competition_round_id,
+                'uploaded_by' => $user->id,
+                'required_document_key' => $document->required_document_key,
+                'name' => $name,
+                'description' => $document->description,
+                'original_name' => $originalName ?: $document->original_name,
+                'path' => $newPath,
+                'url' => $validated['url'] ?? null,
+                'file_size' => $fileSize ?: $document->file_size,
+                'mime_type' => $mimeType ?: $document->mime_type,
+                'version' => $nextVersion + 1,
+                'status' => 'pending',
+                'submitted_at' => now(),
+            ]);
+
+            return back()->with('success', "Versi baru '{$name}' (v{$newDoc->version}) berhasil diunggah.");
+        } else {
+            // Overwrite existing document
+            if ($newPath && $document->path && $document->path !== $newPath) {
+                try {
+                    ObjectStorageService::delete($document->path);
+                } catch (\Throwable $e) {
+                    \Log::warning("Failed to delete overwritten file: {$document->path}");
+                }
+            }
+
+            $updateData = [
+                'name' => $name,
+                'status' => 'pending',
+                'feedback' => null,
+            ];
+
+            if ($newPath) {
+                $updateData['path'] = $newPath;
+                $updateData['original_name'] = $originalName;
+                $updateData['file_size'] = $fileSize;
+                $updateData['mime_type'] = $mimeType;
+                $updateData['url'] = null;
+            }
+
+            if (!empty($validated['url'])) {
+                $updateData['url'] = $validated['url'];
+                if (!$newPath && $document->path) {
+                    try {
+                        ObjectStorageService::delete($document->path);
+                    } catch (\Throwable $e) {}
+                    $updateData['path'] = null;
+                    $updateData['original_name'] = null;
+                    $updateData['file_size'] = 0;
+                    $updateData['mime_type'] = null;
+                }
+            }
+
+            $document->update($updateData);
+
+            return back()->with('success', "Berkas '{$name}' berhasil diperbarui / diganti.");
+        }
+    }
+
     public function recordResult(Request $request, int $participationId): RedirectResponse
     {
         $user = $request->user();

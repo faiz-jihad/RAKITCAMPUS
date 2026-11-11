@@ -18,6 +18,7 @@ import {
     Lock,
     Phone,
     Plus,
+    RefreshCw,
     Send,
     ShieldCheck,
     Sparkles,
@@ -78,6 +79,8 @@ export default function CompetitionWorkspace({
     const [inviteMessage, setInviteMessage] = useState('');
     const [taskModalOpen, setTaskModalOpen] = useState(false);
     const [docModalOpen, setDocModalOpen] = useState(false);
+    const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+    const [selectedDocToReplace, setSelectedDocToReplace] = useState<any>(null);
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [reviewDocId, setReviewDocId] = useState<number | null>(null);
     const [mentorModalOpen, setMentorModalOpen] = useState(false);
@@ -115,6 +118,13 @@ export default function CompetitionWorkspace({
         external_submission_url: '',
         deadline: '',
         file: null as File | null,
+    });
+
+    const replaceForm = useForm({
+        name: '',
+        file: null as File | null,
+        url: '',
+        mode: 'replace' as 'replace' | 'new_version',
     });
 
     const reviewForm = useForm({
@@ -336,6 +346,37 @@ export default function CompetitionWorkspace({
                 docForm.reset();
             },
         });
+    };
+
+    const openReplaceModal = (doc: any) => {
+        setSelectedDocToReplace(doc);
+        replaceForm.setData({
+            name: doc.name || '',
+            file: null,
+            url: doc.url || '',
+            mode: 'replace',
+        });
+        setReplaceModalOpen(true);
+    };
+
+    const handleReplaceDoc = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedDocToReplace) return;
+
+        replaceForm.post(route('competitions.documents.replace', [participation.id, selectedDocToReplace.id]), {
+            forceFormData: true,
+            onSuccess: () => {
+                setReplaceModalOpen(false);
+                setSelectedDocToReplace(null);
+                replaceForm.reset();
+            },
+        });
+    };
+
+    const handleDeleteDoc = (doc: any) => {
+        if (confirm(`Apakah Anda yakin ingin menghapus berkas "${doc.name}"? Berkas fisik yang terunggah juga akan dihapus permanen.`)) {
+            router.delete(route('competitions.documents.delete', [participation.id, doc.id]));
+        }
     };
 
     const handleReviewDoc = (e: React.FormEvent) => {
@@ -580,7 +621,7 @@ export default function CompetitionWorkspace({
                 {/* 3) WORKSPACE TABS NAVIGATION (Zero Horizontal Scrollbar) */}
                 <div
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
+                    className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
                 >
                     {[
                         { id: 'overview', label: 'Tim & Formasi', icon: Users, count: participation.team?.members?.length || 0 },
@@ -1399,15 +1440,28 @@ export default function CompetitionWorkspace({
                                                 {matchedDoc ? (
                                                     <>
                                                         <span className="text-[10px] text-slate-500 font-mono">v{matchedDoc.version}</span>
-                                                        <a
-                                                            href={matchedDoc.file_path || matchedDoc.file_url || matchedDoc.url || (matchedDoc.path ? (matchedDoc.path.startsWith('http') ? matchedDoc.path : '/storage/' + matchedDoc.path) : '#')}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="font-bold text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
-                                                        >
-                                                            <span>Buka</span>
-                                                            <ExternalLink className="size-3 shrink-0" />
-                                                        </a>
+                                                        <div className="flex items-center gap-2">
+                                                            <a
+                                                                href={matchedDoc.file_path || matchedDoc.file_url || matchedDoc.url || (matchedDoc.path ? (matchedDoc.path.startsWith('http') ? matchedDoc.path : '/storage/' + matchedDoc.path) : '#')}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="font-bold text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
+                                                            >
+                                                                <span>Buka</span>
+                                                                <ExternalLink className="size-3 shrink-0" />
+                                                            </a>
+                                                            {isMember && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openReplaceModal(matchedDoc)}
+                                                                    className="font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1 text-[11px] cursor-pointer"
+                                                                    title="Ganti atau perbarui berkas"
+                                                                >
+                                                                    <RefreshCw className="size-2.5 shrink-0" />
+                                                                    <span>Ganti</span>
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </>
                                                 ) : (
                                                     isMember ? (
@@ -1463,17 +1517,41 @@ export default function CompetitionWorkspace({
                                                     )}
                                                 </div>
 
-                                                <div className="flex items-center gap-2 shrink-0">
+                                                <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                                     {(doc.file_path || doc.file_url || doc.url || doc.path) && (
                                                         <a
                                                             href={doc.file_path || doc.file_url || doc.url || (doc.path ? (doc.path.startsWith('http') ? doc.path : '/storage/' + doc.path) : '#')}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5"
+                                                            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition"
                                                         >
                                                             <Download className="size-3 shrink-0" />
                                                             <span>Unduh / Tinjau</span>
                                                         </a>
+                                                    )}
+
+                                                    {isMember && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openReplaceModal(doc)}
+                                                            className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold flex items-center gap-1 cursor-pointer transition"
+                                                            title="Ganti atau perbarui berkas ini"
+                                                        >
+                                                            <RefreshCw className="size-3 shrink-0" />
+                                                            <span>Ganti</span>
+                                                        </button>
+                                                    )}
+
+                                                    {(isMember || isAdmin) && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteDoc(doc)}
+                                                            className="px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-bold flex items-center gap-1 cursor-pointer transition"
+                                                            title="Hapus berkas ini secara permanen"
+                                                        >
+                                                            <Trash2 className="size-3 shrink-0" />
+                                                            <span>Hapus</span>
+                                                        </button>
                                                     )}
 
                                                     {(isMentor || isAdmin) && (
@@ -1483,7 +1561,7 @@ export default function CompetitionWorkspace({
                                                                 setReviewDocId(doc.id);
                                                                 setReviewModalOpen(true);
                                                             }}
-                                                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer"
+                                                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer transition"
                                                         >
                                                             Ulas Berkas
                                                         </button>
@@ -2065,6 +2143,128 @@ export default function CompetitionWorkspace({
                                     className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50"
                                 >
                                     Unggah Dokumen
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL 4B: REPLACE / UPDATE DOCUMENT */}
+            {replaceModalOpen && selectedDocToReplace && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <div className="size-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <RefreshCw className="size-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-base font-bold text-slate-900 truncate">Ganti / Perbarui Berkas</h3>
+                                    <p className="text-[11px] text-slate-500">Versi aktif saat ini: v{selectedDocToReplace.version}</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setReplaceModalOpen(false);
+                                    setSelectedDocToReplace(null);
+                                }}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleReplaceDoc} className="space-y-4 pt-4 text-xs">
+                            {/* Mode Selection */}
+                            <div className="space-y-1.5">
+                                <label className="block text-xs font-bold text-slate-700">Metode Pembaruan</label>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => replaceForm.setData('mode', 'replace')}
+                                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition ${
+                                            replaceForm.data.mode === 'replace'
+                                                ? 'border-blue-600 bg-blue-50/60 text-blue-900 font-bold ring-1 ring-blue-600/30'
+                                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <span className="block text-xs font-bold">Ganti Langsung</span>
+                                        <span className="block text-[10px] text-slate-500 mt-0.5">Timpa berkas lama (tetap v{selectedDocToReplace.version})</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => replaceForm.setData('mode', 'new_version')}
+                                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition ${
+                                            replaceForm.data.mode === 'new_version'
+                                                ? 'border-blue-600 bg-blue-50/60 text-blue-900 font-bold ring-1 ring-blue-600/30'
+                                                : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                        }`}
+                                    >
+                                        <span className="block text-xs font-bold">Buat Versi Baru</span>
+                                        <span className="block text-[10px] text-slate-500 mt-0.5">Simpan riwayat (naik ke v{selectedDocToReplace.version + 1})</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Judul / Nama Berkas</label>
+                                <input
+                                    type="text"
+                                    value={replaceForm.data.name}
+                                    onChange={(e) => replaceForm.setData('name', e.target.value)}
+                                    placeholder="Nama berkas"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Pilih Berkas Pengganti Baru (Maks 20MB)
+                                </label>
+                                <input
+                                    type="file"
+                                    onChange={(e) => replaceForm.setData('file', e.target.files?.[0] || null)}
+                                    className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-200 rounded-lg p-1 bg-slate-50"
+                                />
+                                {selectedDocToReplace.original_name && (
+                                    <p className="text-[10px] text-slate-400 mt-1">
+                                        Berkas saat ini: <span className="font-mono text-slate-600">{selectedDocToReplace.original_name}</span>
+                                    </p>
+                                )}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Atau Tautan Berkas / Cloud Drive URL
+                                </label>
+                                <input
+                                    type="url"
+                                    value={replaceForm.data.url}
+                                    onChange={(e) => replaceForm.setData('url', e.target.value)}
+                                    placeholder="https://drive.google.com/... atau https://figma.com/..."
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setReplaceModalOpen(false);
+                                        setSelectedDocToReplace(null);
+                                    }}
+                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={replaceForm.processing}
+                                    className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold disabled:opacity-50 cursor-pointer transition shadow-xs"
+                                >
+                                    {replaceForm.processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                                 </button>
                             </div>
                         </form>
