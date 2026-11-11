@@ -1,3 +1,4 @@
+import AnimatedIcon from '@/components/animations/AnimatedIcon';
 import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
@@ -428,6 +429,7 @@ export default function CompetitionIndex({
                                     <div>
                                         <div className="flex items-center justify-between gap-3 mb-2.5">
                                             <div className="flex items-center gap-2">
+                                                <AnimatedIcon name="trophy" size={24} />
                                                 <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
                                                     Sorotan
                                                 </span>
@@ -495,8 +497,8 @@ export default function CompetitionIndex({
                                 {/* Right Side: Upcoming Deadlines */}
                                 <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-                                            <Clock className="w-4 h-4 text-blue-600" />
+                                        <div className="flex items-center gap-2.5 pb-3 border-b border-slate-100">
+                                            <AnimatedIcon name="clock" size={20} />
                                             <h3 className="text-sm font-bold text-slate-900">
                                                 Deadline Terdekat
                                             </h3>
@@ -653,7 +655,7 @@ export default function CompetitionIndex({
                         {/* COMPETITION CATALOG */}
                         {catalogCompetitions.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <Trophy className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <AnimatedIcon name="search" size={56} className="mx-auto mb-3" />
                                 <h3 className="text-sm font-bold text-slate-900">
                                     Tidak Ada Kompetisi
                                 </h3>
@@ -760,7 +762,11 @@ export default function CompetitionIndex({
                     <div className="space-y-6 sm:space-y-8">
                         {/* HERO: Team Matchmaking */}
                         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center py-1 sm:py-2">
-                            <div className="lg:col-span-6 space-y-2">
+                            <div className="lg:col-span-6 space-y-3">
+                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-semibold text-blue-700 w-fit">
+                                    <AnimatedIcon name="team" size={20} />
+                                    <span>MinSatu Matchmaking</span>
+                                </div>
                                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
                                     Kurang satu partner? <span className="text-blue-600">Cari di sini.</span>
                                 </h2>
@@ -888,7 +894,7 @@ export default function CompetitionIndex({
                         {/* RECRUITING TEAMS GRID */}
                         {openRecruitingTeams.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <Users className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <AnimatedIcon name="team" size={56} className="mx-auto mb-3" />
                                 <h4 className="text-sm font-bold text-slate-900">
                                     Belum Ada Tim yang Sedang Merekrut
                                 </h4>
@@ -1122,7 +1128,7 @@ export default function CompetitionIndex({
                             <div>
                                 {savedCompetitions.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <Bookmark className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                        <AnimatedIcon name="target" size={56} className="mx-auto mb-3" />
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Kompetisi Tersimpan
                                         </h3>
@@ -1189,7 +1195,7 @@ export default function CompetitionIndex({
                             <div>
                                 {myApplications.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <MessageSquare className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                        <AnimatedIcon name="rocket" size={56} className="mx-auto mb-3" />
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Pengajuan Tim
                                         </h3>
@@ -1254,7 +1260,7 @@ export default function CompetitionIndex({
                             <div>
                                 {myTeams.length === 0 ? (
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <FolderKanban className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                        <AnimatedIcon name="folder" size={56} className="mx-auto mb-3" />
                                         <h3 className="text-sm font-bold text-slate-900">
                                             Belum Ada Tim Aktif
                                         </h3>
@@ -1355,7 +1361,7 @@ export default function CompetitionIndex({
                             </div>
                         ) : (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <Sparkles className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                <AnimatedIcon name="sparkles" size={56} className="mx-auto mb-3" />
                                 <h3 className="text-sm font-bold text-slate-900">
                                     Belum Ada Rekomendasi
                                 </h3>
@@ -1606,8 +1612,8 @@ export default function CompetitionIndex({
             {/* APPLY COMPETITION TEAM MODAL */}
             {selectedTeamData && (
                 <ApplyCompetitionTeamModal
-                    open={applyModalOpen}
-                    onOpenChange={setApplyModalOpen}
+                    isOpen={applyModalOpen}
+                    onClose={() => setApplyModalOpen(false)}
                     teamData={selectedTeamData}
                     currentUserInfo={currentUserInfo}
                 />

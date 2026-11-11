@@ -2,6 +2,7 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowRight,
     BookOpen,
     Calendar,
@@ -418,8 +419,9 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                     </div>
                                                 ) : (
                                                     <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200 text-xs flex flex-col gap-1.5">
-                                                        <span className="font-bold text-amber-800 flex items-center gap-1">
-                                                            ⚠️ Belum Terdaftar di Tim Manapun
+                                                        <span className="font-bold text-amber-800 flex items-center gap-1.5">
+                                                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                                            <span>Belum Terdaftar di Tim Manapun</span>
                                                         </span>
                                                         <p className="text-[11px] text-amber-700 leading-relaxed">
                                                             Cari rekan tim yang membutuhkan keahlian Anda atau bentuk tim mandiri sebelum deadline penutupan.

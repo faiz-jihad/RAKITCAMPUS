@@ -478,7 +478,7 @@ export default function CompetitionWorkspace({
                             </div>
                             <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
                                 <span>Tugas Kanban & Berkas</span>
-                                <span>{readinessScore >= 80 ? '🔥 Siap Maju' : readinessScore >= 40 ? '⚡ Dalam Proses' : '🌱 Awal Persiapan'}</span>
+                                <span>{readinessScore >= 80 ? 'Siap Maju' : readinessScore >= 40 ? 'Dalam Proses' : 'Awal Persiapan'}</span>
                             </div>
                         </div>
                     </div>
@@ -1432,8 +1432,8 @@ export default function CompetitionWorkspace({
                                                     <span>Selesai: {rnd.ends_at ? new Date(rnd.ends_at).toLocaleDateString('id-ID') : '-'}</span>
                                                 </div>
                                                 {rnd.is_final_round && (
-                                                    <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded">
-                                                        🏆 Babak Final
+                                                    <span className="text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                                        Babak Final
                                                     </span>
                                                 )}
                                             </div>

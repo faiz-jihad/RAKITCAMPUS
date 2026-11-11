@@ -16,6 +16,7 @@ import {
     RotateCcw,
     Smartphone,
     UserCircle2,
+    Zap,
 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -125,7 +126,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                     {/* Left Column: Hero Headline & Connected Puzzle Card */}
                     <div className="w-full lg:w-[500px] xl:w-[520px] flex flex-col shrink-0 relative">
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-xs font-semibold text-slate-700 shadow-2xs w-fit mb-3.5">
-                            <span className="text-amber-500">🚀</span>
+                            <Zap className="w-3.5 h-3.5 text-blue-600 fill-current" />
                             <span>Matchmaking Tim Cerdas & Adil</span>
                         </div>
 

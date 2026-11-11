@@ -1,3 +1,4 @@
+import AnimatedIcon from '@/components/animations/AnimatedIcon';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -287,10 +288,15 @@ export default function Dashboard({
 
                 {/* Card 2: Royal Blue Hero Card (Interactive Info Matchmaking Carousel) */}
                 <div className="bg-[#2563eb] text-white rounded-2xl p-5 shadow-sm shadow-blue-500/20 flex flex-col justify-between min-h-[220px] relative overflow-hidden">
-                    {/* Top Row with circular emblem & badge */}
+                    {/* Top Row with animated emblem & badge */}
                     <div className="flex items-center justify-between">
                         <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center shadow-xs">
-                            <div className="w-4 h-4 rounded-full border-[3px] border-[#2563eb]" />
+                            <AnimatedIcon
+                                name={activeSlide === 0 ? 'rocket' : activeSlide === 1 ? 'trophy' : 'team'}
+                                size={22}
+                                primaryColor="#2563eb"
+                                accentColor="#60a5fa"
+                            />
                         </div>
                         <span className="bg-white/20 backdrop-blur-xs text-white text-[11px] font-semibold px-3 py-1 rounded-full">
                             {infoSlides[activeSlide].tag}
@@ -684,7 +690,7 @@ export default function Dashboard({
                             </div>
                         ) : (
                             <div className="py-8 text-center text-slate-400 text-xs">
-                                <Users className="w-8 h-8 text-slate-300 mx-auto mb-2 stroke-[1.5]" />
+                                <AnimatedIcon name="team" size={48} className="mx-auto mb-2" />
                                 <p className="font-semibold text-slate-600">Belum ada rekan tim</p>
                                 <p className="text-[11px] mt-0.5">Gabung tim atau temukan rekan di MinSatu!</p>
                             </div>

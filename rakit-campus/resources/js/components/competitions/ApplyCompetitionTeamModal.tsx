@@ -27,8 +27,10 @@ export interface ApplyTeamData {
 }
 
 interface Props {
-    isOpen: boolean;
-    onClose: () => void;
+    isOpen?: boolean;
+    open?: boolean;
+    onClose?: () => void;
+    onOpenChange?: (open: boolean) => void;
     teamData: ApplyTeamData | null;
     currentUserInfo?: {
         name?: string;
@@ -50,11 +52,19 @@ export function formatWhatsAppUrl(phone: string, text: string): string {
 
 export default function ApplyCompetitionTeamModal({
     isOpen,
+    open,
     onClose,
+    onOpenChange,
     teamData,
     currentUserInfo,
 }: Props) {
-    if (!isOpen || !teamData) return null;
+    const isModalOpen = open ?? isOpen ?? false;
+    const handleClose = () => {
+        if (onClose) onClose();
+        if (onOpenChange) onOpenChange(false);
+    };
+
+    if (!isModalOpen || !teamData) return null;
 
     const availableRoles = teamData.roles || [];
     const [selectedRoleId, setSelectedRoleId] = useState<string>(
@@ -108,7 +118,7 @@ export default function ApplyCompetitionTeamModal({
                 preserveScroll: true,
                 onSuccess: () => {
                     setSubmitting(false);
-                    onClose();
+                    handleClose();
                 },
                 onError: (errors) => {
                     setSubmitting(false);
@@ -142,7 +152,7 @@ export default function ApplyCompetitionTeamModal({
                         </div>
                     </div>
                     <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"
                     >
                         <X className="size-4" />
@@ -302,7 +312,7 @@ export default function ApplyCompetitionTeamModal({
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
                         >
                             Batal

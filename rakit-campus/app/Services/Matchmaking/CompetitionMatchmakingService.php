@@ -223,7 +223,7 @@ class CompetitionMatchmakingService
             $explanationParts[] = 'Mendapat Boost Kesempatan Pemula (Fair Opportunity)';
         }
         if (!$isAvailable) {
-            $explanationParts[] = "⚠️ {$ineligibilityReason}";
+            $explanationParts[] = "Perhatian: {$ineligibilityReason}";
         }
 
         $explanation = empty($explanationParts)
