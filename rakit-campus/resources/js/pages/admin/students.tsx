@@ -129,18 +129,13 @@ export default function AdminStudents({ students, filters }: Props) {
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-0.5">
-                                <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-                                    Manajemen Mahasiswa Kampus
-                                </h1>
-                                <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                                    Admin
-                                </span>
-                            </div>
-                            <p className="text-xs text-neutral-500">
-                                Verifikasi status keaktifan NIM, moderasi akses profil, dan audit mahasiswa terdaftar.
-                            </p>
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+                                Manajemen Mahasiswa Kampus
+                            </h1>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                                Admin
+                            </span>
                         </div>
                     </div>
 

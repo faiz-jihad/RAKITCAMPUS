@@ -151,21 +151,16 @@ export default function AdminNotificationsIndex({
                                 <circle cx="12" cy="12" r="3" />
                             </svg>
                         </div>
-                        <div>
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                                    Monitoring Notifikasi & Email
-                                </h1>
-                                <Badge
-                                    variant={providerConfig.is_configured ? 'default' : 'destructive'}
-                                    className={providerConfig.is_configured ? 'bg-emerald-600' : 'bg-rose-600'}
-                                >
-                                    {providerConfig.status}
-                                </Badge>
-                            </div>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                Observasi infrastruktur pengiriman email transactional, antrean job queue, dan audit log notifikasi platform.
-                            </p>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                                Monitoring Notifikasi & Email
+                            </h1>
+                            <Badge
+                                variant={providerConfig.is_configured ? 'default' : 'destructive'}
+                                className={providerConfig.is_configured ? 'bg-emerald-600' : 'bg-rose-600'}
+                            >
+                                {providerConfig.status}
+                            </Badge>
                         </div>
                     </div>
 

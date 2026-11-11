@@ -148,20 +148,15 @@ export default function NotificationsIndex({
             <div className="max-w-5xl mx-auto space-y-6 pt-2">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-                                Pusat Notifikasi
-                            </h1>
-                            {unreadCount > 0 && (
-                                <Badge variant="secondary" className="bg-blue-600 text-white font-semibold">
-                                    {unreadCount} Belum Dibaca
-                                </Badge>
-                            )}
-                        </div>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            Pantau undangan tim, alokasi kelas, review proposal, deadline tugas, dan progres kompetisi Anda.
-                        </p>
+                    <div className="flex items-center gap-3">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                            Pusat Notifikasi
+                        </h1>
+                        {unreadCount > 0 && (
+                            <Badge variant="secondary" className="bg-blue-600 text-white font-semibold">
+                                {unreadCount} Belum Dibaca
+                            </Badge>
+                        )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2">

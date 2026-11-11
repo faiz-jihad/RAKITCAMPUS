@@ -137,49 +137,24 @@ export default function MatchingIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Cari Teman Tim & Rekomendasi Cerdas — RAKIT Campus" />
 
-            {/* Atmosphere container with diffuse ambient washes */}
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
-                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-                <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-sky-100/50 blur-[100px]" />
+            {/* Main container */}
+            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
+                    {/* Minimal Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                            Cari Rekan Tim Proyek
+                        </h1>
 
-                    {/* HERO HEADER: Modern Frosted Glass Surface */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8 relative overflow-hidden">
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
-
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div className="max-w-3xl">
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-700 text-xs font-bold mb-3">
-                                    <Sparkles className="size-3.5 text-blue-600" />
-                                    <span>Smart Fair Matchmaking Engine</span>
-                                </div>
-                                <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-                                    Cari Teman Tim & Proyek Kolaboratif
-                                </h1>
-                                <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                                    Sistem rekomendasi berimbang berbasis keahlian, peran, minat, dan ketersediaan waktu. Mencegah ketimpangan dan memberikan kesempatan adil bagi seluruh mahasiswa.
-                                </p>
-                            </div>
-
-                            {/* Quick Navigation Action Pills */}
-                            <div className="flex items-center gap-2.5 shrink-0">
-                                <Link
-                                    href="/projects"
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-blue-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
-                                >
-                                    <Compass className="size-4 text-blue-600" />
-                                    <span>Semua Proyek</span>
-                                </Link>
-                                <Link
-                                    href="/competitions"
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/80 hover:bg-white text-slate-700 hover:text-amber-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
-                                >
-                                    <Award className="size-4 text-amber-500" />
-                                    <span>Lomba & Prestasi</span>
-                                </Link>
-                            </div>
+                        <div className="flex items-center gap-2.5 shrink-0">
+                            <Link
+                                href="/projects"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
+                            >
+                                <Compass className="size-4 text-blue-600" />
+                                <span>Semua Proyek</span>
+                            </Link>
                         </div>
                     </div>
 

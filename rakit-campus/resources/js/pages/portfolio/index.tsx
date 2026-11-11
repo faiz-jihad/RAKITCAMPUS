@@ -106,32 +106,20 @@ export default function PortfolioIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Portfolio & Rekam Jejak — RAKIT Campus" />
 
-            <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] via-white to-[#F1F5F9] relative text-[#0E121B] pb-24 selection:bg-[#2563EB] selection:text-white">
-                {/* Atmosphere background radial glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#2563EB]/10 to-transparent blur-3xl pointer-events-none -z-0" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-8">
+            <div className="min-h-screen bg-[#F8FAFC] relative text-[#0E121B] pb-24">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-8">
                     {/* Header */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/80 pb-6">
-                        <div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold mb-2 border border-[#2563EB]/20">
-                                <Award className="size-3.5" />
-                                <span>Rekam Jejak Akademik & Kolaboratif</span>
-                            </div>
-                            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0E121B]">
-                                Rekam Jejak & Portofolio
-                            </h1>
-                            <p className="text-xs sm:text-sm text-neutral-500 mt-1.5 leading-relaxed">
-                                Dokumentasi pencapaian terverifikasi, riwayat proyek selesai, dan portofolio karya mahasiswa.
-                            </p>
-                        </div>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
+                        <h1 className="text-2xl font-bold tracking-tight text-[#0E121B]">
+                            Rekam Jejak & Portofolio
+                        </h1>
 
                         {profile?.slug && profile?.portfolio_public && (
                             <a
                                 href={`/p/${profile.slug}`}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#181135] hover:bg-neutral-900 text-white rounded-full text-xs font-semibold shadow-md shadow-indigo-900/10 transition self-start md:self-auto"
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition self-start md:self-auto"
                             >
                                 <Globe className="size-3.5" />
                                 <span>Buka Portofolio Publik</span>

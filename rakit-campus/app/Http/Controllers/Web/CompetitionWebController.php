@@ -692,6 +692,46 @@ class CompetitionWebController extends Controller
             ->with('success', 'Tim kompetisi berhasil dibentuk! Selamat datang di Preparation Workspace.');
     }
 
+    public function workspaceIndex(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        // 1. Prioritize active participation where user is an active team member
+        $participation = CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })
+            ->whereNotIn('stage', ['winner', 'not_selected', 'withdrawn'])
+            ->latest()
+            ->first();
+
+        // 2. Fallback to any participation where user is a team member
+        if (!$participation) {
+            $participation = CompetitionParticipation::whereHas('team.members', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->latest()->first();
+        }
+
+        // 3. Fallback to participation where user is mentor
+        if (!$participation) {
+            $participation = CompetitionParticipation::where('mentor_id', $user->id)
+                ->orWhereHas('mentors', function ($q) use ($user) {
+                    $q->where('user_id', $user->id);
+                })
+                ->latest()
+                ->first();
+        }
+
+        if ($participation) {
+            return redirect()->route('competitions.workspace', $participation->id);
+        }
+
+        return redirect()->route('competitions.index', ['tab' => 'my_competitions'])
+            ->with('info', 'Anda belum terdaftar dalam tim kompetisi manapun. Daftarkan tim atau cari tim untuk membuka Workspace.');
+    }
+
     public function workspace(Request $request, int $participationId): Response
     {
         $user = $request->user();

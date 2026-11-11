@@ -415,32 +415,39 @@ export default function CompetitionWorkspace({
                     </div>
 
                     {/* Workspace Header Hero Card */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8 bg-white/85 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                         <div className="max-w-2xl">
-                            <div className="flex items-center gap-2 flex-wrap mb-2">
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-tight">
+                                Workspace: {participation.team?.name}
+                            </h1>
+                            <p className="text-xs sm:text-sm text-slate-600 mt-1">
+                                Kompetisi: <strong className="text-slate-900">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
+                            </p>
+
+                            <div className="flex items-center gap-2 flex-wrap mt-3">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                     {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}
                                 </span>
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
                                     {participation.competition?.level || 'Nasional'}
                                 </span>
                                 {participation.category_track && (
-                                    <span className="text-[10px] font-bold px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
                                         Jalur: {participation.category_track}
                                     </span>
                                 )}
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">
+                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
                                     Tahap: {selectionStages[participation.stage]?.label || participation.stage}
                                 </span>
                                 {participation.formation_status === 'approved' ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
                                         <CheckCircle2 className="size-3 text-emerald-600" />
                                         <span>Formasi Disetujui Dosen</span>
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                                         <Clock className="size-3 text-amber-600" />
-                                        <span>Susunan Tim Dalam Pembentukan</span>
+                                        <span>Dalam Pembentukan</span>
                                     </span>
                                 )}
                                 {participation.is_formation_locked && (
@@ -450,20 +457,10 @@ export default function CompetitionWorkspace({
                                     </span>
                                 )}
                             </div>
-
-                            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                                {participation.team?.name}
-                            </h1>
-                            <p className="text-xs sm:text-sm text-slate-600 mt-1">
-                                Kompetisi: <strong className="text-slate-900">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
-                            </p>
-                            <p className="text-xs text-slate-500 mt-1">
-                                {participation.team?.description || 'Workspace kolaborasi persiapan karya, mentoring dosen, dan submission hasil.'}
-                            </p>
                         </div>
 
                         {/* Readiness Score Progress Card */}
-                        <div className="glass-card rounded-2xl p-5 bg-white/95 border border-blue-200/80 min-w-[280px] shrink-0">
+                        <div className="bg-slate-50 rounded-xl p-4 border border-slate-200/80 min-w-[260px] shrink-0">
                             <div className="flex items-center justify-between text-xs font-bold mb-2">
                                 <span className="text-slate-700 flex items-center gap-1.5">
                                     <Trophy className="size-4 text-amber-500" />
@@ -471,7 +468,7 @@ export default function CompetitionWorkspace({
                                 </span>
                                 <span className="text-blue-600 font-mono text-sm">{readinessScore}%</span>
                             </div>
-                            <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                                 <div
                                     className="h-full bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full transition-all duration-500"
                                     style={{ width: `${readinessScore}%` }}

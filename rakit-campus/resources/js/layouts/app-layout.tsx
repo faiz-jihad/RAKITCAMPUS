@@ -173,9 +173,9 @@ export default function AppLayout({
                                 Lomba Saya
                             </Link>
                             <Link
-                                href="/workspace"
+                                href="/competition-workspace"
                                 className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                    url.startsWith('/workspace')
+                                    url.startsWith('/competition-workspace')
                                         ? 'bg-[#2563eb] text-white shadow-sm'
                                         : 'text-slate-600 hover:text-slate-900'
                                 }`}

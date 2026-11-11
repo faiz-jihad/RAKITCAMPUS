@@ -74,18 +74,13 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                             <circle cx="12" cy="12" r="3" />
                         </svg>
                     </div>
-                    <div>
-                        <div className="flex items-center gap-2 mb-0.5">
-                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-                                Panel Administrasi Kampus
-                            </h1>
-                            <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                                Admin
-                            </span>
-                        </div>
-                        <p className="text-xs text-neutral-500">
-                            Statistik aktivitas dan moderasi civitas kampus terintegrasi.
-                        </p>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+                            Panel Administrasi Kampus
+                        </h1>
+                        <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                            Admin
+                        </span>
                     </div>
                 </div>
 

@@ -62,6 +62,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::delete('/competition-workspace/{participationId}/roles/{roleId}', [CompetitionWebController::class, 'deleteRecruitmentRole'])->name('competitions.roles.delete');
 
     // Dedicated Competition Preparation Workspace
+    Route::get('/competition-workspace', [CompetitionWebController::class, 'workspaceIndex'])->name('competitions.workspace.index');
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');
     Route::post('/competition-workspace/{participationId}/lock-formation', [CompetitionWebController::class, 'lockFormation'])->name('competitions.lock-formation');
