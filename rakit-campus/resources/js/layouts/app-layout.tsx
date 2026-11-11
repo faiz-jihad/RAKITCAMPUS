@@ -84,20 +84,19 @@ export default function AppLayout({
                     {/* Brand Logo & Active Hub Pill */}
                     <div className="flex items-center gap-3 sm:gap-4">
                         <Link href="/dashboard" className="flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 group-hover:bg-blue-700 transition">
-                                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="5" r="2.5" />
-                                    <circle cx="18" cy="8.5" r="2.5" />
-                                    <circle cx="18" cy="15.5" r="2.5" />
-                                    <circle cx="12" cy="19" r="2.5" />
-                                    <circle cx="6" cy="15.5" r="2.5" />
-                                    <circle cx="6" cy="8.5" r="2.5" />
-                                    <circle cx="12" cy="12" r="3" />
-                                </svg>
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                            />
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-xl font-extrabold tracking-tight text-slate-900">
+                                    RAKIT
+                                </span>
+                                <span className="text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
+                                    Campus
+                                </span>
                             </div>
-                            <span className="text-xl font-bold tracking-tight text-slate-900">
-                                RakitCampus
-                            </span>
                         </Link>
 
                         {/* Interactive Hub Pill Indicator */}

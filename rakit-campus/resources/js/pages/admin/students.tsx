@@ -118,16 +118,12 @@ export default function AdminStudents({ students, filters }: Props) {
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 pb-5">
                     <div className="flex items-center gap-3.5">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
-                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                                <circle cx="12" cy="5" r="2.5" />
-                                <circle cx="18" cy="8.5" r="2.5" />
-                                <circle cx="18" cy="15.5" r="2.5" />
-                                <circle cx="12" cy="19" r="2.5" />
-                                <circle cx="6" cy="15.5" r="2.5" />
-                                <circle cx="6" cy="8.5" r="2.5" />
-                                <circle cx="12" cy="12" r="3" />
-                            </svg>
+                        <div className="size-11 rounded-xl bg-white border border-slate-200 shadow-2xs p-1.5 shrink-0 flex items-center justify-center">
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="size-8 object-contain"
+                            />
                         </div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
