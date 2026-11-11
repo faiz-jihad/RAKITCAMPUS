@@ -171,18 +171,22 @@ class DashboardWebController extends Controller
         $membership = $user->activeMembership();
         if (!$membership) {
             $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
-            if ($campus) {
-                $membership = CampusMembership::firstOrCreate(
-                    ['campus_id' => $campus->id, 'user_id' => $user->id],
-                    [
-                        'role' => CampusRole::Student,
-                        'status' => MembershipStatus::Active,
-                        'verification_status' => VerificationStatus::Verified,
-                        'student_number' => 'USR-' . substr(abs(crc32($user->email)), 0, 7),
-                        'verified_at' => now(),
-                    ]
-                );
+            if (!$campus) {
+                $campus = Campus::create([
+                    'name' => 'Politeknik Negeri Indramayu',
+                    'slug' => 'polindra',
+                ]);
             }
+            $membership = CampusMembership::firstOrCreate(
+                ['campus_id' => $campus->id, 'user_id' => $user->id],
+                [
+                    'role' => CampusRole::Student,
+                    'status' => MembershipStatus::Active,
+                    'verification_status' => VerificationStatus::Verified,
+                    'student_number' => 'USR-' . substr(abs(crc32($user->email)), 0, 7),
+                    'verified_at' => now(),
+                ]
+            );
         }
         $membership?->loadMissing('campus');
         $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
@@ -298,13 +302,19 @@ class DashboardWebController extends Controller
 
         $profile = $user->profile()->with(['skills', 'campus'])->first();
         if (!$profile) {
-            $campusId = $membership?->campus_id ?? Campus::where('slug', 'polindra')->value('id') ?? Campus::value('id');
+            $campus = $membership?->campus ?? Campus::where('slug', 'polindra')->first() ?? Campus::first();
+            if (!$campus) {
+                $campus = Campus::create([
+                    'name' => 'Politeknik Negeri Indramayu',
+                    'slug' => 'polindra',
+                ]);
+            }
             $profile = StudentProfile::firstOrCreate(
                 ['user_id' => $user->id],
                 [
-                    'campus_id' => $campusId,
+                    'campus_id' => $campus->id,
                     'slug' => Str::slug($user->name) . '-' . Str::random(4),
-                    'bio' => 'Mahasiswa ' . ($membership?->campus?->name ?? 'Kampus'),
+                    'bio' => 'Mahasiswa ' . ($campus->name ?? 'Kampus'),
                 ]
             );
             $profile->loadMissing(['skills', 'campus']);
