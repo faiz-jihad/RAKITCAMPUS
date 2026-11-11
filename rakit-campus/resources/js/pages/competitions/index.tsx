@@ -514,7 +514,7 @@ export default function CompetitionIndex({
                                                 Mereka lagi butuh
                                             </span>
                                             <span className="text-xl sm:text-2xl font-black text-white">
-                                                {totalNeededSlots || 2} orang
+                                                {totalNeededSlots} orang
                                             </span>
                                         </div>
                                     </div>
@@ -1448,7 +1448,7 @@ export default function CompetitionIndex({
                                     Penyelenggara
                                 </span>
                                 <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
-                                    {detailTeam.competition.organizer || 'SPE ITB'}
+                                    {detailTeam.competition.organizer || 'Penyelenggara Resmi'}
                                 </span>
                             </div>
                             <div>
@@ -1462,7 +1462,7 @@ export default function CompetitionIndex({
                                               month: 'short',
                                               year: 'numeric',
                                           })
-                                        : '11 Des 2026'}
+                                        : 'Terbuka'}
                                 </span>
                             </div>
                             <div>
@@ -1470,14 +1470,14 @@ export default function CompetitionIndex({
                                     Format lomba
                                 </span>
                                 <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
-                                    {detailTeam.competition.competition_type || 'Hybrid'}
+                                    {detailTeam.competition.competition_type || 'Umum'}
                                 </span>
                             </div>
                         </div>
 
                         {/* Location / Note */}
                         <div className="text-xs text-slate-500 font-medium -mt-2">
-                            {detailTeam.competition.description || 'Final luring di kampus atau hybrid competition.'}
+                            {detailTeam.competition.description || 'Informasi detail kompetisi dapat dilihat pada pedoman resmi.'}
                         </div>
 
                         {/* Two Columns */}
@@ -1490,7 +1490,7 @@ export default function CompetitionIndex({
                                     </h4>
                                     <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs sm:text-sm text-slate-700 leading-relaxed font-medium">
                                         {detailTeam.team.description ||
-                                            'mau sama - sama belajar, aku hustler and masih belajar juga'}
+                                            'Mencari rekan tim untuk berkolaborasi dan berkompetisi bersama.'}
                                     </div>
                                 </div>
 
@@ -1499,50 +1499,55 @@ export default function CompetitionIndex({
                                         <h4 className="text-xs font-bold text-slate-900">
                                             File & link
                                         </h4>
-                                        <span className="text-[10px] text-slate-400 font-bold">
-                                            3
-                                        </span>
                                     </div>
 
                                     <div className="space-y-2">
-                                        <a
-                                            href={detailTeam.competition.official_url || '#'}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
-                                        >
-                                            <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                <span>Guidebook and Poster</span>
-                                                <ArrowUpRight className="size-3.5" />
-                                            </span>
-                                            <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
-                                                {detailTeam.competition.official_url || 'ipfest2027.com'}
-                                            </span>
-                                        </a>
+                                        {detailTeam.competition.official_url && (
+                                            <a
+                                                href={detailTeam.competition.official_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                            >
+                                                <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                    <span>Website & Guidebook Resmi</span>
+                                                    <ArrowUpRight className="size-3.5" />
+                                                </span>
+                                                <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
+                                                    {detailTeam.competition.official_url.replace(/^https?:\/\//, '')}
+                                                </span>
+                                            </a>
+                                        )}
 
-                                        <a
-                                            href="https://instagram.com"
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
-                                        >
-                                            <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                <span>IG {detailTeam.competition.name.slice(0, 15)}</span>
-                                                <ArrowUpRight className="size-3.5" />
-                                            </span>
-                                            <span className="text-slate-400 text-[11px]">
-                                                www.instagram.com
-                                            </span>
-                                        </a>
+                                        {detailTeam.competition.registration_url && (
+                                            <a
+                                                href={detailTeam.competition.registration_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                            >
+                                                <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                    <span>Portal Registrasi Lomba</span>
+                                                    <ArrowUpRight className="size-3.5" />
+                                                </span>
+                                                <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
+                                                    {detailTeam.competition.registration_url.replace(/^https?:\/\//, '')}
+                                                </span>
+                                            </a>
+                                        )}
 
-                                        <div className="p-3.5 rounded-2xl border border-slate-200/90 flex items-start gap-3 bg-slate-50/50">
-                                            <FileText className="size-4 text-slate-500 mt-0.5 shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-bold text-blue-600 leading-snug break-all hover:underline cursor-pointer">
-                                                    [{detailTeam.competition.category?.toUpperCase() || 'HACKATHON'} COMPETITION - {detailTeam.competition.name}]Innovation meets technology in competition.jpg
-                                                </p>
-                                            </div>
-                                        </div>
+                                        <Link
+                                            href={`/competitions/${detailTeam.competition.id}`}
+                                            className="p-3 rounded-2xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
+                                        >
+                                            <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1">
+                                                <FileText className="size-3.5 text-slate-500" />
+                                                <span>Dokumen & Syarat Lengkap</span>
+                                            </span>
+                                            <span className="text-blue-600 font-semibold text-[11px] flex items-center gap-0.5">
+                                                Buka Detail <ArrowUpRight className="size-3" />
+                                            </span>
+                                        </Link>
                                     </div>
                                 </div>
                             </div>
@@ -1611,14 +1616,9 @@ export default function CompetitionIndex({
                                                 </span>
                                             ))
                                         ) : (
-                                            <>
-                                                <span className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100">
-                                                    Hacker
-                                                </span>
-                                                <span className="px-3 py-1 rounded-full bg-white text-slate-800 text-xs font-bold shadow-2xs border border-slate-100">
-                                                    Hipster
-                                                </span>
-                                            </>
+                                            <span className="px-3 py-1 rounded-full bg-white text-slate-600 text-xs font-medium shadow-2xs border border-slate-100">
+                                                Terbuka untuk semua role
+                                            </span>
                                         )}
                                     </div>
                                 </div>
@@ -1634,7 +1634,7 @@ export default function CompetitionIndex({
                                         </div>
                                         <div className="min-w-0">
                                             <div className="text-xs font-bold text-slate-900 truncate">
-                                                {detailTeam.team.leader?.name || 'Muhammad Chilyany'}
+                                                {detailTeam.team.leader?.name || 'Ketua Tim'}
                                             </div>
                                             <Link
                                                 href={`/competitions/${detailTeam.competition.id}`}

@@ -88,9 +88,50 @@ class DashboardWebController extends Controller
                 ->take(6)
                 ->get();
 
+            $completedTasksCount = Task::where('status', TaskStatus::Completed)->count();
+            $pendingTasksCount = Task::where('status', '!=', TaskStatus::Completed)->count();
+
+            // Monthly activity across platform
+            $monthlyActivity = collect();
+            for ($i = 5; $i >= 0; $i--) {
+                $monthDate = now()->subMonths($i);
+                $monthLabel = $monthDate->translatedFormat('M');
+
+                $tasksDone = Task::where('status', TaskStatus::Completed)
+                    ->whereYear('updated_at', $monthDate->year)
+                    ->whereMonth('updated_at', $monthDate->month)
+                    ->count();
+
+                $logs = ActivityLog::whereYear('created_at', $monthDate->year)
+                    ->whereMonth('created_at', $monthDate->month)
+                    ->count();
+
+                $val = max(15, min(95, ($tasksDone * 15) + ($logs * 8)));
+
+                $monthlyActivity->push([
+                    'month' => $monthLabel,
+                    'done_tasks' => $tasksDone,
+                    'logs' => $logs,
+                    'percent' => $val,
+                ]);
+            }
+
+            // Real campus peers
+            $publicPeers = User::with(['profile:id,user_id,study_program,headline'])
+                ->take(3)
+                ->get()
+                ->map(fn ($p) => [
+                    'id' => $p->id,
+                    'name' => $p->name,
+                    'role' => $p->profile?->headline ?? $p->profile?->study_program ?? 'Mahasiswa',
+                    'team' => $campusName,
+                ]);
+
             $stats = [
                 'my_teams_count' => Team::count(),
-                'pending_tasks_count' => Task::where('status', '!=', TaskStatus::Completed)->count(),
+                'pending_tasks_count' => $pendingTasksCount,
+                'completed_tasks_count' => $completedTasksCount,
+                'team_readiness_avg' => 80,
                 'recommended_matches_count' => Project::where('status', 'recruiting')->count(),
                 'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
                 'taught_classes_count' => 0,
@@ -116,6 +157,8 @@ class DashboardWebController extends Controller
                 'stats' => $stats,
                 'myTeams' => $publicTeams,
                 'myTasks' => collect(),
+                'teammates' => $publicPeers,
+                'monthlyActivity' => $monthlyActivity,
                 'recommendedProjects' => $publicProjects,
                 'upcomingCompetitions' => $upcomingCompetitions,
                 'recentActivities' => $recentActivities,
@@ -230,6 +273,8 @@ class DashboardWebController extends Controller
                 'stats' => [
                     'my_teams_count' => 0,
                     'pending_tasks_count' => 0,
+                    'completed_tasks_count' => $guidedProjects->sum('done_tasks'),
+                    'team_readiness_avg' => 100,
                     'recommended_matches_count' => 0,
                     'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
                     'taught_classes_count' => $taughtClasses->count(),
@@ -239,6 +284,8 @@ class DashboardWebController extends Controller
                 ],
                 'myTeams' => [],
                 'myTasks' => [],
+                'teammates' => [],
+                'monthlyActivity' => [],
                 'recommendedProjects' => [],
                 'upcomingCompetitions' => $upcomingCompetitions,
                 'recentActivities' => $recentActivities,
@@ -329,10 +376,91 @@ class DashboardWebController extends Controller
             'projects_count' => $c->projects_count,
         ]);
 
-        // 6. Summary metrics
+        // 6. Real dynamic metrics & calculations
+        $userCompletedTasksCount = Task::where('assignee_id', $user->id)
+            ->where('status', TaskStatus::Completed)
+            ->count();
+        $teamDoneTasks = $myTeams->sum('done_tasks');
+        $completedTasksCount = max($userCompletedTasksCount, $teamDoneTasks);
+
+        $pendingTasksCount = $myTasks->count();
+        $teamPendingTasks = $myTeams->sum(fn ($t) => max(0, ($t['total_tasks'] ?? 0) - ($t['done_tasks'] ?? 0)));
+        $totalPendingTasks = max($pendingTasksCount, $teamPendingTasks);
+
+        $teamReadinessAvg = $myTeams->isNotEmpty()
+            ? (int) round($myTeams->avg('progress_percent'))
+            : (int) ($profile?->completion()['percent'] ?? 0);
+
+        // 7. Monthly dynamic activity
+        $monthlyActivity = collect();
+        for ($i = 5; $i >= 0; $i--) {
+            $monthDate = now()->subMonths($i);
+            $monthLabel = $monthDate->translatedFormat('M');
+
+            $tasksDone = Task::where('assignee_id', $user->id)
+                ->where('status', TaskStatus::Completed)
+                ->whereYear('updated_at', $monthDate->year)
+                ->whereMonth('updated_at', $monthDate->month)
+                ->count();
+
+            $logs = ActivityLog::where('user_id', $user->id)
+                ->whereYear('created_at', $monthDate->year)
+                ->whereMonth('created_at', $monthDate->month)
+                ->count();
+
+            $val = max(15, min(95, ($tasksDone * 20) + ($logs * 10)));
+
+            $monthlyActivity->push([
+                'month' => $monthLabel,
+                'done_tasks' => $tasksDone,
+                'logs' => $logs,
+                'percent' => $val,
+            ]);
+        }
+
+        // 8. Real Teammates
+        $realTeammates = collect();
+        foreach ($myTeams as $team) {
+            foreach ($team['members'] as $m) {
+                if ($m['id'] !== $user->id && !$realTeammates->contains('id', $m['id'])) {
+                    $realTeammates->push([
+                        'id' => $m['id'],
+                        'name' => $m['name'],
+                        'role' => $m['role'],
+                        'team' => $team['name'],
+                    ]);
+                }
+            }
+        }
+
+        if ($realTeammates->isEmpty()) {
+            $campusId = $membership?->campus_id ?? $profile?->campus_id;
+            $campusPeers = User::where('id', '!=', $user->id)
+                ->whereHas('memberships', function ($q) use ($campusId) {
+                    if ($campusId) {
+                        $q->where('campus_id', $campusId);
+                    }
+                })
+                ->with(['profile:id,user_id,study_program,headline,department'])
+                ->take(3)
+                ->get()
+                ->map(function ($peer) use ($membership) {
+                    return [
+                        'id' => $peer->id,
+                        'name' => $peer->name,
+                        'role' => $peer->profile?->headline ?? $peer->profile?->study_program ?? 'Mahasiswa',
+                        'team' => $membership?->campus?->name ?? 'Rekan Kampus',
+                    ];
+                });
+            $realTeammates = $campusPeers;
+        }
+
+        // Summary metrics
         $stats = [
             'my_teams_count' => $myTeams->count(),
-            'pending_tasks_count' => $myTasks->count(),
+            'pending_tasks_count' => $totalPendingTasks,
+            'completed_tasks_count' => $completedTasksCount,
+            'team_readiness_avg' => $teamReadinessAvg,
             'recommended_matches_count' => $recommendedProjects->count(),
             'upcoming_competitions_count' => Competition::whereIn('status', ['open', 'upcoming'])->count(),
             'taught_classes_count' => 0,
@@ -360,10 +488,12 @@ class DashboardWebController extends Controller
             'stats' => $stats,
             'myTeams' => $myTeams,
             'myTasks' => $myTasks,
+            'teammates' => $realTeammates,
+            'monthlyActivity' => $monthlyActivity,
             'recommendedProjects' => $recommendedProjects,
             'upcomingCompetitions' => $upcomingCompetitions,
             'recentActivities' => $recentActivities,
-            'profileCompletion' => $profile?->completion() ?? ['percent' => 85, 'missing' => []],
+            'profileCompletion' => $profile?->completion() ?? ['percent' => $teamReadinessAvg, 'missing' => []],
             'taughtClasses' => [],
             'guidedProjects' => [],
             'enrolledClasses' => $enrolledClasses,
