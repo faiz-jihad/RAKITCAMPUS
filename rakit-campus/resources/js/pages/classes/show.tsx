@@ -374,50 +374,40 @@ export default function ClassShow({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${academicClass.name} — Manajemen Kelas RAKIT Campus`} />
+            <Head title={`${academicClass.name} — Kelas Kuliah RakitCampus`} />
 
-            {/* Modern Glassmorphic Canvas with Subtle Ambient Depth */}
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-20 overflow-hidden font-sans">
-                {/* Ambient natural light washes behind the frosted glass panels (No AI neon purple!) */}
-                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/60 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-                <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-sky-100/50 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
-
+            <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                     {flash?.success && (
-                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-800">
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800">
                             {flash.success}
                         </div>
                     )}
                     {flash?.info && (
-                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-xl text-xs font-medium text-blue-800">
+                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-800">
                             {flash.info}
                         </div>
                     )}
                     {flash?.error && (
-                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-medium text-rose-700">
+                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-700">
                             {flash.error}
                         </div>
                     )}
 
-                    {/* HERO HEADER: Modern Frosted Glass Card */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-7 relative overflow-hidden">
-                        {/* Top specular reflection line */}
-                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white to-transparent" />
-
+                    {/* HERO HEADER */}
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                         {/* Top Bar: Back Link + Live Status Badge */}
-                        <div className="flex items-center justify-between gap-3 mb-5">
+                        <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                             <Link
                                 href="/classes"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/80 hover:bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs backdrop-blur-sm cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
                             >
                                 <ArrowLeft className="size-3.5" />
                                 <span>Kembali ke Daftar Kelas</span>
                             </Link>
 
                             <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-[11px] font-bold">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
                                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                     <span>Kelas Aktif</span>
                                 </span>
@@ -428,19 +418,19 @@ export default function ClassShow({
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                             <div className="max-w-3xl">
                                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <span className="text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-2xs">
+                                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-2xs">
                                         {academicClass.code}
                                     </span>
-                                    <span className="text-xs font-bold text-slate-700">
+                                    <span className="text-xs font-semibold text-slate-700">
                                         {academicClass.study_program}
                                     </span>
                                     <span className="text-slate-300">•</span>
-                                    <span className="text-xs text-slate-500">
+                                    <span className="text-xs text-slate-400">
                                         Semester {academicClass.semester} ({academicClass.academic_year})
                                     </span>
                                 </div>
 
-                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
                                     {academicClass.name}
                                 </h1>
 
