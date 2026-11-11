@@ -1787,7 +1787,7 @@ export default function CompetitionIndex({
                         </div>
 
                         {/* Top 3-Column Metadata Box */}
-                        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 grid grid-cols-3 gap-4">
+                        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                             <div>
                                 <span className="text-xs text-slate-400 font-medium block">
                                     Penyelenggara
