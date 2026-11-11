@@ -12,6 +12,7 @@ use App\Enums\TeamType;
 use App\Enums\Visibility;
 use App\Http\Controllers\Controller;
 use App\Enums\InvitationStatus;
+use App\Models\AcademicClass;
 use App\Models\Invitation;
 use App\Models\ActivityLog;
 use App\Models\Application;
@@ -58,7 +59,8 @@ class ProjectWebController extends Controller
             ->with([
                 'leader:id,name',
                 'campus:id,name',
-                'academicClass:id,name,code',
+                'academicClass:id,name,code,target_team_size,lecturer_id',
+                'academicClass.coLecturers:id',
                 'skills',
                 'team.members.user:id,name',
                 'team.recruitment.roles',
@@ -84,27 +86,59 @@ class ProjectWebController extends Controller
         $projects = $query->paginate(12)->withQueryString();
 
         $isLecturer = $user ? ($user->isLecturer() || $user->isPlatformAdmin() || $user->isCampusAdmin()) : false;
-        $userHasActiveProject = $user && !$isLecturer ? $user->hasActiveProject() : false;
         $enrolledClassIds = $user && !$isLecturer
-            ? $user->enrolledClasses()->pluck('academic_classes.id')->flip()->all()
+            ? $user->enrolledClasses()->wherePivot('status', 'enrolled')->pluck('academic_classes.id')->flip()->all()
             : [];
+
+        $activeProjectClassIds = [];
+        $hasAnyActiveProject = false;
+        if ($user && !$isLecturer) {
+            $activeMemberships = TeamMember::where('user_id', $user->id)
+                ->where('status', 'active')
+                ->whereHas('team.project', function ($q) {
+                    $q->whereNotIn('status', [
+                        ProjectStatus::Archived->value,
+                        ProjectStatus::Completed->value,
+                    ]);
+                })
+                ->with('team.project:id,academic_class_id')
+                ->get();
+
+            foreach ($activeMemberships as $m) {
+                $hasAnyActiveProject = true;
+                if ($m->team?->project?->academic_class_id !== null) {
+                    $activeProjectClassIds[(int) $m->team->project->academic_class_id] = true;
+                }
+            }
+        }
+
+        $hasActiveCompetition = ($user && !$isLecturer && config('matchmaking.membership_mode', 'strict') === 'strict')
+            ? $this->eligibilityService->hasActiveCompetitionMembership($user)
+            : false;
+
         $appliedRecruitmentIds = $user && !$isLecturer
             ? Application::where('user_id', $user->id)
-                ->whereIn('status', ['pending', 'submitted'])
+                ->whereIn('status', ['pending', 'under_review', 'submitted', 'accepted'])
                 ->pluck('recruitment_id')
                 ->flip()
                 ->all()
             : [];
 
-        $projects->getCollection()->transform(function (Project $proj) use ($user, $isLecturer, $userHasActiveProject, $enrolledClassIds, $appliedRecruitmentIds) {
+        $projects->getCollection()->transform(function (Project $proj) use ($user, $isLecturer, $activeProjectClassIds, $hasAnyActiveProject, $hasActiveCompetition, $enrolledClassIds, $appliedRecruitmentIds) {
             $hasCapacity = $proj->hasCapacity();
-            $isMember = $user ? ($proj->team?->hasMember($user) ?? false) : false;
+            $isMember = $user ? ($proj->isLeader($user) || ($proj->team?->hasMember($user) ?? false)) : false;
             $recruitment = $proj->team?->recruitment;
             $hasOpenRecruitment = $proj->status === ProjectStatus::Recruiting
                 && $recruitment !== null
-                && ($recruitment->status === RecruitmentStatus::Open || $recruitment->status?->value === 'open')
+                && $recruitment->isOpen()
                 && !in_array($proj->formation_status, ['team_locked', 'workspace_activated'], true);
             $hasApplied = $recruitment ? isset($appliedRecruitmentIds[$recruitment->id]) : false;
+            $hasActiveInScope = $proj->academic_class_id !== null
+                ? isset($activeProjectClassIds[(int) $proj->academic_class_id])
+                : $hasAnyActiveProject;
+            $isOutsideClass = $user && !$isLecturer && $proj->academic_class_id !== null
+                && !isset($enrolledClassIds[(int) $proj->academic_class_id]);
+            $canAccessWorkspace = $user ? $this->teamFormationService->canAccessWorkspace($proj, $user) : false;
 
             $blockReason = null;
             if (!$user) {
@@ -114,21 +148,29 @@ class ProjectWebController extends Controller
             } elseif ($isMember) {
                 $blockReason = 'Sudah menjadi anggota.';
             } elseif ($hasApplied) {
-                $blockReason = 'Lamaran sedang ditinjau.';
-            } elseif ($userHasActiveProject) {
-                $blockReason = 'Sudah tergabung di proyek aktif lain (Aturan 1 Proyek).';
-            } elseif ($proj->academic_class_id && !isset($enrolledClassIds[$proj->academic_class_id])) {
-                $blockReason = 'Khusus mahasiswa yang terdaftar di kelas proyek ini.';
-            } elseif (!$hasCapacity) {
-                $blockReason = 'Kapasitas anggota tim sudah penuh.';
+                $blockReason = 'Pengajuan bergabung Anda sedang ditinjau.';
             } elseif (!$hasOpenRecruitment) {
                 $blockReason = 'Rekrutmen tim tidak sedang dibuka.';
+            } elseif (!$hasCapacity) {
+                $blockReason = 'Kapasitas anggota tim sudah penuh.';
+            } elseif ($isOutsideClass) {
+                $blockReason = 'Khusus mahasiswa yang terdaftar di kelas proyek ini.';
+            } elseif ($hasActiveInScope) {
+                $blockReason = $proj->academic_class_id
+                    ? 'Sudah tergabung dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek Aktif).'
+                    : 'Sudah tergabung dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek Aktif).';
+            } elseif ($hasActiveCompetition) {
+                $blockReason = 'Sudah memiliki tim kompetisi aktif (Aturan Mode Ketat).';
             }
 
             $proj->setAttribute('has_capacity', $hasCapacity);
             $proj->setAttribute('is_member', $isMember);
             $proj->setAttribute('has_applied', $hasApplied);
-            $proj->setAttribute('can_apply', $user && !$isLecturer && !$isMember && !$hasApplied && !$userHasActiveProject && $hasCapacity && $hasOpenRecruitment && $blockReason === null);
+            $proj->setAttribute('has_open_recruitment', $hasOpenRecruitment);
+            $proj->setAttribute('can_access_workspace', $canAccessWorkspace);
+            $proj->setAttribute('has_active_in_scope', $hasActiveInScope);
+            $proj->setAttribute('is_class_restricted', $isOutsideClass);
+            $proj->setAttribute('can_apply', $user && !$isLecturer && !$isMember && !$hasApplied && $hasOpenRecruitment && $hasCapacity && $blockReason === null);
             $proj->setAttribute('apply_block_reason', $blockReason);
 
             return $proj;
@@ -139,7 +181,7 @@ class ProjectWebController extends Controller
             'filters' => $request->only(['search', 'category', 'status']),
             'categories' => ProjectCategory::values(),
             'statuses' => ProjectStatus::values(),
-            'userHasActiveProject' => $userHasActiveProject,
+            'userHasActiveProject' => $hasAnyActiveProject,
             'isLecturer' => $isLecturer,
             'isGuest' => !$user,
         ]);
@@ -166,7 +208,9 @@ class ProjectWebController extends Controller
         $user = $request->user();
         $project = $this->resolveProject($id, [
             'leader:id,name,email',
+            'formationApprover:id,name',
             'academicClass.lecturer:id,name,email',
+            'academicClass.coLecturers:id,name,email',
             'campus:id,name,slug',
             'skills',
             'team.members.user:id,name',
@@ -193,7 +237,7 @@ class ProjectWebController extends Controller
             || $project->primary_supervisor_id === $user->id
             || $user->isPlatformAdmin()
         ) : false;
-        $userHasActiveProject = $user ? $user->hasActiveProject() : false;
+        $userHasActiveProject = $user ? $user->hasActiveProject($project->academic_class_id) : false;
 
         $applications = [];
         if ($isLeader && $project->team?->recruitment) {
@@ -377,13 +421,21 @@ class ProjectWebController extends Controller
 
         $canAccessWorkspace = $user ? $this->teamFormationService->canAccessWorkspace($project, $user) : false;
 
+        $recruitment = $project->team?->recruitment;
+        $hasOpenRecruitment = $project->status === ProjectStatus::Recruiting
+            && $recruitment !== null
+            && $recruitment->isOpen()
+            && !in_array($project->formation_status, ['team_locked', 'workspace_activated'], true);
+
         $project->setAttribute('has_capacity', $project->hasCapacity());
+        $project->setAttribute('has_open_recruitment', $hasOpenRecruitment);
         $isLecturerAccount = $user ? ($user->isLecturer() || $user->isPlatformAdmin() || $user->isCampusAdmin()) : false;
-        $isMember = $user ? ($project->team?->hasMember($user) ?? false) : false;
-        $myApplication = ($user && $project->team?->recruitment)
-            ? Application::where('recruitment_id', $project->team->recruitment->id)
+        $isMember = $user ? ($project->isLeader($user) || ($project->team?->hasMember($user) ?? false)) : false;
+        $myApplication = ($user && $recruitment)
+            ? Application::where('recruitment_id', $recruitment->id)
                 ->where('user_id', $user->id)
                 ->with('role:id,name')
+                ->latest('id')
                 ->first()
             : null;
         $eligibility = ($user && !$isLecturerAccount && !$isMember)
@@ -422,15 +474,37 @@ class ProjectWebController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): Response|\Illuminate\Http\RedirectResponse|\Illuminate\Http\JsonResponse
     {
         $user = $request->user();
-        $enrolledClasses = $user ? $user->enrolledClasses()->get(['academic_classes.id', 'academic_classes.name', 'academic_classes.code']) : collect();
+        if (! $user) {
+            return redirect()->route('login');
+        }
+
+        if (! $user->isPlatformAdmin() && ! $user->isStudent()) {
+            $msg = 'Fitur Buat Proyek Perkuliahan hanya tersedia untuk akun mahasiswa.';
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $msg], 403);
+            }
+
+            return redirect()->route('projects.index')->with('error', $msg);
+        }
+
+        $enrolledClasses = $user->enrolledClasses()
+            ->wherePivot('status', 'enrolled')
+            ->get([
+                'academic_classes.id',
+                'academic_classes.name',
+                'academic_classes.code',
+                'academic_classes.target_team_size',
+            ]);
 
         return Inertia::render('projects/create', [
             'categories' => ProjectCategory::values(),
             'visibilities' => Visibility::values(),
             'enrolledClasses' => $enrolledClasses,
+            'selectedClassId' => $request->integer('academic_class_id') ?: null,
+            'userHasActiveProject' => $user->isPlatformAdmin() ? false : $user->hasActiveProject(),
         ]);
     }
 
@@ -642,9 +716,18 @@ class ProjectWebController extends Controller
         ]);
 
         $roles = $project->team?->recruitment?->roles ?? collect();
-        $role = !empty($validated['recruitment_role_id'])
-            ? $roles->firstWhere('id', (int) $validated['recruitment_role_id'])
-            : $roles->first();
+        $role = null;
+        if (!empty($validated['recruitment_role_id'])) {
+            $role = $roles->firstWhere('id', (int) $validated['recruitment_role_id']);
+            if (!$role) {
+                $msg = 'Posisi yang dipilih tidak valid untuk rekrutmen proyek ini.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg, 'errors' => ['recruitment_role_id' => [$msg]]], 422)
+                    : back()->withErrors(['recruitment_role_id' => $msg]);
+            }
+        } elseif ($roles->count() > 0) {
+            $role = $roles->first();
+        }
 
         try {
             $this->membershipService->applyToProject($user, $project, $role, $validated['message'] ?? null);
@@ -668,6 +751,85 @@ class ProjectWebController extends Controller
         }
     }
 
+    public function toggleRecruitment(Request $request, string|int $id)
+    {
+        $user = $request->user();
+        $project = $this->resolveProject($id, ['team.recruitment']);
+
+        if (!$project->isLeader($user) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya ketua tim yang dapat mengubah status rekrutmen proyek.');
+        }
+
+        if ($project->status !== ProjectStatus::Recruiting || in_array($project->formation_status, ['team_locked', 'workspace_activated'], true)) {
+            $msg = 'Status rekrutmen tidak dapat diubah setelah formasi tim dikunci atau workspace aktif.';
+            return $request->wantsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
+        $team = $project->team;
+        if (!$team) {
+            $msg = 'Tim proyek belum tersedia.';
+            return $request->wantsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
+        $validated = $request->validate([
+            'status' => ['nullable', 'string', 'in:open,closed'],
+        ]);
+
+        $recruitment = $team->recruitment;
+        $isCurrentlyOpen = $recruitment !== null && $recruitment->isOpen();
+        $targetStatus = isset($validated['status'])
+            ? RecruitmentStatus::from($validated['status'])
+            : ($isCurrentlyOpen ? RecruitmentStatus::Closed : RecruitmentStatus::Open);
+
+        DB::transaction(function () use ($project, $team, $recruitment, $targetStatus, $user) {
+            if (!$recruitment) {
+                $recruitment = Recruitment::create([
+                    'campus_id' => $team->campus_id,
+                    'team_id' => $team->id,
+                    'title' => 'Rekrutmen Terbuka ' . $project->title,
+                    'status' => $targetStatus,
+                ]);
+            } else {
+                $updates = ['status' => $targetStatus];
+                if ($targetStatus === RecruitmentStatus::Open && $recruitment->closes_at?->isPast()) {
+                    $updates['closes_at'] = null;
+                }
+                $recruitment->update($updates);
+            }
+
+            if ($targetStatus === RecruitmentStatus::Closed && $project->formation_status === 'matchmaking_open') {
+                $project->update(['formation_status' => 'requirements_configured']);
+            } elseif ($targetStatus === RecruitmentStatus::Open && in_array($project->formation_status, [null, 'draft', 'requirements_configured'], true)) {
+                $project->update(['formation_status' => 'matchmaking_open']);
+            }
+
+            MatchingAuditLog::log(
+                $targetStatus === RecruitmentStatus::Open ? 'recruitment_opened' : 'recruitment_closed',
+                ['project_id' => $project->id, 'recruitment_id' => $recruitment->id],
+                $project->academic_class_id,
+                $project->id,
+                $user->id
+            );
+        });
+
+        $message = $targetStatus === RecruitmentStatus::Open
+            ? 'Rekrutmen terbuka berhasil dibuka kembali.'
+            : 'Rekrutmen anggota berhasil ditutup.';
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => $message,
+                'status' => $targetStatus->value,
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function respondApplication(Request $request, string|int $id, int $applicationId)
     {
         $user = $request->user();
@@ -684,7 +846,10 @@ class ProjectWebController extends Controller
         }
 
         if ($application->status !== \App\Enums\ApplicationStatus::Pending) {
-            return back()->with('error', 'Lamaran ini sudah diproses.');
+            $msg = 'Lamaran ini sudah diproses.';
+            return $request->wantsJson()
+                ? response()->json(['message' => $msg], 422)
+                : back()->with('error', $msg);
         }
 
         $action = $request->input('action', 'accept'); // 'accept' or 'reject'
@@ -696,18 +861,33 @@ class ProjectWebController extends Controller
                     $user,
                     $request->input('note', 'Diterima oleh ketua tim.')
                 );
-                return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim!");
+                $msg = "Mahasiswa {$application->user->name} resmi bergabung dengan tim!";
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg])
+                    : back()->with('success', $msg);
             } else {
                 $this->membershipService->rejectApplication(
                     $application,
                     $user,
                     $request->input('note', 'Mohon maaf, posisi saat ini belum sesuai.')
                 );
-                return back()->with('info', 'Lamaran telah ditolak.');
+                $msg = 'Lamaran telah ditolak.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg])
+                    : back()->with('info', $msg);
             }
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => collect($e->errors())->flatten()->first() ?? 'Lamaran tidak dapat diproses.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
             return back()->withErrors($e->errors());
         } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
             return back()->with('error', $e->getMessage());
         }
     }
@@ -728,48 +908,20 @@ class ProjectWebController extends Controller
         DB::transaction(function () use ($project, $user) {
             $project->update([
                 'status' => ProjectStatus::InProgress->value,
+                'formation_status' => 'workspace_activated',
             ]);
 
             if ($project->team) {
+                $project->team->update(['status' => 'active']);
+
                 // Ensure all members are active
                 $project->team->members()->update(['status' => 'active']);
 
-                // Close recruitment
-                $project->team->recruitment?->update(['is_open' => false]);
+                // Close recruitment using canonical status column
+                $project->team->recruitment?->update(['status' => RecruitmentStatus::Closed]);
 
                 // Create initial milestones if none exist
-                if ($project->team->milestones()->count() === 0) {
-                    \App\Models\Milestone::create([
-                        'campus_id' => $project->campus_id,
-                        'team_id' => $project->team->id,
-                        'created_by' => $user->id,
-                        'title' => 'Milestone 1: Perencanaan & Arsitektur',
-                        'description' => 'Penyusunan backlog tugas, pembagian peran, dan perancangan skema data.',
-                        'starts_on' => now(),
-                        'due_on' => now()->addWeeks(2),
-                        'status' => 'in_progress',
-                    ]);
-                    \App\Models\Milestone::create([
-                        'campus_id' => $project->campus_id,
-                        'team_id' => $project->team->id,
-                        'created_by' => $user->id,
-                        'title' => 'Milestone 2: Pengembangan & Integrasi Fitur',
-                        'description' => 'Pengembangan sprint utama, implementasi komponen UI, dan integrasi backend API.',
-                        'starts_on' => now()->addWeeks(2),
-                        'due_on' => now()->addWeeks(6),
-                        'status' => 'planned',
-                    ]);
-                    \App\Models\Milestone::create([
-                        'campus_id' => $project->campus_id,
-                        'team_id' => $project->team->id,
-                        'created_by' => $user->id,
-                        'title' => 'Milestone 3: Pengujian, Evaluasi & Final Submission',
-                        'description' => 'Quality assurance, dokumentasi tugas akhir, dan serah terima ke Dosen Pembimbing.',
-                        'starts_on' => now()->addWeeks(6),
-                        'due_on' => now()->addWeeks(8),
-                        'status' => 'planned',
-                    ]);
-                }
+                TeamFormationService::ensureStarterMilestones($project, $user);
             }
 
             $teamId = $project->team?->id;
@@ -867,7 +1019,7 @@ class ProjectWebController extends Controller
     public function updateRequirements(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = $this->resolveProject($id, ['team.recruitment.roles', 'skills']);
+        $project = $this->resolveProject($id, ['academicClass', 'team.recruitment.roles', 'team.members', 'skills']);
 
         $validated = $request->validate([
             'min_team_size' => ['required', 'integer', 'min:2', 'max:10'],
@@ -884,6 +1036,19 @@ class ProjectWebController extends Controller
             'skills.*.name' => ['required', 'string', 'max:80'],
             'skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
         ]);
+
+        if ($project->academicClass && $validated['max_team_size'] > $project->academicClass->target_team_size) {
+            return back()->withErrors([
+                'max_team_size' => "Batas maksimal anggota kelompok untuk kelas ini adalah {$project->academicClass->target_team_size} orang.",
+            ]);
+        }
+
+        $activeMembersCount = $project->activeMembersCount();
+        if ($validated['max_team_size'] < $activeMembersCount) {
+            return back()->withErrors([
+                'max_team_size' => "Kapasitas maksimal tidak boleh kurang dari jumlah anggota aktif saat ini ({$activeMembersCount} orang).",
+            ]);
+        }
 
         $this->teamFormationService->configureRequirements($project, $validated, $user);
 
@@ -924,6 +1089,10 @@ class ProjectWebController extends Controller
         $user = $request->user();
         $project = $this->resolveProject($id, ['team.members', 'academicClass']);
 
+        $request->merge([
+            'action' => $request->input('action') ?? $request->input('decision'),
+        ]);
+
         $validated = $request->validate([
             'action' => ['required', 'string', 'in:approve,reject,request_changes'],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -934,10 +1103,11 @@ class ProjectWebController extends Controller
             $this->teamFormationService->approveFormation($project, $user, $validated['notes'] ?? null);
             return back()->with('success', 'Susunan tim proyek berhasil disetujui dosen! Tim kini dapat mengaktifkan workspace proyek.');
         } elseif ($validated['action'] === 'reject') {
-            if (empty($validated['reason'])) {
+            $reason = $validated['reason'] ?? $validated['notes'] ?? null;
+            if (empty($reason)) {
                 return back()->withErrors(['reason' => 'Alasan penolakan susunan tim wajib diisi.']);
             }
-            $this->teamFormationService->rejectFormation($project, $user, $validated['reason']);
+            $this->teamFormationService->rejectFormation($project, $user, $reason);
             return back()->with('info', 'Susunan tim proyek ditolak. Ketua tim akan menerima alasan penolakan.');
         } elseif ($validated['action'] === 'request_changes') {
             if (empty($validated['notes'])) {
@@ -1018,9 +1188,11 @@ class ProjectWebController extends Controller
 
         $validated = $request->validate([
             'reason' => ['nullable', 'string', 'max:255'],
+            'declined_reason' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $this->invitationService->declineInvitation($invitation, $user, $validated['reason'] ?? null);
+        $reason = $validated['reason'] ?? $validated['declined_reason'] ?? null;
+        $this->invitationService->declineInvitation($invitation, $user, $reason);
 
         return back()->with('info', 'Undangan proyek telah ditolak.');
     }

@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     Archive,
@@ -33,7 +33,7 @@ import {
     X,
     XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SemesterTimeline from './components/SemesterTimeline';
 import LivingProposalTab from './components/LivingProposalTab';
 import ProposalVersionsTab from './components/ProposalVersionsTab';
@@ -111,6 +111,9 @@ export default function ProjectShow({
     receivedInvitations = [],
     canAccessWorkspace = false,
 }: Props) {
+    const page = usePage<any>();
+    const flash = page.props?.flash;
+    const academicClass = project.academic_class || project.academicClass;
     const initialTabParam = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
@@ -122,6 +125,22 @@ export default function ProjectShow({
     const [submitting, setSubmitting] = useState(false);
     const [decidingId, setDecidingId] = useState<number | null>(null);
     const [lifecycleProcessing, setLifecycleProcessing] = useState(false);
+    const [togglingRecruitment, setTogglingRecruitment] = useState(false);
+
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const params = new URLSearchParams(window.location.search);
+        const tabParam = params.get('tab');
+        if (tabParam) {
+            setActiveTab(tabParam);
+        }
+        if (window.location.hash) {
+            const targetId = window.location.hash.slice(1);
+            window.setTimeout(() => {
+                document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 140);
+        }
+    }, [page.url, project.id]);
 
     // Filter UTS and UAS assessment periods and submissions
     const utsPeriod = assessmentPeriods.find((p: any) => p.type === 'uts') || assessmentPeriods[0];
@@ -268,6 +287,34 @@ export default function ProjectShow({
         }
     };
 
+    const handleToggleRecruitment = async (targetStatus?: 'open' | 'closed') => {
+        setTogglingRecruitment(true);
+        try {
+            const res = await fetch(`/projects/${project.id}/recruitment/toggle`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify(targetStatus ? { status: targetStatus } : {}),
+            });
+            const json = await res.json().catch(() => ({}));
+            if (res.ok) {
+                alert(json.message || 'Status rekrutmen diperbarui.');
+                window.location.reload();
+            } else {
+                alert(json.message || 'Gagal mengubah status rekrutmen.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setTogglingRecruitment(false);
+        }
+    };
+
     // Calculate total documents
     const allDocuments = [
         ...(utsSubmission?.documents || []),
@@ -275,6 +322,20 @@ export default function ProjectShow({
     ];
 
     const teamMembers = project.team?.members || [];
+    const activeMembersCount = teamMembers.filter((m: any) => !m.status || m.status === 'active').length;
+    const minQuota = project.min_team_size || 2;
+    const maxQuota = academicClass?.target_team_size
+        ? Math.min(project.max_team_size || academicClass.target_team_size, academicClass.target_team_size)
+        : (project.max_team_size || project.team?.capacity || 4);
+    const hasOpenRecruitment = Boolean(
+        project.has_open_recruitment ?? (
+            project.status === 'recruiting'
+            && project.team?.recruitment?.status === 'open'
+            && !['team_locked', 'workspace_activated'].includes(project.formation_status || '')
+        )
+    );
+    const activeAppStatuses = ['pending', 'under_review', 'submitted', 'accepted'];
+    const hasActiveApplication = Boolean(myApplication && activeAppStatuses.includes(myApplication.status));
 
     // Comprehensive Project Hub Tabs
     const tabs = [
@@ -331,7 +392,7 @@ export default function ProjectShow({
                         </Link>
 
                         <div className="flex items-center gap-2">
-                            {project.team && (isMember || isLeader || isLecturer) && (
+                            {project.team && (isMember || isLeader || isLecturer) && canAccessWorkspace && (
                                 <Link
                                     href={`/workspace/${project.team.id}`}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
@@ -355,6 +416,22 @@ export default function ProjectShow({
                         </div>
                     </div>
 
+                    {flash?.success && (
+                        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
+                            {flash.success}
+                        </div>
+                    )}
+                    {flash?.info && (
+                        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-medium text-blue-800">
+                            {flash.info}
+                        </div>
+                    )}
+                    {(flash?.warning || flash?.error) && (
+                        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800">
+                            {flash?.error || flash?.warning}
+                        </div>
+                    )}
+
                     {/* HERO HEADER: 3 Distinct Status Indicators & Quick Actions */}
                     <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -363,17 +440,31 @@ export default function ProjectShow({
                                     <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                         {project.category?.replace('_', ' ')}
                                     </span>
-                                    {project.academicClass && (
+                                    {academicClass && (
                                         <Link
-                                            href={`/classes/${project.academicClass.code || project.academicClass.id}`}
+                                            href={`/classes/${academicClass.code || academicClass.id}`}
                                             className="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-blue-600 transition"
                                         >
-                                            Kelas: {project.academicClass.name} ({project.academicClass.code})
+                                            Kelas: {academicClass.name} ({academicClass.code})
                                         </Link>
                                     )}
                                     <span className="text-xs font-semibold text-slate-500">
                                         Kesulitan: {project.difficulty || 'Intermediate'}
                                     </span>
+                                    {project.status === 'recruiting' && (
+                                        <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${
+                                            hasOpenRecruitment
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                : 'bg-slate-100 text-slate-600 border-slate-200'
+                                        }`}>
+                                            {hasOpenRecruitment ? 'Rekrutmen: Terbuka' : 'Rekrutmen: Ditutup'}
+                                        </span>
+                                    )}
+                                    {!canAccessWorkspace && (
+                                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
+                                            Workspace: Menunggu Persetujuan Dosen
+                                        </span>
+                                    )}
                                 </div>
 
                                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
@@ -425,43 +516,88 @@ export default function ProjectShow({
                             <div className="flex flex-col sm:items-end justify-center gap-2.5 shrink-0">
                                 <div className="text-right text-xs text-slate-500">
                                     <span>Ketua: <strong className="text-slate-900">{project.leader?.name}</strong></span>
-                                    {project.academicClass?.lecturer && (
-                                        <span className="block mt-0.5">Dosen: <strong className="text-slate-900">{project.academicClass.lecturer.name}</strong></span>
+                                    {academicClass?.lecturer && (
+                                        <span className="block mt-0.5">Dosen: <strong className="text-slate-900">{academicClass.lecturer.name}</strong></span>
                                     )}
                                 </div>
 
-                                {/* Team activation button if leader and in recruitment */}
+                                {/* Team formation & workspace activation aligned with Lecturer Approval step */}
                                 {isLeader && project.status === 'recruiting' && (
+                                    (project.formation_status === 'lecturer_approved' || project.formation_status === 'team_locked') ? (
+                                        <button
+                                            onClick={handleActivateTeam}
+                                            disabled={lifecycleProcessing}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                        >
+                                            <UserCheck className="size-4" />
+                                            <span>Konfirmasi Formasi & Buka Workspace</span>
+                                        </button>
+                                    ) : project.formation_status === 'formation_review' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('formation')}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                        >
+                                            <Clock className="size-4" />
+                                            <span>Menunggu Persetujuan Dosen</span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('formation')}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                        >
+                                            <UserCheck className="size-4" />
+                                            <span>Kelola Formasi & Ajukan Dosen</span>
+                                        </button>
+                                    )
+                                )}
+
+                                {!isLeader && isLecturer && project.status === 'recruiting' && project.formation_status === 'formation_review' && (
                                     <button
-                                        onClick={handleActivateTeam}
-                                        disabled={lifecycleProcessing}
-                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                        type="button"
+                                        onClick={() => setActiveTab('formation')}
+                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                     >
-                                        <UserCheck className="size-4" />
-                                        <span>Konfirmasi Formasi & Buka Workspace</span>
+                                        <GraduationCap className="size-4" />
+                                        <span>Tinjau & Setujui Formasi Tim</span>
                                     </button>
                                 )}
 
-                                {/* Apply button for eligible students */}
+                                {/* Apply button for eligible students (strictly separated from Workspace lecturer approval) */}
                                 {!isMember && !isLecturer && !isLecturerAccount && project.status === 'recruiting' && (
-                                    myApplication ? (
-                                        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold">
+                                    hasActiveApplication ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('members')}
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                        >
                                             <Clock className="size-3.5" />
-                                            <span>Lamaran {myApplication.status === 'pending' ? 'Sedang Ditinjau' : myApplication.status}</span>
+                                            <span>Lamaran {myApplication?.status === 'pending' || myApplication?.status === 'under_review' || myApplication?.status === 'submitted' ? 'Sedang Ditinjau' : myApplication?.status}</span>
+                                        </button>
+                                    ) : !hasOpenRecruitment ? (
+                                        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
+                                            <span>Rekrutmen Ditutup</span>
                                         </span>
-                                    ) : project.has_capacity && !userHasActiveProject && eligibility?.eligible !== false ? (
+                                    ) : project.has_capacity && eligibility?.eligible !== false ? (
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setActiveTab('members');
                                                 const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
                                                 setApplyingRole(firstRole);
                                             }}
                                             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                         >
                                             <Send className="size-4" />
-                                            <span>Gabung Tim / Lamar Posisi</span>
+                                            <span>Lamar / Ajukan Bergabung</span>
                                         </button>
+                                    ) : eligibility?.reason ? (
+                                        <span
+                                            title={eligibility.reason}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-semibold"
+                                        >
+                                            <span>{project.has_capacity ? 'Belum Memenuhi Syarat' : 'Kapasitas Tim Penuh'}</span>
+                                        </span>
                                     ) : null
                                 )}
                             </div>
@@ -567,6 +703,82 @@ export default function ProjectShow({
 
                             {/* Right sidebar */}
                             <div className="flex flex-col gap-6">
+                                {/* Recruitment & Quota Card */}
+                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+                                            Rekrutmen & Kuota Tim
+                                        </h3>
+                                        {project.status === 'recruiting' && (
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                hasOpenRecruitment
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                                            }`}>
+                                                {hasOpenRecruitment ? 'Terbuka' : 'Ditutup'}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2.5 text-xs">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-500">Kuota Anggota</span>
+                                            <span className="font-bold text-slate-900">
+                                                {activeMembersCount} / {maxQuota} anggota (min. {minQuota})
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-500">Workspace Tim</span>
+                                            <span className={`font-bold ${canAccessWorkspace ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                                {canAccessWorkspace ? 'Aktif' : 'Menunggu Persetujuan Dosen'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 && (
+                                        <div className="mt-3 pt-3 border-t border-slate-100">
+                                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
+                                                Posisi Dibutuhkan
+                                            </span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {project.team.recruitment.roles.map((r: any) => (
+                                                    <span
+                                                        key={r.id}
+                                                        className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                                    >
+                                                        {r.name} ({r.slots || 1})
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {project.status === 'recruiting' && (
+                                        <div className="mt-4 flex flex-col gap-2">
+                                            {!isMember && !isLecturer && !isLecturerAccount && !hasActiveApplication && hasOpenRecruitment && project.has_capacity && eligibility?.eligible !== false && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
+                                                        setApplyingRole(firstRole);
+                                                    }}
+                                                    className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+                                                >
+                                                    <Send className="size-3.5" />
+                                                    <span>Lamar / Ajukan Bergabung</span>
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('members')}
+                                                className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                                            >
+                                                Lihat Detail Posisi & Anggota →
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {/* Team Card */}
                                 <div className="glass-card rounded-2xl p-6 shadow-xs">
                                     <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
@@ -889,40 +1101,84 @@ export default function ProjectShow({
 
                             {/* Open Recruitment Roles & Join Team Section */}
                             {project.status === 'recruiting' && (
-                                <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                                <div id="recruitment-section" className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                         <div>
                                             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                                 <Briefcase className="size-5 text-emerald-600" />
-                                                <span>Rekrutmen Terbuka & Posisi Tim</span>
+                                                <span>{hasOpenRecruitment ? 'Rekrutmen Terbuka & Posisi Tim' : 'Rekrutmen Tim (Saat Ini Ditutup)'}</span>
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-0.5">
-                                                Pilih posisi yang sesuai dengan keahlian kamu untuk mengajukan diri bergabung ke kelompok ini.
+                                                Kuota tim: {activeMembersCount}/{maxQuota} anggota (minimal {minQuota} anggota).
+                                                {!canAccessWorkspace && ' Project Workspace masih menunggu persetujuan dosen, namun rekrutmen anggota tetap berjalan.'}
                                             </p>
                                         </div>
-                                        {project.has_capacity ? (
-                                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start">
-                                                Slot Tim Tersedia
+                                        <div className="flex flex-wrap items-center gap-2 self-start">
+                                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
+                                                !hasOpenRecruitment
+                                                    ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                                    : project.has_capacity
+                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                                            }`}>
+                                                {!hasOpenRecruitment
+                                                    ? 'Rekrutmen Ditutup'
+                                                    : project.has_capacity
+                                                    ? 'Rekrutmen Terbuka • Slot Tersedia'
+                                                    : 'Kapasitas Penuh'}
                                             </span>
-                                        ) : (
-                                            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200 self-start">
-                                                Kapasitas Penuh
-                                            </span>
-                                        )}
+                                            {isLeader && !['team_locked', 'workspace_activated'].includes(project.formation_status || '') && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleToggleRecruitment(hasOpenRecruitment ? 'closed' : 'open')}
+                                                    disabled={togglingRecruitment}
+                                                    className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer disabled:opacity-50 ${
+                                                        hasOpenRecruitment
+                                                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
+                                                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                                                    }`}
+                                                >
+                                                    {togglingRecruitment
+                                                        ? 'Memproses...'
+                                                        : hasOpenRecruitment
+                                                        ? 'Tutup Rekrutmen'
+                                                        : 'Buka Rekrutmen'}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
+                                    {!hasOpenRecruitment && !isLeader && (
+                                        <div className="mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
+                                            Rekrutmen anggota saat ini ditutup oleh ketua tim.
+                                        </div>
+                                    )}
+
                                     {myApplication && (
-                                        <div className="mb-4 p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center justify-between gap-3">
+                                        <div className={`mb-4 p-4 rounded-xl border text-xs flex items-center justify-between gap-3 ${
+                                            hasActiveApplication
+                                                ? 'bg-amber-50 border-amber-200 text-amber-900'
+                                                : 'bg-slate-50 border-slate-200 text-slate-700'
+                                        }`}>
                                             <div>
-                                                <strong className="block">Status Lamaran Kamu: {myApplication.status === 'pending' ? 'Menunggu Persetujuan Ketua Tim' : myApplication.status}</strong>
-                                                <span className="text-amber-800">Posisi yang dilamar: {myApplication.role?.name || 'Anggota Tim'}</span>
+                                                <strong className="block">
+                                                    Status Lamaran Kamu:{' '}
+                                                    {myApplication.status === 'pending' || myApplication.status === 'under_review' || myApplication.status === 'submitted'
+                                                        ? 'Menunggu Persetujuan Ketua Tim'
+                                                        : myApplication.status === 'accepted'
+                                                        ? 'Diterima'
+                                                        : myApplication.status === 'rejected'
+                                                        ? 'Ditolak'
+                                                        : myApplication.status}
+                                                </strong>
+                                                <span>Posisi yang dilamar: {myApplication.role?.name || 'Anggota Tim'}</span>
                                             </div>
                                         </div>
                                     )}
 
-                                    {!isMember && !isLecturer && !isLecturerAccount && !myApplication && eligibility && !eligibility.eligible && eligibility.reason && (
+                                    {!isMember && !isLecturer && !isLecturerAccount && !hasActiveApplication && hasOpenRecruitment && eligibility && !eligibility.eligible && eligibility.reason && (
                                         <div className="mb-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2">
-                                            <Lock className="size-4 text-rose-600 mt-0.5 shrink-0" />
+                                            <AlertCircle className="size-4 text-rose-600 mt-0.5 shrink-0" />
                                             <span>{eligibility.reason}</span>
                                         </div>
                                     )}
@@ -937,11 +1193,11 @@ export default function ProjectShow({
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-900">{role.name}</h4>
                                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                                            Kebutuhan: {role.slots || 1} slot • {role.requirements || 'Keahlian teknis relevan dengan proyek'}
+                                                            Kebutuhan: {role.slots || 1} slot • {role.requirements || role.description || 'Keahlian teknis relevan dengan proyek'}
                                                         </p>
                                                     </div>
 
-                                                    {!isMember && !isLecturer && !isLecturerAccount && !myApplication && project.has_capacity && eligibility?.eligible !== false && (
+                                                    {!isMember && !isLecturer && !isLecturerAccount && !hasActiveApplication && hasOpenRecruitment && project.has_capacity && eligibility?.eligible !== false && (
                                                         <button
                                                             type="button"
                                                             onClick={() => setApplyingRole(role)}
@@ -957,16 +1213,18 @@ export default function ProjectShow({
                                     ) : (
                                         <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                             <p className="text-xs text-slate-600">
-                                                Tim ini masih membuka pendaftaran anggota pengembang baru.
+                                                {hasOpenRecruitment
+                                                    ? 'Tim ini membuka pendaftaran anggota pengembang baru.'
+                                                    : 'Belum ada posisi terbuka saat ini.'}
                                             </p>
-                                            {!isMember && !isLecturer && !isLecturerAccount && !myApplication && project.has_capacity && eligibility?.eligible !== false && (
+                                            {!isMember && !isLecturer && !isLecturerAccount && !hasActiveApplication && hasOpenRecruitment && project.has_capacity && eligibility?.eligible !== false && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setApplyingRole({ id: null, name: 'Anggota Tim Pengembang' })}
                                                     className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
                                                 >
                                                     <Send className="size-3" />
-                                                    <span>Gabung Tim</span>
+                                                    <span>Lamar / Ajukan Bergabung</span>
                                                 </button>
                                             )}
                                         </div>
@@ -975,44 +1233,69 @@ export default function ProjectShow({
                             )}
 
                             {/* Leader Incoming Applications */}
-                            {isLeader && applications.length > 0 && (
-                                <div className="glass-card rounded-2xl p-6 shadow-xs">
+                            {isLeader && (
+                                <div id="applications-section" className="glass-card rounded-2xl p-6 shadow-xs">
                                     <h4 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
                                         <UserCheck className="size-4 text-blue-600" />
-                                        <span>Aplikasi Pelamar ({applications.length})</span>
+                                        <span>Pengajuan Bergabung Pelamar ({applications.length})</span>
                                     </h4>
 
-                                    <div className="flex flex-col gap-3">
-                                        {applications.map((app: any) => (
-                                            <div key={app.id} className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                <div>
-                                                    <span className="text-xs font-bold text-slate-900">{app.user?.name}</span>
-                                                    <span className="text-xs text-slate-500 ml-2">({app.user?.email})</span>
-                                                    <span className="text-xs text-blue-600 block mt-0.5">Posisi: {app.role?.name || 'Anggota'}</span>
-                                                    {app.message && <p className="text-xs text-slate-600 italic mt-1">"{app.message}"</p>}
-                                                </div>
-
-                                                {(app.status === 'pending' || app.status === 'submitted') && (
-                                                    <div className="flex items-center gap-2 shrink-0">
-                                                        <button
-                                                            onClick={() => handleDecideApplication(app.id, 'reject')}
-                                                            disabled={decidingId === app.id}
-                                                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl cursor-pointer"
-                                                        >
-                                                            Tolak
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDecideApplication(app.id, 'accept')}
-                                                            disabled={decidingId === app.id}
-                                                            className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs"
-                                                        >
-                                                            Terima Jadi Anggota
-                                                        </button>
+                                    {applications.length === 0 ? (
+                                        <p className="text-xs text-slate-500 p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+                                            Belum ada mahasiswa yang mengajukan diri untuk bergabung ke proyek ini.
+                                        </p>
+                                    ) : (
+                                        <div className="flex flex-col gap-3">
+                                            {applications.map((app: any) => (
+                                                <div key={app.id} className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                    <div>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span className="text-xs font-bold text-slate-900">{app.user?.name}</span>
+                                                            <span className="text-xs text-slate-500">({app.user?.email})</span>
+                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                                app.status === 'accepted'
+                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                    : app.status === 'rejected'
+                                                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                                                    : 'bg-amber-50 text-amber-800 border-amber-200'
+                                                            }`}>
+                                                                {app.status === 'accepted'
+                                                                    ? 'Diterima'
+                                                                    : app.status === 'rejected'
+                                                                    ? 'Ditolak'
+                                                                    : app.status === 'withdrawn'
+                                                                    ? 'Ditarik'
+                                                                    : 'Menunggu Persetujuan'}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-xs text-blue-600 block mt-0.5">Posisi: {app.role?.name || 'Anggota'}</span>
+                                                        {app.message && <p className="text-xs text-slate-600 italic mt-1">"{app.message}"</p>}
                                                     </div>
-                                                )}
-                                            </div>
-                                        ))}
-                                    </div>
+
+                                                    {(app.status === 'pending' || app.status === 'under_review' || app.status === 'submitted') && (
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDecideApplication(app.id, 'reject')}
+                                                                disabled={decidingId === app.id}
+                                                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                                                            >
+                                                                Tolak
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDecideApplication(app.id, 'accept')}
+                                                                disabled={decidingId === app.id}
+                                                                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs disabled:opacity-50"
+                                                            >
+                                                                Terima Jadi Anggota
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1191,6 +1474,30 @@ export default function ProjectShow({
                         </div>
 
                         <form onSubmit={handleApply} className="flex flex-col gap-4">
+                            {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                        Pilih Posisi / Peran
+                                    </label>
+                                    <select
+                                        value={applyingRole?.id || ''}
+                                        onChange={(e) => {
+                                            const selected = project.team.recruitment.roles.find(
+                                                (r: any) => String(r.id) === e.target.value
+                                            );
+                                            if (selected) setApplyingRole(selected);
+                                        }}
+                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    >
+                                        {project.team.recruitment.roles.map((r: any) => (
+                                            <option key={r.id} value={r.id}>
+                                                {r.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
                                     Pesan Singkat & Portofolio Relevan *

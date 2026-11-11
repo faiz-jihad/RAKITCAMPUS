@@ -2,6 +2,7 @@
 
 namespace App\Services\Matchmaking;
 
+use App\Contracts\Notifications\NotificationCounterInterface;
 use App\Enums\ApplicationStatus;
 use App\Enums\ProjectStatus;
 use App\Models\AcademicClass;
@@ -9,10 +10,12 @@ use App\Models\Application;
 use App\Models\Invitation;
 use App\Models\MatchingAuditLog;
 use App\Models\Project;
+use App\Models\Recruitment;
 use App\Models\RecruitmentRole;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\ApplicationSubmittedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -28,7 +31,7 @@ class MembershipService
      */
     public function applyToProject(User $student, Project $project, ?RecruitmentRole $role = null, ?string $message = null): Application
     {
-        // 1. Eligibility Check
+        // 1. Eligibility Check (includes open recruitment, non-member, non-duplicate, capacity, class & Rule 1)
         $eligibility = $this->eligibilityService->checkStudentEligibility($student, $project);
         if (! $eligibility['eligible']) {
             throw ValidationException::withMessages([
@@ -37,24 +40,83 @@ class MembershipService
         }
 
         $team = $project->team;
-        if (! $team || ! $team->recruitment) {
+        $recruitment = $team?->recruitment;
+        if (! $team || ! $recruitment || ! $recruitment->isOpen()) {
             throw ValidationException::withMessages([
                 'project_id' => ['Proyek ini tidak sedang membuka rekrutmen terbuka.'],
             ]);
         }
 
-        return DB::transaction(function () use ($student, $team, $role, $message, $project) {
-            $application = Application::updateOrCreate(
-                [
-                    'recruitment_id' => $team->recruitment->id,
-                    'user_id' => $student->id,
-                ],
-                [
+        if ($role !== null && (int) $role->recruitment_id !== (int) $recruitment->id) {
+            throw ValidationException::withMessages([
+                'recruitment_role_id' => ['Posisi yang dipilih tidak valid untuk rekrutmen proyek ini.'],
+            ]);
+        }
+
+        $application = DB::transaction(function () use ($student, $team, $recruitment, $role, $message, $project) {
+            $lockedRecruitment = Recruitment::where('id', $recruitment->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedRecruitment->isOpen()) {
+                throw ValidationException::withMessages([
+                    'project_id' => ['Rekrutmen proyek ini sedang ditutup.'],
+                ]);
+            }
+
+            $isAlreadyMember = $project->isLeader($student)
+                || (int) $team->leader_id === (int) $student->id
+                || TeamMember::where('team_id', $team->id)
+                    ->where('user_id', $student->id)
+                    ->where('status', 'active')
+                    ->lockForUpdate()
+                    ->exists();
+
+            if ($isAlreadyMember) {
+                throw ValidationException::withMessages([
+                    'project_id' => ['Kamu sudah menjadi ketua atau anggota pada proyek ini.'],
+                ]);
+            }
+
+            $existingApplication = Application::where('recruitment_id', $lockedRecruitment->id)
+                ->where('user_id', $student->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existingApplication) {
+                $existingStatus = $existingApplication->status instanceof ApplicationStatus
+                    ? $existingApplication->status->value
+                    : (string) $existingApplication->status;
+
+                if (in_array($existingStatus, [
+                    ApplicationStatus::Pending->value,
+                    ApplicationStatus::UnderReview->value,
+                    'submitted',
+                    ApplicationStatus::Accepted->value,
+                ], true)) {
+                    throw ValidationException::withMessages([
+                        'project_id' => ['Kamu sudah memiliki pengajuan aktif pada proyek ini.'],
+                    ]);
+                }
+
+                $existingApplication->update([
                     'recruitment_role_id' => $role?->id,
                     'message' => $message,
-                    'status' => 'pending',
-                ]
-            );
+                    'status' => ApplicationStatus::Pending->value,
+                    'decided_by' => null,
+                    'decided_at' => null,
+                    'decision_note' => null,
+                ]);
+                $application = $existingApplication->fresh();
+            } else {
+                $application = Application::create([
+                    'recruitment_id' => $lockedRecruitment->id,
+                    'recruitment_role_id' => $role?->id,
+                    'user_id' => $student->id,
+                    'message' => $message,
+                    'status' => ApplicationStatus::Pending->value,
+                ]);
+            }
 
             MatchingAuditLog::log(
                 'application_submitted',
@@ -66,6 +128,14 @@ class MembershipService
 
             return $application;
         });
+
+        $leader = $project->leader()->first() ?? $team->leader()->first();
+        if ($leader && (int) $leader->id !== (int) $student->id) {
+            $leader->notify(new ApplicationSubmittedNotification($application));
+            app(NotificationCounterInterface::class)->invalidateUnreadCountCache($leader);
+        }
+
+        return $application;
     }
 
     /**
@@ -98,14 +168,18 @@ class MembershipService
                 ]);
             }
 
-            // 1. Check if applicant already joined an active project in the interim
+            // 1. Check if applicant already joined an active project in this class (or overall if non-class project)
+            $classId = $project->academic_class_id;
             $hasActive = TeamMember::where('user_id', $applicant->id)
                 ->where('status', 'active')
-                ->whereHas('team.project', function ($q) {
+                ->whereHas('team.project', function ($q) use ($classId) {
                     $q->whereNotIn('status', [
                         ProjectStatus::Archived->value,
                         ProjectStatus::Completed->value,
                     ]);
+                    if ($classId !== null) {
+                        $q->where('academic_class_id', $classId);
+                    }
                 })
                 ->lockForUpdate()
                 ->exists();
@@ -220,14 +294,21 @@ class MembershipService
                 throw new \DomainException('Undangan ini sudah tidak aktif atau telah diproses.');
             }
 
-            // 1. Enforce 1 active project rule
+            $team = $invitation->team;
+            $project = $team->project;
+            $classId = $project?->academic_class_id;
+
+            // 1. Enforce 1 active project rule (per class when applicable)
             $hasActive = TeamMember::where('user_id', $student->id)
                 ->where('status', 'active')
-                ->whereHas('team.project', function ($q) {
+                ->whereHas('team.project', function ($q) use ($classId) {
                     $q->whereNotIn('status', [
                         ProjectStatus::Archived->value,
                         ProjectStatus::Completed->value,
                     ]);
+                    if ($classId !== null) {
+                        $q->where('academic_class_id', $classId);
+                    }
                 })
                 ->lockForUpdate()
                 ->exists();
@@ -237,9 +318,6 @@ class MembershipService
                     'invitation' => ['Anda sudah terdaftar dalam proyek aktif lain. Selesaikan proyek saat ini terlebih dahulu.'],
                 ]);
             }
-
-            $team = $invitation->team;
-            $project = $team->project;
 
             // 2. Check team capacity, including the lecturer's class limit
             $maxCapacity = $this->effectiveTeamCapacity($project, $team);
@@ -324,6 +402,26 @@ class MembershipService
                 $project->leader_id
             );
         });
+    }
+
+    /**
+     * Resolve the effective maximum team size, capped by the class's configured quota.
+     */
+    protected function effectiveTeamCapacity(Project $project, Team $team): int
+    {
+        $baseCapacity = (int) ($project->max_team_size ?: ($team->capacity ?: 5));
+
+        if ($project->academic_class_id) {
+            $classTarget = $project->relationLoaded('academicClass')
+                ? $project->academicClass?->target_team_size
+                : \App\Models\AcademicClass::where('id', $project->academic_class_id)->value('target_team_size');
+
+            if ($classTarget && (int) $classTarget > 0) {
+                return min($baseCapacity, (int) $classTarget);
+            }
+        }
+
+        return $baseCapacity;
     }
 
     /**

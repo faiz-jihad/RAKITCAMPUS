@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import {
     Briefcase,
     Check,
@@ -20,12 +20,15 @@ interface Props {
 }
 
 export default function RequirementsTab({ project, isLeader, isLecturer }: Props) {
+    const { errors: pageErrors } = usePage().props as any;
+    const academicClass = project.academic_class || project.academicClass;
+    const classMaxCap = academicClass?.target_team_size || 10;
     const existingRecruitment = project.team?.recruitment;
     const existingRoles = existingRecruitment?.roles || [];
     const existingSkills = project.skills || [];
 
-    const [minTeamSize, setMinTeamSize] = useState<number>(project.min_team_size || 2);
-    const [maxTeamSize, setMaxTeamSize] = useState<number>(project.max_team_size || 4);
+    const [minTeamSize, setMinTeamSize] = useState<number>(Math.min(project.min_team_size || 2, classMaxCap));
+    const [maxTeamSize, setMaxTeamSize] = useState<number>(Math.min(project.max_team_size || 4, classMaxCap));
     const [weeklyHours, setWeeklyHours] = useState<number>(project.expected_weekly_hours || 10);
     const [deadline, setDeadline] = useState<string>(project.formation_deadline || '');
 
@@ -141,6 +144,13 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                 </div>
             </div>
 
+            {/* Validation Error */}
+            {pageErrors?.max_team_size && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
+                    {pageErrors.max_team_size}
+                </div>
+            )}
+
             {/* Team Size & Commitment Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="glass-card rounded-2xl p-5">
@@ -154,10 +164,14 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                             <input
                                 type="number"
                                 min={2}
-                                max={10}
+                                max={classMaxCap}
                                 disabled={!canConfigure}
                                 value={minTeamSize}
-                                onChange={(e) => setMinTeamSize(Math.max(2, parseInt(e.target.value) || 2))}
+                                onChange={(e) => {
+                                    const nextMin = Math.min(classMaxCap, Math.max(2, parseInt(e.target.value) || 2));
+                                    setMinTeamSize(nextMin);
+                                    if (maxTeamSize < nextMin) setMaxTeamSize(nextMin);
+                                }}
                                 className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 text-center"
                             />
                         </div>
@@ -167,15 +181,15 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                             <input
                                 type="number"
                                 min={minTeamSize}
-                                max={10}
+                                max={classMaxCap}
                                 disabled={!canConfigure}
                                 value={maxTeamSize}
-                                onChange={(e) => setMaxTeamSize(Math.max(minTeamSize, parseInt(e.target.value) || minTeamSize))}
+                                onChange={(e) => setMaxTeamSize(Math.min(classMaxCap, Math.max(minTeamSize, parseInt(e.target.value) || minTeamSize)))}
                                 className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-900 text-center"
                             />
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-2">Target kelas: {project.academicClass?.target_team_size || 4} orang</p>
+                    <p className="text-[11px] text-slate-400 mt-2">Target kelas: {academicClass?.target_team_size || 4} orang</p>
                 </div>
 
                 <div className="glass-card rounded-2xl p-5">

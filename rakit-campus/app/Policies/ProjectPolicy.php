@@ -24,8 +24,13 @@ class ProjectPolicy
             return true;
         }
 
-        // Leader or team member can always view
-        if ($project->leader_id === $user->id || $project->team?->hasMember($user)) {
+        // Leader, supervisor, class lecturer, or team member can always view
+        if (
+            $project->leader_id === $user->id
+            || $project->primary_supervisor_id === $user->id
+            || $project->team?->hasMember($user)
+            || ($project->academicClass && $project->academicClass->isLecturer($user))
+        ) {
             return true;
         }
 

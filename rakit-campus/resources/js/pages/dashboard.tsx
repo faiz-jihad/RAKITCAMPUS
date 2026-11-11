@@ -112,13 +112,15 @@ export default function Dashboard({
                 </h1>
 
                 <div className="flex items-center gap-2.5">
-                    <Link
-                        href="/projects/create"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
-                    >
-                        <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span>Buat Proyek</span>
-                    </Link>
+                    {!user?.is_lecturer && (
+                        <Link
+                            href="/projects/create"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                        >
+                            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>Buat Proyek</span>
+                        </Link>
+                    )}
                     <Link
                         href="/workspace"
                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
@@ -375,14 +377,20 @@ export default function Dashboard({
                             <div className="py-6 text-center text-xs text-slate-400">
                                 <FolderKanban className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 <p className="font-semibold text-slate-700">Belum tergabung dalam tim proyek</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.</p>
-                                <Link
-                                    href="/projects/create"
-                                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-xs transition"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>Buat Proyek Baru</span>
-                                </Link>
+                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                    {user?.is_lecturer
+                                        ? 'Kelola kelas dan proyek bimbingan mahasiswa melalui menu Kelas Kuliah.'
+                                        : 'Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.'}
+                                </p>
+                                {!user?.is_lecturer && (
+                                    <Link
+                                        href="/projects/create"
+                                        className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-xs transition"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        <span>Buat Proyek Baru</span>
+                                    </Link>
+                                )}
                             </div>
                         )}
                     </div>

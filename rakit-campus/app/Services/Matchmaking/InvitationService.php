@@ -55,15 +55,15 @@ class InvitationService
             ]);
         }
 
-        // 3. Rule 1: Candidate must not currently have an active project
-        if ($this->eligibilityService->hasActiveProjectMembership($invitee)) {
+        // 3. Rule 1: Candidate must not currently have an active project in this class
+        if ($this->eligibilityService->hasActiveProjectMembership($invitee, $project->academic_class_id)) {
             throw ValidationException::withMessages([
                 'invitee' => ["{$invitee->name} sudah tergabung dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek)."],
             ]);
         }
 
         // 4. Capacity check
-        $maxCapacity = $project->max_team_size ?: ($team->capacity ?: 5);
+        $maxCapacity = $this->effectiveTeamCapacity($project, $team);
         $currentCount = $team->members()->where('status', 'active')->count();
         if ($currentCount >= $maxCapacity) {
             throw ValidationException::withMessages([
@@ -167,13 +167,17 @@ class InvitationService
             }
 
             // 2. Strict Rule 1 Active Membership Check with lock
+            $classId = $project->academic_class_id;
             $hasActive = TeamMember::where('user_id', $student->id)
                 ->where('status', 'active')
-                ->whereHas('team.project', function ($q) {
+                ->whereHas('team.project', function ($q) use ($classId) {
                     $q->whereNotIn('status', [
                         ProjectStatus::Archived->value,
                         ProjectStatus::Completed->value,
                     ]);
+                    if ($classId !== null) {
+                        $q->where('academic_class_id', $classId);
+                    }
                 })
                 ->lockForUpdate()
                 ->exists();
@@ -191,7 +195,7 @@ class InvitationService
             }
 
             // 3. Strict Capacity Check with lock
-            $maxCapacity = $project->max_team_size ?: ($team->capacity ?: 5);
+            $maxCapacity = $this->effectiveTeamCapacity($project, $team);
             $currentCount = $team->members()->where('status', 'active')->lockForUpdate()->count();
 
             if ($currentCount >= $maxCapacity) {
@@ -284,6 +288,26 @@ class InvitationService
             'declined_reason' => 'Dibatalkan oleh ketua tim pengundang.',
             'responded_at' => now(),
         ]);
+    }
+
+    /**
+     * Resolve effective maximum team size, capped by the class's configured quota.
+     */
+    protected function effectiveTeamCapacity(Project $project, Team $team): int
+    {
+        $baseCapacity = (int) ($project->max_team_size ?: ($team->capacity ?: 5));
+
+        if ($project->academic_class_id) {
+            $classTarget = $project->relationLoaded('academicClass')
+                ? $project->academicClass?->target_team_size
+                : \App\Models\AcademicClass::where('id', $project->academic_class_id)->value('target_team_size');
+
+            if ($classTarget && (int) $classTarget > 0) {
+                return min($baseCapacity, (int) $classTarget);
+            }
+        }
+
+        return $baseCapacity;
     }
 
     /**

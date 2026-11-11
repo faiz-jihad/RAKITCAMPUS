@@ -11,7 +11,6 @@ import {
     FolderKanban,
     GraduationCap,
     Layers,
-    Lock,
     MapPin,
     Plus,
     Search,
@@ -34,6 +33,10 @@ interface ProjectItem {
     has_capacity?: boolean;
     is_member?: boolean;
     has_applied?: boolean;
+    has_open_recruitment?: boolean;
+    can_access_workspace?: boolean;
+    has_active_in_scope?: boolean;
+    is_class_restricted?: boolean;
     can_apply?: boolean;
     apply_block_reason?: string | null;
     academic_class?: { id: number; name: string; code: string } | null;
@@ -41,6 +44,7 @@ interface ProjectItem {
     leader?: { name: string };
     skills: { id: number; name: string }[];
     team?: {
+        id?: number;
         members: any[];
         recruitment?: {
             status?: string;
@@ -167,13 +171,15 @@ export default function ProjectIndex({
                             <FolderKanban className="size-3.5 text-blue-600" />
                             <span>Workspace Tim</span>
                         </Link>
-                        <Link
-                            href="/projects/create"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-                        >
-                            <Plus className="size-3.5" />
-                            <span>Buat Proyek</span>
-                        </Link>
+                        {!isLecturer && (
+                            <Link
+                                href="/projects/create"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                            >
+                                <Plus className="size-3.5" />
+                                <span>Buat Proyek</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -256,15 +262,19 @@ export default function ProjectIndex({
                             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                 {search || category || status
                                     ? 'Coba sesuaikan kata kunci atau reset filter untuk menampilkan proyek lainnya.'
+                                    : isLecturer
+                                    ? 'Belum ada proyek mahasiswa terdaftar di kelas Anda.'
                                     : 'Belum ada proyek terdaftar di kelas. Mulai dengan membuat proyek baru.'}
                             </p>
-                            <Link
-                                href="/projects/create"
-                                className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
-                            >
-                                <Plus className="size-3.5" />
-                                <span>Buat Proyek Pertama</span>
-                            </Link>
+                            {!isLecturer && (
+                                <Link
+                                    href="/projects/create"
+                                    className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
+                                >
+                                    <Plus className="size-3.5" />
+                                    <span>Buat Proyek Pertama</span>
+                                </Link>
+                            )}
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -301,7 +311,7 @@ export default function ProjectIndex({
                                             </p>
 
                                             {/* Open Recruitment Alert if recruiting */}
-                                            {proj.status === 'recruiting' && openRoles.length > 0 && (
+                                            {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 && (
                                                 <div className="mt-3.5 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-xs">
                                                     <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
                                                         Membuka {openRoles.length} Posisi:
@@ -351,26 +361,41 @@ export default function ProjectIndex({
                                             <div className="flex items-center gap-2 shrink-0">
                                                 {proj.status === 'recruiting' && !isLecturer && (
                                                     proj.is_member ? (
-                                                        <Link
-                                                            href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs"
-                                                            title="Buka Workspace Tim Proyek"
-                                                        >
-                                                            <FolderKanban className="size-3" />
-                                                            <span>Workspace Tim</span>
-                                                        </Link>
+                                                        proj.can_access_workspace ? (
+                                                            <Link
+                                                                href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs"
+                                                                title="Buka Workspace Tim Proyek"
+                                                            >
+                                                                <FolderKanban className="size-3" />
+                                                                <span>Workspace Tim</span>
+                                                            </Link>
+                                                        ) : (
+                                                            <span
+                                                                title="Workspace Tim menunggu persetujuan dosen pengampu kelas"
+                                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold"
+                                                            >
+                                                                <span>Tim Anda</span>
+                                                            </span>
+                                                        )
                                                     ) : proj.has_applied ? (
                                                         <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
                                                             <span>Sudah Melamar</span>
                                                         </span>
                                                     ) : isGuest ? (
-                                                        <Link
-                                                            href="/login"
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs"
-                                                        >
-                                                            <Send className="size-3" />
-                                                            <span>Gabung Tim</span>
-                                                        </Link>
+                                                        proj.has_open_recruitment === false ? (
+                                                            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-semibold">
+                                                                <span>Rekrutmen Ditutup</span>
+                                                            </span>
+                                                        ) : (
+                                                            <Link
+                                                                href="/login"
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs"
+                                                            >
+                                                                <Send className="size-3" />
+                                                                <span>Gabung Tim</span>
+                                                            </Link>
+                                                        )
                                                     ) : proj.can_apply ? (
                                                         <button
                                                             type="button"
@@ -383,10 +408,19 @@ export default function ProjectIndex({
                                                     ) : (
                                                         <span
                                                             title={proj.apply_block_reason || 'Tidak memenuhi syarat gabung'}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 text-[11px] font-semibold"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-semibold"
                                                         >
-                                                            <Lock className="size-3" />
-                                                            <span>{proj.has_capacity === false ? 'Penuh' : 'Terkunci'}</span>
+                                                            <span>
+                                                                {proj.has_open_recruitment === false
+                                                                    ? 'Rekrutmen Ditutup'
+                                                                    : proj.has_capacity === false
+                                                                    ? 'Penuh'
+                                                                    : proj.is_class_restricted
+                                                                    ? 'Khusus Kelas'
+                                                                    : proj.has_active_in_scope
+                                                                    ? 'Sudah Punya Tim'
+                                                                    : 'Tidak Memenuhi Syarat'}
+                                                            </span>
                                                         </span>
                                                     )
                                                 )}

@@ -187,23 +187,29 @@ class User extends Authenticatable implements MustVerifyEmail
         return $query->exists();
     }
 
-    public function activeProjectMembership(): ?\App\Models\TeamMember
+    public function activeProjectMembership(?int $academicClassId = null): ?\App\Models\TeamMember
     {
         return $this->teamMemberships()
             ->where('status', 'active')
-            ->whereHas('team.project', function ($q) {
+            ->whereHas('team.project', function ($q) use ($academicClassId) {
                 $q->whereNotIn('status', [\App\Enums\ProjectStatus::Archived->value, \App\Enums\ProjectStatus::Completed->value]);
+                if ($academicClassId !== null) {
+                    $q->where('academic_class_id', $academicClassId);
+                }
             })
             ->with(['team.project'])
             ->first();
     }
 
-    public function hasActiveProject(): bool
+    public function hasActiveProject(?int $academicClassId = null): bool
     {
         return $this->teamMemberships()
             ->where('status', 'active')
-            ->whereHas('team.project', function ($q) {
+            ->whereHas('team.project', function ($q) use ($academicClassId) {
                 $q->whereNotIn('status', [\App\Enums\ProjectStatus::Archived->value, \App\Enums\ProjectStatus::Completed->value]);
+                if ($academicClassId !== null) {
+                    $q->where('academic_class_id', $academicClassId);
+                }
             })
             ->exists();
     }

@@ -95,6 +95,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::get('/projects/create', [ProjectWebController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectWebController::class, 'store'])->name('projects.store');
     Route::post('/projects/{id}/apply', [ProjectWebController::class, 'apply'])->name('projects.apply');
+    Route::post('/projects/{id}/recruitment/toggle', [ProjectWebController::class, 'toggleRecruitment'])->name('projects.recruitment.toggle');
     Route::post('/projects/{id}/applications/{appId}/respond', [ProjectWebController::class, 'respondApplication'])->name('projects.applications.respond');
     Route::post('/projects/{id}/activate-team', [ProjectWebController::class, 'activateTeam'])->name('projects.activate-team');
     Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');

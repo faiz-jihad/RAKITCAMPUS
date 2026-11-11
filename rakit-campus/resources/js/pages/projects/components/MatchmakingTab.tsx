@@ -120,7 +120,7 @@ export default function MatchmakingTab({
                             Batas Ekosistem Kelas Perkuliahan (Strictly Class-Based)
                         </h4>
                         <p className="text-xs text-blue-800/90 mt-0.5 leading-relaxed">
-                            Proyek ini terikat pada kelas perkuliahan <strong className="text-blue-950 font-bold">{project.academicClass?.name} ({project.academicClass?.code})</strong>.
+                            Proyek ini terikat pada kelas perkuliahan <strong className="text-blue-950 font-bold">{(project.academic_class || project.academicClass)?.name} ({(project.academic_class || project.academicClass)?.code})</strong>.
                             Hanya mahasiswa yang terdaftar resmi pada kelas ini yang dapat dicari, direkomendasikan, dan diundang ke dalam tim.
                         </p>
                     </div>

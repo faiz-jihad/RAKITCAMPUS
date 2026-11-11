@@ -242,7 +242,7 @@ class TeamFormationService
             ]);
         }
 
-        DB::transaction(function () use ($project) {
+        DB::transaction(function () use ($project, $actor) {
             $project->update([
                 'formation_status' => 'workspace_activated',
                 'status' => ProjectStatus::InProgress,
@@ -250,8 +250,62 @@ class TeamFormationService
 
             if ($project->team) {
                 $project->team->update(['status' => 'active']);
+                $project->team->members()->update(['status' => 'active']);
+                $project->team->recruitment?->update(['status' => RecruitmentStatus::Closed]);
+
+                self::ensureStarterMilestones($project, $actor);
             }
+
+            MatchingAuditLog::log(
+                'workspace_activated',
+                ['project_id' => $project->id, 'team_id' => $project->team?->id],
+                $project->academic_class_id,
+                $project->id,
+                $actor->id
+            );
         });
+    }
+
+    /**
+     * Create default project milestones when a team workspace is first activated.
+     */
+    public static function ensureStarterMilestones(Project $project, User $actor): void
+    {
+        $team = $project->team;
+        if (! $team || $team->milestones()->count() > 0) {
+            return;
+        }
+
+        \App\Models\Milestone::create([
+            'campus_id' => $project->campus_id,
+            'team_id' => $team->id,
+            'created_by' => $actor->id,
+            'title' => 'Milestone 1: Perencanaan & Arsitektur',
+            'description' => 'Penyusunan backlog tugas, pembagian peran, dan perancangan skema data.',
+            'starts_on' => now(),
+            'due_on' => now()->addWeeks(2),
+            'status' => 'in_progress',
+        ]);
+        \App\Models\Milestone::create([
+            'campus_id' => $project->campus_id,
+            'team_id' => $team->id,
+            'created_by' => $actor->id,
+            'title' => 'Milestone 2: Pengembangan & Integrasi Fitur',
+            'description' => 'Pengembangan sprint utama, implementasi komponen UI, dan integrasi backend API.',
+            'starts_on' => now()->addWeeks(2),
+            'due_on' => now()->addWeeks(6),
+            'status' => 'planned',
+        ]);
+        \App\Models\Milestone::create([
+            'campus_id' => $project->campus_id,
+            'team_id' => $team->id,
+            'created_by' => $actor->id,
+            'title' => 'Milestone 3: Pengujian, Evaluasi & Final Submission',
+            'description' => 'Quality assurance, dokumentasi tugas akhir, dan serah terima ke Dosen Pembimbing.',
+            'starts_on' => now()->addWeeks(6),
+            'due_on' => now()->addWeeks(8),
+            'status' => 'planned',
+        ]);
     }
 
     /**
