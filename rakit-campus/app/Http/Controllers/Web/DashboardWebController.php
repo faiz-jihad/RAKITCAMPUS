@@ -403,10 +403,15 @@ class DashboardWebController extends Controller
                 ->whereMonth('updated_at', $monthDate->month)
                 ->count();
 
-            $logs = ActivityLog::where('user_id', $user->id)
-                ->whereYear('created_at', $monthDate->year)
-                ->whereMonth('created_at', $monthDate->month)
-                ->count();
+            $logs = ActivityLog::where(function ($q) use ($user, $teamIds) {
+                $q->where('actor_id', $user->id);
+                if ($teamIds->isNotEmpty()) {
+                    $q->orWhereIn('team_id', $teamIds);
+                }
+            })
+            ->whereYear('created_at', $monthDate->year)
+            ->whereMonth('created_at', $monthDate->month)
+            ->count();
 
             $val = max(15, min(95, ($tasksDone * 20) + ($logs * 10)));
 
@@ -441,7 +446,7 @@ class DashboardWebController extends Controller
                         $q->where('campus_id', $campusId);
                     }
                 })
-                ->with(['profile:id,user_id,study_program,headline,department'])
+                ->with('profile')
                 ->take(3)
                 ->get()
                 ->map(function ($peer) use ($membership) {
