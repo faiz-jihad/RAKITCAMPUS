@@ -69,10 +69,16 @@ class CheckGeminiAiHealth extends Command
 
         if ($participation) {
             $this->info("Step 2: Generating agentic Kanban tasks for Participation #{$participation->id} ({$participation->team?->name})...");
-            $tasks = GeminiAgentService::generateKanbanTasks($participation);
+            $tasksResult = GeminiAgentService::generateKanbanTasks($participation);
+            $tasksList = $tasksResult['tasks'] ?? [];
+            $summary = $tasksResult['summary'] ?? '';
 
-            $this->info("✓ Generated " . count($tasks) . " structured tasks:");
-            foreach ($tasks as $i => $task) {
+            $this->info("✓ Generated " . count($tasksList) . " structured tasks:");
+            if (!empty($summary)) {
+                $this->line("  <fg=gray>Ringkasan: {$summary}</>");
+            }
+
+            foreach ($tasksList as $i => $task) {
                 $num = $i + 1;
                 $priorityColor = match ($task['priority'] ?? 'medium') {
                     'urgent' => 'red',
@@ -87,8 +93,9 @@ class CheckGeminiAiHealth extends Command
             if ($this->option('apply')) {
                 $this->newLine();
                 $this->info('Step 3: Applying generated tasks to team Kanban board via DB transaction...');
-                $count = GeminiAgentService::applyTasksToKanban($participation, $tasks);
-                $this->info("✓ Successfully persisted {$count} tasks to database.");
+                $leader = $participation->team?->leader ?? \App\Models\User::first();
+                $res = GeminiAgentService::applyTasksToKanban($participation, $leader, $tasksResult);
+                $this->info("✓ Successfully persisted {$res['count']} tasks to database.");
             }
         } else {
             $this->warn('No CompetitionParticipation record found to test task generation.');

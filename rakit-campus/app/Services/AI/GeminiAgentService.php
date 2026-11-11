@@ -145,7 +145,11 @@ Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saa
         $rawResponse = self::call($systemPrompt, $userPrompt);
 
         if ($rawResponse) {
-            $parsed = json_decode($rawResponse, true);
+            $cleanJson = trim($rawResponse);
+            if (preg_match('/^```(?:json)?\s*([\s\S]*?)\s*```$/i', $cleanJson, $matches)) {
+                $cleanJson = trim($matches[1]);
+            }
+            $parsed = json_decode($cleanJson, true);
             if (isset($parsed['tasks']) && is_array($parsed['tasks']) && count($parsed['tasks']) > 0) {
                 return $parsed;
             }
@@ -216,7 +220,8 @@ Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saa
     protected static function fallbackTasks(CompetitionParticipation $participation): array
     {
         $comp = $participation->competition;
-        $isHackathon = str_contains(strtolower($comp?->category ?? ''), 'hackathon') || str_contains(strtolower($comp?->name ?? ''), 'hackathon');
+        $categoryStr = $comp?->category instanceof \BackedEnum ? $comp->category->value : (string) ($comp?->category ?? '');
+        $isHackathon = str_contains(strtolower($categoryStr), 'hackathon') || str_contains(strtolower($comp?->name ?? ''), 'hackathon');
 
         return [
             'summary' => 'Rencana aksi persiapan standar kompetisi untuk memastikan deliverable teknis dan dokumen tersusun tepat waktu.',
