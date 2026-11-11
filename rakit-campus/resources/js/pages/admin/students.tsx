@@ -117,21 +117,34 @@ export default function AdminStudents({ students, filters }: Props) {
             <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-neutral-200 pb-5">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="p-1 rounded-lg bg-purple-50 text-purple-600">
-                                <UserCheck className="size-5" />
-                            </span>
-                            <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-                                Manajemen Mahasiswa Kampus
-                            </h1>
+                    <div className="flex items-center gap-3.5">
+                        <div className="w-12 h-12 rounded-2xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20 shrink-0">
+                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
+                                <circle cx="12" cy="5" r="2.5" />
+                                <circle cx="18" cy="8.5" r="2.5" />
+                                <circle cx="18" cy="15.5" r="2.5" />
+                                <circle cx="12" cy="19" r="2.5" />
+                                <circle cx="6" cy="15.5" r="2.5" />
+                                <circle cx="6" cy="8.5" r="2.5" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
                         </div>
-                        <p className="text-sm text-neutral-500">
-                            Verifikasi status keaktifan NIM, moderasi akses profil, dan audit mahasiswa terdaftar.
-                        </p>
+                        <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                                <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
+                                    Manajemen Mahasiswa Kampus
+                                </h1>
+                                <span className="px-2 py-0.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                                    Admin
+                                </span>
+                            </div>
+                            <p className="text-xs text-neutral-500">
+                                Verifikasi status keaktifan NIM, moderasi akses profil, dan audit mahasiswa terdaftar.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs font-semibold text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-full">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-neutral-600 bg-neutral-100 px-3 py-1.5 rounded-full w-fit">
                         Total {students.total} Mahasiswa
                     </div>
                 </div>

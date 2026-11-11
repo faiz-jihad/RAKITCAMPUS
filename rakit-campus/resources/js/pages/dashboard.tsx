@@ -2,6 +2,7 @@ import AnimatedIcon from '@/components/animations/AnimatedIcon';
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowRight,
     Calendar,
     ChevronDown,
     Download,
@@ -60,6 +61,16 @@ interface Props {
     recentActivities?: any[];
     profileCompletion?: { percent: number; missing: string[] };
 }
+
+const getCompetitionCover = (comp: any) => {
+    if (comp?.cover_image) return comp.cover_image;
+    const cat = (comp?.category || '').toLowerCase();
+    if (cat.includes('iot')) return '/images/competitions/iot-challenge.svg';
+    if (cat.includes('hackathon')) return '/images/competitions/hackathon-camp.svg';
+    if (cat.includes('business') || cat.includes('pkm') || cat.includes('kewirausahaan')) return '/images/competitions/pkm-k.svg';
+    if (cat.includes('design') || cat.includes('ui')) return '/images/competitions/uiux-sprint.svg';
+    return '/images/competitions/gemastik-ai.svg';
+};
 
 export default function Dashboard({
     isPublic = false,
@@ -400,48 +411,51 @@ export default function Dashboard({
                     </div>
 
                     {upcomingCompetitions && upcomingCompetitions.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                             {upcomingCompetitions.slice(0, 2).map((comp: any, idx: number) => {
                                 const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
                                 const now = new Date();
                                 const daysLeft = deadline
                                     ? Math.max(0, Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
                                     : 0;
-                                const progressPercent = Math.max(20, Math.min(100, 100 - daysLeft * 3));
 
                                 return (
-                                    <div key={comp.id || idx} className="py-1">
-                                        <div className="flex items-center justify-between gap-2 mb-1.5">
-                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
-                                                    <Calendar className="w-3.5 h-3.5" />
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <p className="text-xs font-bold text-slate-800 truncate" title={comp.name}>
-                                                        {comp.name}
-                                                    </p>
-                                                    <span className="text-[10px] text-slate-400 font-medium">
-                                                        {deadline
-                                                            ? deadline.toLocaleDateString('id-ID', {
-                                                                  day: 'numeric',
-                                                                  month: 'short',
-                                                                  year: 'numeric',
-                                                              })
-                                                            : 'Terbuka'}
-                                                    </span>
-                                                </div>
+                                    <Link
+                                        key={comp.id || idx}
+                                        href={`/competitions/${comp.id}`}
+                                        className="p-2 rounded-xl bg-slate-50/70 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between gap-3 group transition block"
+                                    >
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-slate-900 border border-slate-200">
+                                                <img
+                                                    src={getCompetitionCover(comp)}
+                                                    alt={comp.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition"
+                                                />
                                             </div>
-                                            <span className="text-[10px] font-bold text-blue-600 shrink-0 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-                                                {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Segera'}
-                                            </span>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-slate-800 group-hover:text-blue-600 truncate transition" title={comp.name}>
+                                                    {comp.name}
+                                                </p>
+                                                <span className="text-[10px] text-slate-400 font-medium">
+                                                    {deadline
+                                                        ? deadline.toLocaleDateString('id-ID', {
+                                                              day: 'numeric',
+                                                              month: 'short',
+                                                              year: 'numeric',
+                                                          })
+                                                        : 'Terbuka'}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                                                style={{ width: `${progressPercent}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                                            daysLeft <= 7
+                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                : 'bg-blue-50 text-blue-700 border border-blue-100'
+                                        }`}>
+                                            {daysLeft > 0 ? `${daysLeft} hari` : 'Hari ini'}
+                                        </span>
+                                    </Link>
                                 );
                             })}
                         </div>
@@ -461,6 +475,101 @@ export default function Dashboard({
                     </div>
                 </div>
             </div>
+
+            {/* 3.5 CURATED FEATURED COMPETITIONS SECTION (Lomba Pilihan Mahasiswa) */}
+            {upcomingCompetitions && upcomingCompetitions.length > 0 && (
+                <section className="mb-6">
+                    <div className="flex items-center justify-between mb-3.5">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                                Lomba Pilihan Mahasiswa
+                            </h2>
+                            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider border border-blue-100">
+                                Terverifikasi
+                            </span>
+                        </div>
+                        <Link
+                            href="/competitions"
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 transition flex items-center gap-1"
+                        >
+                            <span>Eksplor Semua Lomba</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                        </Link>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                        {upcomingCompetitions.slice(0, 3).map((comp: any) => {
+                            const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
+                            const now = new Date();
+                            const daysLeft = deadline
+                                ? Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                                : null;
+
+                            return (
+                                <Link
+                                    key={comp.id}
+                                    href={`/competitions/${comp.id}`}
+                                    className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between group"
+                                >
+                                    {/* Cover Image Banner */}
+                                    <div className="relative h-36 w-full overflow-hidden bg-slate-900">
+                                        <img
+                                            src={getCompetitionCover(comp)}
+                                            alt={comp.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-black/20" />
+
+                                        <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
+                                            <span className="px-2 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
+                                                {comp.category?.replace('_', ' ') || 'LOMBA'}
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
+                                                {comp.level || 'Nasional'}
+                                            </span>
+                                        </div>
+
+                                        {daysLeft !== null && (
+                                            <div className="absolute bottom-2 right-2.5">
+                                                <span
+                                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md ${
+                                                        daysLeft <= 7
+                                                            ? 'bg-rose-500/90 text-white'
+                                                            : 'bg-black/50 text-white'
+                                                    }`}
+                                                >
+                                                    {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Card Content */}
+                                    <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                                        <div>
+                                            <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-1">
+                                                {comp.name}
+                                            </h3>
+                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5 truncate">
+                                                {comp.organizer}
+                                            </p>
+                                        </div>
+
+                                        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs">
+                                            <span className="text-[11px] font-medium text-slate-500">
+                                                {comp.competition_type || 'Tim'}
+                                            </span>
+                                            <span className="font-bold text-blue-600 flex items-center gap-0.5">
+                                                Detail ↗
+                                            </span>
+                                        </div>
+                                    </div>
+                                </Link>
+                            );
+                        })}
+                    </div>
+                </section>
+            )}
 
             {/* 4. BOTTOM CARDS ROW (3 CARDS: 1fr - 2fr - 1fr) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">

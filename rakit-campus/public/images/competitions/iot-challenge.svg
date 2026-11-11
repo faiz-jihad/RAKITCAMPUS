@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="100%" height="100%">
+  <defs>
+    <linearGradient id="iotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022c22" />
+      <stop offset="50%" stop-color="#064e3b" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+    <filter id="emeraldGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <rect width="800" height="450" fill="url(#iotGrad)" />
+
+  <!-- Circuit traces -->
+  <g stroke="#34d399" stroke-width="2" stroke-opacity="0.35" fill="none">
+    <path d="M50 225 L200 225 L260 150 L380 150" />
+    <path d="M120 400 L240 280 L350 280 L400 225" />
+    <path d="M750 225 L600 225 L540 300 L420 300" />
+    <path d="M680 50 L560 170 L450 170 L400 225" />
+    <circle cx="380" cy="150" r="4" fill="#34d399" />
+    <circle cx="260" cy="150" r="3" fill="#34d399" />
+    <circle cx="420" cy="300" r="4" fill="#34d399" />
+    <circle cx="540" cy="300" r="3" fill="#34d399" />
+  </g>
+
+  <!-- Central Microchip Icon -->
+  <g transform="translate(340, 165)">
+    <!-- Antenna / wireless waves -->
+    <path d="M60 0 A50 50 0 0 1 60 120" stroke="#6ee7b7" stroke-width="3" stroke-linecap="round" fill="none" opacity="0.6" />
+    <path d="M70 -15 A70 70 0 0 1 70 135" stroke="#6ee7b7" stroke-width="2" stroke-linecap="round" stroke-dasharray="6,4" fill="none" opacity="0.4" />
+    
+    <rect x="0" y="10" width="100" height="100" rx="16" fill="#065f46" stroke="#10b981" stroke-width="2.5" filter="url(#emeraldGlow)" />
+    <!-- Chip pins -->
+    <rect x="-8" y="28" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="-8" y="46" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="-8" y="64" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="-8" y="82" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="100" y="28" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="100" y="46" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="100" y="64" width="8" height="6" rx="2" fill="#a7f3d0" />
+    <rect x="100" y="82" width="8" height="6" rx="2" fill="#a7f3d0" />
+    
+    <!-- Chip core -->
+    <circle cx="50" cy="60" r="18" fill="#047857" />
+    <circle cx="50" cy="60" r="8" fill="#6ee7b7" />
+  </g>
+
+  <!-- Title Badge -->
+  <g transform="translate(300, 310)">
+    <rect width="200" height="36" rx="18" fill="#064e3b" fill-opacity="0.85" stroke="#34d399" stroke-width="1.5" />
+    <text x="100" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="800" fill="#a7f3d0" text-anchor="middle" letter-spacing="2">SMART CAMPUS IOT</text>
+  </g>
+</svg>

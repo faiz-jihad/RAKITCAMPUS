@@ -194,6 +194,16 @@ interface Props {
     activeParticipation?: any;
 }
 
+const getCompetitionCover = (comp: any) => {
+    if (comp?.cover_image) return comp.cover_image;
+    const cat = (comp?.category || '').toLowerCase();
+    if (cat.includes('iot')) return '/images/competitions/iot-challenge.svg';
+    if (cat.includes('hackathon')) return '/images/competitions/hackathon-camp.svg';
+    if (cat.includes('business') || cat.includes('pkm') || cat.includes('kewirausahaan')) return '/images/competitions/pkm-k.svg';
+    if (cat.includes('design') || cat.includes('ui')) return '/images/competitions/uiux-sprint.svg';
+    return '/images/competitions/gemastik-ai.svg';
+};
+
 export default function CompetitionIndex({
     competitions,
     openRecruitingTeams = [],
@@ -425,55 +435,43 @@ export default function CompetitionIndex({
                         {spotlightComp && (
                             <section className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
                                 {/* Spotlight Entry */}
-                                <div className="lg:col-span-7 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
-                                    <div>
-                                        <div className="flex items-center justify-between gap-3 mb-2.5">
-                                            <div className="flex items-center gap-2">
-                                                <AnimatedIcon name="trophy" size={24} />
-                                                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                                                    Sorotan
-                                                </span>
-                                                <span className="text-[11px] text-slate-400 font-medium">
-                                                    {spotlightComp.level || 'Nasional'}
-                                                </span>
-                                            </div>
+                                <div className="lg:col-span-7 bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-xs flex flex-col justify-between group">
+                                    <div className="relative h-44 sm:h-52 w-full overflow-hidden bg-slate-900">
+                                        <img
+                                            src={getCompetitionCover(spotlightComp)}
+                                            alt={spotlightComp.name}
+                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/20" />
 
-                                            <button
-                                                type="button"
-                                                onClick={(e) => handleToggleBookmark(e, spotlightComp.id)}
-                                                className={`p-1.5 rounded-lg border transition cursor-pointer ${
-                                                    bookmarkedIds.includes(spotlightComp.id)
-                                                        ? 'bg-rose-50 border-rose-200 text-rose-600'
-                                                        : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-rose-600'
-                                                }`}
-                                                title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
-                                            >
-                                                <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
-                                            </button>
+                                        {/* Floating Badge on Image */}
+                                        <div className="absolute top-3.5 left-3.5 flex items-center gap-2">
+                                            <span className="px-2.5 py-1 rounded-lg bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                                <AnimatedIcon name="trophy" size={16} />
+                                                <span>Sorotan Utama</span>
+                                            </span>
+                                            <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
+                                                {spotlightComp.level || 'Nasional'}
+                                            </span>
                                         </div>
 
-                                        <Link href={`/competitions/${spotlightComp.id}`} className="group block">
-                                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
-                                                {spotlightComp.name}
-                                            </h2>
-                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => handleToggleBookmark(e, spotlightComp.id)}
+                                            className={`absolute top-3.5 right-3.5 p-2 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                                bookmarkedIds.includes(spotlightComp.id)
+                                                    ? 'bg-rose-500 text-white'
+                                                    : 'bg-black/30 hover:bg-black/50 text-white'
+                                            }`}
+                                            title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
+                                        >
+                                            <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
+                                        </button>
 
-                                        <p className="text-xs font-semibold text-slate-400 mt-1">
-                                            {spotlightComp.organizer}
-                                        </p>
-
-                                        {spotlightComp.description && (
-                                            <p className="text-xs text-slate-600 mt-2 line-clamp-1">
-                                                {spotlightComp.description}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Spotlight Footer */}
-                                    <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-4">
-                                        <div className="text-xs text-slate-600">
-                                            <span className="text-[10px] text-slate-400 block font-medium">Deadline Pendaftaran</span>
-                                            <span className="font-bold text-slate-900">
+                                        {/* Deadline on Image bottom */}
+                                        <div className="absolute bottom-3 left-3.5 text-white">
+                                            <span className="text-[10px] text-white/80 font-medium block">Deadline Pendaftaran</span>
+                                            <span className="text-sm font-bold text-white">
                                                 {spotlightComp.registration_deadline
                                                     ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
                                                           day: 'numeric',
@@ -483,14 +481,46 @@ export default function CompetitionIndex({
                                                     : 'Terbuka'}
                                             </span>
                                         </div>
+                                    </div>
 
-                                        <Link
-                                            href={`/competitions/${spotlightComp.id}`}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition"
-                                        >
-                                            <span>Panduan & Syarat</span>
-                                            <ArrowUpRight className="w-3.5 h-3.5" />
-                                        </Link>
+                                    <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+                                        <div>
+                                            <Link href={`/competitions/${spotlightComp.id}`} className="group block">
+                                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
+                                                    {spotlightComp.name}
+                                                </h2>
+                                            </Link>
+
+                                            <p className="text-xs font-semibold text-slate-400 mt-1">
+                                                {spotlightComp.organizer}
+                                            </p>
+
+                                            {spotlightComp.description && (
+                                                <p className="text-xs text-slate-600 mt-2 line-clamp-2 leading-relaxed">
+                                                    {spotlightComp.description}
+                                                </p>
+                                            )}
+                                        </div>
+
+                                        {/* Spotlight Footer */}
+                                        <div className="pt-4 mt-4 border-t border-slate-100 flex items-center justify-between gap-4">
+                                            <div className="flex items-center gap-2">
+                                                <span className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold">
+                                                    {spotlightComp.competition_type || 'Tim'}
+                                                </span>
+                                                <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold uppercase">
+                                                    {spotlightComp.category?.replace('_', ' ') || 'TEKNOLOGI'}
+                                                </span>
+                                            </div>
+
+                                            <Link
+                                                href={`/competitions/${spotlightComp.id}`}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                                            >
+                                                <span>Panduan & Syarat</span>
+                                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -668,7 +698,7 @@ export default function CompetitionIndex({
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
                                 {catalogCompetitions.map((comp) => {
                                     const isSaved = bookmarkedIds.includes(comp.id);
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
@@ -680,72 +710,104 @@ export default function CompetitionIndex({
                                           })
                                         : 'Terbuka';
 
+                                    const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
+                                    const now = new Date();
+                                    const daysLeft = deadline
+                                        ? Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                                        : null;
+
                                     return (
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.id}`)}
-                                            className={`bg-white rounded-2xl p-5 border transition-all cursor-pointer flex flex-col justify-between gap-3 group ${
+                                            className={`bg-white rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col justify-between group ${
                                                 isExpired
                                                     ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
-                                                    : 'border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md'
+                                                    : 'border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-lg'
                                             }`}
                                         >
-                                            <div>
-                                                <div className="flex items-center justify-between gap-2 mb-2">
-                                                    <div className="flex items-center gap-2 text-[11px]">
-                                                        <span className="font-bold text-blue-600 uppercase tracking-wider">
-                                                            {comp.category?.replace('_', ' ') || 'UMUM'}
-                                                        </span>
-                                                        <span className="text-slate-300">•</span>
-                                                        <span className="font-medium text-slate-500">
-                                                            {comp.level || 'Nasional'}
-                                                        </span>
-                                                    </div>
+                                            {/* Cover Image Banner */}
+                                            <div className="relative h-44 sm:h-48 w-full overflow-hidden bg-slate-900">
+                                                <img
+                                                    src={getCompetitionCover(comp)}
+                                                    alt={comp.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-black/25" />
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                        className={`p-1.5 rounded-lg border transition cursor-pointer ${
-                                                            isSaved
-                                                                ? 'bg-rose-50 border-rose-200 text-rose-600'
-                                                                : 'bg-white border-slate-200 text-slate-400 hover:text-rose-600'
-                                                        }`}
-                                                        title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
-                                                    >
-                                                        <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
-                                                    </button>
+                                                {/* Category & Level Badges on Image */}
+                                                <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                                                    <span className="px-2.5 py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
+                                                        {comp.category?.replace('_', ' ') || 'UMUM'}
+                                                    </span>
+                                                    <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
+                                                        {comp.level || 'Nasional'}
+                                                    </span>
                                                 </div>
 
-                                                <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                    {comp.name}
-                                                </h3>
+                                                {/* Bookmark Button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => handleToggleBookmark(e, comp.id)}
+                                                    className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                                        isSaved
+                                                            ? 'bg-rose-500 text-white shadow-xs'
+                                                            : 'bg-black/30 hover:bg-black/50 text-white'
+                                                    }`}
+                                                    title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
+                                                >
+                                                    <Bookmark className={`w-3.5 h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                </button>
 
-                                                <p className="text-xs font-semibold text-slate-400 mt-0.5">
-                                                    {comp.organizer}
-                                                </p>
+                                                {/* Days left badge */}
+                                                {daysLeft !== null && (
+                                                    <div className="absolute bottom-3 left-3">
+                                                        <span
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                                daysLeft <= 7
+                                                                    ? 'bg-rose-500/90 text-white backdrop-blur-md'
+                                                                    : 'bg-slate-900/85 text-white backdrop-blur-md'
+                                                            }`}
+                                                        >
+                                                            {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
+                                                        </span>
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            {/* Structured Bottom Info */}
-                                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                                                <div className="flex items-center gap-3 text-slate-500">
-                                                    <div>
-                                                        <span className="text-[10px] text-slate-400 block font-medium">Deadline</span>
-                                                        <span className={`font-bold ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                            {formattedDeadline} {isExpired ? '(Tutup)' : ''}
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-5 w-px bg-slate-200" />
-                                                    <div>
-                                                        <span className="text-[10px] text-slate-400 block font-medium">Format</span>
-                                                        <span className="font-semibold text-slate-700">
-                                                            {comp.competition_type || 'Tim'}
-                                                        </span>
-                                                    </div>
+                                            {/* Body */}
+                                            <div className="p-5 flex-1 flex flex-col justify-between gap-3">
+                                                <div>
+                                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2">
+                                                        {comp.name}
+                                                    </h3>
+                                                    <p className="text-xs font-semibold text-slate-400 mt-1">
+                                                        {comp.organizer}
+                                                    </p>
                                                 </div>
 
-                                                <span className="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
-                                                    Detail ↗
-                                                </span>
+                                                {/* Structured Bottom Info */}
+                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-3 text-slate-500">
+                                                        <div>
+                                                            <span className="text-[10px] text-slate-400 block font-medium">Deadline</span>
+                                                            <span className={`font-bold ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                                {formattedDeadline} {isExpired ? '(Tutup)' : ''}
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-5 w-px bg-slate-200" />
+                                                        <div>
+                                                            <span className="text-[10px] text-slate-400 block font-medium">Format</span>
+                                                            <span className="font-semibold text-slate-700">
+                                                                {comp.competition_type || 'Tim'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    <span className="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+                                                        Detail ↗
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
                                     );
