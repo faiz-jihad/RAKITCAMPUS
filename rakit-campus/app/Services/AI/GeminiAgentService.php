@@ -96,11 +96,18 @@ class GeminiAgentService
         $team = $participation->team;
 
         $competitionName = $competition?->name ?? 'Kompetisi Mahasiswa';
-        $category = $competition?->category ?? 'Technology / Hackathon';
-        $level = $competition?->level ?? 'Nasional';
+        $category = $competition?->category;
+        $category = $category instanceof \BackedEnum ? $category->value : (string) ($category ?? 'Technology / Hackathon');
+        
+        $level = $competition?->level;
+        $level = $level instanceof \BackedEnum ? $level->value : (string) ($level ?? 'Nasional');
+
         $deadline = $competition?->registration_deadline ? $competition->registration_deadline->format('d M Y') : 'Mendatang';
         $requiredDocs = is_array($competition?->required_documents) ? implode(', ', $competition->required_documents) : 'Proposal, Pitch Deck';
+        
         $stage = $participation->stage;
+        $stage = $stage instanceof \BackedEnum ? $stage->value : (string) ($stage ?? 'recruiting');
+        
         $teamSize = $team?->members?->count() ?? 1;
 
         $existingTaskTitles = $team ? $team->tasks()->pluck('title')->take(10)->implode('; ') : '';
