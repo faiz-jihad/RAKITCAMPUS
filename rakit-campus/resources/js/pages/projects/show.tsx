@@ -143,7 +143,7 @@ export default function ProjectShow({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Project Hub', href: '/projects' },
-        { title: project.title, href: `/projects/${project.id}` },
+        { title: project.title, href: `/projects/${project.slug || project.id}` },
     ];
 
     const getXsrfToken = () => {
@@ -365,7 +365,7 @@ export default function ProjectShow({
                                     </span>
                                     {project.academicClass && (
                                         <Link
-                                            href={`/classes/${project.academicClass.id}`}
+                                            href={`/classes/${project.academicClass.code || project.academicClass.id}`}
                                             className="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-blue-600 transition"
                                         >
                                             Kelas: {project.academicClass.name} ({project.academicClass.code})

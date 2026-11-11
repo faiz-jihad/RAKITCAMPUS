@@ -143,8 +143,8 @@ export default function CompetitionWorkspace({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
-        { title: participation.competition?.name || 'Kompetisi', href: `/competitions/${participation.competition?.id}` },
-        { title: `Workspace: ${participation.team?.name}`, href: `/competition-workspace/${participation.id}` },
+        { title: participation.competition?.name || 'Kompetisi', href: `/competitions/${participation.competition?.slug || participation.competition?.id}` },
+        { title: `Workspace: ${participation.team?.name}`, href: `/competitions/${participation.competition?.slug || participation.id}/workspace` },
     ];
 
     // Handlers
@@ -384,7 +384,7 @@ export default function CompetitionWorkspace({
                 {/* 1. TOP CONTEXT & ACTIONS BAR */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                     <Link
-                        href={route('competitions.show', participation.competition?.id)}
+                        href={route('competitions.show', participation.competition?.slug || participation.competition?.id)}
                         className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
                     >
                         <ArrowLeft className="size-3.5" />

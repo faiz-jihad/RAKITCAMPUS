@@ -275,7 +275,7 @@ export default function ProjectIndex({
                                             </div>
 
                                             {/* Title */}
-                                            <Link href={`/projects/${proj.id}`} className="block group-hover:text-blue-600 transition">
+                                            <Link href={`/projects/${proj.slug || proj.id}`} className="block group-hover:text-blue-600 transition">
                                                 <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
                                                     {proj.title}
                                                 </h3>
@@ -374,7 +374,7 @@ export default function ProjectIndex({
                                                 )}
 
                                                 <Link
-                                                    href={`/projects/${proj.id}`}
+                                                    href={`/projects/${proj.slug || proj.id}`}
                                                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs"
                                                 >
                                                     <span>Detail</span>
@@ -469,7 +469,7 @@ export default function ProjectIndex({
 
                             <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
                                 <Link
-                                    href={`/projects/${joiningProject.id}`}
+                                    href={`/projects/${joiningProject.slug || joiningProject.id}`}
                                     className="text-xs font-semibold text-blue-600 hover:underline"
                                 >
                                     Lihat Detail Lengkap Proyek &rarr;

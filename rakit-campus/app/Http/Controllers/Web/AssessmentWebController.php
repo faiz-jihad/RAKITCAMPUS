@@ -15,13 +15,29 @@ class AssessmentWebController extends Controller
         protected AssessmentService $assessmentService
     ) {}
 
+    private function resolveProject(string|int $idOrSlug, array $relations = []): Project
+    {
+        $query = Project::query();
+        if (!empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->where(function ($q) use ($idOrSlug) {
+            if (is_numeric($idOrSlug)) {
+                $q->where('id', (int) $idOrSlug)->orWhere('slug', $idOrSlug);
+            } else {
+                $q->where('slug', $idOrSlug);
+            }
+        })->firstOrFail();
+    }
+
     /**
      * Submit an assessment (UTS or UAS) with files and an immutable snapshot.
      */
-    public function submit(Request $request, int $projectId, int $periodId)
+    public function submit(Request $request, string|int $projectId, int $periodId)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($projectId);
+        $project = $this->resolveProject($projectId, ['team.members', 'academicClass']);
 
         if (! $project->isLeader($user) && ! ($project->team?->hasMember($user)) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya anggota kelompok proyek yang dapat mengumpulkan laporan evaluasi semester.');

@@ -581,7 +581,7 @@ export default function CompetitionIndex({
 
                                     <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
                                         <div>
-                                            <Link href={`/competitions/${spotlightComp.id}`} className="group block">
+                                            <Link href={`/competitions/${spotlightComp.slug || spotlightComp.id}`} className="group block">
                                                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900 group-hover:text-blue-600 transition tracking-tight leading-snug">
                                                     {spotlightComp.name}
                                                 </h2>
@@ -610,7 +610,7 @@ export default function CompetitionIndex({
                                             </div>
 
                                             <Link
-                                                href={`/competitions/${spotlightComp.id}`}
+                                                href={`/competitions/${spotlightComp.slug || spotlightComp.id}`}
                                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
                                             >
                                                 <span>Panduan & Syarat</span>
@@ -642,7 +642,7 @@ export default function CompetitionIndex({
                                                     return (
                                                         <Link
                                                             key={comp.id}
-                                                            href={`/competitions/${comp.id}`}
+                                                            href={`/competitions/${comp.slug || comp.id}`}
                                                             className="py-2.5 flex items-center justify-between gap-3 group block"
                                                         >
                                                             <div className="min-w-0 flex-1">
@@ -855,7 +855,7 @@ export default function CompetitionIndex({
                                     return (
                                         <div
                                             key={comp.id}
-                                            onClick={() => router.get(`/competitions/${comp.id}`)}
+                                            onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
                                             className={`bg-white rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col justify-between group ${
                                                 isExpired
                                                     ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
@@ -1438,7 +1438,7 @@ export default function CompetitionIndex({
                                                             <Bookmark className="w-3.5 h-3.5 fill-current" />
                                                         </button>
                                                     </div>
-                                                    <Link href={`/competitions/${comp.id}`}>
+                                                    <Link href={`/competitions/${comp.slug || comp.id}`}>
                                                         <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                             {comp.name}
                                                         </h4>
@@ -1478,7 +1478,7 @@ export default function CompetitionIndex({
                                                         Ikuti Sekarang
                                                     </button>
                                                     <Link
-                                                        href={`/competitions/${comp.id}`}
+                                                        href={`/competitions/${comp.slug || comp.id}`}
                                                         className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold transition"
                                                     >
                                                         Detail ↗
@@ -1573,7 +1573,7 @@ export default function CompetitionIndex({
                                                             </div>
 
                                                             {/* Title */}
-                                                            <Link href={`/competitions/${comp?.id}`}>
+                                                            <Link href={`/competitions/${comp?.slug || comp?.id}`}>
                                                                 <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
                                                                     {comp?.name || 'Kompetisi'}
                                                                 </h4>
@@ -1689,7 +1689,7 @@ export default function CompetitionIndex({
                                                             </Link>
 
                                                             <Link
-                                                                href={`/competitions/${comp?.id}`}
+                                                                href={`/competitions/${comp?.slug || comp?.id}`}
                                                                 className="px-2.5 py-1.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs transition"
                                                                 title="Detail Lomba"
                                                             >
@@ -1723,7 +1723,7 @@ export default function CompetitionIndex({
                                 {recommendedCompetitions.map((comp, idx) => (
                                     <div
                                         key={comp.id}
-                                        onClick={() => router.get(`/competitions/${comp.id}`)}
+                                        onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
                                         className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
                                     >
                                         <div>
@@ -1875,7 +1875,7 @@ export default function CompetitionIndex({
                                         )}
 
                                         <Link
-                                            href={`/competitions/${detailTeam.competition.id}`}
+                                            href={`/competitions/${detailTeam.competition.slug || detailTeam.competition.id}`}
                                             className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
                                         >
                                             <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1.5">
@@ -1969,7 +1969,7 @@ export default function CompetitionIndex({
                                                 {detailTeam.team.leader?.name || 'Ketua Tim'}
                                             </div>
                                             <Link
-                                                href={`/competitions/${detailTeam.competition.id}`}
+                                                href={`/competitions/${detailTeam.competition.slug || detailTeam.competition.id}`}
                                                 className="text-[10px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
                                             >
                                                 <span>Lihat halaman lomba</span>

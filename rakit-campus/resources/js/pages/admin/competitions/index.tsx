@@ -197,7 +197,7 @@ export default function AdminCompetitionsIndex({
         setSubmitting(true);
         setFormErrors({});
 
-        router.put(`/admin/competitions/${editingCompetition.id}`, editForm, {
+        router.put(`/admin/competitions/${editingCompetition.slug || editingCompetition.id}`, editForm, {
             onSuccess: () => {
                 setEditingCompetition(null);
                 setSubmitting(false);
@@ -210,13 +210,13 @@ export default function AdminCompetitionsIndex({
         });
     };
 
-    const handleQuickExtend = (id: number, days: number) => {
+    const handleQuickExtend = (id: number | string, days: number) => {
         if (!confirm(`Perpanjang batas pendaftaran kompetisi ini sebanyak ${days} hari?`)) return;
 
         router.patch(`/admin/competitions/${id}/status`, { extend_days: days }, { preserveScroll: true });
     };
 
-    const handleDelete = (id: number, name: string) => {
+    const handleDelete = (id: number | string, name: string) => {
         if (!confirm(`Hapus kompetisi "${name}" dari sistem? Tindakan ini dapat dibatalkan melalui pemulihan data.`)) return;
 
         router.delete(`/admin/competitions/${id}`, { preserveScroll: true });
@@ -466,7 +466,7 @@ export default function AdminCompetitionsIndex({
 
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleQuickExtend(comp.id, 30)}
+                                                        onClick={() => handleQuickExtend(comp.slug || comp.id, 30)}
                                                         className="px-2 py-1 rounded-md bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200/80 font-medium transition cursor-pointer"
                                                         title="Perpanjang deadline pendaftaran 30 hari"
                                                     >
@@ -475,7 +475,7 @@ export default function AdminCompetitionsIndex({
 
                                                     <button
                                                         type="button"
-                                                        onClick={() => handleDelete(comp.id, comp.name)}
+                                                        onClick={() => handleDelete(comp.slug || comp.id, comp.name)}
                                                         className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                                         title="Hapus Kompetisi"
                                                     >

@@ -652,13 +652,24 @@ class CompetitionWebController extends Controller
             ? 'Kompetisi berhasil ditambahkan dan langsung dipublikasikan.'
             : 'Kompetisi berhasil diajukan dan sedang menunggu verifikasi oleh dosen/admin.';
 
-        return redirect()->route('competitions.show', $competition->id)->with('success', $message);
+        return redirect()->route('competitions.show', $competition->slug ?? $competition->id)->with('success', $message);
     }
 
-    public function verify(Request $request, int $id): RedirectResponse
+    private function resolveCompetition(string|int $idOrSlug): Competition
+    {
+        return Competition::where(function ($q) use ($idOrSlug) {
+            if (is_numeric($idOrSlug)) {
+                $q->where('id', (int) $idOrSlug)->orWhere('slug', $idOrSlug);
+            } else {
+                $q->where('slug', $idOrSlug);
+            }
+        })->firstOrFail();
+    }
+
+    public function verify(Request $request, string|int $id): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if (!$user->isCampusAdminOf($competition->campus_id) && !$user->isPlatformAdmin() && !$user->isLecturer()) {
             abort(403, 'Hanya dosen atau administrator yang dapat memverifikasi kompetisi.');
@@ -674,7 +685,7 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Kompetisi '{$competition->name}' berhasil diverifikasi dan dipublikasikan.");
     }
 
-    public function show(Request $request, int $id): Response
+    public function show(Request $request, string|int $id): Response
     {
         $user = $request->user();
         $competition = Competition::with([
@@ -686,7 +697,15 @@ class CompetitionWebController extends Controller
             'participations.project:id,title,slug',
             'participations.mentor:id,name',
             'participations.result',
-        ])->findOrFail($id);
+        ])
+        ->where(function ($q) use ($id) {
+            if (is_numeric($id)) {
+                $q->where('id', (int) $id)->orWhere('slug', $id);
+            } else {
+                $q->where('slug', $id);
+            }
+        })
+        ->firstOrFail();
 
         if ($user) {
             $this->authorize('view', $competition);
@@ -903,10 +922,10 @@ class CompetitionWebController extends Controller
         ]);
     }
 
-    public function participate(Request $request, int $id): RedirectResponse
+    public function participate(Request $request, string|int $id): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         $validated = $request->validate([
             'project_id' => ['nullable', 'exists:projects,id'],
@@ -996,10 +1015,11 @@ class CompetitionWebController extends Controller
             ->with('info', 'Anda belum terdaftar dalam tim kompetisi manapun. Daftarkan tim atau cari tim untuk membuka Workspace.');
     }
 
-    public function workspace(Request $request, int $participationId): Response
+    public function workspace(Request $request, string|int $participationId): Response
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with([
+
+        $relations = [
             'competition.sources',
             'competition.campus:id,name',
             'competition.rounds',
@@ -1015,7 +1035,24 @@ class CompetitionWebController extends Controller
             'documents.uploader:id,name',
             'result.verifier:id,name',
             'statusHistories.changer:id,name',
-        ])->findOrFail($participationId);
+        ];
+
+        if (is_numeric($participationId)) {
+            $participation = CompetitionParticipation::with($relations)->findOrFail((int) $participationId);
+        } else {
+            $competition = Competition::where('slug', $participationId)->first();
+            if ($competition) {
+                $participation = CompetitionParticipation::with($relations)
+                    ->where('competition_id', $competition->id)
+                    ->whereHas('team.members', fn ($q) => $q->where('user_id', $user->id))
+                    ->first()
+                    ?? CompetitionParticipation::with($relations)
+                        ->where('competition_id', $competition->id)
+                        ->firstOrFail();
+            } else {
+                $participation = CompetitionParticipation::with($relations)->findOrFail($participationId);
+            }
+        }
 
         $team = $participation->team;
         $isMember = $team && $team->hasMember($user);
@@ -1492,10 +1529,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
-    public function toggleBookmark(Request $request, int $id): RedirectResponse
+    public function toggleBookmark(Request $request, string|int $id): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         $bookmark = Bookmark::where('user_id', $user->id)
             ->where('bookmarkable_type', Competition::class)
@@ -1517,10 +1554,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', $message);
     }
 
-    public function storeRound(Request $request, int $id): RedirectResponse
+    public function storeRound(Request $request, string|int $id): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if (!$user->isLecturer() && !$user->isCampusAdminOf($competition->campus_id) && !$user->isPlatformAdmin()) {
             abort(403, 'Hanya dosen atau administrator yang dapat menambahkan tahapan kompetisi.');
@@ -1540,10 +1577,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Tahapan/Babak '{$validated['name']}' berhasil ditambahkan ke jadwal kompetisi.");
     }
 
-    public function updateRound(Request $request, int $id, int $roundId): RedirectResponse
+    public function updateRound(Request $request, string|int $id, int $roundId): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
         $round = CompetitionRound::where('competition_id', $competition->id)->findOrFail($roundId);
 
         if (!$user->isLecturer() && !$user->isCampusAdminOf($competition->campus_id) && !$user->isPlatformAdmin()) {
@@ -1620,10 +1657,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Undangan bergabung ke tim berhasil ditolak.');
     }
 
-    public function allocateStudent(Request $request, int $id): RedirectResponse
+    public function allocateStudent(Request $request, string|int $id): RedirectResponse
     {
         $user = $request->user();
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if (!$user->isLecturer() && !$user->isPlatformAdmin() && !$user->isCampusAdminOf($competition->campus_id)) {
             abort(403, 'Hanya dosen atau administrator yang dapat melakukan alokasi tim kompetisi.');

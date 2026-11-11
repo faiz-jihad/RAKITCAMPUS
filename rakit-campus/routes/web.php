@@ -33,9 +33,9 @@ Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('po
 // Public Discovery Hubs (Open for browsing, enriched when authenticated)
 Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
 Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
-Route::get('/projects/{id}', [ProjectWebController::class, 'show'])->name('projects.show')->whereNumber('id');
+Route::get('/projects/{slug}', [ProjectWebController::class, 'show'])->name('projects.show')->where('slug', '^(?!create$).*$');
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
-Route::get('/competitions/{id}', [CompetitionWebController::class, 'show'])->name('competitions.show')->whereNumber('id');
+Route::get('/competitions/{slug}', [CompetitionWebController::class, 'show'])->name('competitions.show')->where('slug', '^(?!create$).*$');
 Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
 
 Route::middleware(['auth'])->group(function () {
@@ -66,6 +66,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::delete('/competition-workspace/{participationId}/roles/{roleId}', [CompetitionWebController::class, 'deleteRecruitmentRole'])->name('competitions.roles.delete');
 
     // Dedicated Competition Preparation Workspace
+    Route::get('/competitions/{slug}/workspace', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace.slug');
     Route::get('/competition-workspace', [CompetitionWebController::class, 'workspaceIndex'])->name('competitions.workspace.index');
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');
@@ -132,7 +133,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     // Academic Classes (Kelas Kuliah & Bimbingan Dosen)
     Route::get('/classes', [AcademicClassWebController::class, 'index'])->name('classes.index');
     Route::post('/classes', [AcademicClassWebController::class, 'store'])->name('classes.store');
-    Route::get('/classes/{id}', [AcademicClassWebController::class, 'show'])->name('classes.show')->whereNumber('id');
+    Route::get('/classes/{code}', [AcademicClassWebController::class, 'show'])->name('classes.show');
     Route::post('/classes/join', [AcademicClassWebController::class, 'join'])->name('classes.join');
     Route::post('/classes/{id}/students', [AcademicClassWebController::class, 'addStudent'])->name('classes.students.add');
     Route::delete('/classes/{id}/students/{studentId}', [AcademicClassWebController::class, 'removeStudent'])->name('classes.students.remove');

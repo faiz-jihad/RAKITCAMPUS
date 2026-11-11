@@ -99,7 +99,7 @@ export default function CompetitionShow({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
-        { title: competition.name, href: `/competitions/${competition.id}` },
+        { title: competition.name, href: `/competitions/${competition.slug || competition.id}` },
     ];
 
     const categoryTracks: string[] = Array.isArray(competition.category_tracks)
@@ -463,7 +463,7 @@ export default function CompetitionShow({
                                         </div>
 
                                         <Link
-                                            href={route('competitions.workspace', myParticipation.id)}
+                                            href={`/competitions/${competition.slug || competition.id}/workspace`}
                                             className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition"
                                         >
                                             <FolderKanban className="size-4" />

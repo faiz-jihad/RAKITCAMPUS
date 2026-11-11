@@ -362,7 +362,7 @@ export default function Dashboard({
                                                 Progress: {team.progress_percent ?? 0}%
                                             </span>
                                             <Link
-                                                href={`/projects`}
+                                                href={team.project ? `/projects/${team.project.slug || team.project.id}` : `/workspace/${team.id}`}
                                                 className="text-xs font-bold text-blue-600 hover:text-blue-700"
                                             >
                                                 Buka Detail →
@@ -411,7 +411,7 @@ export default function Dashboard({
                                 {recommendedProjects.slice(0, 2).map((proj: any) => (
                                     <Link
                                         key={proj.id}
-                                        href={`/projects/${proj.id}`}
+                                        href={`/projects/${proj.slug || proj.id}`}
                                         className="p-4 rounded-xl border border-slate-200/80 hover:border-blue-400 hover:bg-slate-50/50 transition flex flex-col justify-between gap-3 group block"
                                     >
                                         <div>

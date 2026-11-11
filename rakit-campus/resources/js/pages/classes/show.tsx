@@ -44,7 +44,7 @@ interface Student {
     semester: number;
     has_team: boolean;
     availability_hours?: number;
-    project?: { id: number; title: string; role_name: string } | null;
+    project?: { id: number; title: string; role_name: string; slug?: string } | null;
     skills: string[];
     enrolled_at: string;
 }
@@ -262,7 +262,7 @@ export default function ClassShow({
 
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Kelas Kuliah', href: '/classes' },
-        { title: academicClass.name, href: `/classes/${academicClass.id}` },
+        { title: academicClass.name, href: `/classes/${academicClass.code || academicClass.id}` },
     ];
 
     // Form to manually add student
@@ -795,7 +795,7 @@ export default function ClassShow({
                                                                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                                                                     Proyek Tim Kelas:
                                                                 </span>
-                                                                <Link href={`/projects/${st.project.id}`} className="font-bold text-blue-600 hover:underline block truncate mt-0.5">
+                                                                <Link href={`/projects/${st.project.slug || st.project.id}`} className="font-bold text-blue-600 hover:underline block truncate mt-0.5">
                                                                     {st.project.title}
                                                                 </Link>
                                                                 <span className="text-[11px] text-slate-500">
@@ -889,7 +889,7 @@ export default function ClassShow({
                                                     </span>
                                                 </div>
 
-                                                <Link href={`/projects/${proj.id}`} className="block group">
+                                                <Link href={`/projects/${proj.slug || proj.id}`} className="block group">
                                                     <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                         {proj.title}
                                                     </h3>
@@ -936,7 +936,7 @@ export default function ClassShow({
 
                                             <div className="flex items-center justify-between pt-4 border-t border-slate-100 gap-2">
                                                 <Link
-                                                    href={`/projects/${proj.id}`}
+                                                    href={`/projects/${proj.slug || proj.id}`}
                                                     className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
                                                 >
                                                     <span>Lihat Workspace Proyek</span>

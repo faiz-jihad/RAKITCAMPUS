@@ -214,7 +214,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                 </span>
                                             </div>
 
-                                            <Link href={`/classes/${cls.id}`} className="block group-hover:text-blue-600 transition">
+                                            <Link href={`/classes/${cls.code || cls.id}`} className="block group-hover:text-blue-600 transition">
                                                 <h3 className="text-sm font-bold text-slate-900 leading-snug">
                                                     {cls.name}
                                                 </h3>
@@ -275,7 +275,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                         </div>
 
                                         <Link
-                                            href={`/classes/${cls.id}`}
+                                            href={`/classes/${cls.code || cls.id}`}
                                             className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition"
                                         >
                                             <span>Buka Ruang Kelas</span>
@@ -384,7 +384,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                             {/* Action Button */}
                                             <div className="pt-2">
                                                 <Link
-                                                    href={`/classes/${cls.id}`}
+                                                    href={`/classes/${cls.code || cls.id}`}
                                                     className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition"
                                                 >
                                                     <span>Buka Kelas</span>

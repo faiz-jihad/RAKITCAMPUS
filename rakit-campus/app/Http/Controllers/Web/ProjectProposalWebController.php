@@ -15,13 +15,29 @@ class ProjectProposalWebController extends Controller
         protected ProposalService $proposalService
     ) {}
 
+    private function resolveProject(string|int $idOrSlug, array $relations = []): Project
+    {
+        $query = Project::query();
+        if (!empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->where(function ($q) use ($idOrSlug) {
+            if (is_numeric($idOrSlug)) {
+                $q->where('id', (int) $idOrSlug)->orWhere('slug', $idOrSlug);
+            } else {
+                $q->where('slug', $idOrSlug);
+            }
+        })->firstOrFail();
+    }
+
     /**
      * Save living proposal draft.
      */
-    public function saveDraft(Request $request, int $projectId)
+    public function saveDraft(Request $request, string|int $projectId)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($projectId);
+        $project = $this->resolveProject($projectId, ['team.members', 'academicClass']);
 
         if (! $project->isLeader($user) && ! ($project->team?->hasMember($user)) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya anggota kelompok proyek yang dapat memperbarui draft proposal.');
@@ -58,10 +74,10 @@ class ProjectProposalWebController extends Controller
     /**
      * Submit living proposal for lecturer review.
      */
-    public function submit(Request $request, int $projectId)
+    public function submit(Request $request, string|int $projectId)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($projectId);
+        $project = $this->resolveProject($projectId, ['team.members', 'academicClass']);
 
         if (! $project->isLeader($user) && ! ($project->team?->hasMember($user)) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya anggota kelompok proyek yang dapat mengajukan proposal untuk review.');
@@ -89,10 +105,10 @@ class ProjectProposalWebController extends Controller
     /**
      * Create a new revision version branched from current proposal.
      */
-    public function revise(Request $request, int $projectId)
+    public function revise(Request $request, string|int $projectId)
     {
         $user = $request->user();
-        $project = Project::with(['team.members'])->findOrFail($projectId);
+        $project = $this->resolveProject($projectId, ['team.members']);
 
         if (! $project->isLeader($user) && ! ($project->team?->hasMember($user)) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya anggota kelompok proyek yang dapat membuat revisi proposal baru.');
@@ -118,10 +134,10 @@ class ProjectProposalWebController extends Controller
     /**
      * Lecturer reviews living proposal (Approve, Request Revision, or Reject).
      */
-    public function review(Request $request, int $projectId, int $versionId)
+    public function review(Request $request, string|int $projectId, int $versionId)
     {
         $user = $request->user();
-        $project = Project::with(['academicClass.coLecturers'])->findOrFail($projectId);
+        $project = $this->resolveProject($projectId, ['academicClass.coLecturers']);
 
         $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
             || $project->primary_supervisor_id === $user->id
@@ -159,7 +175,7 @@ class ProjectProposalWebController extends Controller
     /**
      * Compare differences between two proposal versions.
      */
-    public function compare(Request $request, int $projectId)
+    public function compare(Request $request, string|int $projectId)
     {
         $vAId = $request->input('version_a');
         $vBId = $request->input('version_b');

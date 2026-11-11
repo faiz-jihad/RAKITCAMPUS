@@ -214,14 +214,25 @@ class AdminCompetitionWebController extends Controller
         return back()->with('success', 'Kompetisi "' . $validated['name'] . '" berhasil dibuat dan dipublikasikan!');
     }
 
+    private function resolveCompetition(string|int $idOrSlug): Competition
+    {
+        return Competition::where(function ($q) use ($idOrSlug) {
+            if (is_numeric($idOrSlug)) {
+                $q->where('id', (int) $idOrSlug)->orWhere('slug', $idOrSlug);
+            } else {
+                $q->where('slug', $idOrSlug);
+            }
+        })->firstOrFail();
+    }
+
     /**
      * Update an existing competition (deadlines, dates, active status, etc.).
      */
-    public function update(Request $request, int $id): RedirectResponse
+    public function update(Request $request, string|int $id): RedirectResponse
     {
         [$user, $campusId] = $this->authorizeAdmin($request);
 
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if ($campusId && $competition->campus_id && $competition->campus_id !== $campusId) {
             abort(403, 'Anda tidak berwenang mengelola kompetisi dari kampus lain.');
@@ -279,11 +290,11 @@ class AdminCompetitionWebController extends Controller
     /**
      * Quick status toggle or deadline extension.
      */
-    public function updateStatus(Request $request, int $id): RedirectResponse
+    public function updateStatus(Request $request, string|int $id): RedirectResponse
     {
         [$user, $campusId] = $this->authorizeAdmin($request);
 
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if ($campusId && $competition->campus_id && $competition->campus_id !== $campusId) {
             abort(403, 'Akses tidak berwenang.');
@@ -318,11 +329,11 @@ class AdminCompetitionWebController extends Controller
     /**
      * Delete a competition.
      */
-    public function destroy(Request $request, int $id): RedirectResponse
+    public function destroy(Request $request, string|int $id): RedirectResponse
     {
         [$user, $campusId] = $this->authorizeAdmin($request);
 
-        $competition = Competition::findOrFail($id);
+        $competition = $this->resolveCompetition($id);
 
         if ($campusId && $competition->campus_id && $competition->campus_id !== $campusId) {
             abort(403, 'Akses tidak berwenang.');

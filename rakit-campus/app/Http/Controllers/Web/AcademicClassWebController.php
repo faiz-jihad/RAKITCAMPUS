@@ -151,14 +151,30 @@ class AcademicClassWebController extends Controller
             ], 201);
         }
 
-        return redirect()->route('classes.show', $academicClass->id)
+        return redirect()->route('classes.show', $academicClass->code ?? $academicClass->id)
             ->with('success', 'Kelas perkuliahan berhasil dibuat dengan kode gabung: ' . $academicClass->join_code);
     }
 
-    public function show(Request $request, int $id): Response
+    private function resolveAcademicClass(string|int $idOrCode, array $relations = []): AcademicClass
+    {
+        $query = AcademicClass::query();
+        if (!empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->where(function ($q) use ($idOrCode) {
+            if (is_numeric($idOrCode)) {
+                $q->where('id', (int) $idOrCode)->orWhere('code', $idOrCode);
+            } else {
+                $q->where('code', $idOrCode)->orWhere('code', strtoupper($idOrCode));
+            }
+        })->firstOrFail();
+    }
+
+    public function show(Request $request, string|int $id): Response
     {
         $user = $request->user();
-        $academicClass = AcademicClass::with([
+        $academicClass = $this->resolveAcademicClass($id, [
             'lecturer:id,name,email',
             'coLecturers:id,name,email',
             'campus:id,name',
@@ -170,7 +186,7 @@ class AcademicClassWebController extends Controller
             'projects.skills',
             'guidances.lecturer:id,name',
             'guidances.project:id,title',
-        ])->findOrFail($id);
+        ]);
 
         $this->authorize('view', $academicClass);
 
@@ -185,6 +201,7 @@ class AcademicClassWebController extends Controller
                         $projectByUserId[$tm->user_id] = [
                             'id' => $p->id,
                             'title' => $p->title,
+                            'slug' => $p->slug,
                             'role_name' => $tm->role_name ?? 'Anggota',
                         ];
                     }
@@ -429,14 +446,14 @@ class AcademicClassWebController extends Controller
             );
         });
 
-        return redirect()->route('classes.show', $academicClass->id)
+        return redirect()->route('classes.show', $academicClass->code ?? $academicClass->id)
             ->with('success', 'Berhasil bergabung dengan kelas ' . $academicClass->name . '!');
     }
 
-    public function addStudent(Request $request, int $id)
+    public function addStudent(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -470,15 +487,15 @@ class AcademicClassWebController extends Controller
         return back()->with('success', 'Mahasiswa ' . $studentUser->name . ' berhasil ditambahkan ke kelas.');
     }
 
-    public function removeStudent(Request $request, int $id, int $studentId)
+    public function removeStudent(Request $request, string|int $id, int $studentId)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
         $studentUser = User::find($studentId);
-        AcademicClassStudent::where('academic_class_id', $id)
+        AcademicClassStudent::where('academic_class_id', $academicClass->id)
             ->where('user_id', $studentId)
             ->delete();
 
@@ -489,10 +506,10 @@ class AcademicClassWebController extends Controller
         return back()->with('success', 'Mahasiswa berhasil dikeluarkan dari kelas.');
     }
 
-    public function addGuidance(Request $request, int $id)
+    public function addGuidance(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -504,7 +521,7 @@ class AcademicClassWebController extends Controller
         ]);
 
         AcademicClassGuidance::create([
-            'academic_class_id' => $id,
+            'academic_class_id' => $academicClass->id,
             'lecturer_id' => $user->id,
             'project_id' => $validated['project_id'] ?? null,
             'title' => $validated['title'],
@@ -531,10 +548,10 @@ class AcademicClassWebController extends Controller
         return back()->with('success', 'Catatan bimbingan/pengumuman berhasil diterbitkan.');
     }
 
-    public function autoFormTeams(Request $request, int $id)
+    public function autoFormTeams(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::with(['students.profile.skills', 'projects.team.members'])->findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id, ['students.profile.skills', 'projects.team.members']);
 
         $this->authorize('manage', $academicClass);
 
@@ -631,10 +648,10 @@ class AcademicClassWebController extends Controller
         return back()->with('success', $message);
     }
 
-    public function inviteStudent(Request $request, int $id)
+    public function inviteStudent(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $validated = $request->validate([
             'student_id' => ['required', 'integer', 'exists:users,id'],
@@ -720,10 +737,10 @@ class AcademicClassWebController extends Controller
     /**
      * Mode C: Lecturer triggers Smart Fair Assisted Allocation Simulation
      */
-    public function simulateAllocation(Request $request, int $id)
+    public function simulateAllocation(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -735,10 +752,10 @@ class AcademicClassWebController extends Controller
     /**
      * Mode C: Lecturer formally approves and activates proposed team allocation
      */
-    public function approveAllocation(Request $request, int $id, int $sessionId)
+    public function approveAllocation(Request $request, string|int $id, int $sessionId)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -755,10 +772,10 @@ class AcademicClassWebController extends Controller
     /**
      * Mode C: Lecturer manually adjusts an allocation before final approval with recorded reason
      */
-    public function adjustAllocation(Request $request, int $id, int $sessionId, int $allocationId)
+    public function adjustAllocation(Request $request, string|int $id, int $sessionId, int $allocationId)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -796,10 +813,10 @@ class AcademicClassWebController extends Controller
     /**
      * Add co-lecturer to class (Multi-lecturer support)
      */
-    public function addCoLecturer(Request $request, int $id)
+    public function addCoLecturer(Request $request, string|int $id)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         $this->authorize('manage', $academicClass);
 
@@ -832,10 +849,10 @@ class AcademicClassWebController extends Controller
     /**
      * Remove co-lecturer from class
      */
-    public function removeCoLecturer(Request $request, int $id, int $lecturerId)
+    public function removeCoLecturer(Request $request, string|int $id, int $lecturerId)
     {
         $user = $request->user();
-        $academicClass = AcademicClass::findOrFail($id);
+        $academicClass = $this->resolveAcademicClass($id);
 
         if ($academicClass->lecturer_id !== $user->id || ! $user->isLecturer($academicClass->campus_id)) {
             if (! $user->isPlatformAdmin()) {

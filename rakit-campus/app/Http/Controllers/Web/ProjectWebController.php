@@ -145,10 +145,26 @@ class ProjectWebController extends Controller
         ]);
     }
 
-    public function show(Request $request, int $id): Response
+    private function resolveProject(string|int $idOrSlug, array $relations = []): Project
+    {
+        $query = Project::query();
+        if (!empty($relations)) {
+            $query->with($relations);
+        }
+
+        return $query->where(function ($q) use ($idOrSlug) {
+            if (is_numeric($idOrSlug)) {
+                $q->where('id', (int) $idOrSlug)->orWhere('slug', $idOrSlug);
+            } else {
+                $q->where('slug', $idOrSlug);
+            }
+        })->firstOrFail();
+    }
+
+    public function show(Request $request, string|int $id): Response
     {
         $user = $request->user();
-        $project = Project::with([
+        $project = $this->resolveProject($id, [
             'leader:id,name,email',
             'academicClass.lecturer:id,name,email',
             'campus:id,name,slug',
@@ -156,7 +172,7 @@ class ProjectWebController extends Controller
             'team.members.user:id,name',
             'team.recruitment.roles',
             'participations.competition:id,name,slug',
-        ])->findOrFail($id);
+        ]);
 
         if ($user) {
             $this->authorize('view', $project);
@@ -598,10 +614,10 @@ class ProjectWebController extends Controller
             ], 201);
         }
 
-        return redirect()->route('projects.show', $project->id);
+        return redirect()->route('projects.show', $project->slug ?? $project->id);
     }
 
-    public function apply(Request $request, int $id)
+    public function apply(Request $request, string|int $id)
     {
         $user = $request->user();
         if (!$user) {
@@ -618,7 +634,7 @@ class ProjectWebController extends Controller
                 : back()->with('error', $msg);
         }
 
-        $project = Project::with(['team.recruitment.roles'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.recruitment.roles']);
 
         $validated = $request->validate([
             'recruitment_role_id' => ['nullable', 'integer'],
@@ -652,10 +668,10 @@ class ProjectWebController extends Controller
         }
     }
 
-    public function respondApplication(Request $request, int $id, int $applicationId)
+    public function respondApplication(Request $request, string|int $id, int $applicationId)
     {
         $user = $request->user();
-        $project = Project::with(['team.members'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members']);
 
         if (!$project->isLeader($user) && !$user->isPlatformAdmin()) {
             abort(403, 'Hanya ketua tim yang dapat memproses lamaran.');
@@ -696,10 +712,10 @@ class ProjectWebController extends Controller
         }
     }
 
-    public function activateTeam(Request $request, int $id)
+    public function activateTeam(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
 
         $isLeader = $project->isLeader($user);
         $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
@@ -773,10 +789,10 @@ class ProjectWebController extends Controller
             ->with('success', 'Formasi kelompok berhasil dikonfirmasi dan diaktifkan! Workspace proyek telah dibuka.');
     }
 
-    public function submitFinal(Request $request, int $id)
+    public function submitFinal(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.members'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members']);
 
         if (! $project->team?->hasMember($user) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya anggota kelompok yang dapat mengumpulkan tugas akhir proyek.');
@@ -811,10 +827,10 @@ class ProjectWebController extends Controller
         return back()->with('success', 'Tugas akhir proyek berhasil diserahkan untuk dievaluasi oleh Dosen Pembimbing!');
     }
 
-    public function evaluate(Request $request, int $id)
+    public function evaluate(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
 
         $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
             || $project->primary_supervisor_id === $user->id
@@ -848,10 +864,10 @@ class ProjectWebController extends Controller
     /**
      * Section 4: Project Team Requirements Configuration
      */
-    public function updateRequirements(Request $request, int $id)
+    public function updateRequirements(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.recruitment.roles', 'skills'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.recruitment.roles', 'skills']);
 
         $validated = $request->validate([
             'min_team_size' => ['required', 'integer', 'min:2', 'max:10'],
@@ -877,10 +893,10 @@ class ProjectWebController extends Controller
     /**
      * Step 2: Open Matchmaking
      */
-    public function openMatchmaking(Request $request, int $id)
+    public function openMatchmaking(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with('team.recruitment')->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.recruitment']);
 
         $this->teamFormationService->openMatchmaking($project, $user);
 
@@ -890,10 +906,10 @@ class ProjectWebController extends Controller
     /**
      * Step 3: Submit Proposed Team for Lecturer Review
      */
-    public function submitFormation(Request $request, int $id)
+    public function submitFormation(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
 
         $this->teamFormationService->submitForReview($project, $user);
 
@@ -903,10 +919,10 @@ class ProjectWebController extends Controller
     /**
      * Step 4: Lecturer Reviews Team Formation (Approve, Reject, or Request Changes)
      */
-    public function reviewFormation(Request $request, int $id)
+    public function reviewFormation(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team.members', 'academicClass'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
 
         $validated = $request->validate([
             'action' => ['required', 'string', 'in:approve,reject,request_changes'],
@@ -937,10 +953,10 @@ class ProjectWebController extends Controller
     /**
      * Step 5: Activate Workspace Gatekeeper
      */
-    public function activateWorkspace(Request $request, int $id)
+    public function activateWorkspace(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with('team')->findOrFail($id);
+        $project = $this->resolveProject($id, ['team']);
 
         if (! $project->isLeader($user) && ! $user->isPlatformAdmin()) {
             abort(403, 'Hanya ketua proyek yang berwenang mengaktifkan ruang kerja.');
@@ -955,10 +971,10 @@ class ProjectWebController extends Controller
     /**
      * Send Project Invitation to Same-Class Student
      */
-    public function sendInvitation(Request $request, int $id)
+    public function sendInvitation(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = Project::with(['team', 'academicClass'])->findOrFail($id);
+        $project = $this->resolveProject($id, ['team', 'academicClass']);
         $team = $project->team;
 
         if (! $team) {
