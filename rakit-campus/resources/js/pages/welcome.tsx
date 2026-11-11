@@ -1785,7 +1785,7 @@ export default function Welcome() {
 
             {/* 1. Header / Navigation */}
                 <header
-                className={`fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${
+                className={`fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${
                     introStage < 2
                         ? 'opacity-0 pointer-events-none'
                         : isNavVisible
@@ -1793,19 +1793,19 @@ export default function Welcome() {
                         : '-translate-y-full opacity-0 pointer-events-none'
                 } ${
                     isScrolledPastTop
-                        ? 'py-3 sm:py-3.5 bg-[#121212] border-b border-white/10 shadow-2xl'
-                        : 'pt-6 sm:pt-8 pb-3 bg-transparent border-b border-transparent'
+                        ? 'py-2.5 sm:py-3.5 bg-[#121212] border-b border-white/10 shadow-2xl'
+                        : 'pt-4 sm:pt-8 pb-3 bg-transparent border-b border-transparent'
                 }`}
             >
                     {/* Logo (Serif All-Caps) */}
-                    <Link href="/" className="flex items-center group whitespace-nowrap">
-                        <span className="font-serif text-2xl sm:text-3xl font-normal tracking-[0.22em] text-white uppercase drop-shadow-md whitespace-nowrap">
+                    <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2">
+                        <span className="font-serif text-lg xs:text-xl sm:text-2xl md:text-3xl font-normal tracking-[0.15em] sm:tracking-[0.22em] text-white uppercase drop-shadow-md truncate">
                             RAKIT CAMPUS
                         </span>
                     </Link>
 
                     {/* Unified Solid Black Nav Toolbar (100% Match to Reference Layout) */}
-                    <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[52px] flex items-stretch pl-6 sm:pl-8 pr-3 sm:pr-4 relative z-40 transition-colors duration-200`}>
+                    <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[44px] sm:h-[52px] flex items-stretch pl-2.5 sm:pl-8 pr-1.5 sm:pr-4 relative z-40 transition-colors duration-200 shrink-0`}>
                         {/* Desktop Menu Links */}
                         <nav className="hidden lg:flex items-stretch gap-7 xl:gap-8 text-[11px] font-bold tracking-[0.22em] text-white uppercase mr-6 xl:mr-8 select-none">
                             <a
@@ -1909,7 +1909,7 @@ export default function Welcome() {
                             {auth?.user ? (
                                 <Link
                                     href="/dashboard"
-                                    className="hover-blur-text bg-white text-black text-xs font-bold px-6 h-[38px] flex items-center justify-center tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                 >
                                     DASHBOARD
                                 </Link>
@@ -1917,13 +1917,13 @@ export default function Welcome() {
                                 <>
                                     <Link
                                         href="/login"
-                                        className="hover-blur-text bg-white text-black text-xs font-bold px-5 sm:px-6 h-[38px] flex items-center justify-center tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                        className="hidden xs:flex hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                     >
                                         MASUK
                                     </Link>
                                     <Link
                                         href="/register"
-                                        className="hover-blur-text bg-white text-black text-xs font-bold px-5 sm:px-6 h-[38px] flex items-center justify-center tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                     >
                                         MULAI
                                     </Link>
@@ -1935,7 +1935,7 @@ export default function Welcome() {
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                             aria-label="Toggle Navigation"
-                            className="h-[38px] px-3 sm:px-3.5 ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
+                            className="h-[32px] sm:h-[38px] px-2.5 sm:px-3.5 ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
                         >
                             <span className="w-5 h-[1.5px] bg-white"></span>
                             <span className="w-5 h-[1.5px] bg-white"></span>
@@ -2165,11 +2165,11 @@ export default function Welcome() {
                 {/* 2. Hero Elements Layer (Image 4) - Driven UPWARDS by GSAP as user scrolls down */}
                 <div
                     ref={heroContentRef}
-                    className="w-full flex-1 flex flex-col justify-between relative z-30 will-change-transform pb-5 sm:pb-7"
+                    className="w-full flex-1 flex flex-col justify-between relative z-30 will-change-transform pb-4 sm:pb-7"
                 >
                     {/* 2. Hero Headline with Staggered Masked Text Reveal */}
-                    <div className="w-full px-4 sm:px-6 lg:px-8 pb-3 sm:pb-4 flex-1 flex flex-col justify-end select-none">
-                        <h1 className="font-serif text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-normal tracking-[-0.02em] text-white uppercase leading-[0.92] flex flex-wrap gap-x-[0.25em]">
+                    <div className="w-full px-3.5 sm:px-6 lg:px-8 pb-3 sm:pb-4 flex-1 flex flex-col justify-end select-none">
+                        <h1 className="font-serif text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-normal tracking-[-0.02em] text-white uppercase leading-[0.92] flex flex-wrap gap-x-[0.25em]">
                             {/* Word 1: MERAKIT (Masked Rise) */}
                             <span className="inline-block overflow-hidden py-1">
                                 <span
@@ -2204,9 +2204,9 @@ export default function Welcome() {
                         </h1>
 
                         {/* Subtitle Masked Rise with Stagger */}
-                        <div className="overflow-hidden mt-1.5 sm:mt-2 max-w-2xl">
+                        <div className="overflow-hidden mt-1 sm:mt-2 max-w-2xl">
                             <p
-                                className="font-serif text-xl sm:text-2xl md:text-3xl text-neutral-100 font-light tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-snug will-change-transform"
+                                className="font-serif text-base xs:text-lg sm:text-2xl md:text-3xl text-neutral-100 font-light tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] leading-snug will-change-transform"
                                 style={{
                                     transform: textRevealed ? 'translateY(0%)' : 'translateY(120%)',
                                     opacity: textRevealed ? 1 : 0,
@@ -2222,13 +2222,13 @@ export default function Welcome() {
 
                     {/* 3. Bottom Strip: News Ticker & Scroll Indicator */}
                     <div
-                        className={`w-full px-4 sm:px-6 lg:px-8 pt-1 pb-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-opacity duration-700 delay-400 ${
+                        className={`w-full px-3.5 sm:px-6 lg:px-8 pt-1 pb-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 transition-opacity duration-700 delay-400 ${
                             introStage >= 2 ? 'opacity-100' : 'opacity-0'
                         }`}
                     >
                         {/* Left: News Ticker / Announcement Box */}
-                        <div className="bg-black/85 backdrop-blur-md border border-white/20 px-[18px] py-[10.5px] text-[11px] sm:text-xs text-neutral-200 flex items-center gap-2.5 max-w-3xl font-mono shadow-sm">
-                            <span className="text-white font-bold tracking-wider shrink-0">PENGUMUMAN</span>
+                        <div className="bg-black/85 backdrop-blur-md border border-white/20 px-3 sm:px-[18px] py-2 sm:py-[10.5px] text-[10px] sm:text-xs text-neutral-200 flex items-center gap-2 sm:gap-2.5 w-full sm:max-w-3xl font-mono shadow-sm">
+                            <span className="text-white font-bold tracking-wider shrink-0 text-[9.5px] sm:text-xs">PENGUMUMAN</span>
                             <span className="text-neutral-400">|</span>
                             <span className="truncate">
                                 Platform kolaborasi mahasiswa RAKIT CAMPUS: Living Proposal, Fair Matchmaking &amp; Portofolio Terverifikasi.
@@ -2238,10 +2238,10 @@ export default function Welcome() {
                         {/* Right: Scroll Down Button */}
                         <button
                             onClick={handleScrollDown}
-                            className="flex items-center gap-2 py-1 px-1.5 text-[11px] font-bold tracking-[0.25em] text-neutral-200 hover:text-white uppercase transition-colors group cursor-pointer self-end sm:self-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)]"
+                            className="flex items-center gap-2 py-1 px-1 text-[10px] sm:text-[11px] font-bold tracking-[0.2em] sm:tracking-[0.25em] text-neutral-200 hover:text-white uppercase transition-colors group cursor-pointer self-end sm:self-auto drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] shrink-0"
                         >
                             <span>GULIR KE BAWAH</span>
-                            <ArrowDown className="size-3.5 text-[#2563EB] animate-arrow-down-bounce drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]" />
+                            <ArrowDown className="size-3 sm:size-3.5 text-[#2563EB] animate-arrow-down-bounce drop-shadow-[0_0_8px_rgba(37,99,235,0.7)]" />
                         </button>
                     </div>
                 </div>
@@ -2257,26 +2257,26 @@ export default function Welcome() {
                         {/* Upper-Left Column: Watermark Title + Category + Manifesto Quote (Image 2) */}
                         <div
                             ref={aboutLeftColRef}
-                            className="md:absolute md:top-[8vh] lg:top-[9vh] xl:top-[10vh] md:left-4 lg:left-6 xl:left-8 w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl flex flex-col z-10 pt-16 sm:pt-20 md:pt-0 will-change-transform"
+                            className="md:absolute md:top-[8vh] lg:top-[9vh] xl:top-[10vh] md:left-4 lg:left-6 xl:left-8 w-full md:max-w-3xl lg:max-w-4xl xl:max-w-5xl flex flex-col z-10 pt-14 sm:pt-20 md:pt-0 will-change-transform"
                         >
                             {/* 1. Giant Watermark Headline: 1 single line, selectable text */}
-                            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5rem] 2xl:text-[5.5rem] text-white font-bold uppercase tracking-[0.04em] leading-none select-text cursor-default mb-3 sm:mb-4 whitespace-nowrap drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
+                            <h2 className="font-serif text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-[5rem] 2xl:text-[5.5rem] text-white font-bold uppercase tracking-[0.04em] leading-tight sm:leading-none select-text cursor-default mb-2 sm:mb-4 whitespace-normal sm:whitespace-nowrap drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]">
                                 APA YANG KAMI BANGUN
                             </h2>
 
                             {/* Category Subhead: Title Case, serif style matching title & quote */}
                             <div>
-                                <span className="text-sm sm:text-[15px] md:text-base font-serif tracking-[0.08em] text-white font-bold">
+                                <span className="text-xs sm:text-[15px] md:text-base font-serif tracking-[0.08em] text-white font-bold">
                                     Tentang RAKIT CAMPUS
                                 </span>
                             </div>
 
                             {/* 2. Manifesto Quote: 2 sentences, strictly 1 single line each */}
-                            <div className="mt-2.5 sm:mt-3 font-serif text-xl sm:text-2xl md:text-[1.7rem] lg:text-[1.85rem] xl:text-[2.05rem] text-white font-normal leading-[1.35] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.95)]">
-                                <p className="md:whitespace-nowrap">
+                            <div className="mt-2 sm:mt-3 font-serif text-base xs:text-lg sm:text-2xl md:text-[1.7rem] lg:text-[1.85rem] xl:text-[2.05rem] text-white font-normal leading-snug sm:leading-[1.35] tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.95)]">
+                                <p className="whitespace-normal md:whitespace-nowrap">
                                     Memadukan potensi dan logika dengan keindahan karya.
                                 </p>
-                                <p className="mt-1 sm:mt-1.5 text-neutral-200 md:whitespace-nowrap">
+                                <p className="mt-1 sm:mt-1.5 text-neutral-200 whitespace-normal md:whitespace-nowrap">
                                     Membawa antusiasme juara yang tak tertahankan ke setiap mahasiswa.
                                 </p>
                             </div>
@@ -2285,28 +2285,28 @@ export default function Welcome() {
                         {/* Lower-Right Column: Significantly larger gap from "Tentang RAKIT CAMPUS" */}
                         <div
                             ref={aboutRightColRef}
-                            className="md:absolute md:top-[66vh] lg:top-[68vh] xl:top-[70vh] 2xl:top-[72vh] md:right-4 lg:right-6 xl:right-8 w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] lg:max-w-[440px] flex flex-col z-10 mt-36 sm:mt-44 md:mt-0 will-change-transform"
+                            className="md:absolute md:top-[66vh] lg:top-[68vh] xl:top-[70vh] 2xl:top-[72vh] md:right-4 lg:right-6 xl:right-8 w-full max-w-[340px] sm:max-w-[380px] md:max-w-[420px] lg:max-w-[440px] flex flex-col z-10 mt-10 sm:mt-16 md:mt-0 will-change-transform"
                         >
                             {/* Small Label - Unbolded */}
-                            <span className="text-xs sm:text-[13px] font-mono tracking-[0.25em] text-neutral-400 font-normal uppercase mb-2.5 sm:mb-3 block">
+                            <span className="text-xs sm:text-[13px] font-mono tracking-[0.25em] text-neutral-400 font-normal uppercase mb-2 sm:mb-3 block">
                                 TENTANG
                             </span>
 
                             {/* Paragraph 1: Slender, text-justify (rata kanan kiri), enlarged font */}
-                            <p className="text-sm sm:text-[15px] md:text-[16px] lg:text-[16.5px] text-neutral-200 leading-[1.8] sm:leading-[1.85] font-sans font-normal text-justify drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]">
+                            <p className="text-xs xs:text-sm sm:text-[15px] md:text-[16px] lg:text-[16.5px] text-neutral-200 leading-relaxed sm:leading-[1.85] font-sans font-normal text-left sm:text-justify drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]">
                                 RAKIT CAMPUS adalah platform kolaborasi mahasiswa terpadu yang bertujuan untuk menjadi jantung ekosistem inovasi kampus dengan mengintegrasikan sistem pembentukan tim cerdas berbasis kecocokan keahlian (AI-Powered), dokumen Living Proposal interaktif secara real-time, dan validasi portofolio terverifikasi program studi.
                             </p>
 
                             {/* Paragraph 2: Refined typography with text-justify, enlarged font */}
-                            <p className="mt-3.5 sm:mt-4 text-sm sm:text-[15px] md:text-[16px] lg:text-[16.5px] text-neutral-300 leading-[1.8] sm:leading-[1.85] font-sans font-normal text-justify drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]">
+                            <p className="mt-3 sm:mt-4 text-xs xs:text-sm sm:text-[15px] md:text-[16px] lg:text-[16.5px] text-neutral-300 leading-relaxed sm:leading-[1.85] font-sans font-normal text-left sm:text-justify drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)]">
                                 Era pengerjaan proyek yang sporadis dan pembentukan tim serba kebetulan telah berakhir. Kami menggabungkan kebutuhan riil kompetisi dengan kepastian kurikulum akademik untuk menumbuhkan sinergi talenta yang menjadi modal prestasi nyata mahasiswa.
                             </p>
 
                             {/* CTA Button towards Student Dashboard with interactive effects */}
-                            <div className="mt-6 sm:mt-7">
+                            <div className="mt-5 sm:mt-7">
                                 <Link
                                     href="/dashboard"
-                                    className="group relative inline-flex items-center gap-3.5 bg-white hover:bg-neutral-50 text-neutral-900 text-xs sm:text-sm font-sans font-semibold px-6 py-3.5 sm:px-7 sm:py-4 shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_10px_35px_rgba(255,255,255,0.25)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] overflow-hidden cursor-pointer"
+                                    className="group relative inline-flex items-center justify-center gap-3.5 bg-white hover:bg-neutral-50 text-neutral-900 text-xs sm:text-sm font-sans font-semibold px-5 py-3 sm:px-7 sm:py-4 shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_10px_35px_rgba(255,255,255,0.25)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] overflow-hidden cursor-pointer w-full sm:w-auto"
                                 >
                                     {/* Shimmer light sweep highlight effect */}
                                     <span 
@@ -2420,29 +2420,29 @@ export default function Welcome() {
                         ref={section2HeaderContentRef}
                         className="max-w-4xl lg:max-w-5xl mx-auto px-4 relative z-10 text-center w-full will-change-transform"
                     >
-                        <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.12]">
+                        <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.15] sm:leading-[1.12]">
                             Simplify Project Collaboration <br />
                             <span className="text-blue-600">
                                 Boost Campus Achievements
                             </span>
                         </h2>
 
-                        <p className="mt-5 sm:mt-6 text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
+                        <p className="mt-3.5 sm:mt-6 text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
                             Platform pembentukan tim mahasiswa berbasis AI, manajemen sprint Kanban interaktif, dan validasi Living Proposal kurikulum akademik.
                         </p>
 
                         {/* CTA Buttons with Micro-Interactions */}
-                        <div className="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-4 sm:gap-5">
+                        <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-5 w-full max-w-xs sm:max-w-none mx-auto">
                             <Link
                                 href={auth?.user ? "/dashboard" : "/register"}
-                                className="group inline-flex items-center gap-2.5 bg-neutral-900 hover:bg-black text-white text-xs sm:text-sm md:text-base font-semibold px-7 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg shadow-neutral-900/20 hover:shadow-neutral-900/30 hover:-translate-y-0.5 transition-all"
+                                className="group inline-flex items-center justify-center gap-2.5 bg-neutral-900 hover:bg-black text-white text-xs sm:text-sm md:text-base font-semibold px-6 sm:px-8 py-3 sm:py-4 rounded-full shadow-lg shadow-neutral-900/20 hover:shadow-neutral-900/30 hover:-translate-y-0.5 transition-all w-full sm:w-auto text-center"
                             >
                                 <span>Get Started Free</span>
                                 <ArrowRight className="size-4 sm:size-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link
                                 href="/login"
-                                className="inline-flex items-center gap-2 bg-white hover:bg-neutral-50 text-neutral-800 text-xs sm:text-sm md:text-base font-semibold px-7 sm:px-8 py-3.5 sm:py-4 rounded-full border border-neutral-200/90 shadow-2xs hover:border-neutral-300 hover:-translate-y-0.5 transition-all"
+                                className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-50 text-neutral-800 text-xs sm:text-sm md:text-base font-semibold px-6 sm:px-8 py-3 sm:py-4 rounded-full border border-neutral-200/90 shadow-2xs hover:border-neutral-300 hover:-translate-y-0.5 transition-all w-full sm:w-auto text-center"
                             >
                                 <Sparkles className="size-4 text-blue-600" />
                                 <span>Coba Akun Demo Polindra</span>
@@ -2455,7 +2455,7 @@ export default function Welcome() {
             {/* Section 2.5: Dedicated 3D Interactive Platform Showcase (3D Laptop & Handphone) */}
             <section
                 id="platform-showcase"
-                className="relative w-full py-16 sm:py-20 lg:py-28 bg-gradient-to-b from-white via-neutral-50/50 to-white text-neutral-900 overflow-hidden select-none border-b border-neutral-100"
+                className="relative w-full py-10 sm:py-16 md:py-20 lg:py-28 bg-gradient-to-b from-white via-neutral-50/50 to-white text-neutral-900 overflow-hidden select-none border-b border-neutral-100"
             >
                 {/* Subtle Dot Matrix & Ethereal Mesh Background */}
                 <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
@@ -2484,14 +2484,14 @@ export default function Welcome() {
                             >
                                 
                                 {/* LAPTOP SCREEN LID (Display Housing with Anodized Space Gray Aluminum Shell) */}
-                                <div className="relative bg-gradient-to-b from-[#282a34] via-[#1a1b22] to-[#111218] rounded-t-[20px] sm:rounded-t-[26px] md:rounded-t-[30px] p-[6px] sm:p-[8px] md:p-[9px] pb-0 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.45),0_8px_20px_rgba(0,0,0,0.25)] ring-1 ring-white/15 border border-[#373946]">
+                                <div className="relative bg-gradient-to-b from-[#282a34] via-[#1a1b22] to-[#111218] rounded-t-[16px] xs:rounded-t-[20px] sm:rounded-t-[26px] md:rounded-t-[30px] p-[5px] sm:p-[8px] md:p-[9px] pb-0 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.45),0_8px_20px_rgba(0,0,0,0.25)] ring-1 ring-white/15 border border-[#373946]">
                                     
                                     {/* Inner Black Glass Display Bezel */}
-                                    <div className="relative bg-[#090a0d] rounded-t-[14px] sm:rounded-t-[18px] md:rounded-t-[21px] overflow-hidden border border-black/90">
+                                    <div className="relative bg-[#090a0d] rounded-t-[12px] sm:rounded-t-[18px] md:rounded-t-[21px] overflow-hidden border border-black/90">
 
                                         {/* Top Bezel with Integrated FaceTime HD Webcam */}
-                                        <div className="relative w-full h-3 sm:h-3.5 bg-[#0a0a0e] flex items-center justify-center z-30 select-none">
-                                            <div className="size-2 rounded-full bg-[#040406] border border-neutral-700/60 flex items-center justify-center shadow-inner">
+                                        <div className="relative w-full h-2.5 sm:h-3.5 bg-[#0a0a0e] flex items-center justify-center z-30 select-none">
+                                            <div className="size-1.5 sm:size-2 rounded-full bg-[#040406] border border-neutral-700/60 flex items-center justify-center shadow-inner">
                                                 <div className="size-0.5 rounded-full bg-blue-500/80 ring-1 ring-blue-400/30" />
                                             </div>
                                         </div>
@@ -2507,12 +2507,12 @@ export default function Welcome() {
 
                                 {/* GOOGLE CHROME DESKTOP BROWSER UI (Matching Image 2 Reference) */}
                                 <div className="w-full flex flex-col bg-[#eef1f5] border-b border-neutral-300/80 select-none text-left relative z-10 font-sans">
-                                    <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-4 py-2 bg-[#dfe3e8]/90 border-b border-neutral-300">
+                                    <div className="flex items-center gap-1.5 sm:gap-4 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#dfe3e8]/90 border-b border-neutral-300">
                                         {/* macOS Window Controls (Monochrome for strict 3-color palette) */}
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            <div className="size-2.5 sm:size-3 rounded-full bg-neutral-400/80 hover:bg-neutral-600 transition border border-neutral-500/30" />
-                                            <div className="size-2.5 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
-                                            <div className="size-2.5 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
+                                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-400/80 hover:bg-neutral-600 transition border border-neutral-500/30" />
+                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
+                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
                                         </div>
 
                                         {/* Back / Forward / Reload navigation */}
@@ -2529,15 +2529,15 @@ export default function Welcome() {
                                         </div>
 
                                         {/* Chrome Omnibox URL Bar */}
-                                        <div className="flex-1 flex items-center justify-between bg-white border border-neutral-200/90 rounded-full px-3 sm:px-4 py-1 text-[10px] sm:text-[11.5px] font-sans shadow-2xs">
-                                            <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                                        <div className="flex-1 flex items-center justify-between bg-white border border-neutral-200/90 rounded-full px-2.5 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[11.5px] font-sans shadow-2xs min-w-0">
+                                            <div className="flex items-center gap-1 sm:gap-2 truncate">
                                                 <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
                                                 <span className="text-neutral-400 hidden sm:inline font-mono">https://</span>
                                                 <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
-                                                <span className="text-neutral-500 font-mono truncate">/dashboard/polindra-sprint-2026</span>
+                                                <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/polindra-sprint-2026</span>
                                             </div>
-                                            <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                                                <span className="text-[9px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/70">
+                                            <div className="flex items-center gap-1.5 shrink-0 ml-1.5 sm:ml-2">
+                                                <span className="text-[8px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200/70">
                                                     Polindra Hub
                                                 </span>
                                             </div>
@@ -2545,7 +2545,7 @@ export default function Welcome() {
 
                                         {/* Chrome User Profile */}
                                         <div className="flex items-center gap-1.5 shrink-0">
-                                            <div className="size-5 sm:size-6 rounded-full bg-blue-600 text-white text-[9px] sm:text-[10px] font-bold flex items-center justify-center shadow-2xs">
+                                            <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold flex items-center justify-center shadow-2xs">
                                                 BS
                                             </div>
                                             <MoreVertical className="size-3.5 text-neutral-600 hidden sm:inline cursor-pointer" />
@@ -2554,7 +2554,7 @@ export default function Welcome() {
                                 </div>
 
                                 {/* LAPTOP WEB DASHBOARD VIEWPORT (Inside Chrome) */}
-                                <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[460px] sm:min-h-[490px] md:min-h-[510px]">
+                                <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[380px] xs:min-h-[420px] sm:min-h-[490px] md:min-h-[510px]">
                                     {/* Desktop Sidebar */}
                                     <aside className="w-48 sm:w-52 shrink-0 bg-white border-r border-neutral-200/80 p-3 sm:p-4 hidden sm:flex flex-col justify-between">
                                         <div>
@@ -2614,33 +2614,33 @@ export default function Welcome() {
                                     </aside>
 
                                     {/* Main Dashboard Canvas Area */}
-                                    <main className="flex-1 p-3.5 sm:p-5 flex flex-col justify-between overflow-hidden bg-white">
+                                    <main className="flex-1 p-2.5 sm:p-5 flex flex-col justify-between overflow-hidden bg-white">
                                         <div>
                                             {/* Subheader */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-neutral-100 gap-2.5">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-neutral-100 gap-2">
                                                 <div>
                                                     <div className="flex items-center gap-2">
                                                         <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Polindra 2026</h3>
-                                                        <span className="text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">
+                                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200/60">
                                                             Active Sprint
                                                         </span>
                                                     </div>
-                                                    <p className="text-[10px] sm:text-[11px] text-neutral-400 mt-0.5">
+                                                    <p className="text-[9px] sm:text-[11px] text-neutral-400 mt-0.5 truncate max-w-[240px] sm:max-w-none">
                                                         Target Validasi Living Proposal & Prototype IoT Gemastik
                                                     </p>
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex items-center -space-x-1.5 mr-1">
-                                                        <div className="size-5 sm:size-6 rounded-full bg-blue-600 text-white text-[8px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">B</div>
-                                                        <div className="size-5 sm:size-6 rounded-full bg-neutral-900 text-white text-[8px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">S</div>
-                                                        <div className="size-5 sm:size-6 rounded-full bg-blue-500 text-white text-[8px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">A</div>
-                                                        <div className="size-5 sm:size-6 rounded-full bg-neutral-100 text-neutral-800 text-[8px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">+3</div>
+                                                <div className="flex items-center gap-1.5 sm:gap-2">
+                                                    <div className="flex items-center -space-x-1.5 mr-0.5 sm:mr-1">
+                                                        <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">B</div>
+                                                        <div className="size-4.5 sm:size-6 rounded-full bg-neutral-900 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">S</div>
+                                                        <div className="size-4.5 sm:size-6 rounded-full bg-blue-500 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">A</div>
+                                                        <div className="size-4.5 sm:size-6 rounded-full bg-neutral-100 text-neutral-800 text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">+3</div>
                                                     </div>
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveTab('board')}
-                                                        className={`px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${
+                                                        className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-semibold transition ${
                                                             activeTab === 'board'
                                                                 ? 'bg-neutral-900 text-white'
                                                                 : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -2670,31 +2670,31 @@ export default function Welcome() {
                                             </div>
 
                                             {/* KPI Metrics Row */}
-                                            <div className="grid grid-cols-3 gap-2.5 mt-3 mb-3">
-                                                <div className="p-2 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between">
-                                                    <div>
-                                                        <div className="text-[9px] text-neutral-400 font-medium">Sprint Completion</div>
-                                                        <div className="text-xs sm:text-sm font-bold text-neutral-900">78% Terpenuhi</div>
+                                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 mt-2.5 sm:mt-3 mb-2.5 sm:mb-3">
+                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Sprint</div>
+                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">78% Selesai</div>
                                                     </div>
-                                                    <div className="w-12 sm:w-16 bg-neutral-200 h-1.5 rounded-full overflow-hidden">
+                                                    <div className="w-8 sm:w-16 bg-neutral-200 h-1.5 rounded-full overflow-hidden shrink-0 ml-1">
                                                         <div className="bg-blue-600 h-full rounded-full w-[78%]" />
                                                     </div>
                                                 </div>
 
-                                                <div className="p-2 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between">
-                                                    <div>
-                                                        <div className="text-[9px] text-neutral-400 font-medium">Living Proposal</div>
-                                                        <div className="text-xs sm:text-sm font-bold text-blue-700">v2.4 Terverifikasi</div>
+                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Proposal</div>
+                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-700 truncate">v2.4 Valid</div>
                                                     </div>
-                                                    <CheckCircle2 className="size-4 text-blue-600" />
+                                                    <CheckCircle2 className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
                                                 </div>
 
-                                                <div className="p-2 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between">
-                                                    <div>
-                                                        <div className="text-[9px] text-neutral-400 font-medium">Target Gemastik</div>
-                                                        <div className="text-xs sm:text-sm font-bold text-neutral-900">14 Hari Tersisa</div>
+                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Gemastik</div>
+                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">14 Hari Sisa</div>
                                                     </div>
-                                                    <Trophy className="size-4 text-blue-600" />
+                                                    <Trophy className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
                                                 </div>
                                             </div>
 
@@ -2914,11 +2914,11 @@ export default function Welcome() {
                     {/* 2. Realistic 3D Smartphone (iPhone 16 Pro Flagship) with Google Chrome Mobile */}
                     <div 
                         ref={phoneShowcaseRef}
-                        className="absolute bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
+                        className="absolute bottom-2 xs:bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-1 xs:right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
                     >
                         <div 
                             ref={phoneCardRef}
-                            className="w-[190px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[390px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[32px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
+                            className="w-[145px] xs:w-[175px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[300px] xs:h-[360px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
                             style={{
                                 transform: 'perspective(1800px) rotateX(1.5deg) rotateY(0deg) translateZ(20px)',
                                 boxShadow: '-18px 25px 60px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3)',
@@ -2926,7 +2926,7 @@ export default function Welcome() {
                             }}
                         >
                             {/* Phone Body Frame */}
-                            <div className="relative bg-[#fafafa] border-[6px] sm:border-[7px] md:border-[8px] border-[#181920] rounded-[32px] sm:rounded-[36px] md:rounded-[40px] ring-1 ring-white/15 overflow-hidden w-full h-full flex flex-col justify-between">
+                            <div className="relative bg-[#fafafa] border-[4px] xs:border-[6px] sm:border-[7px] md:border-[8px] border-[#181920] rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] ring-1 ring-white/15 overflow-hidden w-full h-full flex flex-col justify-between">
                                 
                                 {/* Glass Specular Reflection Highlight */}
                                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.07] z-20" />
@@ -2938,16 +2938,16 @@ export default function Welcome() {
                                 />
 
                                 {/* Dynamic Island & Phone Status Bar */}
-                                <div className="relative pt-1.5 sm:pt-2 pb-1 bg-white flex items-center justify-between px-3.5 sm:px-4 z-10 border-b border-neutral-100 shrink-0">
-                                    <span className="text-[8.5px] sm:text-[9.5px] font-bold text-neutral-900 font-mono">09:41</span>
+                                <div className="relative pt-1 sm:pt-2 pb-1 bg-white flex items-center justify-between px-2.5 sm:px-4 z-10 border-b border-neutral-100 shrink-0">
+                                    <span className="text-[7.5px] sm:text-[9.5px] font-bold text-neutral-900 font-mono">09:41</span>
                                     {/* Dynamic Island Pill */}
-                                    <div className="w-14 sm:w-16 h-3 sm:h-3.5 bg-black rounded-full flex items-center justify-between px-2 shadow-inner">
+                                    <div className="w-10 xs:w-12 sm:w-16 h-2.5 sm:h-3.5 bg-black rounded-full flex items-center justify-between px-1.5 sm:px-2 shadow-inner">
                                         <div className="size-1 rounded-full bg-[#181822]" />
                                         <div className="size-0.5 rounded-full bg-blue-500/80" />
                                     </div>
                                     <div className="flex items-center gap-1 text-neutral-900">
-                                        <Wifi className="size-2.5" />
-                                        <Battery className="size-3" />
+                                        <Wifi className="size-2 sm:size-2.5" />
+                                        <Battery className="size-2.5 sm:size-3" />
                                     </div>
                                 </div>
 
@@ -3074,11 +3074,11 @@ export default function Welcome() {
                 <div className="flex flex-col gap-3 sm:gap-4 relative z-10">
                     {/* Row 1: Moving to LEFT */}
                     <div className="relative w-full overflow-hidden">
-                        <div className="animate-marquee-left flex items-center gap-3 sm:gap-4 will-change-transform">
+                        <div className="animate-marquee-left flex items-center gap-2.5 sm:gap-4 will-change-transform">
                             {[...photoRowTop, ...photoRowTop].map((item, idx) => (
                                 <div
                                     key={`top-${idx}`}
-                                    className="relative w-[280px] sm:w-[340px] md:w-[380px] h-[180px] sm:h-[210px] md:h-[230px] overflow-hidden group shrink-0 select-none bg-neutral-100"
+                                    className="relative w-[220px] xs:w-[260px] sm:w-[340px] md:w-[380px] h-[145px] xs:h-[170px] sm:h-[210px] md:h-[230px] overflow-hidden group shrink-0 select-none bg-neutral-100"
                                 >
                                     <img
                                         src={item.src}
@@ -3088,11 +3088,11 @@ export default function Welcome() {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                                     />
                                     {/* Bottom Text Overlay: Title & Category (No Badge) */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-3.5 sm:p-4.5 text-white pointer-events-none">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-2.5 sm:p-4.5 text-white pointer-events-none">
                                         <h3 className="font-bold text-xs sm:text-sm md:text-[15px] text-white tracking-tight leading-snug line-clamp-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                                             {item.title}
                                         </h3>
-                                        <p className="text-[10px] sm:text-[11.5px] text-neutral-300 font-medium mt-0.5 line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+                                        <p className="text-[9.5px] sm:text-[11.5px] text-neutral-300 font-medium mt-0.5 line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
                                             {item.category}
                                         </p>
                                     </div>
@@ -3103,11 +3103,11 @@ export default function Welcome() {
 
                     {/* Row 2: Moving to RIGHT */}
                     <div className="relative w-full overflow-hidden">
-                        <div className="animate-marquee-right flex items-center gap-3 sm:gap-4 will-change-transform">
+                        <div className="animate-marquee-right flex items-center gap-2.5 sm:gap-4 will-change-transform">
                             {[...photoRowBottom, ...photoRowBottom].map((item, idx) => (
                                 <div
                                     key={`bottom-${idx}`}
-                                    className="relative w-[280px] sm:w-[340px] md:w-[380px] h-[180px] sm:h-[210px] md:h-[230px] overflow-hidden group shrink-0 select-none bg-neutral-100"
+                                    className="relative w-[220px] xs:w-[260px] sm:w-[340px] md:w-[380px] h-[145px] xs:h-[170px] sm:h-[210px] md:h-[230px] overflow-hidden group shrink-0 select-none bg-neutral-100"
                                 >
                                     <img
                                         src={item.src}
@@ -3117,11 +3117,11 @@ export default function Welcome() {
                                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                                     />
                                     {/* Bottom Text Overlay: Title & Category (No Badge) */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-3.5 sm:p-4.5 text-white pointer-events-none">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent flex flex-col justify-end p-2.5 sm:p-4.5 text-white pointer-events-none">
                                         <h3 className="font-bold text-xs sm:text-sm md:text-[15px] text-white tracking-tight leading-snug line-clamp-1 drop-shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
                                             {item.title}
                                         </h3>
-                                        <p className="text-[10px] sm:text-[11.5px] text-neutral-300 font-medium mt-0.5 line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
+                                        <p className="text-[9.5px] sm:text-[11.5px] text-neutral-300 font-medium mt-0.5 line-clamp-1 drop-shadow-[0_1px_3px_rgba(0,0,0,0.7)]">
                                             {item.category}
                                         </p>
                                     </div>
@@ -3241,10 +3241,10 @@ export default function Welcome() {
                     className="absolute inset-0 w-full h-full flex items-center px-4 sm:px-6 lg:px-8 z-10"
                 >
                     <div className="max-w-6xl xl:max-w-7xl mx-auto w-full text-left">
-                        <h2 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif tracking-tight text-white uppercase leading-[1.05]">
+                        <h2 className="text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif tracking-tight text-white uppercase leading-[1.05]">
                             SOLUSI KAMI
                         </h2>
-                        <p className="mt-3.5 sm:mt-4 text-lg sm:text-2xl md:text-3xl text-neutral-300 font-serif max-w-2xl leading-relaxed">
+                        <p className="mt-2.5 sm:mt-4 text-base xs:text-lg sm:text-2xl md:text-3xl text-neutral-300 font-serif max-w-2xl leading-relaxed">
                             Empat pilar akselerasi inovasi, Living Proposal & kolaborasi kompetisi mahasiswa
                         </p>
                     </div>
@@ -3256,32 +3256,32 @@ export default function Welcome() {
                 {/* ============================================================ */}
                 <div
                     ref={slide1Ref}
-                    className="absolute inset-0 w-full h-full flex items-center px-4 sm:px-6 lg:px-8 z-10"
+                    className="absolute inset-0 w-full h-full flex items-center px-3.5 sm:px-6 lg:px-8 z-10"
                 >
-                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 xl:gap-24 items-center">
+                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 xl:gap-24 items-center">
                         {/* Text Left Column */}
                         <div ref={slide1TextRef} className="flex flex-col justify-between text-left will-change-transform">
                             <div>
-                                <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
+                                <h3 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
                                     FAIR AI<br />MATCHMAKING
                                 </h3>
-                                <p className="mt-4 sm:mt-5 md:mt-6 text-base sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
+                                <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Pencocokan talenta cerdas berdasarkan portofolio dan peran yang saling melengkapi.
                                 </p>
-                                <div className="mt-5 sm:mt-7 space-y-3 sm:space-y-4 text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-justify">
+                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
                                     <p>
                                         Membangun tim proyek atau kompetisi di kampus kini tidak lagi terkendala lingkaran pertemanan sempit atau ketimpangan peran teknis.
                                     </p>
-                                    <p>
+                                    <p className="hidden xs:block">
                                         Algoritma cerdas kami menganalisis keahlian teknis (IoT, Mobile, Web, AI), riwayat proyek, dan komitmen waktu mahasiswa untuk merekomendasikan komposisi tim paling ideal dan berimbang.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Colossal Number 01 / 04 at Bottom-Left */}
-                            <div className="mt-6 sm:mt-10 flex items-baseline justify-start gap-1.5 font-['Playfair_Display',Georgia,serif] select-none">
-                                <span className="text-6xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">01</span>
-                                <span className="text-xs sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
+                            <div className="mt-3 sm:mt-8 flex items-baseline justify-start gap-1.5 font-['Playfair_Display',Georgia,serif] select-none">
+                                <span className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">01</span>
+                                <span className="text-[10px] sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
                             </div>
                         </div>
 
@@ -3289,12 +3289,12 @@ export default function Welcome() {
                         <div className="w-full flex justify-center lg:justify-end">
                             <div
                                 ref={slide1ImageRef}
-                                className="relative w-full max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
+                                className="relative w-full max-w-[280px] xs:max-w-sm sm:max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
                             >
                                 <img
                                     src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80"
                                     alt="Fair AI Matchmaking Tim Mahasiswa"
-                                    className="w-full aspect-[4/3] sm:aspect-[16/10] object-cover"
+                                    className="w-full aspect-[16/9] sm:aspect-[16/10] object-cover max-h-[140px] xs:max-h-[180px] sm:max-h-none"
                                 />
                             </div>
                         </div>
@@ -3307,19 +3307,19 @@ export default function Welcome() {
                 {/* ============================================================ */}
                 <div
                     ref={slide2Ref}
-                    className="absolute inset-0 w-full h-full flex items-center px-4 sm:px-6 lg:px-8 z-10"
+                    className="absolute inset-0 w-full h-full flex items-center px-3.5 sm:px-6 lg:px-8 z-10"
                 >
-                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 xl:gap-24 items-center">
+                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 xl:gap-24 items-center">
                         {/* Photo Left Column */}
                         <div className="order-2 lg:order-1 w-full flex justify-center lg:justify-start">
                             <div
                                 ref={slide2ImageRef}
-                                className="relative w-full max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
+                                className="relative w-full max-w-[280px] xs:max-w-sm sm:max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
                             >
                                 <img
                                     src="https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=1200&q=80"
                                     alt="Living Proposal Kolaborasi Real-time"
-                                    className="w-full aspect-[4/3] sm:aspect-[16/10] object-cover"
+                                    className="w-full aspect-[16/9] sm:aspect-[16/10] object-cover max-h-[140px] xs:max-h-[180px] sm:max-h-none"
                                 />
                             </div>
                         </div>
@@ -3327,26 +3327,26 @@ export default function Welcome() {
                         {/* Text Right Column */}
                         <div ref={slide2TextRef} className="order-1 lg:order-2 flex flex-col justify-between text-left will-change-transform">
                             <div>
-                                <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
+                                <h3 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
                                     LIVING<br />PROPOSAL
                                 </h3>
-                                <p className="mt-4 sm:mt-5 md:mt-6 text-base sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
+                                <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Dokumen proposal interaktif yang tersinkronisasi real-time dengan dosen pembimbing.
                                 </p>
-                                <div className="mt-5 sm:mt-7 space-y-3 sm:space-y-4 text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-justify">
+                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
                                     <p>
                                         Proposal proyek bukan lagi berkas statis PDF yang tercecer di folder drive. Living Proposal adalah dokumen interaktif yang disusun bersama secara real-time.
                                     </p>
-                                    <p>
+                                    <p className="hidden xs:block">
                                         Setiap revisi, umpan balik dosen pembimbing, serta matriks rubrik akademik Gemastik dan PKM diperbarui secara otomatis dan transparan antaranggota tim.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Colossal Number 02 / 04 at Bottom-Right (Aligned Right matching Reference Image) */}
-                            <div className="mt-6 sm:mt-10 flex items-baseline justify-end gap-1.5 font-['Playfair_Display',Georgia,serif] select-none w-full">
-                                <span className="text-6xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">02</span>
-                                <span className="text-xs sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
+                            <div className="mt-3 sm:mt-8 flex items-baseline justify-end gap-1.5 font-['Playfair_Display',Georgia,serif] select-none w-full">
+                                <span className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">02</span>
+                                <span className="text-[10px] sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
                             </div>
                         </div>
                     </div>
@@ -3358,32 +3358,32 @@ export default function Welcome() {
                 {/* ============================================================ */}
                 <div
                     ref={slide3Ref}
-                    className="absolute inset-0 w-full h-full flex items-center px-4 sm:px-6 lg:px-8 z-10"
+                    className="absolute inset-0 w-full h-full flex items-center px-3.5 sm:px-6 lg:px-8 z-10"
                 >
-                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 xl:gap-24 items-center">
+                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 xl:gap-24 items-center">
                         {/* Text Left Column */}
                         <div ref={slide3TextRef} className="flex flex-col justify-between text-left will-change-transform">
                             <div>
-                                <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
+                                <h3 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
                                     TASK KANBAN<br />BOARDS
                                 </h3>
-                                <p className="mt-4 sm:mt-5 md:mt-6 text-base sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
+                                <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Manajemen sprint agile yang terhubung langsung dengan linimasa kompetisi.
                                 </p>
-                                <div className="mt-5 sm:mt-7 space-y-3 sm:space-y-4 text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-justify">
+                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
                                     <p>
                                         Mengubah ide besar menjadi eksekusi mingguan yang terukur. Papan Kanban visual di RAKIT dirancang khusus untuk ritme kerja mahasiswa.
                                     </p>
-                                    <p>
+                                    <p className="hidden xs:block">
                                         Membagi milestone kompetisi seperti Gemastik dan Hackathon ke dalam sprint mingguan dengan pembagian beban kerja merata tanpa free-rider.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Colossal Number 03 / 04 at Bottom-Left */}
-                            <div className="mt-6 sm:mt-10 flex items-baseline justify-start gap-1.5 font-['Playfair_Display',Georgia,serif] select-none">
-                                <span className="text-6xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">03</span>
-                                <span className="text-xs sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
+                            <div className="mt-3 sm:mt-8 flex items-baseline justify-start gap-1.5 font-['Playfair_Display',Georgia,serif] select-none">
+                                <span className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">03</span>
+                                <span className="text-[10px] sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
                             </div>
                         </div>
 
@@ -3391,12 +3391,12 @@ export default function Welcome() {
                         <div className="w-full flex justify-center lg:justify-end">
                             <div
                                 ref={slide3ImageRef}
-                                className="relative w-full max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
+                                className="relative w-full max-w-[280px] xs:max-w-sm sm:max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
                             >
                                 <img
                                     src="https://images.unsplash.com/photo-1542744094-3a31f272c490?auto=format&fit=crop&w=1200&q=80"
                                     alt="Task Kanban Boards Sprint Agile"
-                                    className="w-full aspect-[4/3] sm:aspect-[16/10] object-cover"
+                                    className="w-full aspect-[16/9] sm:aspect-[16/10] object-cover max-h-[140px] xs:max-h-[180px] sm:max-h-none"
                                 />
                             </div>
                         </div>
@@ -3409,19 +3409,19 @@ export default function Welcome() {
                 {/* ============================================================ */}
                 <div
                     ref={slide4Ref}
-                    className="absolute inset-0 w-full h-full flex items-center px-4 sm:px-6 lg:px-8 z-10"
+                    className="absolute inset-0 w-full h-full flex items-center px-3.5 sm:px-6 lg:px-8 z-10"
                 >
-                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-20 xl:gap-24 items-center">
+                    <div className="max-w-6xl xl:max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8 lg:gap-20 xl:gap-24 items-center">
                         {/* Photo Left Column */}
                         <div className="order-2 lg:order-1 w-full flex justify-center lg:justify-start">
                             <div
                                 ref={slide4ImageRef}
-                                className="relative w-full max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
+                                className="relative w-full max-w-[280px] xs:max-w-sm sm:max-w-lg lg:max-w-xl overflow-hidden border border-neutral-800 shadow-[0_20px_50px_rgba(0,0,0,0.65)] ring-1 ring-white/10 will-change-transform"
                             >
                                 <img
                                     src="https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=80"
                                     alt="Portofolio Capaian Prestasi Tervalidasi"
-                                    className="w-full aspect-[4/3] sm:aspect-[16/10] object-cover"
+                                    className="w-full aspect-[16/9] sm:aspect-[16/10] object-cover max-h-[140px] xs:max-h-[180px] sm:max-h-none"
                                 />
                             </div>
                         </div>
@@ -3429,26 +3429,26 @@ export default function Welcome() {
                         {/* Text Right Column */}
                         <div ref={slide4TextRef} className="order-1 lg:order-2 flex flex-col justify-between text-left will-change-transform">
                             <div>
-                                <h3 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
+                                <h3 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-serif tracking-tight text-white uppercase leading-[1.08]">
                                     PORTOFOLIO<br />TERVALIDASI
                                 </h3>
-                                <p className="mt-4 sm:mt-5 md:mt-6 text-base sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
+                                <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Rekam jejak capaian yang diakui resmi oleh program studi dan institusi.
                                 </p>
-                                <div className="mt-5 sm:mt-7 space-y-3 sm:space-y-4 text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-justify">
+                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
                                     <p>
                                         Hasil karya dan kerja keras mahasiswa tidak berhenti di ruang kelas atau kompetisi sesaat.
                                     </p>
-                                    <p>
+                                    <p className="hidden xs:block">
                                         Setiap kontribusi tugas, keberhasilan sprint, dan capaian milestone tercatat permanen dalam rekam jejak digital mahasiswa, siap dikonversi ke nilai SKS mata kuliah proyek akademik.
                                     </p>
                                 </div>
                             </div>
 
                             {/* Colossal Number 04 / 04 at Bottom-Right (Aligned Right matching Reference Image) */}
-                            <div className="mt-6 sm:mt-10 flex items-baseline justify-end gap-1.5 font-['Playfair_Display',Georgia,serif] select-none w-full">
-                                <span className="text-6xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">04</span>
-                                <span className="text-xs sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
+                            <div className="mt-3 sm:mt-8 flex items-baseline justify-end gap-1.5 font-['Playfair_Display',Georgia,serif] select-none w-full">
+                                <span className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl text-white font-normal leading-none tracking-tighter">04</span>
+                                <span className="text-[10px] sm:text-sm font-sans tracking-widest text-neutral-400">/ 04</span>
                             </div>
                         </div>
                     </div>
@@ -3464,10 +3464,10 @@ export default function Welcome() {
                 >
                     <div className="max-w-6xl mx-auto w-full">
                         {/* Header: ANGKA (Editorial Serif Typography matching Image 2) */}
-                        <div className="mb-10 sm:mb-14 lg:mb-16">
+                        <div className="mb-4 sm:mb-10 lg:mb-16">
                             <h2
                                 ref={numbersHeadingRef}
-                                className="font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-normal text-white tracking-tight uppercase select-none will-change-transform"
+                                className="font-serif text-3xl xs:text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal text-white tracking-tight uppercase select-none will-change-transform"
                             >
                                 ANGKA
                             </h2>
@@ -3476,80 +3476,80 @@ export default function Welcome() {
                         {/* 4 Stat Columns Grid matching Image 2 */}
                         <div
                             ref={numbersGridRef}
-                            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-8 will-change-transform"
+                            className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 lg:gap-8 will-change-transform"
                         >
                             {/* Column 1: 95% */}
                             <div className="flex flex-col">
-                                <div className="w-full h-px bg-white/20 mb-6 sm:mb-8" />
-                                <div className="flex items-baseline gap-3">
-                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-5xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
+                                <div className="w-full h-px bg-white/20 mb-3 sm:mb-6 lg:mb-8" />
+                                <div className="flex items-baseline gap-1.5 sm:gap-3">
+                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
                                         <span ref={statNum1Ref}>95</span>%
                                     </span>
-                                    <span className="text-xs sm:text-[13px] text-neutral-400 font-sans leading-tight">
+                                    <span className="text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-tight">
                                         Tingkat<br />Akurasi
                                     </span>
                                 </div>
-                                <h3 className="mt-6 sm:mt-7 text-sm sm:text-base font-bold text-white tracking-wide">
+                                <h3 className="mt-2.5 sm:mt-6 lg:mt-7 text-xs sm:text-base font-bold text-white tracking-wide truncate">
                                     Smart AI Matchmaking
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-[13px] text-neutral-400 font-sans leading-relaxed">
+                                <p className="mt-1 sm:mt-2 text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-relaxed line-clamp-2 sm:line-clamp-none">
                                     Tingkat akurasi kecocokan rekan tim berbasis analisis keahlian teknis dan komitmen waktu antar mahasiswa.
                                 </p>
                             </div>
 
                             {/* Column 2: 3x */}
                             <div className="flex flex-col">
-                                <div className="w-full h-px bg-white/20 mb-6 sm:mb-8" />
-                                <div className="flex items-baseline gap-3">
-                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-5xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
+                                <div className="w-full h-px bg-white/20 mb-3 sm:mb-6 lg:mb-8" />
+                                <div className="flex items-baseline gap-1.5 sm:gap-3">
+                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
                                         <span ref={statNum2Ref}>3</span>x
                                     </span>
-                                    <span className="text-xs sm:text-[13px] text-neutral-400 font-sans leading-tight">
+                                    <span className="text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-tight">
                                         Lebih Cepat<br />Bentuk Tim
                                     </span>
                                 </div>
-                                <h3 className="mt-6 sm:mt-7 text-sm sm:text-base font-bold text-white tracking-wide">
+                                <h3 className="mt-2.5 sm:mt-6 lg:mt-7 text-xs sm:text-base font-bold text-white tracking-wide truncate">
                                     Akselerasi Pembentukan Tim
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-[13px] text-neutral-400 font-sans leading-relaxed">
+                                <p className="mt-1 sm:mt-2 text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-relaxed line-clamp-2 sm:line-clamp-none">
                                     Rekrutmen talenta proyek & kompetisi tanpa hambatan batasan lingkaran pertemanan sempit.
                                 </p>
                             </div>
 
                             {/* Column 3: 100% */}
                             <div className="flex flex-col">
-                                <div className="w-full h-px bg-white/20 mb-6 sm:mb-8" />
-                                <div className="flex items-baseline gap-3">
-                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-5xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
+                                <div className="w-full h-px bg-white/20 mb-3 sm:mb-6 lg:mb-8" />
+                                <div className="flex items-baseline gap-1.5 sm:gap-3">
+                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
                                         <span ref={statNum3Ref}>100</span>%
                                     </span>
-                                    <span className="text-xs sm:text-[13px] text-neutral-400 font-sans leading-tight">
+                                    <span className="text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-tight">
                                         Portofolio<br />Terverifikasi
                                     </span>
                                 </div>
-                                <h3 className="mt-6 sm:mt-7 text-sm sm:text-base font-bold text-white tracking-wide">
+                                <h3 className="mt-2.5 sm:mt-6 lg:mt-7 text-xs sm:text-base font-bold text-white tracking-wide truncate">
                                     Living Proposal & Validasi
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-[13px] text-neutral-400 font-sans leading-relaxed">
+                                <p className="mt-1 sm:mt-2 text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-relaxed line-clamp-2 sm:line-clamp-none">
                                     Dokumen proposal interaktif dan matriks rubrik akademik terverifikasi resmi oleh dosen pembimbing.
                                 </p>
                             </div>
 
                             {/* Column 4: 500+ */}
                             <div className="flex flex-col">
-                                <div className="w-full h-px bg-white/20 mb-6 sm:mb-8" />
-                                <div className="flex items-baseline gap-3">
-                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-5xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
+                                <div className="w-full h-px bg-white/20 mb-3 sm:mb-6 lg:mb-8" />
+                                <div className="flex items-baseline gap-1.5 sm:gap-3">
+                                    <span className="font-['Playfair_Display',Georgia,serif] [font-feature-settings:'lnum'_1,'pnum'_1] text-3xl xs:text-4xl sm:text-6xl lg:text-7xl text-white font-normal leading-none tracking-tight">
                                         <span ref={statNum4Ref}>500</span>+
                                     </span>
-                                    <span className="text-xs sm:text-[13px] text-neutral-400 font-sans leading-tight">
+                                    <span className="text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-tight">
                                         Mahasiswa<br />Kolaborator
                                     </span>
                                 </div>
-                                <h3 className="mt-6 sm:mt-7 text-sm sm:text-base font-bold text-white tracking-wide">
+                                <h3 className="mt-2.5 sm:mt-6 lg:mt-7 text-xs sm:text-base font-bold text-white tracking-wide truncate">
                                     Rekam Jejak Terverifikasi
                                 </h3>
-                                <p className="mt-2 text-xs sm:text-[13px] text-neutral-400 font-sans leading-relaxed">
+                                <p className="mt-1 sm:mt-2 text-[10px] sm:text-[13px] text-neutral-400 font-sans leading-relaxed line-clamp-2 sm:line-clamp-none">
                                     Mahasiswa aktif dan calon kolaborator terverifikasi dalam ekosistem kampus.
                                 </p>
                             </div>
@@ -3573,37 +3573,37 @@ export default function Welcome() {
                     </div>
 
                     {/* Main Content Stage: Left Text & Right Photo Reel */}
-                    <div ref={workflowStageRef} className="w-full h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-8 sm:gap-10 lg:gap-14 items-center relative z-10 will-change-transform">
+                    <div ref={workflowStageRef} className="w-full h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-10 lg:gap-14 items-center relative z-10 will-change-transform pt-14 sm:pt-20 md:pt-0">
                         
                         {/* Left Column: Synchronized Step Texts */}
-                        <div className="md:col-span-5 relative flex flex-col justify-center pr-2 lg:pr-6 h-full min-h-0">
+                        <div className="md:col-span-5 relative flex flex-col justify-center pr-0 md:pr-2 lg:pr-6 md:h-full min-h-0 shrink-0">
                             
                             {/* STEP 01 TEXT */}
                             <div ref={workflowStepText0Ref} className="w-full flex flex-col justify-center will-change-transform">
                                 <div className="flex items-start gap-3 sm:gap-5">
                                     {/* Big Serif Number 01 / 03 */}
                                     <div className="flex items-baseline gap-1.5 font-serif shrink-0">
-                                        <span className="text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
+                                        <span className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
                                              01
                                         </span>
-                                        <span className="text-xs sm:text-sm text-neutral-400 font-sans tracking-widest">
+                                        <span className="text-[10px] sm:text-sm text-neutral-400 font-sans tracking-widest">
                                             / 03
                                         </span>
                                     </div>
 
                                     {/* Tag & Title with Diamond Accent */}
                                     <div className="flex flex-col pt-0.5 sm:pt-1">
-                                        <span className="text-[10px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
+                                        <span className="text-[9px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
                                             ONBOARDING CEPAT
                                         </span>
-                                        <h3 className="font-serif text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
-                                            Simple And Fast <span className="inline-flex items-center whitespace-nowrap">Setup<span className="inline-block size-2 sm:size-2.5 bg-blue-600 rotate-45 ml-2 -translate-y-px shrink-0" /></span>
+                                        <h3 className="font-serif text-base xs:text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
+                                            Simple And Fast <span className="inline-flex items-center whitespace-nowrap">Setup<span className="inline-block size-1.5 sm:size-2.5 bg-blue-600 rotate-45 ml-1.5 -translate-y-px shrink-0" /></span>
                                         </h3>
                                     </div>
                                 </div>
 
                                 {/* Description Paragraph */}
-                                <p className="mt-4 sm:mt-5 text-xs sm:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
+                                <p className="mt-2.5 sm:mt-5 text-xs xs:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
                                     Daftar menggunakan akun kampus Polindra, pilih bidang keahlian, dan tentukan jam ketersediaan mingguan untuk langsung terhubung dengan ekosistem riset kampus.
                                 </p>
                             </div>
@@ -3613,27 +3613,27 @@ export default function Welcome() {
                                 <div className="flex items-start gap-3 sm:gap-5">
                                     {/* Big Serif Number 02 / 03 */}
                                     <div className="flex items-baseline gap-1.5 font-serif shrink-0">
-                                        <span className="text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
+                                        <span className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
                                             02
                                         </span>
-                                        <span className="text-xs sm:text-sm text-neutral-400 font-sans tracking-widest">
+                                        <span className="text-[10px] sm:text-sm text-neutral-400 font-sans tracking-widest">
                                             / 03
                                         </span>
                                     </div>
 
                                     {/* Tag & Title with Diamond Accent */}
                                     <div className="flex flex-col pt-0.5 sm:pt-1">
-                                        <span className="text-[10px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
+                                        <span className="text-[9px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
                                             SMART AI MATCHMAKING
                                         </span>
-                                        <h3 className="font-serif text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
-                                            Work Together <span className="inline-flex items-center whitespace-nowrap">Effortlessly<span className="inline-block size-2 sm:size-2.5 bg-blue-600 rotate-45 ml-2 -translate-y-px shrink-0" /></span>
+                                        <h3 className="font-serif text-base xs:text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
+                                            Work Together <span className="inline-flex items-center whitespace-nowrap">Effortlessly<span className="inline-block size-1.5 sm:size-2.5 bg-blue-600 rotate-45 ml-1.5 -translate-y-px shrink-0" /></span>
                                         </h3>
                                     </div>
                                 </div>
 
                                 {/* Description Paragraph */}
-                                <p className="mt-4 sm:mt-5 text-xs sm:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
+                                <p className="mt-2.5 sm:mt-5 text-xs xs:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
                                     Temukan kolaborator ideal lewat analisis algoritma cerdas berbasis keahlian teknis (IoT, AI, Mobile, Web) atau bentuk tim baru untuk kompetisi hackathon nasional.
                                 </p>
                             </div>
@@ -3643,34 +3643,34 @@ export default function Welcome() {
                                 <div className="flex items-start gap-3 sm:gap-5">
                                     {/* Big Serif Number 03 / 03 */}
                                     <div className="flex items-baseline gap-1.5 font-serif shrink-0">
-                                        <span className="text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
+                                        <span className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
                                             03
                                         </span>
-                                        <span className="text-xs sm:text-sm text-neutral-400 font-sans tracking-widest">
+                                        <span className="text-[10px] sm:text-sm text-neutral-400 font-sans tracking-widest">
                                             / 03
                                         </span>
                                     </div>
 
                                     {/* Tag & Title with Diamond Accent */}
                                     <div className="flex flex-col pt-0.5 sm:pt-1">
-                                        <span className="text-[10px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
+                                        <span className="text-[9px] sm:text-xs font-sans tracking-[0.2em] uppercase text-neutral-400 font-medium mb-1">
                                             LIVING PROPOSAL & SPRINT
                                         </span>
-                                        <h3 className="font-serif text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
-                                            Monitor Your Progress & <span className="inline-flex items-center whitespace-nowrap">Achievements<span className="inline-block size-2 sm:size-2.5 bg-blue-600 rotate-45 ml-2 -translate-y-px shrink-0" /></span>
+                                        <h3 className="font-serif text-base xs:text-lg sm:text-xl lg:text-2xl font-normal text-neutral-900 tracking-tight leading-snug">
+                                            Monitor Your Progress & <span className="inline-flex items-center whitespace-nowrap">Achievements<span className="inline-block size-1.5 sm:size-2.5 bg-blue-600 rotate-45 ml-1.5 -translate-y-px shrink-0" /></span>
                                         </h3>
                                     </div>
                                 </div>
 
                                 {/* Description Paragraph */}
-                                <p className="mt-4 sm:mt-5 text-xs sm:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
+                                <p className="mt-2.5 sm:mt-5 text-xs xs:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
                                     Kelola milestone proyek dengan Kanban terintegrasi, sinkronisasi umpan balik dosen pembimbing secara real-time, dan validasi portofolio permanen untuk konversi SKS.
                                 </p>
                             </div>
                         </div>
 
                         {/* Right Column: Full-Height Photo Reel Viewport (Mentok Atas Bawah!) */}
-                        <div className="md:col-span-7 h-screen flex items-center justify-center relative min-h-0">
+                        <div className="md:col-span-7 h-[220px] xs:h-[260px] sm:h-[340px] md:h-screen flex items-center justify-center relative min-h-0 w-full">
                             <div 
                                 ref={workflowPhotoViewportRef} 
                                 className="w-full h-full overflow-hidden relative"
@@ -3735,7 +3735,7 @@ export default function Welcome() {
             <section
                 id="testimonials"
                 ref={testimonialsSectionRef}
-                className="py-24 sm:py-28 bg-gradient-to-b from-[#fbfbfb] via-white to-[#fbfbfb] border-t border-neutral-200/80 relative overflow-hidden select-none"
+                className="py-14 sm:py-24 lg:py-28 bg-gradient-to-b from-[#fbfbfb] via-white to-[#fbfbfb] border-t border-neutral-200/80 relative overflow-hidden select-none"
             >
                 {/* Subtle Ambient Background Mesh & Dynamic Orbs */}
                 <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-50 pointer-events-none" />
@@ -3745,34 +3745,34 @@ export default function Welcome() {
                 <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
                     
                     {/* Header */}
-                    <div ref={testimonialsHeaderRef} className="text-center max-w-2xl mx-auto mb-16 will-change-transform">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-neutral-900 leading-tight">
+                    <div ref={testimonialsHeaderRef} className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 will-change-transform">
+                        <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-neutral-900 leading-tight">
                             Real Results, Real Impact. <br />
                             Our Success Stories
                         </h2>
-                        <p className="mt-4 text-sm sm:text-base text-neutral-500 max-w-xl mx-auto leading-relaxed">
+                        <p className="mt-3 sm:mt-4 text-xs xs:text-sm sm:text-base text-neutral-500 max-w-xl mx-auto leading-relaxed">
                             Pengalaman nyata mahasiswa Polindra yang sukses membangun tim, memvalidasi proposal, dan menjuarai kompetisi nasional.
                         </p>
                     </div>
 
                     {/* 3 Interactive Floating Cards */}
-                    <div ref={testimonialsCardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch will-change-transform">
+                    <div ref={testimonialsCardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch will-change-transform">
                         
                         {/* Testimonial Card 1 */}
                         <div ref={testimonialCard1Ref} className="w-full flex will-change-transform">
-                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-3xl p-6 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
+                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
                                 
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-amber-400/15 via-blue-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                                 
                                 {/* Decorative Watermark Quote Icon */}
-                                <Quote className="size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-5 top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
+                                <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
                                 <div>
                                     {/* 5-Star Rating */}
-                                    <div className="flex items-center gap-1 text-amber-400 mb-4">
+                                    <div className="flex items-center gap-1 text-amber-400 mb-3 sm:mb-4">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
+                                            <Star key={i} className="size-3.5 sm:size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
                                         ))}
                                     </div>
 
@@ -3783,9 +3783,9 @@ export default function Welcome() {
                                 </div>
 
                                 {/* Author Profile Footer */}
-                                <div className="mt-7 pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
+                                <div className="mt-5 sm:mt-7 pt-3.5 sm:pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-purple-100 group-hover:scale-105 transition-all duration-300">
+                                        <div className="size-8 sm:size-9 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-purple-100 group-hover:scale-105 transition-all duration-300">
                                             B
                                         </div>
                                         <div>
@@ -3793,7 +3793,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Budi Santoso</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[10px] text-neutral-400 font-sans block">Project Leader IoT • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Project Leader IoT • Polindra</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3802,19 +3802,19 @@ export default function Welcome() {
 
                         {/* Testimonial Card 2 */}
                         <div ref={testimonialCard2Ref} className="w-full flex will-change-transform">
-                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-3xl p-6 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
+                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
                                 
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-blue-400/15 via-cyan-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                                 
                                 {/* Decorative Watermark Quote Icon */}
-                                <Quote className="size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-5 top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
+                                <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
                                 <div>
                                     {/* 5-Star Rating */}
-                                    <div className="flex items-center gap-1 text-amber-400 mb-4">
+                                    <div className="flex items-center gap-1 text-amber-400 mb-3 sm:mb-4">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
+                                            <Star key={i} className="size-3.5 sm:size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
                                         ))}
                                     </div>
 
@@ -3825,9 +3825,9 @@ export default function Welcome() {
                                 </div>
 
                                 {/* Author Profile Footer */}
-                                <div className="mt-7 pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
+                                <div className="mt-5 sm:mt-7 pt-3.5 sm:pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-blue-100 group-hover:scale-105 transition-all duration-300">
+                                        <div className="size-8 sm:size-9 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-blue-100 group-hover:scale-105 transition-all duration-300">
                                             S
                                         </div>
                                         <div>
@@ -3835,7 +3835,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Siti Rahma</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[10px] text-neutral-400 font-sans block">Mobile Flutter Dev • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Mobile Flutter Dev • Polindra</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3844,19 +3844,19 @@ export default function Welcome() {
 
                         {/* Testimonial Card 3 */}
                         <div ref={testimonialCard3Ref} className="w-full flex will-change-transform">
-                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-3xl p-6 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
+                            <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
                                 
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-emerald-400/15 via-teal-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
                                 
                                 {/* Decorative Watermark Quote Icon */}
-                                <Quote className="size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-5 top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
+                                <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
                                 <div>
                                     {/* 5-Star Rating */}
-                                    <div className="flex items-center gap-1 text-amber-400 mb-4">
+                                    <div className="flex items-center gap-1 text-amber-400 mb-3 sm:mb-4">
                                         {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
+                                            <Star key={i} className="size-3.5 sm:size-4 fill-amber-400 group-hover:scale-110 transition-transform duration-300" style={{ transitionDelay: `${i * 35}ms` }} />
                                         ))}
                                     </div>
 
@@ -3867,9 +3867,9 @@ export default function Welcome() {
                                 </div>
 
                                 {/* Author Profile Footer */}
-                                <div className="mt-7 pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
+                                <div className="mt-5 sm:mt-7 pt-3.5 sm:pt-4 border-t border-neutral-100 flex items-center justify-between relative z-10">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-emerald-100 group-hover:scale-105 transition-all duration-300">
+                                        <div className="size-8 sm:size-9 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-white shadow-xs group-hover:ring-4 group-hover:ring-emerald-100 group-hover:scale-105 transition-all duration-300">
                                             A
                                         </div>
                                         <div>
@@ -3877,7 +3877,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Agus Prasetyo</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[10px] text-neutral-400 font-sans block">Backend Engineer • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Backend Engineer • Polindra</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3892,20 +3892,20 @@ export default function Welcome() {
             <section 
                 ref={ctaSectionRef} 
                 id="feedback"
-                className="py-16 sm:py-24 relative bg-slate-50 border-t border-slate-200/80"
+                className="py-12 sm:py-20 lg:py-24 relative bg-slate-50 border-t border-slate-200/80"
             >
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 relative z-10">
+                <div className="max-w-3xl mx-auto px-3.5 sm:px-6 relative z-10">
                     <div 
                         ref={ctaCardRef} 
-                        className="bg-white rounded-2xl p-6 sm:p-10 border border-slate-200/80 shadow-xs"
+                        className="bg-white rounded-2xl p-4 sm:p-8 md:p-10 border border-slate-200/80 shadow-xs"
                     >
                         <div ref={ctaContentRef}>
                             {/* Header */}
-                            <div className="text-center max-w-xl mx-auto mb-8">
-                                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                            <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8">
+                                <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
                                     Saran & Masukan Sistem
                                 </h2>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 sm:mt-2 leading-relaxed">
                                     Bantu kami mengembangkan RAKIT Campus menjadi platform kolaborasi yang lebih baik. Kami menerima aspirasi fitur, laporan kendala, atau masukan desain dari Anda.
                                 </p>
                             </div>
@@ -3935,13 +3935,13 @@ export default function Welcome() {
                                     </button>
                                 </div>
                             ) : (
-                                <form onSubmit={handleFeedbackSubmit} className="space-y-4.5">
+                                <form onSubmit={handleFeedbackSubmit} className="space-y-4">
                                     {/* Kategori Masukan */}
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-2">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5 sm:mb-2">
                                             Kategori Masukan
                                         </label>
-                                        <div className="flex flex-wrap gap-2">
+                                        <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                             {[
                                                 { id: 'saran_fitur', label: 'Saran Fitur Baru' },
                                                 { id: 'antarmuka_ui', label: 'Desain & Tampilan' },
@@ -3953,7 +3953,7 @@ export default function Welcome() {
                                                     key={cat.id}
                                                     type="button"
                                                     onClick={() => setFeedbackCategory(cat.id)}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs transition cursor-pointer ${
+                                                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition cursor-pointer ${
                                                         feedbackCategory === cat.id
                                                             ? 'bg-blue-50 border border-blue-600 text-blue-700 font-semibold shadow-2xs'
                                                             : 'bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
@@ -3966,7 +3966,7 @@ export default function Welcome() {
                                     </div>
 
                                     {/* Nama & Email */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
                                         <div>
                                             <label className="block text-xs font-medium text-slate-700 mb-1">
                                                 Nama Lengkap <span className="text-slate-400 font-normal">(Opsional)</span>
@@ -4049,13 +4049,13 @@ export default function Welcome() {
 
                                     {/* Action Buttons */}
                                     <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
-                                        <p className="text-[11px] text-slate-500">
+                                        <p className="text-[10.5px] sm:text-[11px] text-slate-500">
                                             Setiap masukan ditinjau langsung oleh tim pengembang RAKIT Campus.
                                         </p>
                                         <button
                                             type="submit"
                                             disabled={submittingFeedback || feedbackMessage.trim().length < 5}
-                                            className="inline-flex items-center justify-center gap-1.5 px-4.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0"
+                                            className="inline-flex items-center justify-center gap-1.5 px-5 py-2.5 sm:py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 w-full sm:w-auto"
                                         >
                                             {submittingFeedback ? (
                                                 <>
@@ -4078,8 +4078,8 @@ export default function Welcome() {
             </section>
 
             {/* 10. Footer */}
-            <footer className="border-t border-slate-200/80 py-10 bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <footer className="border-t border-slate-200/80 py-8 sm:py-10 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6 text-center sm:text-left">
                     <div className="flex items-center gap-2.5">
                         <img src="/images/rakit-mark.png" alt="RAKIT" className="h-6 w-auto object-contain" />
                         <span className="text-sm font-bold text-slate-900">
@@ -4087,7 +4087,7 @@ export default function Welcome() {
                         </span>
                     </div>
 
-                    <div className="flex items-center gap-6 text-xs text-slate-600 font-medium">
+                    <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs text-slate-600 font-medium">
                         <Link href="/projects" className="hover:text-slate-900 transition">Project Hub</Link>
                         <Link href="/competitions" className="hover:text-slate-900 transition">Competition Hub</Link>
                         <Link href="/matching" className="hover:text-slate-900 transition">Smart Matching</Link>
