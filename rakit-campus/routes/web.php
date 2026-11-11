@@ -85,6 +85,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-workspace/{participationId}/result/verify', [CompetitionWebController::class, 'verifyResult'])->name('competitions.result.verify');
     Route::post('/competition-workspace/{participationId}/mentors', [CompetitionWebController::class, 'assignMentor'])->name('competitions.mentors.assign');
     Route::post('/competition-workspace/{participationId}/tasks', [CompetitionWebController::class, 'createTask'])->name('competitions.tasks.create');
+    Route::post('/competition-workspace/{participationId}/tasks/ai-generate', [CompetitionWebController::class, 'generateTasksWithAi'])->name('competitions.tasks.ai-generate');
     Route::patch('/competition-workspace/{participationId}/tasks/{taskId}', [CompetitionWebController::class, 'updateTask'])->name('competitions.tasks.update');
     Route::get('/storage-download/{path}', [\App\Http\Controllers\Api\v1\UploadController::class, 'download'])->where('path', '.*')->name('storage.download');
 

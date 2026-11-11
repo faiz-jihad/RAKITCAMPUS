@@ -85,21 +85,34 @@ class CompetitionParticipation extends Model
         $team = $this->team;
         $taskScore = 0;
         if ($team) {
-            $totalTasks = Task::where('team_id', $team->id)->count();
-            $completedTasks = Task::where('team_id', $team->id)->where('status', 'completed')->count();
+            if ($team->relationLoaded('tasks')) {
+                $totalTasks = $team->tasks->count();
+                $completedTasks = $team->tasks->where('status', 'completed')->count();
+            } else {
+                $totalTasks = Task::where('team_id', $team->id)->count();
+                $completedTasks = Task::where('team_id', $team->id)->where('status', 'completed')->count();
+            }
             $taskScore = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
         }
 
         $requiredDocs = $this->competition?->required_documents ?? ['proposal', 'pitch_deck'];
         $uploadedCount = 0;
         if (is_array($requiredDocs) && count($requiredDocs) > 0) {
-            $uploadedKeys = $this->documents()
-                ->where(function ($q) {
-                    $q->whereNotNull('path')->orWhereNotNull('url');
-                })
-                ->pluck('required_document_key')
-                ->filter()
-                ->toArray();
+            if ($this->relationLoaded('documents')) {
+                $uploadedKeys = $this->documents
+                    ->filter(fn ($d) => !empty($d->path) || !empty($d->url))
+                    ->pluck('required_document_key')
+                    ->filter()
+                    ->toArray();
+            } else {
+                $uploadedKeys = $this->documents()
+                    ->where(function ($q) {
+                        $q->whereNotNull('path')->orWhereNotNull('url');
+                    })
+                    ->pluck('required_document_key')
+                    ->filter()
+                    ->toArray();
+            }
             foreach ($requiredDocs as $reqKey) {
                 if (in_array($reqKey, $uploadedKeys, true)) {
                     $uploadedCount++;
@@ -107,7 +120,7 @@ class CompetitionParticipation extends Model
             }
             $docScore = ($uploadedCount / count($requiredDocs)) * 100;
         } else {
-            $docScore = $this->documents()->count() > 0 ? 100 : 0;
+            $docScore = ($this->relationLoaded('documents') ? $this->documents->count() : $this->documents()->count()) > 0 ? 100 : 0;
         }
 
         return (int) round((0.50 * $taskScore) + (0.50 * $docScore));

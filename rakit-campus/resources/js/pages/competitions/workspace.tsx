@@ -82,6 +82,7 @@ export default function CompetitionWorkspace({
     const [reviewDocId, setReviewDocId] = useState<number | null>(null);
     const [mentorModalOpen, setMentorModalOpen] = useState(false);
     const [resultModalOpen, setResultModalOpen] = useState(false);
+    const [aiGenerating, setAiGenerating] = useState(false);
 
     // Form states
     const stageForm = useForm({
@@ -277,6 +278,22 @@ export default function CompetitionWorkspace({
         );
     };
 
+    const handleGenerateAiTasks = () => {
+        if (confirm('AI Gemini akan menganalisis profil kompetisi dan otomatis merumuskan paket tugas Kanban prioritas juara untuk tim Anda. Lanjutkan?')) {
+            setAiGenerating(true);
+            router.post(
+                route('competitions.tasks.ai-generate', participation.id),
+                {},
+                {
+                    preserveScroll: true,
+                    onFinish: () => {
+                        setAiGenerating(false);
+                    },
+                }
+            );
+        }
+    };
+
     const handleDragStart = (e: React.DragEvent, taskId: number, fromCol: string) => {
         setDraggedTaskId(taskId);
         e.dataTransfer.setData('application/json', JSON.stringify({ taskId, fromCol }));
@@ -374,7 +391,7 @@ export default function CompetitionWorkspace({
             <Head title={`Workspace: ${participation.team?.name} — ${participation.competition?.name}`} />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-16">
-                {/* 1. TOP CONTEXT & ACTIONS BAR */}
+                {/* 1. TOP UTILITY BAR & ACTIONS */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                     <Link
                         href={`/competitions/${participation.competition?.slug || participation.competition?.id}`}
@@ -385,6 +402,44 @@ export default function CompetitionWorkspace({
                     </Link>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                        {participation.competition?.official_url && (
+                            <a
+                                href={participation.competition.official_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
+                            >
+                                <Globe className="size-3.5 text-slate-400 shrink-0" />
+                                <span>Website Resmi</span>
+                                <ExternalLink className="size-3 text-slate-400 shrink-0" />
+                            </a>
+                        )}
+
+                        {participation.competition?.registration_url && (
+                            <a
+                                href={participation.competition.registration_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs"
+                            >
+                                <span>Portal Pendaftaran</span>
+                                <ExternalLink className="size-3 shrink-0" />
+                            </a>
+                        )}
+
+                        {isMember && (
+                            <button
+                                type="button"
+                                onClick={handleGenerateAiTasks}
+                                disabled={aiGenerating}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Susun otomatis rencana tugas Kanban menggunakan Google Gemini AI"
+                            >
+                                <Sparkles className="size-3.5" />
+                                <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI'}</span>
+                            </button>
+                        )}
+
                         {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
                             <button
                                 type="button"
@@ -431,10 +486,10 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 2. UNIFIED WORKSPACE HEADER (Clean, Professional, Zero Fluff) */}
+                {/* 2. MODERN WORKSPACE TEAM HERO BANNER */}
                 <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div className="space-y-2">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="space-y-2 min-w-0 flex-1">
                             {/* Badges Row */}
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
@@ -446,19 +501,19 @@ export default function CompetitionWorkspace({
                                 <button
                                     type="button"
                                     onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
-                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 transition ${
+                                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition ${
                                         (isLeader || isMentor || isAdmin)
                                             ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer'
                                             : 'bg-amber-50 text-amber-800 border border-amber-200 cursor-default'
                                     }`}
                                     title="Klik untuk mengubah tahap seleksi"
                                 >
-                                    <span className="size-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    <span className="size-1.5 rounded-full bg-amber-500" />
                                     <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
                                     {(isLeader || isMentor || isAdmin) && <span className="text-[9px] text-amber-600 font-normal">✎</span>}
                                 </button>
                                 {participation.category_track && (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 truncate max-w-[260px]">
                                         Jalur: {participation.category_track}
                                     </span>
                                 )}
@@ -472,79 +527,61 @@ export default function CompetitionWorkspace({
 
                             {/* Team Title & Competition Name */}
                             <div>
-                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                                     {participation.team?.name || 'Tim Mahasiswa'}
                                 </h1>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                                    Kompetisi: <strong className="text-slate-800">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
+                                    Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
                                 </p>
                             </div>
+                        </div>
 
-                            {/* Compact Stats Badges (Replaces Bulky Metric Strip) */}
-                            <div className="flex items-center gap-2.5 sm:gap-3.5 pt-1 text-xs text-slate-500 flex-wrap">
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-                                    <Users className="size-3.5 text-blue-600 shrink-0" />
-                                    <span>{participation.team?.members?.length || 0}/{participation.team?.capacity || participation.competition?.max_team_size || 5} Anggota</span>
-                                </span>
-                                <span className="text-slate-300">•</span>
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-                                    <FolderKanban className="size-3.5 text-blue-600 shrink-0" />
-                                    <span>{participation.team?.tasks?.length || 0} Tugas</span>
-                                </span>
-                                <span className="text-slate-300">•</span>
-                                <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-                                    <FileText className="size-3.5 text-blue-600 shrink-0" />
-                                    <span>{participation.documents?.length || 0} Berkas</span>
-                                </span>
-                                {typeof readinessScore === 'number' && (
-                                    <>
-                                        <span className="text-slate-300">•</span>
-                                        <span className="inline-flex items-center gap-1.5 font-semibold text-slate-700">
-                                            <span>Kesiapan:</span>
-                                            <span className="font-bold text-blue-600 font-mono">{readinessScore}%</span>
-                                            <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden inline-block align-middle">
-                                                <div
-                                                    className="h-full bg-blue-600 rounded-full transition-all"
-                                                    style={{ width: `${readinessScore}%` }}
-                                                />
-                                            </div>
-                                        </span>
-                                    </>
-                                )}
+                        {/* Readiness KPI Card */}
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[210px] self-start md:self-auto">
+                            <div className="flex items-center justify-between text-xs">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kesiapan Tim</span>
+                                <span className="font-extrabold text-blue-600 font-mono text-sm">{readinessScore}%</span>
                             </div>
+                            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                    style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
+                                />
+                            </div>
+                            <span className="text-[10px] text-slate-400">
+                                Berdasarkan tugas & berkas terunggah
+                            </span>
                         </div>
+                    </div>
 
-                        {/* Action Portal Links */}
-                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                            {participation.competition?.official_url && (
-                                <a
-                                    href={participation.competition.official_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
-                                >
-                                    <Globe className="size-3.5 text-slate-400 shrink-0" />
-                                    <span>Website Resmi</span>
-                                    <ExternalLink className="size-3 text-slate-400 shrink-0" />
-                                </a>
-                            )}
-                            {participation.competition?.registration_url && (
-                                <a
-                                    href={participation.competition.registration_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs"
-                                >
-                                    <span>Portal Pendaftaran</span>
-                                    <ExternalLink className="size-3 shrink-0" />
-                                </a>
-                            )}
-                        </div>
+                    {/* Quick Metric Strip */}
+                    <div className="flex items-center gap-2 sm:gap-3 pt-3 border-t border-slate-100 flex-wrap text-xs text-slate-600">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
+                            <Users className="size-3.5 text-blue-600 shrink-0" />
+                            <span>{participation.team?.members?.length || 0}/{participation.team?.capacity || participation.competition?.max_team_size || 5} Anggota</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
+                            <FolderKanban className="size-3.5 text-blue-600 shrink-0" />
+                            <span>{participation.team?.tasks?.length || 0} Tugas</span>
+                        </span>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
+                            <FileText className="size-3.5 text-blue-600 shrink-0" />
+                            <span>{participation.documents?.length || 0} Berkas</span>
+                        </span>
+                        {rounds.length > 0 && (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
+                                <Clock className="size-3.5 text-blue-600 shrink-0" />
+                                <span>{rounds.length} Babak Seleksi</span>
+                            </span>
+                        )}
                     </div>
                 </div>
 
-                {/* 2) WORKSPACE TABS NAVIGATION */}
-                <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none border-b border-slate-200 -mx-1 px-1">
+                {/* 3) WORKSPACE TABS NAVIGATION (Zero Horizontal Scrollbar) */}
+                <div
+                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                    className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
+                >
                     {[
                         { id: 'overview', label: 'Tim & Formasi', icon: Users, count: participation.team?.members?.length || 0 },
                         { id: 'applicants', label: 'Pelamar MinSatu', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
@@ -563,16 +600,16 @@ export default function CompetitionWorkspace({
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`shrink-0 flex items-center gap-1.5 px-3 sm:px-4 py-2.5 text-xs font-bold transition border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
+                                className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 text-xs font-bold transition rounded-t-lg border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
                                     isActive
-                                        ? 'border-blue-600 text-blue-600 bg-white'
-                                        : 'border-transparent text-slate-500 hover:text-slate-800'
+                                        ? 'border-blue-600 text-blue-600 bg-white shadow-2xs'
+                                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                                 }`}
                             >
                                 <Icon className="size-3.5 shrink-0" />
                                 <span>{tab.label}</span>
                                 {typeof tab.count === 'number' && (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md min-w-[18px] text-center shrink-0 ${
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md min-w-[18px] text-center shrink-0 ${
                                         isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
                                     }`}>
                                         {tab.count}
@@ -1119,14 +1156,26 @@ export default function CompetitionWorkspace({
                                 </p>
                             </div>
                             {isMember && (
-                                <button
-                                    type="button"
-                                    onClick={() => setTaskModalOpen(true)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
-                                >
-                                    <Plus className="size-3.5" />
-                                    <span>Tambah Tugas</span>
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateAiTasks}
+                                        disabled={aiGenerating}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
+                                        title="Susun Kanban Tasks Otomatis Menggunakan AI Gemini"
+                                    >
+                                        <Sparkles className="size-3.5" />
+                                        <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI (Gemini)'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setTaskModalOpen(true)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        <span>Tambah Tugas</span>
+                                    </button>
+                                </div>
                             )}
                         </div>
 

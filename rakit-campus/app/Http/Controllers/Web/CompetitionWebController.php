@@ -1025,7 +1025,8 @@ class CompetitionWebController extends Controller
             'competition.campus:id,name',
             'competition.rounds',
             'team.members.user.profile.skills',
-            'team.tasks.creator:id,name',
+            'team.tasks.assignee:id,name,avatar',
+            'team.tasks.creator:id,name,avatar',
             'team.recruitment.roles',
             'team.recruitment.applications.user.profile.skills',
             'team.recruitment.applications.role',
@@ -1307,24 +1308,28 @@ class CompetitionWebController extends Controller
             $path = $stored['path'];
         }
 
-        // Calculate latest version for this document key
-        $lastVersion = CompetitionDocument::where('participation_id', $participation->id)
-            ->where('required_document_key', $validated['required_document_key'])
-            ->max('version') ?? 0;
+        // Calculate latest version and record document atomically
+        $lastVersion = 0;
+        DB::transaction(function () use ($participation, $user, $validated, $originalName, $fileSize, $mimeType, $path, &$lastVersion) {
+            $lastVersion = CompetitionDocument::where('participation_id', $participation->id)
+                ->where('required_document_key', $validated['required_document_key'])
+                ->lockForUpdate()
+                ->max('version') ?? 0;
 
-        CompetitionDocument::create([
-            'participation_id' => $participation->id,
-            'uploaded_by' => $user->id,
-            'required_document_key' => $validated['required_document_key'],
-            'name' => $validated['name'],
-            'original_name' => $originalName,
-            'path' => $path,
-            'url' => $validated['url'] ?? null,
-            'file_size' => $fileSize,
-            'mime_type' => $mimeType,
-            'version' => $lastVersion + 1,
-            'status' => 'pending',
-        ]);
+            CompetitionDocument::create([
+                'participation_id' => $participation->id,
+                'uploaded_by' => $user->id,
+                'required_document_key' => $validated['required_document_key'],
+                'name' => $validated['name'],
+                'original_name' => $originalName,
+                'path' => $path,
+                'url' => $validated['url'] ?? null,
+                'file_size' => $fileSize,
+                'mime_type' => $mimeType,
+                'version' => $lastVersion + 1,
+                'status' => 'pending',
+            ]);
+        });
 
         return back()->with('success', "Dokumen '{$validated['name']}' versi " . ($lastVersion + 1) . ' berhasil diunggah.');
     }
@@ -1479,7 +1484,7 @@ class CompetitionWebController extends Controller
     public function createTask(Request $request, int $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
 
         if (!$participation->team || !$participation->team->hasMember($user)) {
             abort(403, 'Hanya anggota tim yang dapat membuat tugas.');
@@ -1493,17 +1498,19 @@ class CompetitionWebController extends Controller
             'assignee_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        Task::create([
-            'campus_id' => $participation->competition->campus_id ?? $user->campusId(),
-            'team_id' => $participation->team->id,
-            'created_by' => $user->id,
-            'assignee_id' => $validated['assignee_id'] ?? null,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'status' => TaskStatus::Todo,
-            'priority' => $validated['priority'],
-            'due_on' => $validated['due_on'] ?? null,
-        ]);
+        DB::transaction(function () use ($participation, $user, $validated) {
+            Task::create([
+                'campus_id' => $participation->competition?->campus_id ?? $user->campusId(),
+                'team_id' => $participation->team->id,
+                'created_by' => $user->id,
+                'assignee_id' => $validated['assignee_id'] ?? null,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'status' => TaskStatus::Todo,
+                'priority' => $validated['priority'],
+                'due_on' => $validated['due_on'] ?? null,
+            ]);
+        });
 
         return back()->with('success', "Tugas '{$validated['title']}' berhasil ditambahkan ke Kanban tim.");
     }
@@ -1529,6 +1536,23 @@ class CompetitionWebController extends Controller
         ]);
 
         return back()->with('success', 'Status tugas berhasil diperbarui.');
+    }
+
+    public function generateTasksWithAi(Request $request, int $participationId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with(['team.members', 'competition'])->findOrFail($participationId);
+
+        if (!$participation->team || !$participation->team->hasMember($user)) {
+            abort(403, 'Hanya anggota tim yang dapat membuat tugas menggunakan AI.');
+        }
+
+        try {
+            $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban($participation, $user);
+            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI Gemini untuk tim Anda!");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
+        }
     }
 
     public function toggleBookmark(Request $request, string|int $id): RedirectResponse
@@ -1848,62 +1872,57 @@ class CompetitionWebController extends Controller
         ]);
 
         $campusId = $user->campusId() ?? $team->campus_id;
-        $recruitment = $team->recruitment()->firstOrCreate(
-            ['team_id' => $team->id],
-            [
-                'campus_id' => $campusId,
-                'title' => 'Rekrutmen Tim ' . $team->name,
-                'description' => 'Mencari anggota tim untuk ' . $participation->competition->name,
-                'status' => RecruitmentStatus::Open,
-            ]
-        );
 
-        $roleId = $validated['recruitment_role_id'] ?? null;
-        if (!$roleId && !empty($validated['role_name'])) {
-            $role = $recruitment->roles()->firstOrCreate(
-                ['name' => $validated['role_name']],
-                ['slots' => 1]
+        DB::transaction(function () use ($team, $campusId, $participation, $validated, $user) {
+            $recruitment = $team->recruitment()->firstOrCreate(
+                ['team_id' => $team->id],
+                [
+                    'campus_id' => $campusId,
+                    'title' => 'Rekrutmen Tim ' . $team->name,
+                    'description' => 'Mencari anggota tim untuk ' . $participation->competition->name,
+                    'status' => RecruitmentStatus::Open,
+                ]
             );
-            $roleId = $role->id;
-        }
 
-        $existing = Application::where('recruitment_id', $recruitment->id)
-            ->where('user_id', $user->id)
-            ->first();
-
-        if ($existing && $existing->status === ApplicationStatus::Pending) {
-            return back()->with('error', 'Anda sudah mengirimkan lamaran ke tim ini. Mohon tunggu respon ketua tim.');
-        }
-
-        if ($user->profile) {
-            $profileUpdates = [];
-            if (!empty($validated['whatsapp_number'])) {
-                $profileUpdates['phone'] = $validated['whatsapp_number'];
+            $roleId = $validated['recruitment_role_id'] ?? null;
+            if (!$roleId && !empty($validated['role_name'])) {
+                $role = $recruitment->roles()->firstOrCreate(
+                    ['name' => $validated['role_name']],
+                    ['slots' => 1]
+                );
+                $roleId = $role->id;
             }
-            if (!empty($validated['portfolio_url']) && empty($user->profile->portfolio_url)) {
-                $profileUpdates['portfolio_url'] = $validated['portfolio_url'];
-            }
-            if (!empty($profileUpdates)) {
-                $user->profile->update($profileUpdates);
-            }
-        }
 
-        Application::updateOrCreate(
-            [
-                'recruitment_id' => $recruitment->id,
-                'user_id' => $user->id,
-            ],
-            [
-                'recruitment_role_id' => $roleId,
-                'message' => $validated['message'],
-                'contact_phone' => $validated['whatsapp_number'] ?? ($user->profile?->phone ?? null),
-                'portfolio_url' => $validated['portfolio_url'] ?? ($user->profile?->portfolio_url ?? null),
-                'status' => ApplicationStatus::Pending,
-                'decided_by' => null,
-                'decided_at' => null,
-                'decision_note' => null,
-            ]
-        );
+            if ($user->profile) {
+                $profileUpdates = [];
+                if (!empty($validated['whatsapp_number'])) {
+                    $profileUpdates['phone'] = $validated['whatsapp_number'];
+                }
+                if (!empty($validated['portfolio_url']) && empty($user->profile->portfolio_url)) {
+                    $profileUpdates['portfolio_url'] = $validated['portfolio_url'];
+                }
+                if (!empty($profileUpdates)) {
+                    $user->profile->update($profileUpdates);
+                }
+            }
+
+            Application::updateOrCreate(
+                [
+                    'recruitment_id' => $recruitment->id,
+                    'user_id' => $user->id,
+                ],
+                [
+                    'recruitment_role_id' => $roleId,
+                    'message' => $validated['message'],
+                    'contact_phone' => $validated['whatsapp_number'] ?? ($user->profile?->phone ?? null),
+                    'portfolio_url' => $validated['portfolio_url'] ?? ($user->profile?->portfolio_url ?? null),
+                    'status' => ApplicationStatus::Pending,
+                    'decided_by' => null,
+                    'decided_at' => null,
+                    'decision_note' => null,
+                ]
+            );
+        });
 
         return back()->with('success', "Lamaran kamu berhasil dikirim ke ketua tim {$team->name}! Ketua tim dapat menghubungi kamu langsung via WhatsApp.");
     }
@@ -1926,32 +1945,36 @@ class CompetitionWebController extends Controller
             'decision_note' => ['nullable', 'string', 'max:500'],
         ]);
 
+        DB::transaction(function () use ($validated, $application, $team, $user) {
+            if ($validated['action'] === 'accept') {
+                $roleName = $application->role?->name ?? 'Anggota Tim';
+
+                $this->membershipService->addMemberToCompetitionTeam(
+                    $team,
+                    $application->user,
+                    $roleName,
+                    $application->recruitment_role_id
+                );
+
+                $application->update([
+                    'status' => ApplicationStatus::Accepted,
+                    'decided_by' => $user->id,
+                    'decided_at' => now(),
+                    'decision_note' => $validated['decision_note'] ?? 'Lamaran diterima oleh ketua tim.',
+                ]);
+            } else {
+                $application->update([
+                    'status' => ApplicationStatus::Rejected,
+                    'decided_by' => $user->id,
+                    'decided_at' => now(),
+                    'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
+                ]);
+            }
+        });
+
         if ($validated['action'] === 'accept') {
-            $roleName = $application->role?->name ?? 'Anggota Tim';
-
-            $this->membershipService->addMemberToCompetitionTeam(
-                $team,
-                $application->user,
-                $roleName,
-                $application->recruitment_role_id
-            );
-
-            $application->update([
-                'status' => ApplicationStatus::Accepted,
-                'decided_by' => $user->id,
-                'decided_at' => now(),
-                'decision_note' => $validated['decision_note'] ?? 'Lamaran diterima oleh ketua tim.',
-            ]);
-
             return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim {$team->name}!");
         } else {
-            $application->update([
-                'status' => ApplicationStatus::Rejected,
-                'decided_by' => $user->id,
-                'decided_at' => now(),
-                'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
-            ]);
-
             return back()->with('success', "Lamaran dari {$application->user->name} telah ditolak.");
         }
     }
@@ -1974,21 +1997,23 @@ class CompetitionWebController extends Controller
         ]);
 
         $campusId = $user->campusId() ?? $team->campus_id;
-        $recruitment = $team->recruitment()->firstOrCreate(
-            ['team_id' => $team->id],
-            [
-                'campus_id' => $campusId,
-                'title' => 'Rekrutmen Tim ' . $team->name,
-                'description' => 'Mencari anggota untuk ' . $participation->competition->name,
-                'status' => RecruitmentStatus::Open,
-            ]
-        );
+        DB::transaction(function () use ($team, $campusId, $participation, $validated) {
+            $recruitment = $team->recruitment()->firstOrCreate(
+                ['team_id' => $team->id],
+                [
+                    'campus_id' => $campusId,
+                    'title' => 'Rekrutmen Tim ' . $team->name,
+                    'description' => 'Mencari anggota untuk ' . $participation->competition->name,
+                    'status' => RecruitmentStatus::Open,
+                ]
+            );
 
-        $recruitment->roles()->create([
-            'name' => $validated['name'],
-            'slots' => $validated['slots'],
-            'requirements' => $validated['requirements'] ?? null,
-        ]);
+            $recruitment->roles()->create([
+                'name' => $validated['name'],
+                'slots' => $validated['slots'],
+                'requirements' => $validated['requirements'] ?? null,
+            ]);
+        });
 
         return back()->with('success', "Peran '{$validated['name']}' berhasil ditambahkan ke lowongan tim!");
     }
