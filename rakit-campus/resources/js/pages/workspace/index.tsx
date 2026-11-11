@@ -25,44 +25,33 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function WorkspaceIndex({ teams }: Props) {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
             <Head title="Workspace Tim & Kanban — RAKIT Campus" />
 
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden">
-                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-                <div className="pointer-events-none absolute top-2/3 left-8 h-[360px] w-[360px] rounded-full bg-sky-100/50 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-6">
-                    {/* Header Surface */}
-                    <div className="glass-surface rounded-3xl p-6 sm:p-8 relative overflow-hidden bg-white/85">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-700 text-xs font-bold mb-2.5 border border-blue-500/20">
-                                    <Kanban className="size-3.5" />
-                                    <span>Manajemen Tugas & Kolaborasi Real-Time</span>
-                                </div>
-                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                                    Workspace & Tim Kolaborasi
-                                </h1>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
-                                    Kelola papan Kanban interaktif, delegasikan tugas, lacak sprint, dan pantau progres proyek kolaboratif Anda.
-                                </p>
-                            </div>
-
-                            <div className="flex items-center gap-3 shrink-0">
-                                <Link
-                                    href="/projects/create"
-                                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
-                                >
-                                    <Plus className="size-4" />
-                                    <span>Buat Tim & Proyek Baru</span>
-                                </Link>
-                            </div>
-                        </div>
+            <div className="space-y-6 pt-2">
+                {/* Header Row */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 mb-2">
+                    <div>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1d3557] tracking-tight">
+                            Workspace & Task Board
+                        </h1>
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                            Kelola papan Kanban tim, lacak progres sprint, dan koordinasikan tugas anggota secara terstruktur.
+                        </p>
                     </div>
 
-                    {/* Teams Grid */}
+                    <div className="flex items-center gap-3 shrink-0">
+                        <Link
+                            href="/projects/create"
+                            className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-blue-700 text-white rounded-full px-5 py-2.5 text-xs sm:text-sm font-semibold shadow-sm shadow-blue-500/20 active:scale-[0.98] transition"
+                        >
+                            <Plus className="w-4 h-4 stroke-[2.5]" />
+                            <span>Bikin Tim & Proyek</span>
+                        </Link>
+                    </div>
+                </div>
+
+                {/* Teams Grid */}
                     {teams.length === 0 ? (
                         <div className="p-12 text-center glass-card rounded-3xl bg-white/85 max-w-2xl mx-auto w-full">
                             <div className="size-14 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center mx-auto mb-4 border border-blue-500/20">
@@ -185,7 +174,6 @@ export default function WorkspaceIndex({ teams }: Props) {
                             ))}
                         </div>
                     )}
-                </div>
             </div>
         </AppLayout>
     );

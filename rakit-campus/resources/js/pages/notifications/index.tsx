@@ -146,7 +146,7 @@ export default function NotificationsIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Pusat Notifikasi — RAKIT Campus" />
 
-            <div className="container mx-auto max-w-5xl px-4 py-8 space-y-6">
+            <div className="max-w-5xl mx-auto space-y-6 pt-2">
                 {/* Header */}
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
                     <div>

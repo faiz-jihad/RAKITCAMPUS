@@ -29,26 +29,22 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/settings/profile';
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#F8FAFC] via-white to-[#F1F5F9] relative text-[#0E121B] pb-24 selection:bg-[#2563EB] selection:text-white">
-            {/* Top Atmospheric Glow */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[340px] bg-gradient-to-b from-[#2563EB]/10 to-transparent blur-3xl pointer-events-none -z-0" />
-
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 relative z-10 flex flex-col gap-8">
-                {/* Header */}
-                <div className="border-b border-neutral-200/80 pb-5">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-xs font-semibold mb-2 border border-[#2563EB]/20">
-                        <Sparkles className="size-3.5" />
-                        <span>Pusat Pengaturan Akun & Preferensi</span>
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0E121B]">
-                        Pengaturan Akun & Profil
-                    </h1>
-                    <p className="text-xs sm:text-sm text-neutral-500 mt-1 leading-relaxed">
-                        Kelola informasi akademik, portofolio keahlian untuk AI Smart Matching, kata sandi, dan preferensi tampilan.
-                    </p>
+        <div className="space-y-6 pt-2">
+            {/* Header */}
+            <div className="border-b border-slate-100 pb-5">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-2 border border-blue-200/60">
+                    <Sparkles className="size-3.5" />
+                    <span>Pusat Pengaturan Akun & Preferensi</span>
                 </div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
+                    Pengaturan Akun & Profil
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
+                    Kelola informasi akademik, portofolio keahlian untuk AI Smart Matching, kata sandi, dan preferensi tampilan.
+                </p>
+            </div>
 
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
+            <div className="flex flex-col lg:flex-row gap-8 items-start">
                     {/* Navigation Sidebar */}
                     <aside className="w-full lg:w-72 shrink-0">
                         <div className="bg-white border border-neutral-200/80 rounded-3xl p-3 shadow-sm flex flex-col gap-1.5">
@@ -96,6 +92,5 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                     <main className="flex-1 min-w-0 w-full">{children}</main>
                 </div>
             </div>
-        </div>
     );
 }

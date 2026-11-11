@@ -148,14 +148,8 @@ export default function ProjectIndex({
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Project Hub — Temukan & Bangun Proyek Kolaborasi Kampus" />
 
-            {/* Modern Glassmorphic Canvas */}
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-20 overflow-hidden font-sans">
-                {/* Natural ambient light diffusion */}
-                <div className="pointer-events-none absolute -top-40 left-1/4 h-[420px] w-[420px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
-                    {/* Header Banner Glass Surface */}
+            <div className="space-y-6 pt-2">
+                {/* Header Banner Surface */}
                     <div className="glass-surface rounded-3xl p-6 sm:p-7 flex flex-col md:flex-row md:items-end justify-between gap-6 relative overflow-hidden">
                         <div className="max-w-3xl">
                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold tracking-wide mb-3">
@@ -425,7 +419,6 @@ export default function ProjectIndex({
                             ))}
                         </div>
                     )}
-                </div>
             </div>
 
             {/* QUICK JOIN / APPLY MODAL */}

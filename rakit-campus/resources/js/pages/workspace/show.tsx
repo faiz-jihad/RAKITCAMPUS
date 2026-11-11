@@ -502,15 +502,11 @@ export default function WorkspaceShow({
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
             <Head title={`Workspace & Roadmap — ${team.name}`} />
 
-            <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24 overflow-hidden selection:bg-blue-600 selection:text-white">
-                <div className="pointer-events-none absolute -top-24 -left-20 h-[480px] w-[480px] rounded-full bg-blue-100/50 blur-[110px]" />
-                <div className="pointer-events-none absolute top-48 -right-20 h-[380px] w-[380px] rounded-full bg-slate-200/50 blur-[100px]" />
-
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-6">
-                    {/* Top Row: Back & Team Identity */}
+            <div className="space-y-6 pt-2">
+                {/* Top Row: Back & Team Identity */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-3">
                             <Link
@@ -1391,7 +1387,6 @@ export default function WorkspaceShow({
                         </div>
                     </div>
                 )}
-            </div>
         </AppLayout>
     );
 }
