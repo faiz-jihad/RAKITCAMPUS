@@ -231,18 +231,17 @@ export default function Profile({
                         </div>
                     )}
 
-                    {/* 1. LinkedIn-Style Hero Card with Cover Banner & Overlapping Avatar */}
-                    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden">
+                    {/* 1. LinkedIn-Style Hero Card with Clean Cover Banner & Overlapping Avatar */}
+                    <div className="bg-white border border-slate-200/90 rounded-2xl shadow-2xs overflow-hidden">
                         {/* Cover Banner with Geometric Blue Abstract Wallpaper */}
-                        <div className="h-36 sm:h-52 bg-[#0B1536] bg-[url('/images/profile-banner-abstract.jpg')] bg-cover bg-center relative overflow-hidden">
-                            {/* Subtle dark gradient overlay for depth and high contrast */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-black/20" />
-                            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+                        <div className="h-40 sm:h-48 w-full bg-[#0B1536] bg-[url('/images/profile-banner-abstract.jpg')] bg-cover bg-center relative">
+                            <div className="absolute inset-0 bg-slate-950/25" />
+                            <div className="absolute top-3.5 right-3.5 flex items-center gap-2 z-10">
                                 <Link
                                     href={profile?.slug ? `/p/${encodeURIComponent(profile.slug)}` : '#'}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-bold shadow-md backdrop-blur-md transition border border-white/20 hover:scale-105"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 hover:bg-black/60 text-white text-xs font-semibold shadow-xs backdrop-blur-md transition border border-white/20"
                                 >
-                                    <ExternalLink className="size-3.5 text-blue-400" />
+                                    <ExternalLink className="size-3 text-blue-300" />
                                     <span>Lihat Profil Publik</span>
                                 </Link>
                             </div>
@@ -250,9 +249,9 @@ export default function Profile({
 
                         {/* Content Below Banner with Overlapping Avatar */}
                         <div className="px-6 pb-6 pt-0">
-                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-18 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 mb-4">
                                 <div className="relative inline-block">
-                                    <div className="size-24 sm:size-28 rounded-full border-4 border-white bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-xl ring-2 ring-blue-500/20">
+                                    <div className="size-24 sm:size-28 rounded-full border-4 border-white bg-slate-900 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-md">
                                         {data.name
                                             .split(' ')
                                             .map((n) => n[0])
@@ -260,32 +259,32 @@ export default function Profile({
                                             .join('')
                                             .toUpperCase() || 'U'}
                                     </div>
-                                    <div className="absolute bottom-1 right-1 size-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-md cursor-pointer hover:bg-slate-50 hover:text-blue-600 transition" title="Ganti Foto">
+                                    <div className="absolute bottom-0 right-0 size-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-500 hover:text-blue-600 shadow-xs cursor-pointer transition" title="Ganti Foto Profil">
                                         <Camera className="size-3.5" />
                                     </div>
                                 </div>
 
-                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center gap-3 shrink-0 self-start sm:self-auto">
-                                    <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center font-extrabold text-xs text-blue-700">
-                                        {completionPercent}%
-                                    </div>
-                                    <div>
+                                <div className="flex items-center gap-2.5 self-start sm:self-auto py-1">
+                                    <div className="text-right">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                                             Kekuatan Profil
                                         </span>
-                                        <div className="text-xs font-bold text-slate-900">
-                                            {completionPercent >= 100 ? 'Profil All-Star' : 'Tingkat Menengah'}
+                                        <div className="text-xs font-bold text-slate-800">
+                                            {completionPercent >= 100 ? 'Profil Lengkap' : `${completionPercent}% Menengah`}
                                         </div>
+                                    </div>
+                                    <div className="size-9 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center font-bold text-xs text-blue-600">
+                                        {completionPercent}%
                                     </div>
                                 </div>
                             </div>
 
                             <div className="space-y-1">
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                                         {data.name}
                                     </h2>
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <ShieldCheck className="size-3" />
                                         Mahasiswa Terverifikasi
                                     </span>

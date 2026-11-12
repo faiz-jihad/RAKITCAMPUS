@@ -1184,152 +1184,66 @@ export default function CompetitionIndex({
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="relative bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1.5 hover:border-blue-500/60 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-5 group overflow-hidden"
+                                            className="bg-white rounded-2xl p-5 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 group"
                                         >
-                                            {/* Top Gradient Accent Bar */}
-                                            <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-400 group-hover:h-2 transition-all duration-300" />
-                                            {/* Ambient Background Glow */}
-                                            <div className="absolute -top-10 -right-10 size-32 bg-blue-500/5 group-hover:bg-blue-500/10 rounded-full blur-2xl transition-all pointer-events-none" />
-
-                                            <div className="space-y-4">
-                                                {/* Header Row: Competition Category & Recruiting Status */}
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-blue-50 text-blue-700 text-[10px] font-black uppercase tracking-wider border border-blue-200/80 shadow-2xs">
-                                                        <span className="size-1.5 rounded-full bg-blue-600" />
-                                                        <span>{comp.category?.replace('_', ' ') || 'KOMPETISI'}</span>
+                                            <div className="space-y-3">
+                                                {/* Category & Deadline */}
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
+                                                        {comp.category?.replace('_', ' ') || 'KOMPETISI'}
                                                     </span>
+                                                    <span className="text-slate-400 text-[11px] flex items-center gap-1 font-medium">
+                                                        <Clock className="size-3" />
+                                                        <span>{formattedDeadline}</span>
+                                                    </span>
+                                                </div>
 
+                                                {/* Team Title & Target Competition */}
+                                                <div>
+                                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-1">
+                                                        {team.name}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
+                                                        Target: <span className="text-slate-800 font-medium">{comp.name}</span>
+                                                    </p>
+                                                </div>
+
+                                                {/* Roles Needed */}
+                                                {roles.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 pt-0.5">
+                                                        {roles.map((r: any) => (
+                                                            <span
+                                                                key={r.id}
+                                                                className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200/70"
+                                                            >
+                                                                {r.name}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* Clean Formation Row: Blue Person Icons */}
+                                                <div className="pt-1.5 border-t border-slate-100">
+                                                    <div className="flex items-center justify-between text-xs mb-2">
+                                                        <span className="text-[11px] text-slate-500 font-medium">Formasi Anggota</span>
+                                                        <span className="text-xs font-semibold text-slate-700">
+                                                            <span className="text-blue-600 font-bold">{membersCount}</span>/{maxCap} Terisi
+                                                        </span>
+                                                    </div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                                                            <span className="relative flex size-1.5">
-                                                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                                                                <span className="relative inline-flex rounded-full size-1.5 bg-emerald-500" />
-                                                            </span>
-                                                            <span>Merekrut</span>
-                                                        </span>
-                                                        <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
-                                                            <Clock className="size-3 text-slate-400" />
-                                                            <span>{formattedDeadline}</span>
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                {/* Squad Crest, Name & Target Tournament */}
-                                                <div className="space-y-2.5">
-                                                    <div className="flex items-start gap-3">
-                                                        <div className="size-12 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 text-white flex items-center justify-center font-black text-sm shadow-xs ring-2 ring-slate-100 shrink-0 group-hover:scale-105 transition-transform duration-300">
-                                                            {teamInitials}
-                                                        </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-1 tracking-tight">
-                                                                {team.name}
-                                                            </h3>
-                                                            <p className="text-xs text-slate-500 font-medium">
-                                                                Kapten: <strong className="text-slate-800">{team?.leader?.name || 'Ketua Tim'}</strong>
-                                                            </p>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Target Competition Spotlight */}
-                                                    <div className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 border border-slate-200/80 group-hover:bg-blue-50/50 group-hover:border-blue-200 transition-colors">
-                                                        <Trophy className="size-3.5 text-amber-500 shrink-0" />
-                                                        <div className="text-xs truncate">
-                                                            <span className="text-slate-400 font-medium">Target: </span>
-                                                            <strong className="text-slate-800 font-bold">{comp.name}</strong>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Lowongan Peran Terbuka (Roles Needed) */}
-                                                <div className="space-y-1.5">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                                                        <Sparkles className="size-3 text-blue-500" />
-                                                        <span>Lowongan Peran Terbuka</span>
-                                                    </span>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {roles.length > 0 ? (
-                                                            roles.map((r: any) => (
-                                                                <span
-                                                                    key={r.id}
-                                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-700 text-xs font-bold border border-slate-200/80 group-hover:border-blue-200 transition-all shadow-2xs"
-                                                                >
-                                                                    <Plus className="size-2.5 text-blue-500" />
-                                                                    <span>{r.name}</span>
-                                                                </span>
-                                                            ))
-                                                        ) : (
-                                                            <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                                                                Terbuka Semua Peran
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Visual Squad Formation: Person Icons (Blue for filled, dashed for vacant) */}
-                                                <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/70 space-y-2.5">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-black text-slate-900 tracking-tight">Formasi Anggota</span>
-                                                            <span className="text-[10px] font-bold text-slate-400 font-mono">({maxCap} Slot)</span>
-                                                        </div>
-                                                        <div className="flex items-center gap-1.5">
-                                                            <span className="text-xs font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 font-mono">
-                                                                {membersCount}/{maxCap} Terisi
-                                                            </span>
-                                                            {emptySlots > 0 ? (
-                                                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
-                                                                    {emptySlots} Kosong
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                                                    Penuh
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Person Icons Row */}
-                                                    <div className="flex items-center gap-2 flex-wrap">
                                                         {Array.from({ length: maxCap }).map((_, idx) => {
                                                             const isFilled = idx < membersCount;
-                                                            const isLeader = idx === 0;
-
                                                             return (
                                                                 <div
                                                                     key={idx}
-                                                                    className={`relative flex items-center justify-center size-9 sm:size-10 rounded-xl transition-all ${
+                                                                    className={`size-8 rounded-full flex items-center justify-center transition-colors ${
                                                                         isFilled
-                                                                            ? 'bg-blue-600 text-white shadow-xs shadow-blue-500/30 ring-2 ring-blue-200/80'
-                                                                            : 'border-2 border-dashed border-slate-300 bg-white text-slate-300 hover:border-blue-400 hover:text-blue-500 hover:bg-blue-50/40'
+                                                                            ? 'bg-blue-600 text-white shadow-2xs'
+                                                                            : 'border border-dashed border-slate-300 bg-slate-50/60 text-slate-300'
                                                                     }`}
-                                                                    title={
-                                                                        isFilled
-                                                                            ? isLeader
-                                                                                ? `Ketua Tim: ${team?.leader?.name || 'Ketua'}`
-                                                                                : `Anggota #${idx + 1} (Terisi)`
-                                                                            : `Slot Terbuka #${idx + 1} - Siap Kamu Isi`
-                                                                    }
+                                                                    title={isFilled ? `Anggota #${idx + 1} Terisi` : `Slot #${idx + 1} Kosong`}
                                                                 >
-                                                                    <User
-                                                                        className={`size-4.5 ${
-                                                                            isFilled
-                                                                                ? 'fill-white/30 stroke-[2.2]'
-                                                                                : 'stroke-[1.8] opacity-60'
-                                                                        }`}
-                                                                    />
-                                                                    {isLeader && (
-                                                                        <span
-                                                                            className="absolute -top-1.5 -right-1.5 size-4 bg-amber-400 text-amber-950 rounded-full flex items-center justify-center text-[9px] font-black shadow-xs ring-1 ring-white"
-                                                                            title="Ketua / Inisiator Tim"
-                                                                        >
-                                                                            ★
-                                                                        </span>
-                                                                    )}
-                                                                    {!isFilled && (
-                                                                        <span className="absolute -bottom-1 -right-1 size-3.5 bg-slate-200 text-slate-600 rounded-full flex items-center justify-center text-[9px] font-black">
-                                                                            +
-                                                                        </span>
-                                                                    )}
+                                                                    <User className="size-3.5 stroke-[2]" />
                                                                 </div>
                                                             );
                                                         })}
@@ -1337,23 +1251,23 @@ export default function CompetitionIndex({
                                                 </div>
                                             </div>
 
-                                            {/* Bottom Leader & CTA Button */}
+                                            {/* Bottom Leader & Action */}
                                             <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-3 text-xs">
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="size-7 rounded-full bg-slate-900 text-white font-black text-[11px] flex items-center justify-center shrink-0 shadow-xs">
+                                                    <div className="size-6 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">
                                                         {leaderInitials}
                                                     </div>
-                                                    <span className="font-extrabold text-slate-800 text-xs truncate">
+                                                    <span className="font-medium text-slate-700 text-xs truncate">
                                                         {team?.leader?.name || 'Ketua Tim'}
                                                     </span>
                                                 </div>
 
                                                 <button
                                                     type="button"
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all shrink-0 cursor-pointer"
+                                                    className="inline-flex items-center gap-1 font-semibold text-blue-600 group-hover:text-blue-700 transition"
                                                 >
                                                     <span>Ajukan Diri</span>
-                                                    <ArrowUpRight className="size-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+                                                    <ArrowUpRight className="size-3.5" />
                                                 </button>
                                             </div>
                                         </div>
