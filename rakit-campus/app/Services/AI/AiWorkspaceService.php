@@ -253,7 +253,7 @@ class AiWorkspaceService
             'team_id' => $team->id,
             'team_name' => $team->name,
             'team_members' => $team->members()->with('user:id,name')->get()
-                ->map(fn($m) => ['name' => $m->user->name, 'role' => $m->role ?? 'member'])
+                ->map(fn($m) => ['name' => $m->user?->name, 'role' => $m->role_name ?? 'member'])
                 ->toArray(),
         ];
 

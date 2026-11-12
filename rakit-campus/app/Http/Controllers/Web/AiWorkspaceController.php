@@ -38,7 +38,7 @@ class AiWorkspaceController extends Controller
         })->with([
             'project:id,title,slug,status,category',
             'participations.competition:id,name,slug',
-            'members:id,team_id,user_id,role',
+            'members:id,team_id,user_id,role_name',
         ])->latest()->get();
 
         $activeTeam = null;
@@ -123,7 +123,7 @@ class AiWorkspaceController extends Controller
                     'name' => $p->competition->name,
                     'slug' => $p->competition->slug,
                 ])->toArray(),
-                'members' => $activeTeam->members->map(fn($m) => ['id' => $m->user_id, 'role' => $m->role])->toArray(),
+                'members' => $activeTeam->members->map(fn($m) => ['id' => $m->user_id, 'role' => $m->role_name ?? 'member'])->toArray(),
             ] : null,
             'quotaInfo' => $quotaInfo,
             'sessions' => $sessions,
