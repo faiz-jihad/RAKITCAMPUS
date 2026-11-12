@@ -442,7 +442,6 @@ class AiWorkspaceController extends Controller
             ], 500);
         }
     }
-    }
 
     /**
      * Get quota info for a team.
