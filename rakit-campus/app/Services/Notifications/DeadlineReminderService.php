@@ -41,24 +41,16 @@ class DeadlineReminderService
         $cutoff = now()->addHours($hoursAhead);
 
         $upcomingTasks = Task::with(['team', 'assignee'])
-            ->where(function ($q) use ($now, $cutoff) {
-                $q->where(function ($sub) use ($now, $cutoff) {
-                    $sub->whereNotNull('due_on')
-                        ->where('due_on', '>=', $now->toDateString())
-                        ->where('due_on', '<=', $cutoff->toDateString());
-                })->orWhere(function ($sub) use ($now, $cutoff) {
-                    $sub->whereNotNull('due_date')
-                        ->where('due_date', '>', $now)
-                        ->where('due_date', '<=', $cutoff);
-                });
-            })
+            ->whereNotNull('due_on')
+            ->where('due_on', '>=', $now->toDateString())
+            ->where('due_on', '<=', $cutoff->toDateString())
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->get();
 
         $sentCount = 0;
 
         foreach ($upcomingTasks as $task) {
-            $dueDate = $task->due_on ?? $task->due_date;
+            $dueDate = $task->due_on;
             if (!$dueDate) {
                 continue;
             }
