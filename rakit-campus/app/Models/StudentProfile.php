@@ -15,7 +15,7 @@ class StudentProfile extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'campus_id', 'slug', 'photo_path', 'phone',
+        'user_id', 'campus_id', 'nim', 'slug', 'photo_path', 'phone',
         'department', 'study_program', 'semester', 'bio',
         'github_url', 'linkedin_url', 'portfolio_url',
         'interests', 'preferred_roles',

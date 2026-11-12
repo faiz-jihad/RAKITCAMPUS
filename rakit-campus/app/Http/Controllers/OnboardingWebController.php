@@ -48,6 +48,7 @@ class OnboardingWebController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'nim' => $profile->nim ?? '',
                 'academic_status' => $profile->academic_status ?? 'tpb',
                 'department' => $profile->department ?? '',
                 'study_program' => $profile->study_program ?? '',
@@ -78,6 +79,7 @@ class OnboardingWebController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'nim' => 'nullable|string|max:50',
             'academic_status' => 'nullable|string|in:tpb,prodi',
             'department' => 'nullable|string|max:255',
             'study_program' => 'nullable|string|max:255',
@@ -105,14 +107,19 @@ class OnboardingWebController extends Controller
 
         $membership = $user->activeMembership();
         if (!$membership && $campus) {
+            $studentNumber = !empty($validated['nim']) ? trim($validated['nim']) : ('MHS-' . substr(abs(crc32($user->email)), 0, 7));
             $membership = CampusMembership::create([
                 'campus_id' => $campus->id,
                 'user_id' => $user->id,
                 'role' => CampusRole::Student,
                 'status' => MembershipStatus::Active,
                 'verification_status' => VerificationStatus::Verified,
-                'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
+                'student_number' => $studentNumber,
                 'verified_at' => now(),
+            ]);
+        } elseif ($membership && !empty($validated['nim'])) {
+            $membership->update([
+                'student_number' => trim($validated['nim']),
             ]);
         } elseif ($membership && str_starts_with($membership->student_number ?? '', 'REG-')) {
             $membership->update([
@@ -123,6 +130,7 @@ class OnboardingWebController extends Controller
         // 3. Update or create StudentProfile
         $profile = $user->profile;
         $profileData = [
+            'nim' => !empty($validated['nim']) ? trim($validated['nim']) : ($profile->nim ?? null),
             'academic_status' => $validated['academic_status'] ?? 'tpb',
             'department' => $validated['department'] ?? ($validated['academic_status'] === 'tpb' ? 'Tahap Persiapan Bersama' : 'Teknologi Informasi'),
             'study_program' => $validated['study_program'] ?? ($validated['academic_status'] === 'tpb' ? 'TPB' : 'D4 Rekayasa Perangkat Lunak'),

@@ -25,8 +25,10 @@ import {
     Sparkles, 
     Trash2, 
     Trophy, 
-    Users 
+    Users,
+    Volume2
 } from 'lucide-react';
+import { getPushPermissionStatus, playNotificationChime, requestPushPermission, sendBrowserNotification } from '@/lib/push-notifications';
 import { useState } from 'react';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,6 +62,20 @@ export default function NotificationsIndex({
     categories,
 }: Props) {
     const [prefOpen, setPrefOpen] = useState(false);
+    const [pushStatus, setPushStatus] = useState<string>(() => getPushPermissionStatus());
+
+    const handleEnablePush = async () => {
+        const res = await requestPushPermission();
+        setPushStatus(res);
+    };
+
+    const handleTestNotification = () => {
+        playNotificationChime();
+        sendBrowserNotification('Uji Coba Push Notifikasi', {
+            body: 'Push notifikasi browser aktif dan terhubung normal dengan RAKIT Campus.',
+        });
+    };
+
     const { data: prefData, setData: setPrefData, post: postPrefs, processing: prefProcessing } = useForm({
         preferences: Object.keys(preferences).reduce((acc, key) => {
             acc[key] = {
@@ -275,6 +291,62 @@ export default function NotificationsIndex({
                                 </form>
                             </DialogContent>
                         </Dialog>
+                    </div>
+                </div>
+
+                {/* PUSH NOTIFICATION BROWSER ACTIVATION BANNER */}
+                <div className="bg-gradient-to-r from-blue-50 via-indigo-50/40 to-white border border-blue-200/80 rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs">
+                    <div className="flex items-start sm:items-center gap-3.5">
+                        <div className="size-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                            <Bell className="size-5" />
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="text-sm font-bold text-slate-900">
+                                    Push Notifikasi Peramban
+                                </h3>
+                                {pushStatus === 'granted' ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        <span className="size-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                                        <span>Aktif & Terhubung</span>
+                                    </span>
+                                ) : pushStatus === 'denied' ? (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                        Diblokir di Peramban
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                        Belum Diaktifkan
+                                    </span>
+                                )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Terima notifikasi instan pada layar desktop atau ponsel saat ada undangan rekan tim, tugas baru, dan pengumuman lomba.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                        {pushStatus === 'granted' ? (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleTestNotification}
+                                className="text-xs font-semibold rounded-xl border-slate-300 hover:bg-blue-50 hover:text-blue-600"
+                            >
+                                <Volume2 className="size-3.5 mr-1" />
+                                <span>Uji Suara & Notifikasi</span>
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleEnablePush}
+                                size="sm"
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs"
+                            >
+                                <Bell className="size-3.5 mr-1" />
+                                <span>Aktifkan Push Notifikasi</span>
+                            </Button>
+                        )}
                     </div>
                 </div>
 

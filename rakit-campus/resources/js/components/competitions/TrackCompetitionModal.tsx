@@ -46,8 +46,14 @@ export default function TrackCompetitionModal({
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setErrorMsg(null);
+
+        if (participationMode === 'team' && !teamName.trim()) {
+            setErrorMsg('Mohon masukkan nama tim untuk kompetisi ini.');
+            return;
+        }
+
+        setLoading(true);
 
         router.post(
             route('competitions.participate', competition.id),

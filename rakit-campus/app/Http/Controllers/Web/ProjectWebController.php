@@ -463,6 +463,7 @@ class ProjectWebController extends Controller
             'required_skills' => ['nullable', 'array'],
             'required_skills.*.name' => ['required', 'string', 'max:80'],
             'required_skills.*.min_proficiency' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'team_name' => ['nullable', 'string', 'max:100'],
         ]);
 
         $academicClass = AcademicClass::findOrFail($validated['academic_class_id']);
@@ -535,7 +536,7 @@ class ProjectWebController extends Controller
                 'project_id' => $project->id,
                 'leader_id' => $user->id,
                 'type' => TeamType::Project,
-                'name' => $project->title . ' Core Team',
+                'name' => !empty($validated['team_name']) ? trim($validated['team_name']) : ($project->title . ' Core Team'),
                 'description' => 'Tim proyek ' . $project->title,
                 'capacity' => $requestedCapacity,
             ]);

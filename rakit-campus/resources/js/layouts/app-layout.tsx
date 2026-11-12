@@ -1,4 +1,7 @@
+import AppFooter from '@/components/app-footer';
 import HubGatewayModal from '@/components/gateway/HubGatewayModal';
+import { playNotificationChime, sendBrowserNotification } from '@/lib/push-notifications';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -29,7 +32,6 @@ import {
     User,
     Users,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -93,6 +95,17 @@ export default function AppLayout({
     }, [user?.name]);
 
     const unreadCount = user?.unread_notifications_count || 0;
+    const prevUnreadRef = useRef<number>(unreadCount);
+
+    useEffect(() => {
+        if (unreadCount > prevUnreadRef.current) {
+            playNotificationChime();
+            sendBrowserNotification('RAKIT Campus — Notifikasi Baru', {
+                body: `Anda memiliki ${unreadCount} notifikasi baru. Klik untuk meninjau.`,
+            });
+        }
+        prevUnreadRef.current = unreadCount;
+    }, [unreadCount]);
 
     const renderUserActions = () => (
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -454,6 +467,9 @@ export default function AppLayout({
                 {/* Page Content */}
                 <div>{children}</div>
             </main>
+
+            {/* Platform Footer */}
+            <AppFooter />
 
             {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
             <nav

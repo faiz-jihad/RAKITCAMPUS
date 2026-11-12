@@ -18,6 +18,7 @@ interface CurrentUser {
     id: number;
     name: string;
     email: string;
+    nim?: string;
     academic_status: 'tpb' | 'prodi';
     department: string;
     study_program: string;
@@ -53,6 +54,7 @@ export default function OnboardingIndex({
 
     // Form States
     const [name, setName] = useState(currentUser.name || '');
+    const [nim, setNim] = useState(currentUser.nim || '');
     const [academicStatus, setAcademicStatus] = useState<'tpb' | 'prodi'>(
         currentUser.academic_status || 'tpb'
     );
@@ -147,6 +149,7 @@ export default function OnboardingIndex({
             '/onboarding',
             {
                 name: name.trim(),
+                nim: nim.trim() || null,
                 academic_status: academicStatus,
                 department: academicStatus === 'tpb' ? 'Tahap Persiapan Bersama' : department,
                 study_program: academicStatus === 'tpb' ? 'TPB' : studyProgram,
@@ -267,6 +270,25 @@ export default function OnboardingIndex({
                                         placeholder="Faiz Alba"
                                         className="w-full px-4 py-3 rounded-2xl border-2 border-blue-500/80 focus:border-blue-600 focus:outline-none text-sm text-slate-900 font-medium transition"
                                     />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs font-semibold text-slate-700 block">
+                                            Nomor Induk Mahasiswa (NIM)
+                                        </label>
+                                        <span className="text-[11px] text-slate-400 font-medium">Opsional</span>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={nim}
+                                        onChange={(e) => setNim(e.target.value)}
+                                        placeholder="Contoh: 210102001 (opsional)"
+                                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 focus:border-blue-500 focus:outline-none text-sm text-slate-900 font-medium transition"
+                                    />
+                                    <p className="text-[11px] text-slate-400">
+                                        Bisa diisi sekarang atau nanti di Pengaturan Akun & Profil.
+                                    </p>
                                 </div>
 
                                 <div className="space-y-2 pt-2">

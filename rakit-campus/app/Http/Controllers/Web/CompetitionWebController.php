@@ -2289,4 +2289,27 @@ class CompetitionWebController extends Controller
             default => ucwords(str_replace('_', ' ', $val)),
         };
     }
+
+    public function renameTeam(Request $request, $teamId)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'min:2', 'max:100'],
+        ]);
+
+        $team = Team::findOrFail($teamId);
+        $user = Auth::user();
+
+        $isLeader = $team->leader_id === $user->id;
+        $isMember = $team->members()->where('user_id', $user->id)->exists();
+
+        if (! $isLeader && ! $isMember && ! $user->isPlatformAdmin()) {
+            abort(403, 'Hanya anggota atau ketua tim yang berhak mengubah nama tim.');
+        }
+
+        $team->update([
+            'name' => trim($validated['name']),
+        ]);
+
+        return back()->with('success', 'Nama tim berhasil diperbarui.');
+    }
 }

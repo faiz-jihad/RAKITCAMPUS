@@ -13,6 +13,7 @@ import {
     AlertCircle,
     ArrowRight,
     ArrowUpRight,
+    Award,
     Bookmark,
     Briefcase,
     Calendar,
@@ -459,13 +460,14 @@ export default function CompetitionIndex({
                             </h1>
                         </div>
 
-                        <Link
-                            href="/competitions/create"
-                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-xs transition shrink-0"
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('teams')}
+                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-xs transition shrink-0 cursor-pointer"
                         >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Bikin Tim</span>
-                        </Link>
+                            <Users className="w-3.5 h-3.5" />
+                            <span>Cari & Bikin Tim</span>
+                        </button>
                     </div>
 
                     {/* Navigation Pills Bar (Mobile full-width swipeable, Desktop segmented) */}
@@ -952,27 +954,27 @@ export default function CompetitionIndex({
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
-                                            className={`bg-white rounded-2xl overflow-hidden border transition-all cursor-pointer flex flex-col justify-between h-full group ${
+                                            className={`bg-white rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
                                                 isExpired
                                                     ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
-                                                    : 'border-slate-200/80 shadow-2xs hover:border-blue-400 hover:shadow-xs'
+                                                    : 'border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/70'
                                             }`}
                                         >
-                                            {/* Cover Image Banner */}
-                                            <div className="relative h-32 sm:h-44 w-full overflow-hidden bg-slate-900 shrink-0">
+                                            {/* Cover Image Banner with Multi-badge Overlay */}
+                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 shrink-0">
                                                 <img
                                                     src={getCompetitionCover(comp)}
                                                     alt={comp.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/25" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-black/20" />
 
                                                 {/* Category & Level Badges on Image */}
-                                                <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 flex items-center gap-1">
-                                                    <span className="px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-md bg-blue-600/90 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider shadow-2xs truncate max-w-[85px] sm:max-w-none">
+                                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap max-w-[80%]">
+                                                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-600/95 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
                                                         {comp.category?.replace('_', ' ') || 'UMUM'}
                                                     </span>
-                                                    <span className="hidden xs:inline-block px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[9px] sm:text-[10px] font-semibold uppercase">
+                                                    <span className="px-2 py-0.5 rounded-lg bg-black/45 backdrop-blur-md text-white/95 text-[10px] font-semibold uppercase border border-white/10">
                                                         {comp.level || 'Nasional'}
                                                     </span>
                                                 </div>
@@ -981,62 +983,73 @@ export default function CompetitionIndex({
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                    className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 p-1.5 sm:p-2 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                                    className={`absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition cursor-pointer shadow-sm ${
                                                         isSaved
-                                                            ? 'bg-rose-500 text-white shadow-2xs'
-                                                            : 'bg-black/30 hover:bg-black/50 text-white'
+                                                            ? 'bg-rose-500 text-white'
+                                                            : 'bg-black/35 hover:bg-black/60 text-white'
                                                     }`}
                                                     title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
                                                 >
-                                                    <Bookmark className={`w-3 h-3 sm:w-3.5 sm:h-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                    <Bookmark className={`size-3.5 ${isSaved ? 'fill-current' : ''}`} />
                                                 </button>
 
-                                                {/* Days left badge */}
-                                                {daysLeft !== null && (
-                                                    <div className="absolute bottom-2 left-2 sm:bottom-2.5 sm:left-2.5">
+                                                {/* Bottom Banner Status Pill on Cover */}
+                                                <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
+                                                    {daysLeft !== null ? (
                                                         <span
-                                                            className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 sm:px-2 sm:py-0.5 rounded-md ${
-                                                                daysLeft <= 7
-                                                                    ? 'bg-rose-500/90 text-white backdrop-blur-md'
-                                                                    : 'bg-slate-900/85 text-white backdrop-blur-md'
+                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-lg backdrop-blur-md shadow-xs ${
+                                                                daysLeft <= 3
+                                                                    ? 'bg-rose-600/95 text-white animate-pulse'
+                                                                    : daysLeft <= 14
+                                                                        ? 'bg-amber-500/95 text-white'
+                                                                        : 'bg-slate-900/85 text-white'
                                                             }`}
                                                         >
-                                                            {daysLeft > 0 ? `${daysLeft}h lagi` : 'Hari ini'}
+                                                            {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Tutup hari ini'}
                                                         </span>
-                                                    </div>
-                                                )}
+                                                    ) : (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-600/90 text-white backdrop-blur-md">
+                                                            Pendaftaran Buka
+                                                        </span>
+                                                    )}
+
+                                                    <span className="text-[10px] font-medium text-white/90 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 truncate">
+                                                        {comp.format || 'Online'}
+                                                    </span>
+                                                </div>
                                             </div>
 
                                             {/* Body */}
-                                            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between gap-2.5">
+                                            <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3">
                                                 <div>
-                                                    <span className="text-[10px] sm:text-[11px] font-semibold text-slate-400 block truncate">
-                                                        {comp.organizer}
-                                                    </span>
-                                                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-0.5">
+                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+                                                        <Award className="size-3.5 text-blue-600 shrink-0" />
+                                                        <span className="truncate">{comp.organizer}</span>
+                                                    </div>
+
+                                                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-1.5">
                                                         {comp.name}
                                                     </h3>
+
                                                     {comp.description && (
-                                                        <p className="hidden sm:line-clamp-2 text-xs text-slate-500 mt-1 leading-relaxed">
+                                                        <p className="line-clamp-2 text-xs text-slate-500 mt-1.5 leading-relaxed">
                                                             {comp.description}
                                                         </p>
                                                     )}
                                                 </div>
 
-                                                {/* Structured Bottom Info */}
-                                                <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-[10px] sm:text-xs text-slate-500">
-                                                    <div className="flex items-center gap-1.5 truncate">
-                                                        <span className={`font-bold text-[10px] sm:text-[11px] truncate ${isExpired ? 'text-rose-600' : 'text-slate-800'}`}>
+                                                {/* Structured Bottom Info & CTA */}
+                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
+                                                        <Clock className="size-3.5 text-slate-400 shrink-0" />
+                                                        <span className="text-[11px] font-semibold text-slate-700 truncate">
                                                             {formattedDeadline}
-                                                        </span>
-                                                        <span className="text-slate-300">•</span>
-                                                        <span className="font-semibold text-slate-600 text-[10px] sm:text-[11px]">
-                                                            {comp.competition_type || 'Tim'}
                                                         </span>
                                                     </div>
 
-                                                    <span className="font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1">
-                                                        ↗
+                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0">
+                                                        <span>Detail</span>
+                                                        <ArrowUpRight className="size-3.5" />
                                                     </span>
                                                 </div>
                                             </div>
@@ -1160,87 +1173,102 @@ export default function CompetitionIndex({
                                         ? team.leader.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
                                         : 'K';
 
+                                    const teamInitials = (team?.name || 'Tim')
+                                        .split(/\s+/)
+                                        .map((p: string) => p[0])
+                                        .slice(0, 2)
+                                        .join('')
+                                        .toUpperCase();
+
                                     return (
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
+                                            className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/70 transition-all duration-300 cursor-pointer flex flex-col justify-between gap-4 group"
                                         >
-                                            <div>
-                                                <div className="flex items-start justify-between gap-2 mb-1.5">
-                                                    <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
+                                            <div className="space-y-3">
+                                                {/* Header Row: Competition Category & Target */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 text-[10px] font-extrabold uppercase tracking-wider border border-blue-200">
                                                         {comp.category?.replace('_', ' ') || 'HACKATHON'}
                                                     </span>
-                                                    <span className="text-[10px] font-medium text-slate-500">
-                                                        Deadline: {formattedDeadline}
+                                                    <span className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+                                                        <Clock className="size-3" />
+                                                        <span>{formattedDeadline}</span>
                                                     </span>
                                                 </div>
 
-                                                <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                    {comp.name}
-                                                </h4>
-                                                <p className="text-xs font-medium text-slate-400 mt-0.5">
-                                                    Tim: {team.name}
-                                                </p>
+                                                {/* Team Title & Target Competition */}
+                                                <div className="flex items-start gap-3">
+                                                    <div className="size-11 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-sm shadow-xs shrink-0">
+                                                        {teamInitials}
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <h3 className="text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-1">
+                                                            {team.name}
+                                                        </h3>
+                                                        <p className="text-xs text-slate-500 font-medium line-clamp-1 mt-0.5">
+                                                            Target: <span className="text-slate-800 font-semibold">{comp.name}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
 
                                                 {/* Roles Needed */}
-                                                <div className="mt-3">
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                                                        Lowongan Peran Terbuka
+                                                    </span>
                                                     <div className="flex flex-wrap gap-1.5">
                                                         {roles.length > 0 ? (
-                                                            roles.map((r) => (
+                                                            roles.map((r: any) => (
                                                                 <span
                                                                     key={r.id}
-                                                                    className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-medium"
+                                                                    className="px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 text-xs font-semibold border border-slate-200/80 transition"
                                                                 >
                                                                     {r.name}
                                                                 </span>
                                                             ))
                                                         ) : (
-                                                            <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
-                                                                Terbuka semua role
+                                                            <span className="px-2.5 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                                                                Terbuka Semua Peran
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                {/* Slot Counter */}
-                                                <div className="mt-3 flex items-center gap-1.5">
-                                                    {Array.from({ length: membersCount }).map((_, idx) => (
+                                                {/* Slot Counter & Progress */}
+                                                <div className="p-3 bg-slate-50/80 rounded-2xl border border-slate-100 space-y-2">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-[11px] font-bold text-slate-600">Formasi Anggota</span>
+                                                        <span className="font-mono font-bold text-slate-900">{membersCount} / {maxCap} Terisi</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
                                                         <div
-                                                            key={`filled-${idx}`}
-                                                            className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
-                                                        >
-                                                            <User className="w-3 h-3 fill-current" />
-                                                        </div>
-                                                    ))}
-                                                    {Array.from({ length: Math.min(4, emptySlots) }).map((_, idx) => (
-                                                        <div
-                                                            key={`empty-${idx}`}
-                                                            className="w-5 h-5 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
-                                                        >
-                                                            <User className="w-2.5 h-2.5" />
-                                                        </div>
-                                                    ))}
-                                                    <span className="text-[11px] text-slate-500 font-medium ml-1">
-                                                        {membersCount}/{maxCap} terisi
-                                                    </span>
+                                                            className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                                            style={{ width: `${Math.min(100, (membersCount / maxCap) * 100)}%` }}
+                                                        />
+                                                    </div>
                                                 </div>
                                             </div>
 
-                                            {/* Bottom Leader */}
+                                            {/* Bottom Leader & CTA */}
                                             <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-3 text-xs">
                                                 <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="w-6 h-6 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+                                                    <div className="size-6 rounded-full bg-blue-100 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">
                                                         {leaderInitials}
                                                     </div>
-                                                    <span className="font-semibold text-slate-800 truncate">
+                                                    <span className="font-semibold text-slate-800 text-xs truncate">
                                                         {team?.leader?.name || 'Ketua Tim'}
                                                     </span>
                                                 </div>
 
-                                                <span className="font-bold text-blue-600">
-                                                    Formasi Tim ↗
-                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center gap-1 font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform"
+                                                >
+                                                    <span>Ajukan Diri</span>
+                                                    <ArrowUpRight className="size-3.5" />
+                                                </button>
                                             </div>
                                         </div>
                                     );

@@ -42,6 +42,10 @@ Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('le
 Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
 Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
 
+// Legal & Compliance Pages
+Route::inertia('/terms', 'terms/index')->name('terms');
+Route::inertia('/privacy', 'privacy/index')->name('privacy');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
     Route::post('/onboarding', [OnboardingWebController::class, 'store'])->name('onboarding.store');
@@ -63,7 +67,8 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-invitations/{invitationId}/accept', [CompetitionWebController::class, 'acceptInvitation'])->name('competitions.invitations.accept');
     Route::post('/competition-invitations/{invitationId}/decline', [CompetitionWebController::class, 'declineInvitation'])->name('competitions.invitations.decline');
 
-    // MinSatu Flow: Apply to Recruiting Competition Team & Process Applications
+    // Team Formation & Management
+    Route::patch('/competitions/teams/{teamId}/rename', [CompetitionWebController::class, 'renameTeam'])->name('competitions.teams.rename');
     Route::post('/competitions/teams/{participationId}/apply', [CompetitionWebController::class, 'applyTeam'])->name('competitions.teams.apply');
     Route::post('/competitions/teams/{participationId}/applications/{applicationId}/respond', [CompetitionWebController::class, 'respondApplication'])->name('competitions.teams.applications.respond');
     Route::post('/competition-workspace/{participationId}/roles', [CompetitionWebController::class, 'storeRecruitmentRole'])->name('competitions.roles.store');

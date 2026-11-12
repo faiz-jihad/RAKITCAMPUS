@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import SeoHead from '@/components/seo/SeoHead';
+import { LeaderboardPodium, type LeaderboardRanking } from '@/components/ui/leaderboard-podium';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -322,7 +323,25 @@ export default function LeaderboardIndex({
 
                 {/* 3. TOP 3 PODIUM SECTION (Only when 2 or more entries exist) */}
                 {leaderboard.top_three && leaderboard.top_three.length >= 2 && !search && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                    <div className="space-y-6 pt-2">
+                        {/* Interactive Visual Olympic Podium */}
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center">
+                            <LeaderboardPodium
+                                rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => ({
+                                    userId: String(item.user?.id || item.team?.id || item.project?.id || idx + 1),
+                                    userName: item.user?.name || item.team?.name || item.project?.title || `Peserta #${item.rank || idx + 1}`,
+                                    rank: (item.rank || idx + 1) as 1 | 2 | 3,
+                                    value: item.points || 0,
+                                    avatarUrl: item.user?.avatar || (item.user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user.name)}&background=2563EB&color=fff` : null),
+                                }))}
+                                size="default"
+                                medalStyle="modern"
+                                showValue={true}
+                                showAvatar={true}
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* 2nd Place (Silver) */}
                         {leaderboard.top_three[1] && (
                             <div className="order-2 md:order-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
@@ -452,6 +471,7 @@ export default function LeaderboardIndex({
                                 </div>
                             </div>
                         )}
+                        </div>
                     </div>
                 )}
 

@@ -116,6 +116,7 @@ class ProfileController extends Controller
             }
 
             if ($profile) {
+                $profile->nim = !empty($validated['student_number']) ? trim($validated['student_number']) : $profile->nim;
                 $profile->department = $validated['department'] ?? $profile->department;
                 $profile->study_program = $validated['study_program'] ?? $profile->study_program;
                 $profile->semester = isset($validated['semester']) ? (int) $validated['semester'] : $profile->semester;

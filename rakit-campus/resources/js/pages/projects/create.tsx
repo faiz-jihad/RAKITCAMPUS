@@ -22,6 +22,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
     const { data, setData } = useForm({
         academic_class_id: (enrolledClasses && enrolledClasses.length > 0 ? enrolledClasses[0].id : '') as string | number,
         title: '',
+        team_name: '',
         short_description: '',
         description: '',
         category: categories[0] || 'academic',
@@ -75,6 +76,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                 body: JSON.stringify({
                     academic_class_id: data.academic_class_id || null,
                     title: data.title,
+                    team_name: data.team_name || null,
                     short_description: data.short_description,
                     description: data.description,
                     category: data.category,
@@ -202,6 +204,22 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 required
                                 className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                             />
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                Nama Tim Proyek <span className="text-slate-400 font-normal">(Opsional)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={data.team_name}
+                                onChange={(e) => setData('team_name', e.target.value)}
+                                placeholder="Contoh: Tim Inovasi Alpha, Garuda Dev Team"
+                                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                            />
+                            <p className="text-[11px] text-slate-400 mt-1">
+                                Opsional. Jika dikosongkan, nama tim otomatis dinamai: <em>[Judul Proyek] Core Team</em>.
+                            </p>
                         </div>
 
                         <div>

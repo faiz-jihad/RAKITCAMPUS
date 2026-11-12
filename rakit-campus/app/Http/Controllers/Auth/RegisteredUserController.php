@@ -40,6 +40,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
+            'nim' => 'nullable|string|max:50',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
@@ -59,13 +60,15 @@ class RegisteredUserController extends Controller
                 ?? Campus::first();
 
             if ($campus) {
+                $studentNumber = !empty($request->nim) ? trim($request->nim) : ('REG-' . substr(abs(crc32($request->email)), 0, 7));
+
                 CampusMembership::create([
                     'campus_id' => $campus->id,
                     'user_id' => $user->id,
                     'role' => CampusRole::Student,
                     'status' => MembershipStatus::Active,
                     'verification_status' => VerificationStatus::Verified,
-                    'student_number' => 'REG-' . substr(abs(crc32($request->email)), 0, 7),
+                    'student_number' => $studentNumber,
                     'verified_at' => now(),
                 ]);
 
@@ -73,6 +76,7 @@ class RegisteredUserController extends Controller
                     'user_id' => $user->id,
                     'campus_id' => $campus->id,
                     'slug' => Str::slug($request->name) . '-' . Str::random(4),
+                    'nim' => !empty($request->nim) ? trim($request->nim) : null,
                     'headline' => 'Mahasiswa Baru ' . $campus->name,
                     'interests' => ['Teknologi', 'Proyek Mahasiswa'],
                     'preferred_roles' => ['Developer', 'Anggota Tim'],
