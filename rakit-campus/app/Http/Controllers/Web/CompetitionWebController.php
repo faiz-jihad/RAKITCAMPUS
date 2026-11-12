@@ -752,6 +752,12 @@ class CompetitionWebController extends Controller
                 if ($user && $team && $team->recruitment) {
                     $myApp = $team->recruitment->applications->first();
                 }
+
+                $isMember = $user && $team ? ($team->hasMember($user) || $team->members->contains(function ($m) use ($user) {
+                    return (int) $m->user_id === (int) $user->id;
+                })) : false;
+                $isLeader = $user && $team ? $team->isLeader($user) : false;
+
                 return [
                     'id' => $part->id,
                     'stage' => $part->stage,
@@ -786,6 +792,8 @@ class CompetitionWebController extends Controller
                             ]),
                         ] : null,
                     ] : null,
+                    'is_member' => $isMember,
+                    'is_leader' => $isLeader,
                     'my_application' => $myApp ? [
                         'id' => $myApp->id,
                         'status' => $myApp->status instanceof ApplicationStatus ? $myApp->status->value : $myApp->status,
@@ -1298,7 +1306,23 @@ class CompetitionWebController extends Controller
         ]);
 
         $student = User::findOrFail($validated['student_id']);
+        if ($participation->team->hasMember($student)) {
+            return back()->with('error', "Mahasiswa {$student->name} sudah bergabung dalam tim ini.");
+        }
+
         $this->membershipService->addMemberToCompetitionTeam($participation->team, $student, $validated['role_name']);
+
+        // Check if matching recruitment role exists and remove/decrement it
+        if ($participation->team->recruitment) {
+            $matchingRole = $participation->team->recruitment->roles()->where('name', $validated['role_name'])->first();
+            if ($matchingRole) {
+                if ($matchingRole->slots > 1) {
+                    $matchingRole->decrement('slots');
+                } else {
+                    $matchingRole->delete();
+                }
+            }
+        }
 
         return back()->with('success', "Mahasiswa {$student->name} berhasil ditambahkan ke tim sebagai {$validated['role_name']}.");
     }
@@ -2079,8 +2103,12 @@ class CompetitionWebController extends Controller
             return back()->with('error', 'Formasi tim ini sudah dikunci dan tidak menerima pelamar baru.');
         }
 
-        if ($team->hasMember($user)) {
-            return back()->with('error', 'Anda sudah menjadi anggota dalam tim ini.');
+        $isAlreadyInTeam = $team->hasMember($user)
+            || $team->isLeader($user)
+            || $team->members()->where('user_id', $user->id)->exists();
+
+        if ($isAlreadyInTeam) {
+            return back()->with('error', 'Anda sudah bergabung dalam tim ini. Anda tidak dapat mengajukan diri lagi ke tim ini.');
         }
 
         $maxCapacity = $participation->competition->max_team_size ?? 5;
@@ -2181,6 +2209,23 @@ class CompetitionWebController extends Controller
                     $roleName,
                     $application->recruitment_role_id
                 );
+
+                // Automatically remove or decrement the approved recruitment position
+                $recRole = null;
+                if ($application->recruitment_role_id) {
+                    $recRole = RecruitmentRole::find($application->recruitment_role_id);
+                }
+                if (!$recRole && $team->recruitment) {
+                    $recRole = $team->recruitment->roles()->where('name', $roleName)->first();
+                }
+
+                if ($recRole) {
+                    if ($recRole->slots > 1) {
+                        $recRole->decrement('slots');
+                    } else {
+                        $recRole->delete();
+                    }
+                }
 
                 $application->update([
                     'status' => ApplicationStatus::Accepted,

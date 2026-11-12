@@ -43,6 +43,12 @@ class MembershipService
             ]);
         }
 
+        if ($team->hasMember($student) || $team->isLeader($student) || $team->members()->where('user_id', $student->id)->exists()) {
+            throw ValidationException::withMessages([
+                'user' => ['Anda sudah bergabung dalam tim ini. Anda tidak dapat mengajukan diri lagi ke tim ini.'],
+            ]);
+        }
+
         return DB::transaction(function () use ($student, $team, $role, $message, $project) {
             $application = Application::updateOrCreate(
                 [
@@ -147,6 +153,23 @@ class MembershipService
                     'joined_at' => now(),
                 ]
             );
+
+            // Automatically remove or decrement the approved recruitment position
+            $recRole = null;
+            if ($application->recruitment_role_id) {
+                $recRole = \App\Models\RecruitmentRole::find($application->recruitment_role_id);
+            }
+            if (! $recRole && $team->recruitment) {
+                $recRole = $team->recruitment->roles()->where('name', $application->role?->name)->first();
+            }
+
+            if ($recRole) {
+                if ($recRole->slots > 1) {
+                    $recRole->decrement('slots');
+                } else {
+                    $recRole->delete();
+                }
+            }
 
             // 4. Update application status
             $application->update([
@@ -383,6 +406,18 @@ class MembershipService
                     'joined_at' => now(),
                 ]
             );
+
+            // If recruitmentRoleId provided, decrement or delete the role
+            if ($recruitmentRoleId) {
+                $role = \App\Models\RecruitmentRole::find($recruitmentRoleId);
+                if ($role) {
+                    if ($role->slots > 1) {
+                        $role->decrement('slots');
+                    } else {
+                        $role->delete();
+                    }
+                }
+            }
 
             return $member;
         });

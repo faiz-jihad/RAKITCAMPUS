@@ -429,6 +429,8 @@ export default function CompetitionIndex({
             competitionName: part.competition.name,
             organizer: part.competition.organizer,
             leaderName: part.team?.leader?.name,
+            isMember: part.is_member,
+            isLeader: part.is_leader,
             roles: part.team?.recruitment?.roles || [],
         });
         setApplyModalOpen(true);
@@ -1264,13 +1266,20 @@ export default function CompetitionIndex({
                                                     </span>
                                                 </div>
 
-                                                <button
-                                                    type="button"
-                                                    className="inline-flex items-center gap-1 font-semibold text-blue-600 group-hover:text-blue-700 transition"
-                                                >
-                                                    <span>Ajukan Diri</span>
-                                                    <ArrowUpRight className="size-3.5" />
-                                                </button>
+                                                {part.is_member || part.is_leader ? (
+                                                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] border border-emerald-200">
+                                                        <CheckCircle2 className="size-3 text-emerald-600" />
+                                                        <span>Anda Sudah di Tim Ini</span>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        className="inline-flex items-center gap-1 font-semibold text-blue-600 group-hover:text-blue-700 transition"
+                                                    >
+                                                        <span>Ajukan Diri</span>
+                                                        <ArrowUpRight className="size-3.5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -2099,19 +2108,34 @@ export default function CompetitionIndex({
                                     </div>
                                 </div>
 
-                                {/* CTA: Ajukan Diri */}
+                                {/* CTA: Ajukan Diri or Already Member Status */}
                                 <div className="pt-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const teamToApply = detailTeam;
-                                            setDetailTeam(null);
-                                            openApplyModal(teamToApply);
-                                        }}
-                                        className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
-                                    >
-                                        Ajukan Diri ke Tim
-                                    </button>
+                                    {detailTeam.is_member || detailTeam.is_leader ? (
+                                        <div className="space-y-2">
+                                            <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 text-center flex items-center justify-center gap-1.5">
+                                                <CheckCircle2 className="size-4 text-emerald-600" />
+                                                <span>Anda Sudah Bergabung dalam Tim Ini</span>
+                                            </div>
+                                            <Link
+                                                href={`/workspace/${detailTeam.team.id}`}
+                                                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold text-center block transition shadow-2xs"
+                                            >
+                                                Buka Workspace Tim
+                                            </Link>
+                                        </div>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                const teamToApply = detailTeam;
+                                                setDetailTeam(null);
+                                                openApplyModal(teamToApply);
+                                            }}
+                                            className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                                        >
+                                            Ajukan Diri ke Tim
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         </div>

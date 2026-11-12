@@ -93,10 +93,16 @@ class Team extends Model
 
     public function hasMember(User|int $user): bool
     {
-        $userId = $user instanceof User ? $user->id : $user;
+        $userId = $user instanceof User ? $user->id : (int) $user;
+
+        if ((int) $this->leader_id === $userId) {
+            return true;
+        }
 
         if ($this->relationLoaded('members')) {
-            return $this->members->contains('user_id', $userId);
+            return $this->members->contains(function ($m) use ($userId) {
+                return (int) $m->user_id === $userId;
+            });
         }
 
         return $this->members()->where('user_id', $userId)->exists();

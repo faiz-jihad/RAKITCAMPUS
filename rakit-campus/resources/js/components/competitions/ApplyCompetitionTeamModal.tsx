@@ -18,6 +18,8 @@ export interface ApplyTeamData {
     competitionName: string;
     organizer?: string;
     leaderName?: string;
+    isMember?: boolean;
+    isLeader?: boolean;
     roles?: Array<{
         id: number;
         name: string;
@@ -162,6 +164,13 @@ export default function ApplyCompetitionTeamModal({
                 {errorMessage && (
                     <div className="mt-4 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-medium">
                         {errorMessage}
+                    </div>
+                )}
+
+                {(teamData.isMember || teamData.isLeader) && (
+                    <div className="mt-4 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 font-semibold flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                        <span>Anda sudah bergabung dalam tim ini. Anda tidak dapat mengajukan diri lagi ke tim ini.</span>
                     </div>
                 )}
 
@@ -319,11 +328,11 @@ export default function ApplyCompetitionTeamModal({
                         </button>
                         <button
                             type="submit"
-                            disabled={submitting}
+                            disabled={submitting || teamData.isMember || teamData.isLeader}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
                         >
                             <Send className="size-3.5" />
-                            <span>{submitting ? 'Mengirim...' : 'Kirim Lamaran'}</span>
+                            <span>{submitting ? 'Mengirim...' : (teamData.isMember || teamData.isLeader) ? 'Sudah Bergabung' : 'Kirim Lamaran'}</span>
                         </button>
                     </div>
                 </form>

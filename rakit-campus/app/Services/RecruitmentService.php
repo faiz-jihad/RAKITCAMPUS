@@ -42,9 +42,9 @@ class RecruitmentService
             }
 
             // 2. Cannot apply to own team or if already a member
-            if ($team->hasMember($applicant)) {
+            if ($team->hasMember($applicant) || $team->isLeader($applicant) || $team->members()->where('user_id', $applicant->id)->exists()) {
                 throw ValidationException::withMessages([
-                    'user' => ['Anda sudah menjadi anggota tim ini.'],
+                    'user' => ['Anda sudah bergabung dalam tim ini. Anda tidak dapat mengajukan diri lagi ke tim ini.'],
                 ]);
             }
 
@@ -168,6 +168,15 @@ class RecruitmentService
                 'recruitment_role_id' => $role?->id,
                 'joined_at' => now(),
             ]);
+
+            // Automatically remove or decrement the approved recruitment position
+            if ($role) {
+                if ($role->slots > 1) {
+                    $role->decrement('slots');
+                } else {
+                    $role->delete();
+                }
+            }
 
             // Update application status
             $application->update([

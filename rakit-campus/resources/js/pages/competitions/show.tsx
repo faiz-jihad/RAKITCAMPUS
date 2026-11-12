@@ -680,13 +680,19 @@ export default function CompetitionShow({
                                                 </div>
 
                                                 <div className="flex items-center gap-2 shrink-0">
-                                                    {myParticipation?.id === part.id ? (
-                                                        <Link
-                                                            href={route('competitions.workspace', competition?.slug || part.id)}
-                                                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold"
-                                                        >
-                                                            Workspace Tim
-                                                        </Link>
+                                                    {myParticipation?.id === part.id || part.is_member || part.is_leader ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                                                                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                                <span>Anda Sudah di Tim</span>
+                                                            </span>
+                                                            <Link
+                                                                href={route('competitions.workspace', competition?.slug || part.id)}
+                                                                className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs"
+                                                            >
+                                                                Workspace Tim
+                                                            </Link>
+                                                        </div>
                                                     ) : part.my_application ? (
                                                         <span className="px-3.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 text-xs font-bold border border-amber-200">
                                                             Lamaran Terkirim
@@ -700,6 +706,8 @@ export default function CompetitionShow({
                                                                     competitionName: competition.name,
                                                                     organizer: competition.organizer,
                                                                     leaderName: part.team?.leader?.name,
+                                                                    isMember: part.is_member,
+                                                                    isLeader: part.is_leader,
                                                                     roles: part.team?.recruitment?.roles || [],
                                                                 });
                                                                 setApplyModalOpen(true);
