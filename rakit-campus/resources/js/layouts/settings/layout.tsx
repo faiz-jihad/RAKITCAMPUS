@@ -2,7 +2,7 @@ import Heading from '@/components/heading';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { KeyRound, LogOut, Palette, Sparkles, User } from 'lucide-react';
+import { KeyRound, LogOut, Palette, User } from 'lucide-react';
 
 const sidebarNavItems = [
     {
@@ -30,18 +30,11 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
     return (
         <div className="space-y-6 pt-2">
-            {/* Header */}
-            <div className="border-b border-slate-100 pb-5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-2 border border-blue-200/60">
-                    <Sparkles className="size-3.5" />
-                    <span>Pusat Pengaturan Akun & Preferensi</span>
-                </div>
+            {/* Header: Judulnya saja */}
+            <div className="border-b border-slate-100 pb-4">
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
                     Pengaturan Akun & Profil
                 </h1>
-                <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
-                    Kelola informasi akademik, portofolio keahlian untuk AI Smart Matching, kata sandi, dan preferensi tampilan.
-                </p>
             </div>
 
             <div className="flex flex-col lg:flex-row gap-8 items-start">

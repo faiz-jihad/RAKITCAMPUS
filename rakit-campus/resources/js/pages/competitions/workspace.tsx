@@ -7,6 +7,7 @@ import {
     Briefcase,
     Check,
     CheckCircle2,
+    ChevronDown,
     Clock,
     Download,
     ExternalLink,
@@ -31,6 +32,13 @@ import {
     Users,
     X,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import React, { useState } from 'react';
 
 interface Props {
@@ -484,7 +492,7 @@ export default function CompetitionWorkspace({
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
                             >
                                 <Globe className="size-3.5 text-slate-400 shrink-0" />
-                                <span>Website Resmi</span>
+                                <span className="hidden xs:inline">Website Resmi</span>
                                 <ExternalLink className="size-3 text-slate-400 shrink-0" />
                             </a>
                         )}
@@ -501,99 +509,89 @@ export default function CompetitionWorkspace({
                             </a>
                         )}
 
+                        {/* Dropdown Kelola Tim for Administrative actions */}
+                        {(isLeader || isMentor || isAdmin) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                                    >
+                                        <span>Kelola Tim</span>
+                                        <ChevronDown className="size-3 text-slate-400 shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-52">
+                                    <DropdownMenuItem
+                                        onClick={() => setStageModalOpen(true)}
+                                        className="cursor-pointer gap-2"
+                                    >
+                                        <Sparkles className="size-3.5 text-blue-600" />
+                                        <span>Update Tahapan</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                        onClick={() => setResultModalOpen(true)}
+                                        className="cursor-pointer gap-2"
+                                    >
+                                        <Trophy className="size-3.5 text-amber-600" />
+                                        <span>Catat Prestasi</span>
+                                    </DropdownMenuItem>
+
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                onClick={handleLockFormation}
+                                                className="cursor-pointer gap-2"
+                                            >
+                                                <Lock className="size-3.5 text-slate-500" />
+                                                <span>Kunci Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+
+                                    {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                onClick={handleApproveFormation}
+                                                className="cursor-pointer gap-2 text-emerald-700"
+                                            >
+                                                <ShieldCheck className="size-3.5 text-emerald-600" />
+                                                <span>Setujui Susunan Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+
+                        {/* Primary Action Button: Tambah Tugas */}
                         {canManageTasks && (
                             <button
                                 type="button"
                                 onClick={() => setTaskModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
                             >
                                 <Plus className="size-3.5" />
                                 <span>Tambah Tugas</span>
                             </button>
                         )}
-
-                        {canManageTasks && (
-                            <button
-                                type="button"
-                                onClick={() => setDocModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
-                            >
-                                <Upload className="size-3.5 text-slate-500" />
-                                <span>Unggah Berkas</span>
-                            </button>
-                        )}
-
-                        {isMember && (
-                            <button
-                                type="button"
-                                onClick={handleGenerateAiTasks}
-                                disabled={aiGenerating}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
-                                title="Susun otomatis rencana tugas Kanban menggunakan Google Gemini AI"
-                            >
-                                <Sparkles className="size-3.5" />
-                                <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI'}</span>
-                            </button>
-                        )}
-
-                        {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
-                            <button
-                                type="button"
-                                onClick={handleApproveFormation}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
-                            >
-                                <ShieldCheck className="size-3.5" />
-                                <span>Setujui Susunan Tim</span>
-                            </button>
-                        )}
-
-                        {isLeader && !participation.is_formation_locked && (
-                            <button
-                                type="button"
-                                onClick={handleLockFormation}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
-                            >
-                                <Lock className="size-3.5 text-slate-500" />
-                                <span>Kunci Tim</span>
-                            </button>
-                        )}
-
-                        {(isLeader || isMentor || isAdmin) && (
-                            <button
-                                type="button"
-                                onClick={() => setStageModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
-                            >
-                                <Sparkles className="size-3.5" />
-                                <span>Update Tahapan</span>
-                            </button>
-                        )}
-
-                        {(isLeader || isMentor || isAdmin) && (
-                            <button
-                                type="button"
-                                onClick={() => setResultModalOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold transition cursor-pointer"
-                            >
-                                <Trophy className="size-3.5 text-amber-600" />
-                                <span>Catat Prestasi</span>
-                            </button>
-                        )}
                     </div>
                 </div>
 
-                {/* 2. MODERN WORKSPACE TEAM HERO BANNER */}
-                <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* 2. UNIFIED COMMAND CENTER HERO CARD */}
+                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+                    {/* Upper Section: Team Identity & Readiness */}
+                    <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
                         <div className="space-y-2 min-w-0 flex-1">
-                            {/* Badges Row */}
+                            {/* Badges line: subtle & organized */}
                             <div className="flex items-center gap-2 flex-wrap">
                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                                    {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}
+                                    {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'} • Tingkat {participation.competition?.level || 'Nasional'}
                                 </span>
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                                    Tingkat {participation.competition?.level || 'Nasional'}
-                                </span>
+
                                 <button
                                     type="button"
                                     onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
@@ -608,32 +606,35 @@ export default function CompetitionWorkspace({
                                     <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
                                     {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-amber-700 shrink-0" />}
                                 </button>
+
                                 {participation.category_track && (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 truncate max-w-[260px]">
                                         Jalur: {participation.category_track}
                                     </span>
                                 )}
+
                                 {participation.is_formation_locked && (
                                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
                                         <Lock className="size-3" />
-                                        <span>Susunan Dikunci</span>
+                                        <span>Terkunci</span>
                                     </span>
                                 )}
                             </div>
 
                             {/* Team Title & Competition Name */}
                             <div>
-                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
                                     {participation.team?.name || 'Tim Mahasiswa'}
                                 </h1>
                                 <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
-                                    Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong> • Penyelenggara: {participation.competition?.organizer}
+                                    Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
+                                    {participation.competition?.organizer ? ` • ${participation.competition.organizer}` : ''}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Readiness KPI Card */}
-                        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[210px] self-start md:self-auto">
+                        {/* Readiness Meter */}
+                        <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[210px] self-start md:self-auto">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kesiapan Tim</span>
                                 <span className="font-extrabold text-blue-600 font-mono text-sm">{readinessScore}%</span>
@@ -650,149 +651,120 @@ export default function CompetitionWorkspace({
                         </div>
                     </div>
 
-                    {/* Quick Metric Strip */}
-                    <div className="flex items-center gap-2 sm:gap-3 pt-3 border-t border-slate-100 flex-wrap text-xs text-slate-600">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
-                            <Users className="size-3.5 text-blue-600 shrink-0" />
-                            <span>{participation.team?.members?.length || 0}/{participation.team?.capacity || participation.competition?.max_team_size || 5} Anggota</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
-                            <FolderKanban className="size-3.5 text-blue-600 shrink-0" />
-                            <span>{participation.team?.tasks?.length || 0} Tugas</span>
-                        </span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
-                            <FileText className="size-3.5 text-blue-600 shrink-0" />
-                            <span>{participation.documents?.length || 0} Berkas</span>
-                        </span>
-                        {rounds.length > 0 && (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 font-semibold text-slate-700">
-                                <Clock className="size-3.5 text-blue-600 shrink-0" />
-                                <span>{rounds.length} Babak Seleksi</span>
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {/* 2.5 EXECUTIVE KPI COMMAND CENTER */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-                    {/* Card 1: Sprint & Tasks Progress */}
-                    <div
-                        onClick={() => setActiveTab('kanban')}
-                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-blue-400 hover:shadow-xs transition cursor-pointer group"
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <FolderKanban className="size-3.5 text-blue-600" />
-                                Sprint & Tugas Tim
-                            </span>
-                            <span className="text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                                Papan Tugas &rarr;
-                            </span>
-                        </div>
-                        <div className="flex items-baseline justify-between mb-2">
-                            <span className="text-2xl font-black text-slate-900">
-                                {completedTasks}/{totalTasks} <span className="text-xs font-semibold text-slate-500 font-sans">Selesai</span>
-                            </span>
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-                                {taskPercentage}%
-                            </span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
-                            <div
-                                className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                                style={{ width: `${taskPercentage}%` }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                            <span>{inProgressTasks} Sedang Dikerjakan</span>
-                            <span>{todoTasks} To Do</span>
-                        </div>
-                    </div>
-
-                    {/* Card 2: Timeline & Deadlines */}
-                    <div
-                        onClick={() => setActiveTab('rounds')}
-                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-amber-400 hover:shadow-xs transition cursor-pointer group"
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <Clock className="size-3.5 text-amber-600" />
-                                Target & Linimasa
-                            </span>
-                            <span className="text-xs font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
-                                Jadwal &rarr;
-                            </span>
-                        </div>
-                        <div className="flex items-baseline justify-between mb-2">
-                            <span className="text-2xl font-black text-slate-900">
-                                {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini') : 'Terbuka'}
-                                <span className="text-xs font-semibold text-slate-500 font-sans ml-1">
-                                    {daysLeft !== null && daysLeft > 0 ? 'Tersisa' : ''}
+                    {/* Integrated Metric Strip: 3 Clean Interactive Stat Tiles */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/50">
+                        {/* Metric 1: Sprint & Tasks */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('kanban')}
+                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
+                        >
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-blue-600 transition">
+                                    <FolderKanban className="size-3.5 text-blue-600" />
+                                    <span>Sprint & Tugas</span>
                                 </span>
-                            </span>
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                daysLeft !== null && daysLeft <= 7 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
-                            }`}>
-                                {selectionStages[participation.stage]?.label || participation.stage}
-                            </span>
-                        </div>
-                        <div className="text-xs text-slate-700 font-semibold mb-1 truncate">
-                            Deadline: <span className="font-normal text-slate-500">{formattedDeadline}</span>
-                        </div>
-                        <div className="text-[11px] text-slate-500 truncate">
-                            {rounds.length > 0 ? `${rounds.length} babak seleksi terdata` : 'Format: ' + (participation.competition?.competition_type || 'Tim')}
-                        </div>
-                    </div>
+                                <span className="text-[11px] font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                                    Buka Papan &rarr;
+                                </span>
+                            </div>
+                            <div className="flex items-baseline justify-between mb-1.5">
+                                <span className="text-lg font-black text-slate-900">
+                                    {completedTasks}/{totalTasks} <span className="text-xs font-semibold text-slate-500 font-sans">Selesai</span>
+                                </span>
+                                <span className="text-xs font-bold px-2 py-0.2 rounded-md bg-blue-50 text-blue-700">
+                                    {taskPercentage}%
+                                </span>
+                            </div>
+                            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-1.5">
+                                <div
+                                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                                    style={{ width: `${taskPercentage}%` }}
+                                />
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                                <span>{inProgressTasks} Dalam Proses</span>
+                                <span>{todoTasks} To Do</span>
+                            </div>
+                        </button>
 
-                    {/* Card 3: Formasi & Kesiapan Berkas */}
-                    <div
-                        onClick={() => setActiveTab('documents')}
-                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-emerald-400 hover:shadow-xs transition cursor-pointer group"
-                    >
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                                <FileText className="size-3.5 text-emerald-600" />
-                                Kesiapan & Berkas Tim
-                            </span>
-                            <span className="text-xs font-bold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
-                                Berkas &rarr;
-                            </span>
-                        </div>
-                        <div className="flex items-baseline justify-between mb-2">
-                            <span className="text-2xl font-black text-slate-900">
-                                {readinessScore}% <span className="text-xs font-semibold text-slate-500 font-sans">Siap</span>
-                            </span>
-                            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
-                                {membersCount}/{capacity} Anggota
-                            </span>
-                        </div>
-                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
-                            <div
-                                className="h-full bg-emerald-600 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
-                            />
-                        </div>
-                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                            <span>{totalDocs} Berkas Terunggah</span>
-                            <span>{pendingAppsCount > 0 ? `${pendingAppsCount} Pelamar Baru` : 'Formasi Lengkap'}</span>
-                        </div>
+                        {/* Metric 2: Timeline & Deadlines */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('rounds')}
+                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
+                        >
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-amber-600 transition">
+                                    <Clock className="size-3.5 text-amber-600" />
+                                    <span>Linimasa & Babak</span>
+                                </span>
+                                <span className="text-[11px] font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
+                                    Jadwal &rarr;
+                                </span>
+                            </div>
+                            <div className="flex items-baseline justify-between mb-1">
+                                <span className="text-lg font-black text-slate-900">
+                                    {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini') : 'Terbuka'}
+                                    <span className="text-xs font-semibold text-slate-500 font-sans ml-1">
+                                        {daysLeft !== null && daysLeft > 0 ? 'Tersisa' : ''}
+                                    </span>
+                                </span>
+                                <span className="text-xs text-slate-500 font-medium">
+                                    Deadline: <strong className="text-slate-800">{formattedDeadline}</strong>
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-2">
+                                <span>{rounds.length > 0 ? `${rounds.length} Babak Seleksi` : `Format: ${participation.competition?.competition_type || 'Tim'}`}</span>
+                                <span className="text-slate-600">{selectionStages[participation.stage]?.label || participation.stage}</span>
+                            </div>
+                        </button>
+
+                        {/* Metric 3: Team Formasi & Dokumen */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('documents')}
+                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
+                        >
+                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
+                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-emerald-600 transition">
+                                    <FileText className="size-3.5 text-emerald-600" />
+                                    <span>Kesiapan Berkas & Tim</span>
+                                </span>
+                                <span className="text-[11px] font-bold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
+                                    Berkas &rarr;
+                                </span>
+                            </div>
+                            <div className="flex items-baseline justify-between mb-1">
+                                <span className="text-lg font-black text-slate-900">
+                                    {membersCount}/{capacity} <span className="text-xs font-semibold text-slate-500 font-sans">Anggota</span>
+                                </span>
+                                <span className="text-xs font-bold px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700">
+                                    {totalDocs} Berkas
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-2">
+                                <span>{totalDocs > 0 ? `${totalDocs} Berkas Terunggah` : 'Belum Ada Berkas'}</span>
+                                <span>{pendingAppsCount > 0 ? `${pendingAppsCount} Pelamar Baru` : 'Formasi Lengkap'}</span>
+                            </div>
+                        </button>
                     </div>
                 </div>
 
-                {/* 3) WORKSPACE TABS NAVIGATION (Zero Horizontal Scrollbar) */}
+                {/* 3) WORKSPACE TABS NAVIGATION */}
                 <div
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
                 >
                     {[
                         { id: 'overview', label: 'Tim & Formasi', icon: Users, count: participation.team?.members?.length || 0 },
-                        { id: 'applicants', label: 'Pelamar MinSatu', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
+                        { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
                         { id: 'kanban', label: 'Papan Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
                         { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
-                        { id: 'rounds', label: 'Jadwal & Babak', icon: Clock, count: rounds.length },
-                        { id: 'mentoring', label: 'Bimbingan Dosen', icon: GraduationCap },
-                        { id: 'results', label: 'Hasil & Prestasi', icon: Trophy },
-                        { id: 'history', label: 'Riwayat Status', icon: History, count: participation.status_histories?.length || 0 },
+                        { id: 'rounds', label: 'Babak Seleksi', icon: Clock, count: rounds.length },
+                        { id: 'mentoring', label: 'Bimbingan', icon: GraduationCap },
+                        { id: 'results', label: 'Prestasi', icon: Trophy },
+                        { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
                     ].map((tab) => {
                         const Icon = tab.icon;
                         const isActive = activeTab === tab.id;
