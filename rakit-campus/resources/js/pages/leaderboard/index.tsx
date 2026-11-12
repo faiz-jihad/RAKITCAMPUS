@@ -195,7 +195,7 @@ export default function LeaderboardIndex({
                                 }`}
                             >
                                 <Trophy className="size-3.5" />
-                                <span>🏆 Klasemen RAKIT (Overall)</span>
+                                <span>Klasemen RAKIT (Overall)</span>
                             </button>
 
                             <button
@@ -208,7 +208,7 @@ export default function LeaderboardIndex({
                                 }`}
                             >
                                 <FolderKanban className="size-3.5" />
-                                <span>🚀 Project Hub</span>
+                                <span>Project Hub</span>
                             </button>
 
                             <button
@@ -221,7 +221,7 @@ export default function LeaderboardIndex({
                                 }`}
                             >
                                 <Award className="size-3.5" />
-                                <span>🎯 Competition Hub</span>
+                                <span>Competition Hub</span>
                             </button>
                         </div>
 
@@ -334,8 +334,8 @@ export default function LeaderboardIndex({
                         {leaderboard.top_three[1] && (
                             <div className="order-2 md:order-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
                                 <div className="absolute top-3 left-3">
-                                    <span className="size-7 rounded-xl bg-slate-100 text-slate-700 font-black text-xs flex items-center justify-center border border-slate-200 shadow-2xs">
-                                        🥈 #2
+                                    <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs">
+                                        #2
                                     </span>
                                 </div>
                                 <div className="absolute top-3 right-3">
@@ -377,8 +377,9 @@ export default function LeaderboardIndex({
                         {leaderboard.top_three[0] && (
                             <div className="order-1 md:order-2 bg-gradient-to-b from-amber-50/70 via-white to-white rounded-2xl p-6 border-2 border-amber-300 shadow-xs flex flex-col justify-between items-center text-center relative overflow-hidden group">
                                 <div className="absolute top-3 left-3">
-                                    <span className="px-2.5 py-1 rounded-xl bg-amber-400 text-amber-950 font-black text-xs flex items-center gap-1 shadow-2xs">
-                                        👑 Juara 1
+                                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-400 text-amber-950 font-black text-xs flex items-center gap-1 shadow-2xs">
+                                        <Trophy className="size-3 shrink-0" />
+                                        <span>Peringkat 1</span>
                                     </span>
                                 </div>
                                 <div className="absolute top-3 right-3">
@@ -420,8 +421,8 @@ export default function LeaderboardIndex({
                         {leaderboard.top_three[2] && (
                             <div className="order-3 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
                                 <div className="absolute top-3 left-3">
-                                    <span className="size-7 rounded-xl bg-amber-50 text-amber-800 font-black text-xs flex items-center justify-center border border-amber-200 shadow-2xs">
-                                        🥉 #3
+                                    <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200 shadow-2xs">
+                                        #3
                                     </span>
                                 </div>
                                 <div className="absolute top-3 right-3">
@@ -477,8 +478,11 @@ export default function LeaderboardIndex({
                                     {userContext.points.toLocaleString()} Total Poin Terverifikasi
                                 </h4>
                                 {userContext.points_to_next > 0 && (
-                                    <p className="text-xs text-blue-200/90 mt-0.5">
-                                        🚀 Butuh <strong>{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!
+                                    <p className="text-xs text-blue-200/90 mt-0.5 flex items-center gap-1.5">
+                                        <TrendingUp className="size-3.5 shrink-0 text-blue-300" />
+                                        <span>
+                                            Butuh <strong>{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!
+                                        </span>
                                     </p>
                                 )}
                             </div>
@@ -673,10 +677,10 @@ export default function LeaderboardIndex({
                             <div className="p-3 rounded-xl bg-blue-50/80 border border-blue-200 text-xs text-blue-900 space-y-1">
                                 <span className="font-bold block">Pengali Bobot Tingkat Kompetisi:</span>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] pt-1">
-                                    <div>🌍 Internasional: <strong>2.5×</strong></div>
-                                    <div>🇮🇩 Nasional: <strong>1.8×</strong></div>
-                                    <div>📍 Regional: <strong>1.3×</strong></div>
-                                    <div>🏫 Kampus: <strong>1.0×</strong></div>
+                                    <div>Internasional: <strong>2.5×</strong></div>
+                                    <div>Nasional: <strong>1.8×</strong></div>
+                                    <div>Regional: <strong>1.3×</strong></div>
+                                    <div>Kampus: <strong>1.0×</strong></div>
                                 </div>
                             </div>
 

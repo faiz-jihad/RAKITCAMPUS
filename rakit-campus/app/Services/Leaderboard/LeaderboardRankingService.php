@@ -609,18 +609,18 @@ class LeaderboardRankingService
     protected static function determineUserBadge(int $totalPts, int $compPts, int $projPts): array
     {
         if ($compPts >= 1200) {
-            return ['name' => '🏆 Global Competitor', 'color' => 'amber'];
+            return ['name' => 'Global Competitor', 'color' => 'amber'];
         }
         if ($compPts >= 500) {
-            return ['name' => '🥇 Hackathon Champion', 'color' => 'blue'];
+            return ['name' => 'Hackathon Champion', 'color' => 'blue'];
         }
         if ($projPts >= 500) {
-            return ['name' => '🚀 Master Builder', 'color' => 'indigo'];
+            return ['name' => 'Master Builder', 'color' => 'indigo'];
         }
         if ($totalPts >= 300) {
-            return ['name' => '⭐ Core Contributor', 'color' => 'emerald'];
+            return ['name' => 'Core Contributor', 'color' => 'emerald'];
         }
-        return ['name' => '🌱 Rising Star', 'color' => 'slate'];
+        return ['name' => 'Rising Star', 'color' => 'slate'];
     }
 
     /**

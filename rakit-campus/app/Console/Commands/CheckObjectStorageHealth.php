@@ -93,7 +93,7 @@ class CheckObjectStorageHealth extends Command
         }
 
         $this->newLine();
-        $this->info('★ All Object Storage diagnostics passed successfully!');
+        $this->info('[OK] All Object Storage diagnostics passed successfully!');
         return Command::SUCCESS;
     }
 }

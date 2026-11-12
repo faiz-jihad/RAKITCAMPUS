@@ -9,7 +9,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown, ChevronRight, KeyRound, Layers, LogOut, Settings, User } from 'lucide-react';
+import {
+    ArrowLeftRight,
+    Award,
+    Bell,
+    BookmarkCheck,
+    Briefcase,
+    ChevronDown,
+    ChevronRight,
+    Compass,
+    FolderKanban,
+    KeyRound,
+    Layers,
+    LayoutDashboard,
+    LogOut,
+    PlusCircle,
+    Settings,
+    Trophy,
+    User,
+    Users,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 interface AppLayoutProps {
@@ -242,65 +261,57 @@ export default function AppLayout({
 
             {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
             <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 transition-all">
-                <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4">
-                    {/* Top Row on Mobile: Brand Logo + Hub Pill on Left, User Actions on Right */}
-                    <div className="w-full md:w-auto flex items-center justify-between gap-3">
-                        {/* Brand Logo & Active Hub Pill */}
-                        <div className="flex items-center gap-2 sm:gap-3.5">
-                            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
-                                <img
-                                    src="/images/rakit-mark.png"
-                                    alt="RAKIT"
-                                    className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
-                                />
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
-                                        RAKIT
-                                    </span>
-                                    <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
-                                        Campus
-                                    </span>
-                                </div>
-                            </Link>
-
-                            {/* Interactive Hub Pill Indicator */}
-                            <button
-                                type="button"
-                                onClick={() => setIsGatewayOpen(true)}
-                                className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
-                                    isCompetitionHub
-                                        ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
-                                        : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
-                                }`}
-                                title="Klik untuk berpindah ruang kerja"
-                            >
-                                <span
-                                    className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
-                                        isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
-                                    }`}
-                                />
-                                <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
-                                <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
-                                <span
-                                    className={`text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.5 rounded-md transition ${
-                                        isCompetitionHub
-                                            ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
-                                            : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
-                                    }`}
-                                >
-                                    ⇄
+                <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex items-center justify-between gap-3 sm:gap-4">
+                    {/* Brand Logo & Active Hub Pill */}
+                    <div className="flex items-center gap-2 sm:gap-3.5 shrink-0">
+                        <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
+                            />
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+                                    RAKIT
                                 </span>
-                            </button>
-                        </div>
+                                <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
+                                    Campus
+                                </span>
+                            </div>
+                        </Link>
 
-                        {/* Mobile User Actions (visible on mobile only, beside brand) */}
-                        <div className="flex md:hidden items-center gap-1.5">
-                            {renderUserActions()}
-                        </div>
+                        {/* Interactive Hub Pill Indicator */}
+                        <button
+                            type="button"
+                            onClick={() => setIsGatewayOpen(true)}
+                            className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
+                                isCompetitionHub
+                                    ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
+                                    : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
+                            }`}
+                            title="Klik untuk berpindah ruang kerja"
+                        >
+                            <span
+                                className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
+                                    isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
+                                }`}
+                            />
+                            <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
+                            <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
+                            <span
+                                className={`text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.5 rounded-md transition flex items-center justify-center ${
+                                    isCompetitionHub
+                                        ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
+                                        : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
+                                }`}
+                            >
+                                <ArrowLeftRight className="size-2.5 sm:size-3" />
+                            </span>
+                        </button>
                     </div>
 
-                    {/* Navigation Capsule / Pills Tailored strictly to Active Hub */}
-                    <div className="w-full md:w-auto flex justify-center md:justify-start overflow-x-auto scrollbar-none -mx-1 px-1">
+                    {/* Desktop Navigation Capsule / Pills (Hidden on Mobile, placed in Bottom Nav) */}
+                    <div className="hidden md:flex items-center justify-center overflow-x-auto scrollbar-none">
                         {isCompetitionHub ? (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
                                 <Link
@@ -416,15 +427,15 @@ export default function AppLayout({
                         )}
                     </div>
 
-                    {/* Desktop Right User Actions */}
-                    <div className="hidden md:flex items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* Right User Actions (visible on all screens) */}
+                    <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
                         {renderUserActions()}
                     </div>
                 </div>
             </header>
 
-            {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
+            {/* 2. MAIN FULL SCREEN CONTENT AREA (with safe bottom padding for mobile bottom bar) */}
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 md:pb-7">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
                     <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
@@ -451,6 +462,212 @@ export default function AppLayout({
                 {/* Page Content */}
                 <div>{children}</div>
             </main>
+
+            {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
+            <nav
+                aria-label="Mobile Navigation"
+                className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
+            >
+                <div className="grid grid-cols-5 h-16 items-center px-1 max-w-lg mx-auto">
+                    {isCompetitionHub ? (
+                        <>
+                            {/* 1. Eksplor Lomba */}
+                            <Link
+                                href="/competitions?tab=explore"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    (url === '/competitions' || url.includes('tab=explore')) &&
+                                    !url.includes('tab=teams') &&
+                                    !url.includes('tab=my_competitions')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Compass
+                                    className={`size-5 ${
+                                        (url === '/competitions' || url.includes('tab=explore')) &&
+                                        !url.includes('tab=teams') &&
+                                        !url.includes('tab=my_competitions')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Eksplor</span>
+                            </Link>
+
+                            {/* 2. MinSatu (Cari Tim) */}
+                            <Link
+                                href="/competitions?tab=teams"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.includes('tab=teams')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Users
+                                    className={`size-5 ${
+                                        url.includes('tab=teams') ? 'stroke-[2.25] text-blue-600' : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">MinSatu</span>
+                            </Link>
+
+                            {/* 3. Lomba Saya */}
+                            <Link
+                                href="/competitions?tab=my_competitions"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.includes('tab=my_competitions')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <BookmarkCheck
+                                    className={`size-5 ${
+                                        url.includes('tab=my_competitions')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Lomba Saya</span>
+                            </Link>
+
+                            {/* 4. Workspace Tim */}
+                            <Link
+                                href="/competition-workspace"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/competition-workspace')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Briefcase
+                                    className={`size-5 ${
+                                        url.startsWith('/competition-workspace')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                            </Link>
+
+                            {/* 5. Leaderboard */}
+                            <Link
+                                href="/leaderboard?hub=competition"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/leaderboard')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Trophy
+                                    className={`size-5 ${
+                                        url.startsWith('/leaderboard')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
+                            </Link>
+                        </>
+                    ) : (
+                        <>
+                            {/* 1. Dashboard */}
+                            <Link
+                                href="/dashboard"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url === '/dashboard' || url === '/'
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <LayoutDashboard
+                                    className={`size-5 ${
+                                        url === '/dashboard' || url === '/'
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+                            </Link>
+
+                            {/* 2. Proyek Kelas */}
+                            <Link
+                                href="/projects"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/projects') && !url.startsWith('/projects/create')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <FolderKanban
+                                    className={`size-5 ${
+                                        url.startsWith('/projects') && !url.startsWith('/projects/create')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Proyek</span>
+                            </Link>
+
+                            {/* 3. Workspace */}
+                            <Link
+                                href="/workspace"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/workspace')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Layers
+                                    className={`size-5 ${
+                                        url.startsWith('/workspace')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                            </Link>
+
+                            {/* 4. Leaderboard */}
+                            <Link
+                                href="/leaderboard?hub=project"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/leaderboard')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Trophy
+                                    className={`size-5 ${
+                                        url.startsWith('/leaderboard')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
+                            </Link>
+
+                            {/* 5. Buat Proyek */}
+                            <Link
+                                href="/projects/create"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/projects/create')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <PlusCircle
+                                    className={`size-5 ${
+                                        url.startsWith('/projects/create')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Buat</span>
+                            </Link>
+                        </>
+                    )}
+                </div>
+            </nav>
         </div>
     );
 }

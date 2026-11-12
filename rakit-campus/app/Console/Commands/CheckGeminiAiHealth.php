@@ -102,7 +102,7 @@ class CheckGeminiAiHealth extends Command
         }
 
         $this->newLine();
-        $this->info('★ Gemini AI agent integration is healthy and operational!');
+        $this->info('[OK] Gemini AI agent integration is healthy and operational!');
         return 0;
     }
 }

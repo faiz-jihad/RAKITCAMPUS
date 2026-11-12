@@ -1692,7 +1692,7 @@ class CompetitionWebController extends Controller
 
         try {
             $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban($participation, $user);
-            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI Gemini untuk tim Anda!");
+            return back()->with('success', "{$result['count']} tugas persiapan berhasil disusun otomatis oleh AI Gemini untuk tim Anda!");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
         }

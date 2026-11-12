@@ -16,6 +16,7 @@ import {
     GraduationCap,
     History,
     Lock,
+    PenLine,
     Phone,
     Plus,
     RefreshCw,
@@ -551,7 +552,7 @@ export default function CompetitionWorkspace({
                                 >
                                     <span className="size-1.5 rounded-full bg-amber-500" />
                                     <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
-                                    {(isLeader || isMentor || isAdmin) && <span className="text-[9px] text-amber-600 font-normal">✎</span>}
+                                    {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-amber-700 shrink-0" />}
                                 </button>
                                 {participation.category_track && (
                                     <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 truncate max-w-[260px]">
