@@ -110,6 +110,7 @@ export default function CompetitionWorkspace({
     const [dragOverCol, setDragOverCol] = useState<string | null>(null);
     const [inlineAddingCol, setInlineAddingCol] = useState<string | null>(null);
     const [inlineTitle, setInlineTitle] = useState('');
+    const [mobileKanbanCol, setMobileKanbanCol] = useState<'all' | 'todo' | 'in_progress' | 'in_review' | 'completed'>('all');
 
     const docForm = useForm({
         required_document_key: 'proposal',
@@ -151,7 +152,7 @@ export default function CompetitionWorkspace({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
         { title: participation.competition?.name || 'Kompetisi', href: `/competitions/${participation.competition?.slug || participation.competition?.id}` },
-        { title: `Workspace: ${participation.team?.name}`, href: `/competition-workspace/${participation.id}` },
+        { title: `Workspace: ${participation.team?.name}`, href: `/competition-workspace/${participation.competition?.slug || participation.id}` },
     ];
 
     // Handlers
@@ -216,7 +217,7 @@ export default function CompetitionWorkspace({
         if (!newRoleName.trim()) return;
 
         router.post(
-            `/competition-workspace/${participation.id}/roles`,
+            `/competition-workspace/${participation.competition?.slug || participation.id}/roles`,
             {
                 name: newRoleName.trim(),
                 slots: newRoleSlots,
@@ -235,7 +236,7 @@ export default function CompetitionWorkspace({
 
     const handleDeleteRecruitmentRole = (roleId: number) => {
         if (confirm('Hapus lowongan peran ini?')) {
-            router.delete(`/competition-workspace/${participation.id}/roles/${roleId}`);
+            router.delete(`/competition-workspace/${participation.competition?.slug || participation.id}/roles/${roleId}`);
         }
     };
 
@@ -438,6 +439,27 @@ export default function CompetitionWorkspace({
     const hasInvitations = participation.team?.invitations && participation.team.invitations.length > 0;
     const hasAllocations = teamAllocations.length > 0;
 
+    // Executive KPI stats calculation
+    const tasks = participation.team?.tasks || [];
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t: any) => t.status === 'completed').length;
+    const inProgressTasks = tasks.filter((t: any) => t.status === 'in_progress').length;
+    const reviewTasks = tasks.filter((t: any) => t.status === 'in_review').length;
+    const todoTasks = tasks.filter((t: any) => t.status === 'todo').length;
+    const taskPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+    const deadlineDate = participation.competition?.registration_deadline ? new Date(participation.competition.registration_deadline) : null;
+    const now = new Date();
+    const daysLeft = deadlineDate ? Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const formattedDeadline = deadlineDate
+        ? deadlineDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+        : 'Terbuka';
+
+    const membersCount = participation.team?.members?.length || 0;
+    const capacity = participation.team?.capacity || participation.competition?.max_team_size || 5;
+    const docs = participation.documents || [];
+    const totalDocs = docs.length;
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={`Workspace: ${participation.team?.name} — ${participation.competition?.name}`} />
@@ -477,6 +499,28 @@ export default function CompetitionWorkspace({
                                 <span>Portal Pendaftaran</span>
                                 <ExternalLink className="size-3 shrink-0" />
                             </a>
+                        )}
+
+                        {canManageTasks && (
+                            <button
+                                type="button"
+                                onClick={() => setTaskModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                            >
+                                <Plus className="size-3.5" />
+                                <span>Tambah Tugas</span>
+                            </button>
+                        )}
+
+                        {canManageTasks && (
+                            <button
+                                type="button"
+                                onClick={() => setDocModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                            >
+                                <Upload className="size-3.5 text-slate-500" />
+                                <span>Unggah Berkas</span>
+                            </button>
                         )}
 
                         {isMember && (
@@ -626,6 +670,112 @@ export default function CompetitionWorkspace({
                                 <span>{rounds.length} Babak Seleksi</span>
                             </span>
                         )}
+                    </div>
+                </div>
+
+                {/* 2.5 EXECUTIVE KPI COMMAND CENTER */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+                    {/* Card 1: Sprint & Tasks Progress */}
+                    <div
+                        onClick={() => setActiveTab('kanban')}
+                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-blue-400 hover:shadow-xs transition cursor-pointer group"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                <FolderKanban className="size-3.5 text-blue-600" />
+                                Sprint & Tugas Tim
+                            </span>
+                            <span className="text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                                Papan Tugas &rarr;
+                            </span>
+                        </div>
+                        <div className="flex items-baseline justify-between mb-2">
+                            <span className="text-2xl font-black text-slate-900">
+                                {completedTasks}/{totalTasks} <span className="text-xs font-semibold text-slate-500 font-sans">Selesai</span>
+                            </span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
+                                {taskPercentage}%
+                            </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+                            <div
+                                className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                                style={{ width: `${taskPercentage}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                            <span>{inProgressTasks} Sedang Dikerjakan</span>
+                            <span>{todoTasks} To Do</span>
+                        </div>
+                    </div>
+
+                    {/* Card 2: Timeline & Deadlines */}
+                    <div
+                        onClick={() => setActiveTab('rounds')}
+                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-amber-400 hover:shadow-xs transition cursor-pointer group"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                <Clock className="size-3.5 text-amber-600" />
+                                Target & Linimasa
+                            </span>
+                            <span className="text-xs font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
+                                Jadwal &rarr;
+                            </span>
+                        </div>
+                        <div className="flex items-baseline justify-between mb-2">
+                            <span className="text-2xl font-black text-slate-900">
+                                {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini') : 'Terbuka'}
+                                <span className="text-xs font-semibold text-slate-500 font-sans ml-1">
+                                    {daysLeft !== null && daysLeft > 0 ? 'Tersisa' : ''}
+                                </span>
+                            </span>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                daysLeft !== null && daysLeft <= 7 ? 'bg-rose-50 text-rose-700 border border-rose-200' : 'bg-amber-50 text-amber-800 border border-amber-200'
+                            }`}>
+                                {selectionStages[participation.stage]?.label || participation.stage}
+                            </span>
+                        </div>
+                        <div className="text-xs text-slate-700 font-semibold mb-1 truncate">
+                            Deadline: <span className="font-normal text-slate-500">{formattedDeadline}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                            {rounds.length > 0 ? `${rounds.length} babak seleksi terdata` : 'Format: ' + (participation.competition?.competition_type || 'Tim')}
+                        </div>
+                    </div>
+
+                    {/* Card 3: Formasi & Kesiapan Berkas */}
+                    <div
+                        onClick={() => setActiveTab('documents')}
+                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-emerald-400 hover:shadow-xs transition cursor-pointer group"
+                    >
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                                <FileText className="size-3.5 text-emerald-600" />
+                                Kesiapan & Berkas Tim
+                            </span>
+                            <span className="text-xs font-bold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
+                                Berkas &rarr;
+                            </span>
+                        </div>
+                        <div className="flex items-baseline justify-between mb-2">
+                            <span className="text-2xl font-black text-slate-900">
+                                {readinessScore}% <span className="text-xs font-semibold text-slate-500 font-sans">Siap</span>
+                            </span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700">
+                                {membersCount}/{capacity} Anggota
+                            </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
+                            <div
+                                className="h-full bg-emerald-600 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
+                            <span>{totalDocs} Berkas Terunggah</span>
+                            <span>{pendingAppsCount > 0 ? `${pendingAppsCount} Pelamar Baru` : 'Formasi Lengkap'}</span>
+                        </div>
                     </div>
                 </div>
 
@@ -1222,6 +1372,31 @@ export default function CompetitionWorkspace({
                             )}
                         </div>
 
+                        {/* Mobile Column Switcher (Zero horizontal scrollbar) */}
+                        <div className="flex lg:hidden items-center gap-1 overflow-x-auto no-scrollbar bg-slate-100 p-1 rounded-xl">
+                            {[
+                                { key: 'all', label: 'Semua', count: totalTasks },
+                                { key: 'todo', label: 'To Do', count: todoTasks },
+                                { key: 'in_progress', label: 'In Progress', count: inProgressTasks },
+                                { key: 'in_review', label: 'Review', count: reviewTasks },
+                                { key: 'completed', label: 'Selesai', count: completedTasks },
+                            ].map((mCol) => (
+                                <button
+                                    key={mCol.key}
+                                    type="button"
+                                    onClick={() => setMobileKanbanCol(mCol.key as any)}
+                                    className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg text-xs font-bold transition whitespace-nowrap text-center cursor-pointer ${
+                                        mobileKanbanCol === mCol.key
+                                            ? 'bg-white text-slate-900 shadow-2xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <span>{mCol.label}</span>
+                                    <span className="ml-1 text-[10px] text-slate-400">({mCol.count})</span>
+                                </button>
+                            ))}
+                        </div>
+
                         {/* 4-Column Board */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
                             {(
@@ -1235,6 +1410,7 @@ export default function CompetitionWorkspace({
                                 const colTasks = participation.team?.tasks?.filter((t: any) => t.status === col.key) || [];
                                 const isDragTarget = dragOverCol === col.key;
                                 const isAddingHere = inlineAddingCol === col.key;
+                                const isColVisibleOnMobile = mobileKanbanCol === 'all' || mobileKanbanCol === col.key;
 
                                 return (
                                     <div
@@ -1243,7 +1419,9 @@ export default function CompetitionWorkspace({
                                         onDragLeave={(e) => handleDragLeave(e, col.key)}
                                         onDrop={(e) => handleDrop(e, col.key)}
                                         style={{ minHeight: '300px' }}
-                                        className={`rounded-2xl p-2.5 flex flex-col gap-2.5 transition-all duration-150 ${
+                                        className={`rounded-2xl p-2.5 flex-col gap-2.5 transition-all duration-150 ${
+                                            isColVisibleOnMobile ? 'flex' : 'hidden lg:flex'
+                                        } ${
                                             isDragTarget
                                                 ? 'bg-blue-50/80 border-2 border-dashed border-blue-400'
                                                 : 'bg-slate-100/70 border border-slate-200/80'

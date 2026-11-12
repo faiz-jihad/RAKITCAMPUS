@@ -137,6 +137,8 @@ interface MyApplication {
     created_at?: string;
     team_name: string;
     competition_name: string;
+    competition_slug?: string;
+    competition?: any;
     organizer?: string;
     leader_name?: string;
     participation_id?: number;
@@ -441,18 +443,34 @@ export default function CompetitionIndex({
         <AppLayout activeTab="lomba" title="Competition Hub — RakitCampus">
             <div className="space-y-6 sm:space-y-8">
                 {/* 1. MINIMAL HEADER SECTION */}
-                <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80">
-                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                        Competition Hub
-                    </h1>
+                <header className="space-y-3 sm:space-y-4 pb-5 border-b border-slate-200/80">
+                    <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                                Competition Hub
+                            </h1>
+                            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/70">
+                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
+                                Katalog Lomba
+                            </span>
+                        </div>
 
-                    {/* Navigation Pills Bar */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        <nav className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/70 overflow-x-auto max-w-full">
+                        <Link
+                            href="/competitions/create"
+                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-xs transition shrink-0"
+                        >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Bikin Tim</span>
+                        </Link>
+                    </div>
+
+                    {/* Navigation Pills Bar (Mobile full-width swipeable, Desktop segmented) */}
+                    <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                        <nav className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/70 min-w-full sm:min-w-0">
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('explore')}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer text-center ${
                                     activeTab === 'explore'
                                         ? 'bg-white text-slate-900 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
@@ -463,7 +481,7 @@ export default function CompetitionIndex({
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('teams')}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer ${
                                     activeTab === 'teams'
                                         ? 'bg-white text-slate-900 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
@@ -479,7 +497,7 @@ export default function CompetitionIndex({
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('categories')}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer text-center ${
                                     activeTab === 'categories'
                                         ? 'bg-white text-slate-900 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
@@ -490,7 +508,7 @@ export default function CompetitionIndex({
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('my_competitions')}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap flex items-center justify-center gap-1.5 cursor-pointer ${
                                     activeTab === 'my_competitions'
                                         ? 'bg-white text-slate-900 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
@@ -504,7 +522,7 @@ export default function CompetitionIndex({
                             <button
                                 type="button"
                                 onClick={() => setActiveTab('recommendations')}
-                                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer ${
+                                className={`flex-1 sm:flex-none px-3.5 py-1.5 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer text-center ${
                                     activeTab === 'recommendations'
                                         ? 'bg-white text-slate-900 shadow-2xs'
                                         : 'text-slate-600 hover:text-slate-900'
@@ -513,14 +531,6 @@ export default function CompetitionIndex({
                                 Rekomendasi
                             </button>
                         </nav>
-
-                        <Link
-                            href="/competitions/create"
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition shrink-0"
-                        >
-                            <Plus className="w-3.5 h-3.5" />
-                            <span>Bikin Tim</span>
-                        </Link>
                     </div>
                 </header>
 
@@ -694,8 +704,8 @@ export default function CompetitionIndex({
                         )}
 
                         {/* SEARCH & FILTERS BAR */}
-                        <div id="catalog-section" className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center gap-2">
-                            <form onSubmit={handleExploreFilterSubmit} className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full">
+                        <div id="catalog-section" className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row items-stretch lg:items-center gap-2">
+                            <form onSubmit={handleExploreFilterSubmit} className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full border border-slate-200/60 focus-within:border-blue-500 focus-within:bg-white transition">
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
@@ -712,14 +722,14 @@ export default function CompetitionIndex({
                                 </button>
                             </form>
 
-                            <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto">
                                 <select
                                     value={exploreCategory}
                                     onChange={(e) => {
                                         setExploreCategory(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: e.target.value, level: exploreLevel, format: exploreFormat }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
                                     <option value="">Semua Kategori</option>
                                     {categories.map((c) => (
@@ -735,7 +745,7 @@ export default function CompetitionIndex({
                                         setExploreLevel(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: e.target.value, format: exploreFormat }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
                                     <option value="">Semua Tingkat</option>
                                     <option value="university">Kampus</option>
@@ -750,7 +760,7 @@ export default function CompetitionIndex({
                                         setExploreFormat(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: e.target.value, type: exploreType, status: exploreStatus, sort: exploreSort }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
                                     <option value="">Semua Format</option>
                                     <option value="Online">Online</option>
@@ -764,7 +774,7 @@ export default function CompetitionIndex({
                                         setExploreType(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: e.target.value, status: exploreStatus, sort: exploreSort }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
                                     <option value="">Semua Tipe</option>
                                     <option value="team">Tim</option>
@@ -777,11 +787,11 @@ export default function CompetitionIndex({
                                         setExploreStatus(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: exploreType, status: e.target.value, sort: exploreSort }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
                                     <option value="">Semua Status</option>
-                                    <option value="open">Pendaftaran Buka</option>
-                                    <option value="closing_soon">Segera Tutup (&le; 7 Hari)</option>
+                                    <option value="open">Buka</option>
+                                    <option value="closing_soon">Segera Tutup</option>
                                     <option value="closed">Ditutup</option>
                                 </select>
 
@@ -791,20 +801,20 @@ export default function CompetitionIndex({
                                         setExploreSort(e.target.value);
                                         router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: exploreType, status: exploreStatus, sort: e.target.value }, { preserveState: true });
                                     }}
-                                    className="px-3 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-blue-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-blue-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="deadline_asc">Urut: Deadline Terdekat</option>
-                                    <option value="deadline_desc">Urut: Deadline Terlama</option>
-                                    <option value="latest">Urut: Terbaru</option>
+                                    <option value="deadline_asc">Deadline Terdekat</option>
+                                    <option value="deadline_desc">Deadline Terlama</option>
+                                    <option value="latest">Terbaru</option>
                                 </select>
 
                                 {(exploreSearch || exploreCategory || exploreLevel || exploreFormat || exploreType || exploreStatus) && (
                                     <button
                                         type="button"
                                         onClick={handleResetExploreFilter}
-                                        className="px-2 py-1 text-xs font-semibold text-rose-600 hover:text-rose-700 cursor-pointer"
+                                        className="col-span-2 sm:col-span-1 lg:w-auto px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg text-center cursor-pointer transition"
                                     >
-                                        Reset
+                                        Reset Filter
                                     </button>
                                 )}
                             </div>
@@ -1383,7 +1393,7 @@ export default function CompetitionIndex({
 
                                                 {app.participation_id && app.status === 'accepted' && (
                                                     <Link
-                                                        href={`/competition-workspace/${app.participation_id}`}
+                                                        href={`/competition-workspace/${app.competition?.slug || app.participation_id}`}
                                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                                                     >
                                                         <span>Workspace Tim</span>
@@ -1684,7 +1694,7 @@ export default function CompetitionIndex({
                                                             )}
 
                                                             <Link
-                                                                href={`/competition-workspace/${part.id}`}
+                                                                href={`/competition-workspace/${comp?.slug || part.id}`}
                                                                 className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition flex-1 text-center"
                                                             >
                                                                 Workspace

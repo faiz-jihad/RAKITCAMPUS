@@ -594,7 +594,7 @@ export default function CompetitionShow({
                                                 <div className="flex items-center gap-2 shrink-0">
                                                     {myParticipation?.id === part.id ? (
                                                         <Link
-                                                            href={route('competitions.workspace', part.id)}
+                                                            href={route('competitions.workspace', competition?.slug || part.id)}
                                                             className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold"
                                                         >
                                                             Workspace Tim
@@ -684,7 +684,7 @@ export default function CompetitionShow({
 
                                                 {myParticipation?.id === part.id && (
                                                     <Link
-                                                        href={route('competitions.workspace', part.id)}
+                                                        href={route('competitions.workspace', competition?.slug || part.id)}
                                                         className="px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold shrink-0"
                                                     >
                                                         Masuk Workspace Tim

@@ -1009,14 +1009,15 @@ class CompetitionWebController extends Controller
         }
 
         if ($participation) {
-            return redirect()->route('competitions.workspace', $participation->id);
+            $slug = $participation->competition?->slug ?: $participation->id;
+            return redirect()->route('competitions.workspace', ['participationId' => $slug]);
         }
 
         return redirect()->route('competitions.index', ['tab' => 'my_competitions'])
             ->with('info', 'Anda belum terdaftar dalam tim kompetisi manapun. Daftarkan tim atau cari tim untuk membuka Workspace.');
     }
 
-    public function workspace(Request $request, string|int $participationId): Response
+    public function workspace(Request $request, string|int $participationId): Response|RedirectResponse
     {
         $user = $request->user();
 
@@ -1039,21 +1040,15 @@ class CompetitionWebController extends Controller
             'statusHistories.changer:id,name',
         ];
 
+        // If numeric ID was passed (e.g. /competition-workspace/5), redirect permanently to slug URL
         if (is_numeric($participationId)) {
             $participation = CompetitionParticipation::with($relations)->findOrFail((int) $participationId);
-        } else {
-            $competition = Competition::where('slug', $participationId)->first();
-            if ($competition) {
-                $participation = CompetitionParticipation::with($relations)
-                    ->where('competition_id', $competition->id)
-                    ->whereHas('team.members', fn ($q) => $q->where('user_id', $user->id))
-                    ->first()
-                    ?? CompetitionParticipation::with($relations)
-                        ->where('competition_id', $competition->id)
-                        ->firstOrFail();
-            } else {
-                $participation = CompetitionParticipation::with($relations)->findOrFail($participationId);
+            $slug = $participation->competition?->slug;
+            if ($slug) {
+                return redirect()->route('competitions.workspace', ['participationId' => $slug]);
             }
+        } else {
+            $participation = $this->resolveParticipation($participationId, $relations);
         }
 
         $team = $participation->team;
@@ -1165,10 +1160,45 @@ class CompetitionWebController extends Controller
         ]);
     }
 
-    public function updateStage(Request $request, int $participationId): RedirectResponse
+    public function resolveParticipation(int|string $identifier, array $relations = []): CompetitionParticipation
+    {
+        if (is_numeric($identifier)) {
+            return CompetitionParticipation::with($relations)->findOrFail((int) $identifier);
+        }
+
+        $teamId = null;
+        $slug = $identifier;
+        if (str_contains($identifier, '--')) {
+            [$slug, $teamPart] = explode('--', $identifier, 2);
+            if (is_numeric($teamPart)) {
+                $teamId = (int) $teamPart;
+            }
+        }
+
+        $competition = Competition::where('slug', $slug)->first();
+        if ($competition) {
+            $user = auth()->user();
+            $query = CompetitionParticipation::with($relations)->where('competition_id', $competition->id);
+
+            if ($teamId) {
+                $query->where('team_id', $teamId);
+            } elseif ($user) {
+                $userPart = (clone $query)->whereHas('team.members', fn ($q) => $q->where('user_id', $user->id))->first();
+                if ($userPart) {
+                    return $userPart;
+                }
+            }
+
+            return $query->first() ?? CompetitionParticipation::with($relations)->findOrFail($identifier);
+        }
+
+        return CompetitionParticipation::with($relations)->findOrFail($identifier);
+    }
+
+    public function updateStage(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
 
         $isLeader = $participation->team && $participation->team->isLeader($user);
         $isMentor = $participation->mentor_id === $user->id;
@@ -1238,10 +1268,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Tahapan kompetisi berhasil diperbarui ke '{$newStage}'.");
     }
 
-    public function lockFormation(Request $request, int $participationId): RedirectResponse
+    public function lockFormation(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         if (!$participation->team || !$participation->team->isLeader($user)) {
             abort(403, 'Hanya ketua tim yang dapat mengunci susunan tim kompetisi.');
@@ -1252,10 +1282,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Susunan tim kompetisi telah berhasil dikunci.');
     }
 
-    public function inviteCandidate(Request $request, int $participationId): RedirectResponse
+    public function inviteCandidate(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         if (!$participation->team || !$participation->team->isLeader($user)) {
             abort(403, 'Hanya ketua tim yang dapat menambahkan anggota ke tim kompetisi.');
@@ -1272,10 +1302,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Mahasiswa {$student->name} berhasil ditambahkan ke tim sebagai {$validated['role_name']}.");
     }
 
-    public function uploadDocument(Request $request, int $participationId): RedirectResponse
+    public function uploadDocument(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         if (!$participation->team || !$participation->team->hasMember($user)) {
             abort(403, 'Hanya anggota tim yang dapat mengunggah berkas persiapan.');
@@ -1334,9 +1364,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Dokumen '{$validated['name']}' versi " . ($lastVersion + 1) . ' berhasil diunggah.');
     }
 
-    public function reviewDocument(Request $request, int $participationId, int $docId): RedirectResponse
+    public function reviewDocument(Request $request, int|string $participationId, int $docId): RedirectResponse
     {
-        $document = CompetitionDocument::where('participation_id', $participationId)->findOrFail($docId);
+        $participation = $this->resolveParticipation($participationId);
+        $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:approved,revision_required,reviewed'],
@@ -1351,10 +1382,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Ulasan dokumen berhasil disimpan.');
     }
 
-    public function deleteDocument(Request $request, int $participationId, int $docId): RedirectResponse
+    public function deleteDocument(Request $request, int|string $participationId, int $docId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
         $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
 
         $isLeader = $participation->team && $participation->team->isLeader($user);
@@ -1382,10 +1413,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Berkas '{$docName}' berhasil dihapus.");
     }
 
-    public function replaceDocument(Request $request, int $participationId, int $docId): RedirectResponse
+    public function replaceDocument(Request $request, int|string $participationId, int $docId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
         $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
 
         $isLeader = $participation->team && $participation->team->isLeader($user);
@@ -1494,10 +1525,10 @@ class CompetitionWebController extends Controller
         }
     }
 
-    public function recordResult(Request $request, int $participationId): RedirectResponse
+    public function recordResult(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
 
         $isLeader = $participation->team && $participation->team->isLeader($user);
         $isMember = $participation->team && $participation->team->hasMember($user);
@@ -1544,10 +1575,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', $message);
     }
 
-    public function verifyResult(Request $request, int $participationId): RedirectResponse
+    public function verifyResult(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['result', 'team.members', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['result', 'team.members', 'competition']);
 
         if (!$user->isCampusAdminOf($participation->competition->campus_id) && !$user->isPlatformAdmin() && !$user->isLecturer()) {
             abort(403, 'Hanya dosen atau administrator yang dapat memverifikasi sertifikat prestasi.');
@@ -1597,9 +1628,9 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Prestasi kompetisi telah resmi diverifikasi dan diterbitkan ke portofolio mahasiswa.');
     }
 
-    public function assignMentor(Request $request, int $participationId): RedirectResponse
+    public function assignMentor(Request $request, int|string $participationId): RedirectResponse
     {
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         $validated = $request->validate([
             'lecturer_id' => ['required', 'exists:users,id'],
@@ -1624,10 +1655,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Dosen pembimbing {$lecturer->name} berhasil ditugaskan.");
     }
 
-    public function createTask(Request $request, int $participationId): RedirectResponse
+    public function createTask(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
 
         $isAuthorized = $participation->team && (
             $participation->team->hasMember($user) ||
@@ -1665,10 +1696,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Tugas '{$validated['title']}' berhasil ditambahkan ke Kanban tim.");
     }
 
-    public function updateTask(Request $request, int $participationId, int $taskId): RedirectResponse
+    public function updateTask(Request $request, int|string $participationId, int $taskId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         $isAuthorized = $participation->team && (
             $participation->team->hasMember($user) ||
@@ -1695,10 +1726,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
-    public function deleteTask(Request $request, int $participationId, int $taskId): RedirectResponse
+    public function deleteTask(Request $request, int|string $participationId, int $taskId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         $isAuthorized = $participation->team && (
             $participation->team->hasMember($user) ||
@@ -1718,10 +1749,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Tugas '{$taskTitle}' berhasil dihapus.");
     }
 
-    public function generateTasksWithAi(Request $request, int $participationId): RedirectResponse
+    public function generateTasksWithAi(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team.members', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team.members', 'competition']);
 
         $isAuthorized = $participation->team && (
             $participation->team->hasMember($user) ||
@@ -1814,10 +1845,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Tahapan kompetisi '{$round->name}' berhasil diperbarui.");
     }
 
-    public function sendTeamInvitation(Request $request, int $participationId): RedirectResponse
+    public function sendTeamInvitation(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         if (!$participation->team || !$participation->team->isLeader($user)) {
             abort(403, 'Hanya ketua tim yang dapat mengirim undangan anggota ke tim kompetisi.');
@@ -1933,10 +1964,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Rekomendasi alokasi tim berhasil ditolak.');
     }
 
-    public function approveFormation(Request $request, int $participationId): RedirectResponse
+    public function approveFormation(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['competition', 'team'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['competition', 'team']);
 
         if (!$user->isLecturer() && !$user->isPlatformAdmin() && !$user->isCampusAdminOf($participation->competition->campus_id)) {
             abort(403, 'Hanya dosen pembimbing atau administrator yang dapat menyetujui susunan tim.');
@@ -1947,10 +1978,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Susunan tim kompetisi telah resmi disetujui dan diverifikasi oleh dosen pembimbing.');
     }
 
-    public function submitDeliverable(Request $request, int $participationId): RedirectResponse
+    public function submitDeliverable(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -1973,10 +2004,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Berkas deliverable '{$doc->name}' versi {$doc->version} berhasil diunggah.");
     }
 
-    public function reviewDeliverable(Request $request, int $participationId, int $docId): RedirectResponse
+    public function reviewDeliverable(Request $request, int|string $participationId, int $docId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('competition')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['competition']);
         $document = CompetitionDocument::where('participation_id', $participation->id)->findOrFail($docId);
 
         $isMentor = $participation->mentor_id === $user->id || $participation->mentors()->where('user_id', $user->id)->exists();
@@ -1996,10 +2027,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Ulasan dan status berkas deliverable berhasil disimpan.');
     }
 
-    public function withdrawMember(Request $request, int $participationId, int $userId): RedirectResponse
+    public function withdrawMember(Request $request, int|string $participationId, int $userId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team.members')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team.members']);
         $team = $participation->team;
 
         if (!$team) {
@@ -2022,14 +2053,14 @@ class CompetitionWebController extends Controller
     }
 
     // MinSatu Flow: Student applies to an open recruiting team
-    public function applyTeam(Request $request, int $participationId): RedirectResponse
+    public function applyTeam(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
         if (!$user) {
             return redirect()->route('login');
         }
 
-        $participation = CompetitionParticipation::with(['team.members', 'team.recruitment.roles', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team.members', 'team.recruitment.roles', 'competition']);
         $team = $participation->team;
 
         if (!$team) {
@@ -2115,10 +2146,10 @@ class CompetitionWebController extends Controller
     }
 
     // MinSatu Flow: Team leader responds to applicant (Accept / Reject)
-    public function respondApplication(Request $request, int $participationId, int $applicationId): RedirectResponse
+    public function respondApplication(Request $request, int|string $participationId, int $applicationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team.members', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team.members', 'competition']);
         $team = $participation->team;
 
         if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
@@ -2167,10 +2198,10 @@ class CompetitionWebController extends Controller
     }
 
     // MinSatu Flow: Manage recruiting roles for competition team
-    public function storeRecruitmentRole(Request $request, int $participationId): RedirectResponse
+    public function storeRecruitmentRole(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team', 'competition']);
         $team = $participation->team;
 
         if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
@@ -2205,10 +2236,10 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Peran '{$validated['name']}' berhasil ditambahkan ke lowongan tim!");
     }
 
-    public function deleteRecruitmentRole(Request $request, int $participationId, int $roleId): RedirectResponse
+    public function deleteRecruitmentRole(Request $request, int|string $participationId, int $roleId): RedirectResponse
     {
         $user = $request->user();
-        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+        $participation = $this->resolveParticipation($participationId, ['team']);
         $team = $participation->team;
 
         if (!$team || (!$team->isLeader($user) && !$user->isPlatformAdmin())) {
