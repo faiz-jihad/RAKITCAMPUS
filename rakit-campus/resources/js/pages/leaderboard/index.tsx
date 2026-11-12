@@ -68,6 +68,14 @@ export default function LeaderboardIndex({
     const [rulesModalOpen, setRulesModalOpen] = useState(false);
 
     const handleSwitchHub = (hub: string) => {
+        try {
+            if (hub === 'competition' || hub === 'project') {
+                localStorage.setItem('rakit_active_hub', hub);
+                sessionStorage.setItem('rakit_hub_chosen', hub);
+            }
+        } catch {
+            // ignore
+        }
         router.get(
             '/leaderboard',
             { hub, period: activePeriod },

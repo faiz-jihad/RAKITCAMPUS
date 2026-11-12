@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     ArrowLeftRight,
     Award,
@@ -54,10 +54,92 @@ export default function AppLayout({
 
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
-    // Determine current Hub mode strictly
-    const isCompetitionHub = useMemo(() => {
-        return url.startsWith('/competitions') || url.startsWith('/competition-workspace');
+    // Persistent & route-aware active hub state (defaults to 'competition' to protect user flow)
+    const [activeHub, setActiveHub] = useState<'competition' | 'project'>(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const hubParam = params.get('hub');
+            if (hubParam === 'competition') return 'competition';
+            if (hubParam === 'project') return 'project';
+
+            const pathname = window.location.pathname;
+            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+                return 'competition';
+            }
+            if (
+                pathname.startsWith('/projects') ||
+                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
+            ) {
+                return 'project';
+            }
+
+            try {
+                const saved = localStorage.getItem('rakit_active_hub');
+                if (saved === 'competition' || saved === 'project') {
+                    return saved;
+                }
+            } catch {
+                // ignore
+            }
+        }
+        return 'competition';
+    });
+
+    // Synchronize hub state and prevent accidental jumping to project hub
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            const hubParam = params.get('hub');
+            const pathname = window.location.pathname;
+
+            let detectedHub: 'competition' | 'project' | null = null;
+
+            if (hubParam === 'competition') {
+                detectedHub = 'competition';
+            } else if (hubParam === 'project') {
+                detectedHub = 'project';
+            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+                detectedHub = 'competition';
+            } else if (
+                pathname.startsWith('/projects') ||
+                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
+            ) {
+                detectedHub = 'project';
+            } else if (pathname === '/dashboard') {
+                const saved = localStorage.getItem('rakit_active_hub');
+                // If user was in competition hub, prevent sudden jump to project dashboard from system redirects
+                if (saved === 'competition' && !params.has('hub')) {
+                    router.get('/competitions');
+                    return;
+                } else {
+                    detectedHub = 'project';
+                }
+            }
+
+            if (detectedHub) {
+                setActiveHub(detectedHub);
+                try {
+                    localStorage.setItem('rakit_active_hub', detectedHub);
+                    sessionStorage.setItem('rakit_hub_chosen', detectedHub);
+                } catch {
+                    // ignore
+                }
+            } else {
+                // On neutral pages (/notifications, /settings/*, /terms, /privacy, /leaderboard overall),
+                // maintain currently saved active hub so the user never loses their hub context
+                try {
+                    const saved = localStorage.getItem('rakit_active_hub') as 'competition' | 'project' | null;
+                    if (saved && (saved === 'competition' || saved === 'project')) {
+                        setActiveHub(saved);
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+        }
     }, [url]);
+
+    const isCompetitionHub = activeHub === 'competition';
 
     // Check login or initial session trigger
     useEffect(() => {
@@ -73,8 +155,8 @@ export default function AppLayout({
                 return;
             }
 
-            // Fresh login or new browser session trigger when landing on root/dashboard
-            if (user && !sessionStorage.getItem('rakit_hub_chosen')) {
+            // Fresh login trigger only when no hub has EVER been chosen
+            if (user && !sessionStorage.getItem('rakit_hub_chosen') && !localStorage.getItem('rakit_active_hub')) {
                 if (url === '/dashboard' || url === '/') {
                     setIsGatewayOpen(true);
                 }
@@ -270,7 +352,10 @@ export default function AppLayout({
                 <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
                     {/* Brand Logo & Active Hub Pill */}
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                        <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 group shrink-0">
+                        <Link
+                            href={isCompetitionHub ? '/competitions' : '/dashboard'}
+                            className="flex items-center gap-1.5 sm:gap-2 group shrink-0"
+                        >
                             <img
                                 src="/images/rakit-mark.png"
                                 alt="RAKIT"

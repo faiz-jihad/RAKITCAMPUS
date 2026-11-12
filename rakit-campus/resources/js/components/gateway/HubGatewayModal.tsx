@@ -43,6 +43,7 @@ export default function HubGatewayModal({
 
         try {
             sessionStorage.setItem('rakit_hub_chosen', 'competition');
+            localStorage.setItem('rakit_active_hub', 'competition');
         } catch {
             // Ignore storage errors in private mode
         }
@@ -54,6 +55,7 @@ export default function HubGatewayModal({
     const handleSelectMandiri = () => {
         try {
             sessionStorage.setItem('rakit_hub_chosen', 'project');
+            localStorage.setItem('rakit_active_hub', 'project');
         } catch {
             // Ignore storage errors in private mode
         }
@@ -80,6 +82,7 @@ export default function HubGatewayModal({
                 onSuccess: () => {
                     try {
                         sessionStorage.setItem('rakit_hub_chosen', 'project');
+                        localStorage.setItem('rakit_active_hub', 'project');
                     } catch {
                         // ignore
                     }
