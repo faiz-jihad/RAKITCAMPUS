@@ -137,14 +137,10 @@ export default function MatchingIndex({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <SeoHead
-                title="Smart Matchmaking Tim Mahasiswa & Rekomendasi Partner — RAKIT Campus"
+                title="Smart Matchmaking Tim Mahasiswa & Rekomendasi Partner"
                 description="Temukan partner proyek dan rekan lomba yang tepat dengan algoritma AI Smart Matchmaking berdasarkan keahlian komplementer dan minat akademik."
                 keywords="cari teman tim, matchmaking mahasiswa, partner hackathon, kolaborasi tim, rakit campus"
                 canonicalUrl="https://rakitcampus.my.id/matching"
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Matchmaking', url: '/matching' },
-                ]}
             />
 
             {/* Main container */}

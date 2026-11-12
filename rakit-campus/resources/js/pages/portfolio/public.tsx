@@ -83,26 +83,6 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
     const headline = profile?.headline || 'Mahasiswa & Inovator Kampus';
     const canonicalUrl = `https://rakitcampus.my.id/p/${encodeURIComponent(profile.slug)}`;
 
-    const personJsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'ProfilePage',
-        mainEntity: {
-            '@type': 'Person',
-            name: userName,
-            description: profile?.bio || headline,
-            image: profile?.user?.avatar || 'https://rakitcampus.my.id/favicon.png',
-            jobTitle: headline,
-            affiliation: profile?.campus?.name
-                ? {
-                      '@type': 'EducationalOrganization',
-                      name: profile.campus.name,
-                  }
-                : undefined,
-            sameAs: [profile?.linkedin_url, profile?.github_url, profile?.website_url].filter(Boolean),
-            knowsAbout: profile?.skills?.map((s) => s.name) || [],
-        },
-    };
-
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased selection:bg-blue-600 selection:text-white">
             <SeoHead
@@ -111,12 +91,6 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
                 keywords={`portofolio ${userName}, prestasi mahasiswa, rekam jejak ${userName}, ${profile?.campus?.name || ''}, rakit campus`}
                 canonicalUrl={canonicalUrl}
                 ogType="profile"
-                jsonLd={personJsonLd}
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Portofolio Mahasiswa', url: '/p/' + profile.slug },
-                    { name: userName, url: canonicalUrl },
-                ]}
             />
 
             {/* Public Header */}

@@ -444,14 +444,10 @@ export default function CompetitionIndex({
     return (
         <AppLayout activeTab="lomba" title="Competition Hub — RakitCampus">
             <SeoHead
-                title="Eksplor Lomba & Hackathon Mahasiswa Nasional & Internasional — RAKIT Campus"
+                title="Eksplor Lomba & Hackathon Mahasiswa Nasional & Internasional"
                 description="Katalog kompetisi mahasiswa terkurasi: Hackathon, Business Plan, UI/UX, Olimpiade & Riset. Cari tim, daftar lomba, dan catat prestasi kampus."
                 keywords="lomba mahasiswa, kompetisi mahasiswa, hackathon indonesia 2026, cari tim lomba, business plan competition, ui ux design, rakit campus"
                 canonicalUrl="https://rakitcampus.my.id/competitions"
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Kompetisi', url: '/competitions' },
-                ]}
             />
             <div className="space-y-6 sm:space-y-8">
                 {/* 1. MINIMAL HEADER SECTION */}

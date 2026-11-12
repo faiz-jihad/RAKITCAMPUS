@@ -322,23 +322,6 @@ export default function ProjectShow({
         .trim()
         .slice(0, 180) || `Eksplor proyek mahasiswa ${project.title} kategori ${project.category || 'Teknologi'} di RAKIT Campus.`;
 
-    const projectJsonLd = {
-        '@context': 'https://schema.org',
-        '@type': 'CreativeWork',
-        '@id': `${canonicalUrl}#work`,
-        name: project.title,
-        headline: project.title,
-        description: cleanDesc,
-        url: canonicalUrl,
-        image: project.cover_image || 'https://rakitcampus.my.id/favicon.png',
-        dateCreated: project.created_at || undefined,
-        keywords: Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : undefined,
-        author: {
-            '@type': 'Person',
-            name: project.leader?.name || 'Mahasiswa RAKIT Campus',
-        },
-    };
-
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <SeoHead
@@ -348,12 +331,6 @@ export default function ProjectShow({
                 canonicalUrl={canonicalUrl}
                 ogImage={project.cover_image || undefined}
                 ogType="article"
-                jsonLd={projectJsonLd}
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Proyek', url: '/projects' },
-                    { name: project.title, url: `/projects/${project.slug || project.id}` },
-                ]}
             />
 
             <div className="space-y-6">

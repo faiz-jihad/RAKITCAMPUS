@@ -136,14 +136,10 @@ export default function LeaderboardIndex({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <SeoHead
-                title="Klasemen & Peringkat Mahasiswa Berprestasi Nasional — RAKIT Campus"
+                title="Klasemen & Peringkat Mahasiswa Berprestasi Nasional"
                 description="Papan peringkat mahasiswa berprestasi, kontributor proyek teraktif, dan tim juara kompetisi kampus terverifikasi di seluruh Indonesia."
                 keywords="peringkat mahasiswa, klasemen kampus, mahasiswa berprestasi, juara lomba, leaderboard rakit campus"
                 canonicalUrl="https://rakitcampus.my.id/leaderboard"
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Leaderboard', url: '/leaderboard' },
-                ]}
             />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-20">

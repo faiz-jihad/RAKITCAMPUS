@@ -147,14 +147,10 @@ export default function ProjectIndex({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <SeoHead
-                title="Katalog Proyek & Portofolio Karya Mahasiswa — RAKIT Campus"
+                title="Katalog Proyek & Portofolio Karya Mahasiswa"
                 description="Jelajahi inovasi proyek mahasiswa, prototipe open-source, riset akademik, dan living proposal tugas akhir perguruan tinggi di RAKIT Campus."
                 keywords="proyek mahasiswa, portofolio teknologi, living proposal, tugas akhir inovatif, riset kampus, kolaborasi proyek, rakit campus"
                 canonicalUrl="https://rakitcampus.my.id/projects"
-                breadcrumbs={[
-                    { name: 'Beranda', url: '/' },
-                    { name: 'Proyek', url: '/projects' },
-                ]}
             />
 
             <div className="space-y-6">
