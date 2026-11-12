@@ -327,17 +327,7 @@ export default function NotificationsIndex({
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                        {pushStatus === 'granted' ? (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleTestNotification}
-                                className="text-xs font-semibold rounded-xl border-slate-300 hover:bg-blue-50 hover:text-blue-600"
-                            >
-                                <Volume2 className="size-3.5 mr-1" />
-                                <span>Uji Suara & Notifikasi</span>
-                            </Button>
-                        ) : (
+                        {pushStatus !== 'granted' && (
                             <Button
                                 onClick={handleEnablePush}
                                 size="sm"

@@ -15,6 +15,7 @@ import {
     FolderKanban,
     Globe,
     GraduationCap,
+    HardDrive,
     History,
     Lock,
     PenLine,
@@ -55,6 +56,15 @@ interface Props {
     isMember: boolean;
     isMentor: boolean;
     isAdmin: boolean;
+    storageQuota?: {
+        used_bytes: number;
+        used_mb: number;
+        max_bytes: number;
+        max_mb: number;
+        remaining_bytes: number;
+        remaining_mb: number;
+        percent_used: number;
+    };
 }
 
 export default function CompetitionWorkspace({
@@ -71,6 +81,7 @@ export default function CompetitionWorkspace({
     isMember,
     isMentor,
     isAdmin,
+    storageQuota,
 }: Props) {
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'documents' | 'rounds' | 'mentoring' | 'results' | 'history'>('overview');
@@ -1610,6 +1621,43 @@ export default function CompetitionWorkspace({
                                 )}
                             </div>
 
+                            {/* Object Storage Quota Widget */}
+                            {storageQuota && (
+                                <div className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                            <HardDrive className="size-4" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-xs font-bold text-slate-900">
+                                                    Kapasitas Object Storage Tim
+                                                </h4>
+                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                                                    Batas 70 MB / Tim
+                                                </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                                Terpakai <strong className="text-slate-800">{storageQuota.used_mb} MB</strong> dari batas <strong className="text-slate-800">{storageQuota.max_mb} MB</strong> ({storageQuota.percent_used}% terpakai, sisa {storageQuota.remaining_mb} MB)
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="w-full sm:w-48 flex items-center gap-2.5">
+                                        <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                                            <div
+                                                className={`h-2 rounded-full transition-all duration-500 ${
+                                                    storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
+                                                }`}
+                                                style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-[11px] font-mono font-bold text-slate-700 shrink-0">
+                                            {storageQuota.percent_used}%
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Standard Templates Checklist */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                                 {deliverableTemplates.map((tpl) => {
@@ -2299,7 +2347,7 @@ export default function CompetitionWorkspace({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Unggah Berkas (PDF / ZIP / Gambar)</label>
+                                <label className="block text-xs font-bold text-slate-800 mb-1">Unggah Berkas (PDF / ZIP / Gambar - Maks 70MB per tim)</label>
                                 <input
                                     type="file"
                                     onChange={(e) => docForm.setData('file', e.target.files?.[0] || null)}
@@ -2410,7 +2458,7 @@ export default function CompetitionWorkspace({
 
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Pilih Berkas Pengganti Baru (Maks 20MB)
+                                    Pilih Berkas Pengganti Baru (Maks 70MB, kuota tim 70MB)
                                 </label>
                                 <input
                                     type="file"

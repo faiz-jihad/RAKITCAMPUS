@@ -12,6 +12,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
+    Award,
     Bell,
     Bookmark,
     Briefcase,
@@ -19,6 +20,7 @@ import {
     CheckCircle2,
     Clock,
     ExternalLink,
+    FileText,
     FolderKanban,
     GraduationCap,
     Plus,
@@ -324,278 +326,255 @@ export default function CompetitionShow({
                         )}
                     </div>
 
-                    {/* Bento Grid Header Layout (Requested .parent, .div1, .div2, .div3) */}
-                    <style>{`
-                        @media (min-width: 1024px) {
-                            .bento-competition-parent {
-                                display: grid;
-                                grid-template-columns: repeat(5, 1fr);
-                                grid-template-rows: repeat(5, 1fr);
-                                gap: 8px;
-                            }
-                            .bento-competition-div1 {
-                                grid-column: span 2 / span 2;
-                                grid-row: span 5 / span 5;
-                            }
-                            .bento-competition-div2 {
-                                grid-column: span 3 / span 3;
-                                grid-row: span 3 / span 3;
-                                grid-column-start: 3;
-                            }
-                            .bento-competition-div3 {
-                                grid-column: span 3 / span 3;
-                                grid-row: span 2 / span 2;
-                                grid-column-start: 3;
-                                grid-row-start: 4;
-                            }
-                        }
-                    `}</style>
+                    {/* Clean Hero Layout: 4:5 Poster Artwork on Left, Comprehensive Competition Info on Right */}
+                    <div className="bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-7 shadow-xs">
+                        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
+                            {/* Left Column: 4:5 Poster Aspect Ratio with badges */}
+                            <div className="w-full lg:w-80 shrink-0">
+                                <div className="relative rounded-2xl overflow-hidden bg-slate-950 aspect-[4/5] border border-slate-200/80 shadow-xs flex flex-col justify-between p-4 group">
+                                    <img
+                                        src={getCompetitionCover(competition)}
+                                        alt={competition.name}
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-black/20" />
 
-                    <div className="flex flex-col gap-2.5 bento-competition-parent lg:min-h-[460px]">
-                        {/* .div1: span 2 / span 5 — 4:5 Poster Aspect Ratio */}
-                        <div className="bento-competition-div1 relative rounded-2xl overflow-hidden bg-slate-950 aspect-[4/5] sm:aspect-auto min-h-[320px] lg:min-h-0 border border-slate-200/80 shadow-xs flex flex-col justify-between p-4 sm:p-5 group">
-                            <img
-                                src={getCompetitionCover(competition)}
-                                alt={competition.name}
-                                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-black/30" />
-
-                            {/* Floating top badges */}
-                            <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                    <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-600/95 backdrop-blur-md text-white shadow-xs">
-                                        {competition.category?.replace('_', ' ') || 'Umum'}
-                                    </span>
-                                    {competition.level && (
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white border border-white/10">
-                                            {competition.level}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={toggleBookmark}
-                                    className={`p-2 rounded-full backdrop-blur-md transition cursor-pointer ${
-                                        bookmarked
-                                            ? 'bg-rose-500 text-white shadow-xs'
-                                            : 'bg-black/30 hover:bg-black/50 text-white'
-                                    }`}
-                                    title={bookmarked ? 'Hapus Simpanan' : 'Simpan Kompetisi'}
-                                >
-                                    <Bookmark className={`size-3.5 ${bookmarked ? 'fill-current' : ''}`} />
-                                </button>
-                            </div>
-
-                            {/* Floating bottom content */}
-                            <div className="relative z-10 space-y-2">
-                                <div className="flex items-center gap-2">
-                                    {competition.verification_status === 'verified' ? (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600/90 backdrop-blur-md px-2.5 py-0.5 rounded-md">
-                                            <ShieldCheck className="size-3" />
-                                            <span>Terverifikasi Resmi</span>
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-amber-600/90 backdrop-blur-md px-2.5 py-0.5 rounded-md">
-                                            <Clock className="size-3" />
-                                            <span>Menunggu Verifikasi</span>
-                                        </span>
-                                    )}
-
-                                    {daysLeft !== null && (
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md ${
-                                            daysLeft <= 7
-                                                ? 'bg-rose-500/95 text-white'
-                                                : 'bg-black/50 text-white'
-                                        }`}>
-                                            {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <span className="text-[11px] font-medium text-slate-300 block truncate">
-                                        Penyelenggara: <strong className="text-white font-semibold">{competition.organizer}</strong>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* .div2: span 3 / span 3 / col-start 3 */}
-                        <div className="bento-competition-div2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
-                            <div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                        {competition.organizer}
-                                    </span>
-                                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
-                                        Format: {competition.competition_type || 'Tim'}
-                                    </span>
-                                </div>
-                                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug mt-1">
-                                    {competition.name}
-                                </h1>
-                                <p className="text-xs sm:text-sm text-slate-600 line-clamp-3 leading-relaxed mt-2">
-                                    {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
-                                </p>
-
-                                {categoryTracks.length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                                        <span className="text-[10px] font-bold text-slate-400">Jalur:</span>
-                                        {categoryTracks.slice(0, 5).map((trk, i) => (
-                                            <span
-                                                key={i}
-                                                className="text-[10px] font-semibold px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md"
-                                            >
-                                                {trk}
+                                    {/* Top badges */}
+                                    <div className="relative z-10 flex flex-wrap items-center justify-between gap-2">
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-600/95 backdrop-blur-md text-white shadow-xs">
+                                                {competition.category?.replace('_', ' ') || 'Umum'}
                                             </span>
-                                        ))}
-                                        {categoryTracks.length > 5 && (
-                                            <span className="text-[10px] font-semibold text-slate-400">+{categoryTracks.length - 5} lainnya</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* CTA Action Row */}
-                            <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-                                <div className="flex items-center gap-2">
-                                    {competition.official_url && (
-                                        <a
-                                            href={competition.official_url}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition"
-                                        >
-                                            <span>Website Resmi</span>
-                                            <ExternalLink className="size-3 text-slate-400" />
-                                        </a>
-                                    )}
-
-                                    {isLecturer && (
-                                        <button
-                                            onClick={() => setIsAllocateModalOpen(true)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition cursor-pointer"
-                                        >
-                                            <GraduationCap className="size-3.5" />
-                                            <span>Alokasikan Mahasiswa</span>
-                                        </button>
-                                    )}
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    {myParticipation ? (
-                                        <>
-                                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
-                                                myParticipation.lifecycle_status === 'completed'
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : 'bg-blue-50 text-blue-700 border-blue-200'
-                                            }`}>
-                                                {myParticipation.stage_label || myParticipation.stage}
-                                            </span>
-                                            <Link
-                                                href={`/competition-workspace/${competition.slug || competition.id}`}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
-                                            >
-                                                <FolderKanban className="size-3.5" />
-                                                <span>Workspace Tim</span>
-                                            </Link>
-                                            <button
-                                                type="button"
-                                                onClick={() => setStageModalOpen(true)}
-                                                className="px-2.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer"
-                                            >
-                                                Update Tahap
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={() => setResultModalOpen(true)}
-                                                className="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                                            >
-                                                Catat Prestasi
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {competition.registration_url && (
-                                                <a
-                                                    href={competition.registration_url}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-xs font-semibold shadow-2xs transition"
-                                                >
-                                                    <span>Daftar di Penyelenggara</span>
-                                                    <ExternalLink className="size-3" />
-                                                </a>
+                                            {competition.level && (
+                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white border border-white/10">
+                                                    {competition.level}
+                                                </span>
                                             )}
-                                            <button
-                                                onClick={() => setTrackModalOpen(true)}
-                                                className="inline-flex items-center gap-1.5 px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                                            >
-                                                <Trophy className="size-3.5" />
-                                                <span>Ikuti di Lomba Saya</span>
-                                            </button>
-                                        </>
-                                    )}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={toggleBookmark}
+                                            className={`p-2 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                                bookmarked
+                                                    ? 'bg-rose-500 text-white shadow-xs'
+                                                    : 'bg-black/30 hover:bg-black/50 text-white'
+                                            }`}
+                                            title={bookmarked ? 'Hapus Simpanan' : 'Simpan Kompetisi'}
+                                        >
+                                            <Bookmark className={`size-3.5 ${bookmarked ? 'fill-current' : ''}`} />
+                                        </button>
+                                    </div>
+
+                                    {/* Bottom Info on Poster */}
+                                    <div className="relative z-10 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            {competition.verification_status === 'verified' ? (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-emerald-600/90 backdrop-blur-md px-2.5 py-0.5 rounded-md">
+                                                    <ShieldCheck className="size-3" />
+                                                    <span>Terverifikasi Resmi</span>
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-white bg-amber-600/90 backdrop-blur-md px-2.5 py-0.5 rounded-md">
+                                                    <Clock className="size-3" />
+                                                    <span>Menunggu Verifikasi</span>
+                                                </span>
+                                            )}
+
+                                            {daysLeft !== null && (
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md backdrop-blur-md ${
+                                                    daysLeft <= 7
+                                                        ? 'bg-rose-500/95 text-white'
+                                                        : 'bg-black/50 text-white'
+                                                }`}>
+                                                    {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini'}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <p className="text-[11px] text-slate-300 truncate">
+                                            Penyelenggara: <strong className="text-white font-semibold">{competition.organizer}</strong>
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        {/* .div3: span 3 / span 2 / col-start 3 / row-start 4 */}
-                        <div className="bento-competition-div3 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-center">
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
-                                {/* Stat 1: Deadline */}
-                                <div className="flex items-center gap-3 sm:pr-3">
-                                    <div className="size-9 rounded-xl bg-amber-50 border border-amber-200/60 flex items-center justify-center text-amber-600 shrink-0">
-                                        <Calendar className="size-4" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] text-slate-400 font-medium block">Batas Pendaftaran</span>
-                                        <span className="text-xs font-bold text-slate-900 block truncate">
-                                            {competition.registration_deadline
-                                                ? new Date(competition.registration_deadline).toLocaleDateString('id-ID', {
-                                                      day: 'numeric',
-                                                      month: 'short',
-                                                      year: 'numeric',
-                                                  })
-                                                : 'Terbuka'}
+                            {/* Right Column: Title, Tracks, Summary, 3-Card Metrics, & Action Bar */}
+                            <div className="flex-1 min-w-0 flex flex-col justify-between gap-5 self-stretch">
+                                <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <span className="text-xs font-bold text-blue-600 tracking-wide uppercase">
+                                            {competition.organizer}
                                         </span>
-                                        <span className="text-[10px] text-amber-700 font-semibold block">
-                                            {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini') : 'Jadwal terbuka'}
-                                        </span>
-                                    </div>
-                                </div>
-
-                                {/* Stat 2: Team Size */}
-                                <div className="flex items-center gap-3 pt-2 sm:pt-0 sm:px-3">
-                                    <div className="size-9 rounded-xl bg-blue-50 border border-blue-200/60 flex items-center justify-center text-blue-600 shrink-0">
-                                        <Users className="size-4" />
-                                    </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] text-slate-400 font-medium block">Ukuran Tim</span>
-                                        <span className="text-xs font-bold text-slate-900 block truncate">
-                                            {competition.min_team_size} - {competition.max_team_size} Mahasiswa
-                                        </span>
-                                        <span className="text-[10px] text-blue-700 font-semibold block">
+                                        <span className="text-slate-300">·</span>
+                                        <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">
                                             Format: {competition.competition_type || 'Tim'}
                                         </span>
                                     </div>
+
+                                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                                        {competition.name}
+                                    </h1>
+
+                                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed max-w-3xl">
+                                        {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional.'}
+                                    </p>
+
+                                    {categoryTracks.length > 0 && (
+                                        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                                            <span className="text-[11px] font-bold text-slate-400">Jalur Lomba:</span>
+                                            {categoryTracks.slice(0, 5).map((trk, i) => (
+                                                <span
+                                                    key={i}
+                                                    className="text-[11px] font-semibold px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200/60 rounded-md"
+                                                >
+                                                    {trk}
+                                                </span>
+                                            ))}
+                                            {categoryTracks.length > 5 && (
+                                                <span className="text-[11px] font-semibold text-slate-400">+{categoryTracks.length - 5} lainnya</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
-                                {/* Stat 3: Prize */}
-                                <div className="flex items-center gap-3 pt-2 sm:pt-0 sm:pl-3">
-                                    <div className="size-9 rounded-xl bg-purple-50 border border-purple-200/60 flex items-center justify-center text-purple-600 shrink-0">
-                                        <Trophy className="size-4" />
+                                {/* Clean 3-Metric Stats Bar */}
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
+                                    {/* Stat 1: Deadline */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-9 rounded-xl bg-amber-500/10 border border-amber-300/40 flex items-center justify-center text-amber-600 shrink-0">
+                                            <Calendar className="size-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-400 font-medium block">Batas Pendaftaran</span>
+                                            <span className="text-xs font-bold text-slate-900 block truncate">
+                                                {competition.registration_deadline
+                                                    ? new Date(competition.registration_deadline).toLocaleDateString('id-ID', {
+                                                          day: 'numeric',
+                                                          month: 'short',
+                                                          year: 'numeric',
+                                                      })
+                                                    : 'Terbuka'}
+                                            </span>
+                                            <span className="text-[10px] text-amber-700 font-semibold block">
+                                                {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini') : 'Jadwal terbuka'}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className="min-w-0">
-                                        <span className="text-[10px] text-slate-400 font-medium block">Hadiah & Prestasi</span>
-                                        <span className="text-xs font-bold text-slate-900 block truncate" title={competition.prize_info}>
-                                            {competition.prize_info || 'Sertifikat & Apresiasi'}
-                                        </span>
-                                        <span className="text-[10px] text-purple-700 font-semibold block">
-                                            Tercatat Portofolio
-                                        </span>
+
+                                    {/* Stat 2: Team Size */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-9 rounded-xl bg-blue-500/10 border border-blue-300/40 flex items-center justify-center text-blue-600 shrink-0">
+                                            <Users className="size-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-400 font-medium block">Ukuran Tim</span>
+                                            <span className="text-xs font-bold text-slate-900 block truncate">
+                                                {competition.min_team_size} - {competition.max_team_size} Mahasiswa
+                                            </span>
+                                            <span className="text-[10px] text-blue-700 font-semibold block">
+                                                Format: {competition.competition_type || 'Tim'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {/* Stat 3: Prize */}
+                                    <div className="flex items-center gap-3">
+                                        <div className="size-9 rounded-xl bg-purple-500/10 border border-purple-300/40 flex items-center justify-center text-purple-600 shrink-0">
+                                            <Trophy className="size-4" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <span className="text-[10px] text-slate-400 font-medium block">Hadiah & Prestasi</span>
+                                            <span className="text-xs font-bold text-slate-900 block truncate" title={competition.prize_info}>
+                                                {competition.prize_info || 'Sertifikat & Apresiasi'}
+                                            </span>
+                                            <span className="text-[10px] text-purple-700 font-semibold block">
+                                                Tercatat Portofolio
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* CTA Action Row */}
+                                <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        {competition.official_url && (
+                                            <a
+                                                href={competition.official_url}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition"
+                                            >
+                                                <span>Website Resmi</span>
+                                                <ExternalLink className="size-3 text-slate-400" />
+                                            </a>
+                                        )}
+
+                                        {isLecturer && (
+                                            <button
+                                                onClick={() => setIsAllocateModalOpen(true)}
+                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition cursor-pointer"
+                                            >
+                                                <GraduationCap className="size-3.5" />
+                                                <span>Alokasikan Mahasiswa</span>
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5">
+                                        {myParticipation ? (
+                                            <>
+                                                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border ${
+                                                    myParticipation.lifecycle_status === 'completed'
+                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                }`}>
+                                                    {myParticipation.stage_label || myParticipation.stage}
+                                                </span>
+                                                <Link
+                                                    href={`/competition-workspace/${competition.slug || competition.id}`}
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition"
+                                                >
+                                                    <FolderKanban className="size-3.5" />
+                                                    <span>Workspace Tim</span>
+                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStageModalOpen(true)}
+                                                    className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                                >
+                                                    Update Tahap
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setResultModalOpen(true)}
+                                                    className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+                                                >
+                                                    Catat Prestasi
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                {competition.registration_url && (
+                                                    <a
+                                                        href={competition.registration_url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-blue-200 text-blue-700 hover:bg-blue-50 rounded-xl text-xs font-semibold shadow-2xs transition"
+                                                    >
+                                                        <span>Daftar di Penyelenggara</span>
+                                                        <ExternalLink className="size-3" />
+                                                    </a>
+                                                )}
+                                                <button
+                                                    onClick={() => setTrackModalOpen(true)}
+                                                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
+                                                >
+                                                    <Trophy className="size-4" />
+                                                    <span>Ikuti di Lomba Saya</span>
+                                                </button>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

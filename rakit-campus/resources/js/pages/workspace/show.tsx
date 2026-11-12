@@ -15,6 +15,7 @@ import {
     Filter,
     FolderKanban,
     GraduationCap,
+    HardDrive,
     Kanban,
     LayoutGrid,
     List,
@@ -47,6 +48,15 @@ interface Props {
     isLecturer: boolean;
     isFull: boolean;
     project?: any;
+    storageQuota?: {
+        used_bytes: number;
+        used_mb: number;
+        max_bytes: number;
+        max_mb: number;
+        remaining_bytes: number;
+        remaining_mb: number;
+        percent_used: number;
+    };
 }
 
 export default function WorkspaceShow({
@@ -59,6 +69,7 @@ export default function WorkspaceShow({
     isLecturer,
     isFull,
     project: initialProject,
+    storageQuota,
 }: Props) {
     const [kanban, setKanban] = useState(initialKanban);
     const [milestones, setMilestones] = useState(initialMilestones);
@@ -96,6 +107,122 @@ export default function WorkspaceShow({
     const [evalNotes, setEvalNotes] = useState(project?.lecturer_notes || '');
     const [savingEval, setSavingEval] = useState(false);
     const [evalSavedMsg, setEvalSavedMsg] = useState(false);
+
+    // Sprint / Milestone Management
+    const [isSprintModalOpen, setSprintModalOpen] = useState(false);
+    const [sprintToEdit, setSprintToEdit] = useState<any>(null);
+    const [sprintTitle, setSprintTitle] = useState('');
+    const [sprintDescription, setSprintDescription] = useState('');
+    const [sprintStatus, setSprintStatus] = useState('planned');
+    const [sprintDueOn, setSprintDueOn] = useState('');
+    const [sprintStartsOn, setSprintStartsOn] = useState('');
+    const [sprintSubmitting, setSprintSubmitting] = useState(false);
+
+    const openAddSprint = () => {
+        setSprintToEdit(null);
+        setSprintTitle('');
+        setSprintDescription('');
+        setSprintStatus('planned');
+        setSprintDueOn('');
+        setSprintStartsOn('');
+        setSprintModalOpen(true);
+    };
+
+    const openEditSprint = (m: any) => {
+        setSprintToEdit(m);
+        setSprintTitle(m.title || '');
+        setSprintDescription(m.description || '');
+        setSprintStatus(m.status?.toLowerCase().replace(' ', '_') || 'planned');
+        setSprintDueOn(m.due_on || '');
+        setSprintStartsOn(m.starts_on || '');
+        setSprintModalOpen(true);
+    };
+
+    const handleSaveSprint = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!sprintTitle.trim()) return;
+        setSprintSubmitting(true);
+
+        const isEditing = Boolean(sprintToEdit);
+        const url = isEditing
+            ? `/workspace/${team.id}/milestones/${sprintToEdit.id}`
+            : `/workspace/${team.id}/milestones`;
+        const method = isEditing ? 'PATCH' : 'POST';
+
+        try {
+            const res = await fetch(url, {
+                method,
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({
+                    title: sprintTitle,
+                    description: sprintDescription || null,
+                    status: sprintStatus,
+                    starts_on: sprintStartsOn || null,
+                    due_on: sprintDueOn || null,
+                }),
+            });
+
+            const json = await res.json();
+            if (res.ok) {
+                if (isEditing) {
+                    setMilestones((prev) =>
+                        prev.map((item) => (item.id === sprintToEdit.id ? { ...item, ...json.data } : item))
+                    );
+                } else {
+                    setMilestones((prev) => [...prev, json.data]);
+                }
+                setSprintModalOpen(false);
+            } else {
+                alert(json.message || 'Gagal menyimpan sprint.');
+            }
+        } catch {
+            alert('Terjadi kesalahan jaringan.');
+        } finally {
+            setSprintSubmitting(false);
+        }
+    };
+
+    const handleDeleteSprint = async (mId: number, mTitle: string) => {
+        if (!confirm(`Hapus sprint "${mTitle}"? Semua tugas terkait akan tetap tersimpan di board (tugas dilepas dari sprint ini).`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/workspace/${team.id}/milestones/${mId}`, {
+                method: 'DELETE',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+            });
+
+            const json = await res.json();
+            if (res.ok) {
+                setMilestones((prev) => prev.filter((item) => item.id !== mId));
+                setKanban((prev: any) => {
+                    const next: any = {};
+                    Object.keys(prev).forEach((col) => {
+                        next[col] = prev[col].map((t: any) =>
+                            t.milestone_id === mId ? { ...t, milestone_id: null, milestone: null } : t
+                        );
+                    });
+                    return next;
+                });
+            } else {
+                alert(json.message || 'Gagal menghapus sprint.');
+            }
+        } catch {
+            alert('Terjadi kendala saat menghapus sprint.');
+        }
+    };
 
     // Search and View
     const [searchQuery, setSearchQuery] = useState('');
@@ -697,6 +824,43 @@ export default function WorkspaceShow({
                         )
                     )}
 
+                    {/* Object Storage Quota Widget */}
+                    {storageQuota && (
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                                <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                    <HardDrive className="size-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-xs font-bold text-slate-900">
+                                            Kapasitas Penyimpanan Berkas Tim (Object Storage)
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                                            Batas 70 MB / Tim
+                                        </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                        Terpakai <strong className="text-slate-800">{storageQuota.used_mb} MB</strong> dari kuota maksimal <strong className="text-slate-800">{storageQuota.max_mb} MB</strong> ({storageQuota.percent_used}% terpakai, sisa {storageQuota.remaining_mb} MB)
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="w-full sm:w-48 flex items-center gap-2.5">
+                                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                                    <div
+                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                            storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
+                                        }`}
+                                        style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
+                                    />
+                                </div>
+                                <span className="text-[11px] font-mono font-bold text-slate-700 shrink-0">
+                                    {storageQuota.percent_used}%
+                                </span>
+                            </div>
+                        </div>
+                    )}
+
                     {/* 2. ROADMAP & JADWAL PENGERJAAN TIM */}
                     <div className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-2xs">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
@@ -719,14 +883,24 @@ export default function WorkspaceShow({
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleTriggerAiAgent}
-                                disabled={orchestrating}
-                                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
-                            >
-                                <Wand2 className="size-3.5 text-blue-400" />
-                                <span>{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
-                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    onClick={openAddSprint}
+                                    type="button"
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
+                                >
+                                    <Plus className="size-3.5 text-blue-600" />
+                                    <span>Tambah Sprint</span>
+                                </button>
+                                <button
+                                    onClick={handleTriggerAiAgent}
+                                    disabled={orchestrating}
+                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
+                                >
+                                    <Wand2 className="size-3.5 text-blue-400" />
+                                    <span>{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
+                                </button>
+                            </div>
                         </div>
 
                         {/* Visual Milestones / Sprint Cards (Trello Roadmap) */}
@@ -736,23 +910,45 @@ export default function WorkspaceShow({
                                     <Calendar className="size-8 text-neutral-400 mx-auto mb-2" />
                                     <p className="text-xs font-bold text-neutral-700">Belum ada roadmap pengerjaan</p>
                                     <p className="text-[11px] text-neutral-500 mt-0.5 max-w-sm mx-auto mb-3">
-                                        Klik tombol "Bagi Tugas & Roadmap Otomatis" di atas untuk membuat 4 tahap pengerjaan dan membagi tugas ke anggota tim.
+                                        Klik tombol "Tambah Sprint" atau "Bagi Tugas & Roadmap Otomatis" di atas untuk membuat tahapan pengerjaan tim.
                                     </p>
                                 </div>
                             ) : (
                                 milestones.map((m: any, idx: number) => (
                                     <div
                                         key={m.id || idx}
-                                        className="p-4 rounded-2xl border border-purple-100/80 bg-gradient-to-b from-[#FAF8FF] to-white flex flex-col justify-between shadow-2xs hover:shadow-xs transition"
+                                        className="group p-4 rounded-2xl border border-purple-100/80 bg-gradient-to-b from-[#FAF8FF] to-white flex flex-col justify-between shadow-2xs hover:shadow-xs transition relative"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between gap-1 mb-2">
                                                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] font-extrabold">
                                                     Sprint {idx + 1}
                                                 </span>
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-neutral-600 font-semibold capitalize">
-                                                    {m.status?.replace('_', ' ') || 'Planned'}
-                                                </span>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-neutral-600 font-semibold capitalize">
+                                                        {m.status?.replace('_', ' ') || 'Planned'}
+                                                    </span>
+                                                    {(isLeader || isLecturer) && (
+                                                        <div className="flex items-center gap-0.5 ml-1">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openEditSprint(m)}
+                                                                className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition cursor-pointer"
+                                                                title="Edit Sprint"
+                                                            >
+                                                                <Edit3 className="size-3" />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleDeleteSprint(m.id, m.title)}
+                                                                className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition cursor-pointer"
+                                                                title="Hapus Sprint"
+                                                            >
+                                                                <Trash2 className="size-3" />
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
 
                                             <h4 className="text-xs font-bold text-[#0E121B] line-clamp-1 leading-snug">
@@ -1383,6 +1579,124 @@ export default function WorkspaceShow({
                                             className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
                                         >
                                             {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* Sprint / Milestone Modal (Add & Edit) */}
+                {isSprintModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+                        <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-neutral-100 flex flex-col gap-4">
+                            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900">
+                                        {sprintToEdit ? 'Ubah Sprint / Milestone' : 'Tambah Sprint Baru'}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        {sprintToEdit
+                                            ? 'Perbarui target, status tahapan, atau tenggat waktu sprint.'
+                                            : 'Tentukan target pengerjaan dan batas waktu sprint tim Anda.'}
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSprintModalOpen(false)}
+                                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    <X className="size-5" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSaveSprint} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                        Judul Sprint <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        required
+                                        value={sprintTitle}
+                                        onChange={(e) => setSprintTitle(e.target.value)}
+                                        placeholder="Contoh: Sprint 1: Perancangan Arsitektur & Wireframe"
+                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Status Sprint
+                                        </label>
+                                        <select
+                                            value={sprintStatus}
+                                            onChange={(e) => setSprintStatus(e.target.value)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                        >
+                                            <option value="planned">Direncanakan (Planned)</option>
+                                            <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
+                                            <option value="completed">Selesai (Completed)</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Tenggat Waktu (Due Date)
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={sprintDueOn}
+                                            onChange={(e) => setSprintDueOn(e.target.value)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                        Deskripsi & Sasaran Target
+                                    </label>
+                                    <textarea
+                                        rows={3}
+                                        value={sprintDescription}
+                                        onChange={(e) => setSprintDescription(e.target.value)}
+                                        placeholder="Tuliskan tujuan spesifik sprint ini dan output yang diharapkan..."
+                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-between gap-3 pt-3 border-t border-slate-100">
+                                    {sprintToEdit && (isLeader || isLecturer) ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setSprintModalOpen(false);
+                                                handleDeleteSprint(sprintToEdit.id, sprintToEdit.title);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                            <span>Hapus Sprint</span>
+                                        </button>
+                                    ) : <div />}
+
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setSprintModalOpen(false)}
+                                            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={sprintSubmitting}
+                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                        >
+                                            {sprintSubmitting ? 'Menyimpan...' : (sprintToEdit ? 'Simpan Perubahan' : 'Buat Sprint')}
                                         </button>
                                     </div>
                                 </div>

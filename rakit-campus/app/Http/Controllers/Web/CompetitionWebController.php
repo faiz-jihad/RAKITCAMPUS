@@ -1157,6 +1157,7 @@ class CompetitionWebController extends Controller
             'isMember' => $isMember,
             'isMentor' => $isMentor,
             'isAdmin' => $isAdmin,
+            'storageQuota' => $participation->team_id ? ObjectStorageService::getTeamStorageQuotaInfo($participation->team_id) : null,
         ]);
     }
 
@@ -1314,7 +1315,7 @@ class CompetitionWebController extends Controller
         $validated = $request->validate([
             'required_document_key' => ['required', 'string', 'max:100'],
             'name' => ['required', 'string', 'max:255'],
-            'file' => ['nullable', 'file', 'max:15360'], // max 15MB
+            'file' => ['nullable', 'file', 'max:71680'], // max 70MB per file
             'url' => ['nullable', 'url', 'max:255'],
         ]);
 
@@ -1331,6 +1332,9 @@ class CompetitionWebController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
+            if ($participation->team_id) {
+                ObjectStorageService::checkTeamStorageQuota($participation->team_id, $file->getSize());
+            }
             $stored = ObjectStorageService::store($file, 'competitions/documents');
             $originalName = $stored['original_name'];
             $fileSize = $stored['file_size'];
@@ -1430,7 +1434,7 @@ class CompetitionWebController extends Controller
 
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:255'],
-            'file' => ['nullable', 'file', 'max:20480'], // max 20MB
+            'file' => ['nullable', 'file', 'max:71680'], // max 70MB per file
             'url' => ['nullable', 'url', 'max:255'],
             'mode' => ['nullable', 'string', 'in:replace,new_version'],
         ]);
@@ -1451,6 +1455,10 @@ class CompetitionWebController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
+            if ($participation->team_id) {
+                $replacingBytes = ($mode === 'replace') ? (int) $document->file_size : 0;
+                ObjectStorageService::checkTeamStorageQuota($participation->team_id, $file->getSize(), $replacingBytes);
+            }
             $folder = str_starts_with($document->path ?? '', 'competitions/deliverables') ? 'competitions/deliverables' : 'competitions/documents';
             $stored = ObjectStorageService::store($file, $folder);
             $originalName = $stored['original_name'];
@@ -1991,7 +1999,7 @@ class CompetitionWebController extends Controller
             'url' => ['nullable', 'url', 'max:255'],
             'external_submission_url' => ['nullable', 'url', 'max:255'],
             'deadline' => ['nullable', 'date'],
-            'file' => ['nullable', 'file', 'max:20480'], // max 20MB
+            'file' => ['nullable', 'file', 'max:71680'], // max 70MB per file
         ]);
 
         $doc = $this->deliverableService->submitDeliverable(

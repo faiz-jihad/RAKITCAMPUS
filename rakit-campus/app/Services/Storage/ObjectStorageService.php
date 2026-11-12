@@ -233,4 +233,95 @@ class ObjectStorageService
             ]
         );
     }
+
+    /**
+     * Storage quota limit per team in Object Storage (70 MB).
+     */
+    public const TEAM_STORAGE_LIMIT_BYTES = 73400320; // 70 MB = 70 * 1024 * 1024 bytes
+    public const TEAM_STORAGE_LIMIT_MB = 70;
+
+    /**
+     * Get total storage used by a team across competition documents and submission deliverables.
+     */
+    public static function getTeamStorageUsageBytes(int $teamId): int
+    {
+        $compDocBytes = 0;
+        try {
+            $participationIds = \App\Models\CompetitionParticipation::where('team_id', $teamId)->pluck('id');
+            if ($participationIds->isNotEmpty()) {
+                $compDocBytes = (int) \App\Models\CompetitionDocument::whereIn('participation_id', $participationIds)->sum('file_size');
+            }
+        } catch (\Throwable $e) {
+            Log::warning("Could not calculate competition documents storage for team {$teamId}: " . $e->getMessage());
+        }
+
+        $projectDocBytes = 0;
+        try {
+            $team = \App\Models\Team::find($teamId);
+            if ($team && $team->project_id) {
+                $projectDocBytes = (int) \App\Models\SubmissionDocument::whereHas('projectSubmission', function ($q) use ($team) {
+                    $q->where('project_id', $team->project_id);
+                })->sum('file_size');
+            }
+        } catch (\Throwable $e) {
+            // Ignore if models or tables not present
+        }
+
+        return $compDocBytes + $projectDocBytes;
+    }
+
+    /**
+     * Get team storage quota info for UI and API responses.
+     */
+    public static function getTeamStorageQuotaInfo(int $teamId): array
+    {
+        $usedBytes = self::getTeamStorageUsageBytes($teamId);
+        $maxBytes = self::TEAM_STORAGE_LIMIT_BYTES;
+        $remainingBytes = max(0, $maxBytes - $usedBytes);
+
+        return [
+            'used_bytes' => $usedBytes,
+            'used_mb' => round($usedBytes / (1024 * 1024), 2),
+            'max_bytes' => $maxBytes,
+            'max_mb' => self::TEAM_STORAGE_LIMIT_MB,
+            'remaining_bytes' => $remainingBytes,
+            'remaining_mb' => round($remainingBytes / (1024 * 1024), 2),
+            'percent_used' => min(100, (int) round(($usedBytes / $maxBytes) * 100)),
+        ];
+    }
+
+    /**
+     * Check if an upload exceeds the 70MB per team storage limit.
+     * Throws ValidationException if limit would be exceeded.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public static function checkTeamStorageQuota(int $teamId, int $newFileSizeBytes, int $replacingFileSizeBytes = 0): void
+    {
+        // Check single file max size 70MB
+        if ($newFileSizeBytes > self::TEAM_STORAGE_LIMIT_BYTES) {
+            $fileMb = round($newFileSizeBytes / (1024 * 1024), 2);
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'file' => [
+                    "Ukuran berkas ({$fileMb} MB) melebihi batas maksimal 70 MB per berkas."
+                ]
+            ]);
+        }
+
+        $currentUsage = self::getTeamStorageUsageBytes($teamId);
+        $projectedUsage = max(0, $currentUsage - $replacingFileSizeBytes) + $newFileSizeBytes;
+
+        if ($projectedUsage > self::TEAM_STORAGE_LIMIT_BYTES) {
+            $currentMb = round($currentUsage / (1024 * 1024), 2);
+            $newMb = round($newFileSizeBytes / (1024 * 1024), 2);
+            $maxMb = self::TEAM_STORAGE_LIMIT_MB;
+            $projectedMb = round($projectedUsage / (1024 * 1024), 2);
+
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'file' => [
+                    "Batas kuota Object Storage tim ({$maxMb} MB) terlampaui. Total berkas tim saat ini: {$currentMb} MB, berkas baru: {$newMb} MB (akan menjadi {$projectedMb} MB, melebihi kuota {$maxMb} MB per tim). Harap hapus berkas lama terlebih dahulu."
+                ]
+            ]);
+        }
+    }
 }

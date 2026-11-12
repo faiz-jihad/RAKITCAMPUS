@@ -171,6 +171,7 @@ class WorkspaceWebController extends Controller
             'isLecturer' => $isLecturer,
             'isFull' => $team->isFull(),
             'project' => $team->project,
+            'storageQuota' => \App\Services\Storage\ObjectStorageService::getTeamStorageQuotaInfo($team->id),
         ]);
     }
 
@@ -364,5 +365,172 @@ class WorkspaceWebController extends Controller
         }
 
         return back()->with('success', 'Nilai dan catatan perbaikan berhasil diterbitkan oleh Dosen.');
+    }
+
+    /**
+     * Create a new milestone/sprint manually
+     */
+    public function storeMilestone(Request $request, int $teamId)
+    {
+        $user = $request->user();
+        $team = Team::findOrFail($teamId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+
+        if (!$isLecturer && !$team->hasMember($user)) {
+            abort(403, 'Hanya anggota tim atau dosen pembimbing yang dapat menambahkan sprint.');
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'status' => ['required', Rule::in(['planned', 'in_progress', 'completed'])],
+            'starts_on' => ['nullable', 'date'],
+            'due_on' => ['nullable', 'date'],
+        ]);
+
+        $campusId = $team->campus_id ?? $team->project?->campus_id ?? $user->campusId() ?? 1;
+
+        $milestone = Milestone::create([
+            'campus_id' => $campusId,
+            'team_id' => $team->id,
+            'created_by' => $user->id,
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'],
+            'starts_on' => $validated['starts_on'] ?? null,
+            'due_on' => $validated['due_on'] ?? null,
+        ]);
+
+        ActivityLog::log(
+            $campusId,
+            $team->id,
+            $user->id,
+            'milestone_created',
+            $milestone,
+            ['title' => $milestone->title]
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Sprint baru berhasil dibuat.',
+                'data' => [
+                    'id' => $milestone->id,
+                    'title' => $milestone->title,
+                    'description' => $milestone->description,
+                    'status' => $milestone->status->value ?? $milestone->status,
+                    'starts_on' => $milestone->starts_on?->format('d M Y'),
+                    'due_on' => $milestone->due_on?->format('d M Y'),
+                    'tasks_count' => 0,
+                    'completed_tasks_count' => 0,
+                    'progress' => 0,
+                ],
+            ]);
+        }
+
+        return back()->with('success', "Sprint '{$milestone->title}' berhasil dibuat.");
+    }
+
+    /**
+     * Edit / update an existing milestone/sprint
+     */
+    public function updateMilestone(Request $request, int $teamId, int $milestoneId)
+    {
+        $user = $request->user();
+        $team = Team::findOrFail($teamId);
+        $milestone = Milestone::where('team_id', $team->id)->findOrFail($milestoneId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+
+        if (!$isLecturer && !$team->hasMember($user)) {
+            abort(403, 'Hanya anggota tim atau dosen pembimbing yang dapat mengubah sprint ini.');
+        }
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'status' => ['required', Rule::in(['planned', 'in_progress', 'completed'])],
+            'starts_on' => ['nullable', 'date'],
+            'due_on' => ['nullable', 'date'],
+        ]);
+
+        $milestone->update($validated);
+
+        // Recalculate milestone progress
+        $tasksCount = $milestone->tasks()->count();
+        $completedCount = $milestone->tasks()->where('status', TaskStatus::Completed->value)->count();
+        $progress = $tasksCount > 0 ? (int) round(($completedCount / $tasksCount) * 100) : 0;
+
+        ActivityLog::log(
+            $team->campus_id ?? 1,
+            $team->id,
+            $user->id,
+            'milestone_updated',
+            $milestone,
+            ['title' => $milestone->title, 'status' => $milestone->status]
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Sprint berhasil diperbarui.',
+                'data' => [
+                    'id' => $milestone->id,
+                    'title' => $milestone->title,
+                    'description' => $milestone->description,
+                    'status' => is_object($milestone->status) ? $milestone->status->value : $milestone->status,
+                    'starts_on' => $milestone->starts_on?->format('d M Y'),
+                    'due_on' => $milestone->due_on?->format('d M Y'),
+                    'tasks_count' => $tasksCount,
+                    'completed_tasks_count' => $completedCount,
+                    'progress' => $progress,
+                ],
+            ]);
+        }
+
+        return back()->with('success', "Sprint '{$milestone->title}' berhasil diperbarui.");
+    }
+
+    /**
+     * Delete a milestone/sprint (safely unlinks associated tasks so tasks remain on the board)
+     */
+    public function deleteMilestone(Request $request, int $teamId, int $milestoneId)
+    {
+        $user = $request->user();
+        $team = Team::findOrFail($teamId);
+        $milestone = Milestone::where('team_id', $team->id)->findOrFail($milestoneId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+        $isLeader = $team->isLeader($user);
+
+        if (!$isLecturer && !$isLeader) {
+            abort(403, 'Hanya ketua tim atau dosen pembimbing yang dapat menghapus sprint.');
+        }
+
+        $title = $milestone->title;
+
+        // Unlink associated tasks so tasks are preserved on the board without a milestone
+        Task::where('milestone_id', $milestone->id)->update(['milestone_id' => null]);
+
+        $milestone->delete();
+
+        ActivityLog::log(
+            $team->campus_id ?? 1,
+            $team->id,
+            $user->id,
+            'milestone_deleted',
+            null,
+            ['title' => $title]
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => "Sprint '{$title}' berhasil dihapus. Tugas terkait tetap tersimpan.",
+            ]);
+        }
+
+        return back()->with('success', "Sprint '{$title}' berhasil dihapus. Tugas terkait tetap tersimpan.");
     }
 }

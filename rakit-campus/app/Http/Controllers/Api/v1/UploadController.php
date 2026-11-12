@@ -16,12 +16,17 @@ class UploadController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:256000'], // max 250MB
+            'file' => ['required', 'file', 'max:71680'], // max 70MB per file
             'type' => ['nullable', 'string', 'in:avatar,document,attachment,portfolio,project,general,proposal,deliverable'],
+            'team_id' => ['nullable', 'exists:teams,id'],
         ]);
 
         $file = $request->file('file');
         $type = $validated['type'] ?? 'general';
+
+        if (!empty($validated['team_id'])) {
+            ObjectStorageService::checkTeamStorageQuota((int) $validated['team_id'], $file->getSize());
+        }
 
         $stored = ObjectStorageService::store($file, 'uploads/' . $type);
 

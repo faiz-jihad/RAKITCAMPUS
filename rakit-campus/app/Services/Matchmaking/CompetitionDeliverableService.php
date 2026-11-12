@@ -41,6 +41,9 @@ class CompetitionDeliverableService
         $mimeType = null;
 
         if ($file) {
+            if ($team) {
+                ObjectStorageService::checkTeamStorageQuota($team->id, $file->getSize());
+            }
             $stored = ObjectStorageService::store($file, 'competitions/deliverables');
             $originalName = $stored['original_name'];
             $fileSize = $stored['file_size'];
