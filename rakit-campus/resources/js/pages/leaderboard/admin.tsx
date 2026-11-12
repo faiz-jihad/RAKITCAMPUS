@@ -110,11 +110,8 @@ export default function LeaderboardAdmin({
                         </Link>
                         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
                             <Shield className="size-7 text-blue-600" />
-                            <span>Manajemen & Audit Continuous Leaderboard</span>
+                            <span>Manajemen Continuous Leaderboard</span>
                         </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                            Kendali aturan penilaian, audit trail transaksi poin, dan rekalkulasi klasemen RAKIT Campus.
-                        </p>
                     </div>
 
                     <div className="flex items-center gap-2 self-start sm:self-auto">

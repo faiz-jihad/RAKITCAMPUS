@@ -64,6 +64,7 @@ export default function CompetitionWorkspace({
     isMentor,
     isAdmin,
 }: Props) {
+    const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'documents' | 'rounds' | 'mentoring' | 'results' | 'history'>('overview');
 
     // MinSatu Roles & Applicants State
@@ -940,11 +941,8 @@ export default function CompetitionWorkspace({
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <Briefcase className="size-4 text-purple-600 shrink-0" />
-                                        <span>Posisi / Peran yang Dicari Tim ({recruitmentRoles.length})</span>
+                                        <span>Posisi / Peran Dicari ({recruitmentRoles.length})</span>
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Tentukan spesifikasi keahlian yang dibutuhkan agar mahasiswa lain dapat melamar posisi tersebut di MinSatu Hub.
-                                    </p>
                                 </div>
 
                                 {isLeader && !participation.is_formation_locked && (
@@ -1076,9 +1074,6 @@ export default function CompetitionWorkspace({
                                     <UserPlus className="size-4 text-blue-600 shrink-0" />
                                     <span>Pelamar Masuk ({incomingApplications.length})</span>
                                 </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Mahasiswa yang melamar untuk bergabung dengan tim kompetisi ini.
-                                </p>
                             </div>
 
                             {incomingApplications.length === 0 ? (
@@ -1200,13 +1195,10 @@ export default function CompetitionWorkspace({
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <FolderKanban className="size-4 text-blue-600 shrink-0" />
-                                    <span>Papan Tugas Sprint Kompetisi</span>
+                                    <span>Papan Tugas</span>
                                 </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Bagi tugas persiapan proposal, coding prototipe, video teaser, dan pitching.
-                                </p>
                             </div>
-                            {isMember && (
+                            {canManageTasks && (
                                 <div className="flex items-center gap-2">
                                     <button
                                         type="button"
@@ -1272,7 +1264,7 @@ export default function CompetitionWorkspace({
                                                 <button
                                                     type="button"
                                                     onClick={() => {
-                                                        if (isMember) {
+                                                        if (canManageTasks) {
                                                             setInlineAddingCol(col.key);
                                                             setInlineTitle('');
                                                         }
@@ -1290,7 +1282,7 @@ export default function CompetitionWorkspace({
                                                 return (
                                                     <div
                                                         key={task.id}
-                                                        draggable={isMember}
+                                                        draggable={canManageTasks}
                                                         onDragStart={(e) => handleDragStart(e, task.id, col.key)}
                                                         className={`bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs hover:border-blue-300 transition flex flex-col gap-2 cursor-grab active:cursor-grabbing select-none ${
                                                             isBeingDragged ? 'opacity-40' : ''
@@ -1308,7 +1300,7 @@ export default function CompetitionWorkspace({
                                                             </span>
 
                                                             <div className="flex items-center gap-1 shrink-0">
-                                                                {isMember && (
+                                                                {canManageTasks && (
                                                                     <select
                                                                         value={task.status}
                                                                         onClick={(e) => e.stopPropagation()}
@@ -1322,7 +1314,7 @@ export default function CompetitionWorkspace({
                                                                     </select>
                                                                 )}
 
-                                                                {isMember && (
+                                                                {canManageTasks && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => {
@@ -1388,7 +1380,7 @@ export default function CompetitionWorkspace({
                                             )}
                                         </div>
 
-                                        {isMember && !isAddingHere && colTasks.length > 0 && (
+                                        {canManageTasks && !isAddingHere && colTasks.length > 0 && (
                                             <button
                                                 type="button"
                                                 onClick={() => {
@@ -1416,14 +1408,11 @@ export default function CompetitionWorkspace({
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <FileText className="size-4 text-blue-600 shrink-0" />
-                                        <span>Berkas & Karya Kompetisi</span>
+                                        <span>Berkas & Karya</span>
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Unggah proposal, pitch deck, video demo, dan tautan repositori kode.
-                                    </p>
                                 </div>
 
-                                {isMember && (
+                                {canManageTasks && (
                                     <button
                                         type="button"
                                         onClick={() => setDocModalOpen(true)}
@@ -1608,11 +1597,8 @@ export default function CompetitionWorkspace({
                         <div className="border-b border-slate-100 pb-3">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <Clock className="size-4 text-blue-600 shrink-0" />
-                                <span>Babak & Tahapan Kompetisi ({rounds.length})</span>
+                                <span>Jadwal & Babak ({rounds.length})</span>
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Jadwal resmi setiap tahapan kompetisi dari pembukaan hingga babak final.
-                            </p>
                         </div>
 
                         {rounds.length === 0 ? (
@@ -1660,11 +1646,8 @@ export default function CompetitionWorkspace({
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <GraduationCap className="size-4 text-blue-600 shrink-0" />
-                                    <span>Dosen Pembimbing Kompetisi</span>
+                                    <span>Bimbingan Dosen</span>
                                 </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Dosen pendamping untuk bimbingan proposal, validasi karya, dan surat tugas kampus.
-                                </p>
                             </div>
 
                             {(isLeader || isAdmin) && (
@@ -1716,11 +1699,8 @@ export default function CompetitionWorkspace({
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <Trophy className="size-4 text-amber-500 shrink-0" />
-                                    <span>Capaian & Prestasi Kompetisi</span>
+                                    <span>Hasil & Capaian</span>
                                 </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Catat hasil akhir lomba, sertifikat, dan integrasi ke portofolio mahasiswa.
-                                </p>
                             </div>
 
                             {(isLeader || isMentor || isAdmin) && (
@@ -1812,11 +1792,8 @@ export default function CompetitionWorkspace({
                         <div className="border-b border-slate-100 pb-3">
                             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                 <History className="size-4 text-blue-600 shrink-0" />
-                                <span>Riwayat Perubahan Status & Tahapan Seleksi</span>
+                                <span>Riwayat Status</span>
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Log audit tahapan perjalanan tim dalam kompetisi ini.
-                            </p>
                         </div>
 
                         {(!participation.status_histories || participation.status_histories.length === 0) ? (

@@ -255,9 +255,6 @@ export default function Dashboard({
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Tugas Prioritas
                                 </h2>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    Daftar tugas yang memerlukan tindakan Anda
-                                </p>
                             </div>
                             <Link
                                 href="/workspace"
@@ -321,9 +318,6 @@ export default function Dashboard({
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Proyek Akademik Anda
                                 </h2>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    Living proposal dan manajemen tim kuliah
-                                </p>
                             </div>
                             <Link
                                 href="/projects"
@@ -395,9 +389,6 @@ export default function Dashboard({
                                     <h2 className="text-sm font-bold text-slate-900">
                                         Proyek yang Membuka Rekrutmen
                                     </h2>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        Peluang kolaborasi seimbang sesuai keahlian Anda
-                                    </p>
                                 </div>
                                 <Link
                                     href="/projects"

@@ -154,9 +154,6 @@ export default function ProjectIndex({
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
                             Proyek Kelas
                         </h1>
-                        <p className="text-xs text-slate-500 mt-1">
-                            Eksplorasi ide proyek berbasis perkuliahan, cari rekan kolaborator, dan bangun portofolio tim.
-                        </p>
                     </div>
 
                     <div className="flex items-center gap-2 self-start sm:self-auto">

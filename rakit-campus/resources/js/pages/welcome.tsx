@@ -73,7 +73,7 @@ const featuresList = [
 
 const photoRowTop = [
     {
-        title: 'Tim Hackathon Polindra',
+        title: 'Tim Mahasiswa Hackathon',
         category: 'Teknik Informatika',
         badge: 'Gemastik Finalist',
         src: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80',
@@ -143,7 +143,7 @@ const photoRowBottom = [
     },
     {
         title: 'Selebrasi Juara Mahasiswa',
-        category: 'Prestasi Polindra',
+        category: 'Prestasi Mahasiswa',
         badge: 'Juara 1 Nasional',
         src: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80',
     },
@@ -2448,7 +2448,7 @@ export default function Welcome() {
                         </h2>
 
                         <p className="mt-3.5 sm:mt-6 text-xs xs:text-sm sm:text-base md:text-lg lg:text-xl text-neutral-600 max-w-2xl mx-auto leading-relaxed">
-                            Platform pembentukan tim mahasiswa berbasis AI, manajemen sprint Kanban interaktif, dan validasi Living Proposal kurikulum akademik.
+                            Platform kolaborasi tim mahasiswa, manajemen sprint Kanban, dan validasi portofolio akademik.
                         </p>
 
                         {/* CTA Buttons with Micro-Interactions */}
@@ -2461,11 +2461,11 @@ export default function Welcome() {
                                 <ArrowRight className="size-4 sm:size-5 group-hover:translate-x-1 transition-transform" />
                             </Link>
                             <Link
-                                href="/login"
+                                href="/competitions"
                                 className="inline-flex items-center justify-center gap-2 bg-white hover:bg-neutral-50 text-neutral-800 text-xs sm:text-sm md:text-base font-semibold px-6 sm:px-8 py-3 sm:py-4 rounded-full border border-neutral-200/90 shadow-2xs hover:border-neutral-300 hover:-translate-y-0.5 transition-all w-full sm:w-auto text-center"
                             >
-                                <Sparkles className="size-4 text-blue-600" />
-                                <span>Coba Akun Demo Polindra</span>
+                                <Trophy className="size-4 text-blue-600" />
+                                <span>Eksplor Kompetisi</span>
                             </Link>
                         </div>
                     </div>
@@ -2554,11 +2554,11 @@ export default function Welcome() {
                                                 <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
                                                 <span className="text-neutral-400 hidden sm:inline font-mono">https://</span>
                                                 <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
-                                                <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/polindra-sprint-2026</span>
+                                                <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/workspace</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0 ml-1.5 sm:ml-2">
                                                 <span className="text-[8px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200/70">
-                                                    Polindra Hub
+                                                    RAKIT Hub
                                                 </span>
                                             </div>
                                         </div>
@@ -2585,7 +2585,7 @@ export default function Welcome() {
                                                 </div>
                                                 <div>
                                                     <div className="text-xs font-black tracking-tight text-neutral-900 leading-tight">RAKIT CAMPUS</div>
-                                                    <div className="text-[9px] text-neutral-400 font-medium">Polindra Workspace</div>
+                                                    <div className="text-[9px] text-neutral-400 font-medium">RAKIT Workspace</div>
                                                 </div>
                                             </div>
 
@@ -2640,7 +2640,7 @@ export default function Welcome() {
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-neutral-100 gap-2">
                                                 <div>
                                                     <div className="flex items-center gap-2">
-                                                        <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Polindra 2026</h3>
+                                                        <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Proyek 2026</h3>
                                                         <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200/60">
                                                             Active Sprint
                                                         </span>
@@ -3006,14 +3006,14 @@ export default function Welcome() {
                                                 <span className="text-[10px] font-black text-neutral-900 tracking-tight">RAKIT</span>
                                             </div>
                                             <span className="text-[7.5px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/70">
-                                                Polindra Hub
+                                                RAKIT Hub
                                             </span>
                                         </div>
 
                                         {/* Mobile Card 1: Active Sprint Progress */}
                                         <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
                                             <div className="flex items-center justify-between text-[8px] font-bold text-neutral-900">
-                                                <span>Sprint Polindra 2026</span>
+                                                <span>Sprint Proyek 2026</span>
                                                 <span className="text-blue-600">78%</span>
                                             </div>
                                             <div className="w-full bg-neutral-100 h-1 rounded-full mt-1 overflow-hidden">
@@ -3288,14 +3288,6 @@ export default function Welcome() {
                                 <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Pencocokan talenta cerdas berdasarkan portofolio dan peran yang saling melengkapi.
                                 </p>
-                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
-                                    <p>
-                                        Membangun tim proyek atau kompetisi di kampus kini tidak lagi terkendala lingkaran pertemanan sempit atau ketimpangan peran teknis.
-                                    </p>
-                                    <p className="hidden xs:block">
-                                        Algoritma cerdas kami menganalisis keahlian teknis (IoT, Mobile, Web, AI), riwayat proyek, dan komitmen waktu mahasiswa untuk merekomendasikan komposisi tim paling ideal dan berimbang.
-                                    </p>
-                                </div>
                             </div>
 
                             {/* Colossal Number 01 / 04 at Bottom-Left */}
@@ -3353,14 +3345,6 @@ export default function Welcome() {
                                 <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Dokumen proposal interaktif yang tersinkronisasi real-time dengan dosen pembimbing.
                                 </p>
-                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
-                                    <p>
-                                        Proposal proyek bukan lagi berkas statis PDF yang tercecer di folder drive. Living Proposal adalah dokumen interaktif yang disusun bersama secara real-time.
-                                    </p>
-                                    <p className="hidden xs:block">
-                                        Setiap revisi, umpan balik dosen pembimbing, serta matriks rubrik akademik Gemastik dan PKM diperbarui secara otomatis dan transparan antaranggota tim.
-                                    </p>
-                                </div>
                             </div>
 
                             {/* Colossal Number 02 / 04 at Bottom-Right (Aligned Right matching Reference Image) */}
@@ -3390,14 +3374,6 @@ export default function Welcome() {
                                 <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Manajemen sprint agile yang terhubung langsung dengan linimasa kompetisi.
                                 </p>
-                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
-                                    <p>
-                                        Mengubah ide besar menjadi eksekusi mingguan yang terukur. Papan Kanban visual di RAKIT dirancang khusus untuk ritme kerja mahasiswa.
-                                    </p>
-                                    <p className="hidden xs:block">
-                                        Membagi milestone kompetisi seperti Gemastik dan Hackathon ke dalam sprint mingguan dengan pembagian beban kerja merata tanpa free-rider.
-                                    </p>
-                                </div>
                             </div>
 
                             {/* Colossal Number 03 / 04 at Bottom-Left */}
@@ -3455,14 +3431,6 @@ export default function Welcome() {
                                 <p className="mt-2 sm:mt-4 md:mt-6 text-xs xs:text-sm sm:text-lg md:text-xl lg:text-[22px] text-neutral-200 font-serif leading-snug sm:leading-relaxed">
                                     Rekam jejak capaian yang diakui resmi oleh program studi dan institusi.
                                 </p>
-                                <div className="mt-2.5 sm:mt-5 space-y-2 sm:space-y-4 text-xs xs:text-sm sm:text-base md:text-[16.5px] lg:text-[17px] text-neutral-300 leading-relaxed font-sans max-w-xl text-left sm:text-justify">
-                                    <p>
-                                        Hasil karya dan kerja keras mahasiswa tidak berhenti di ruang kelas atau kompetisi sesaat.
-                                    </p>
-                                    <p className="hidden xs:block">
-                                        Setiap kontribusi tugas, keberhasilan sprint, dan capaian milestone tercatat permanen dalam rekam jejak digital mahasiswa, siap dikonversi ke nilai SKS mata kuliah proyek akademik.
-                                    </p>
-                                </div>
                             </div>
 
                             {/* Colossal Number 04 / 04 at Bottom-Right (Aligned Right matching Reference Image) */}
@@ -3624,7 +3592,7 @@ export default function Welcome() {
 
                                 {/* Description Paragraph */}
                                 <p className="mt-2.5 sm:mt-5 text-xs xs:text-sm lg:text-base text-neutral-600 font-sans leading-relaxed max-w-md">
-                                    Daftar menggunakan akun kampus Polindra, pilih bidang keahlian, dan tentukan jam ketersediaan mingguan untuk langsung terhubung dengan ekosistem riset kampus.
+                                    Daftar dengan akun kampus, tentukan bidang keahlian, dan langsung terhubung dengan tim kolaborator.
                                 </p>
                             </div>
 
@@ -3771,7 +3739,7 @@ export default function Welcome() {
                             Our Success Stories
                         </h2>
                         <p className="mt-3 sm:mt-4 text-xs xs:text-sm sm:text-base text-neutral-500 max-w-xl mx-auto leading-relaxed">
-                            Pengalaman nyata mahasiswa Polindra yang sukses membangun tim, memvalidasi proposal, dan menjuarai kompetisi nasional.
+                            Pengalaman nyata mahasiswa yang sukses membangun tim dan menjuarai kompetisi nasional.
                         </p>
                     </div>
 
@@ -3813,7 +3781,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Budi Santoso</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Project Leader IoT • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Project Leader IoT • Mahasiswa</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3855,7 +3823,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Siti Rahma</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Mobile Flutter Dev • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Mobile Flutter Dev • Mahasiswa</span>
                                         </div>
                                     </div>
                                 </div>
@@ -3897,7 +3865,7 @@ export default function Welcome() {
                                                 <h5 className="text-xs sm:text-[13px] font-bold text-neutral-900">Agus Prasetyo</h5>
                                                 <CheckCircle2 className="size-3 text-blue-600 shrink-0" />
                                             </div>
-                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Backend Engineer • Polindra</span>
+                                            <span className="text-[9.5px] sm:text-[10px] text-neutral-400 font-sans block">Backend Engineer • Mahasiswa</span>
                                         </div>
                                     </div>
                                 </div>

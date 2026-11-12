@@ -153,9 +153,6 @@ export default function LeaderboardIndex({
                         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                             Klasemen & Peringkat RAKIT Campus
                         </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                            Sistem peringkat kontribusi transparan berbasis aktivitas terverifikasi pada Project Hub (proyek kelas) dan Competition Hub (prestasi lomba).
-                        </p>
                     </div>
 
                     <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
@@ -647,8 +644,8 @@ export default function LeaderboardIndex({
                             </button>
                         </div>
 
-                        <p className="text-xs text-slate-500 leading-relaxed">
-                            Setiap poin yang tercatat pada Leaderboard RAKIT Campus dihitung secara otomatis dan berbasis bukti nyata (verified ledger). Kami melarang bot farming, manipulasi manual, dan perulangan tindakan semu.
+                        <p className="text-xs text-slate-500">
+                            Poin dihitung otomatis berbasis bukti nyata (verified ledger). Anti bot-farming & manipulasi.
                         </p>
 
                         <div className="space-y-3 pt-2">

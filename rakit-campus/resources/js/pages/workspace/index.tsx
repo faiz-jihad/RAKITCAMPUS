@@ -33,11 +33,8 @@ export default function WorkspaceIndex({ teams }: Props) {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                            Workspace Proyek & Tim
+                            Workspace Proyek
                         </h1>
-                        <p className="text-xs text-slate-500 mt-1">
-                            Pusat kolaborasi tim, pengelolaan papan Kanban tugas, dan pemantauan milestone proyek kelas.
-                        </p>
                     </div>
 
                     <Link

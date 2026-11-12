@@ -1629,7 +1629,14 @@ class CompetitionWebController extends Controller
         $user = $request->user();
         $participation = CompetitionParticipation::with(['team', 'competition'])->findOrFail($participationId);
 
-        if (!$participation->team || !$participation->team->hasMember($user)) {
+        $isAuthorized = $participation->team && (
+            $participation->team->hasMember($user) ||
+            $participation->team->leader_id === $user->id ||
+            $user->role === 'admin' ||
+            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
+        );
+
+        if (!$isAuthorized) {
             abort(403, 'Hanya anggota tim yang dapat membuat tugas.');
         }
 
@@ -1663,7 +1670,14 @@ class CompetitionWebController extends Controller
         $user = $request->user();
         $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
 
-        if (!$participation->team || !$participation->team->hasMember($user)) {
+        $isAuthorized = $participation->team && (
+            $participation->team->hasMember($user) ||
+            $participation->team->leader_id === $user->id ||
+            $user->role === 'admin' ||
+            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
+        );
+
+        if (!$isAuthorized) {
             abort(403, 'Hanya anggota tim yang dapat mengubah status tugas.');
         }
 
@@ -1686,7 +1700,14 @@ class CompetitionWebController extends Controller
         $user = $request->user();
         $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
 
-        if (!$participation->team || !$participation->team->hasMember($user)) {
+        $isAuthorized = $participation->team && (
+            $participation->team->hasMember($user) ||
+            $participation->team->leader_id === $user->id ||
+            $user->role === 'admin' ||
+            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
+        );
+
+        if (!$isAuthorized) {
             abort(403, 'Hanya anggota tim yang dapat menghapus tugas.');
         }
 
@@ -1702,7 +1723,16 @@ class CompetitionWebController extends Controller
         $user = $request->user();
         $participation = CompetitionParticipation::with(['team.members', 'competition'])->findOrFail($participationId);
 
-        if (!$participation->team || !$participation->team->hasMember($user)) {
+        $isAuthorized = $participation->team && (
+            $participation->team->hasMember($user) ||
+            $participation->team->leader_id === $user->id ||
+            $user->role === 'admin' ||
+            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
+        );
+
+        if (!$isAuthorized) {
+            abort(403, 'Hanya anggota tim yang dapat membuat rekomendasi tugas.');
+        }
             abort(403, 'Hanya anggota tim yang dapat membuat tugas menggunakan AI.');
         }
 
