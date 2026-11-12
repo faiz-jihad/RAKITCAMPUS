@@ -211,6 +211,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/ai-workspace/sessions/{sessionId}/messages', [AiWorkspaceController::class, 'sendMessage'])->name('ai.messages.send');
     Route::post('/ai-workspace/sessions/{sessionId}/share', [AiWorkspaceController::class, 'shareSession'])->name('ai.sessions.share');
     Route::post('/ai-workspace/sessions/{sessionId}/artifact', [AiWorkspaceController::class, 'saveArtifact'])->name('ai.artifacts.save');
+    Route::post('/ai-workspace/sessions/{sessionId}/execute-action', [AiWorkspaceController::class, 'executeAction'])->name('ai.actions.execute');
     Route::get('/ai-workspace/quota/{teamId}', [AiWorkspaceController::class, 'getQuota'])->name('ai.quota');
 
     // Central Notification Center

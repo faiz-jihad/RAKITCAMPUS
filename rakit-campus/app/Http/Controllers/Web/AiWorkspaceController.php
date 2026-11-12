@@ -2,13 +2,18 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\TaskPriority;
+use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AiArtifact;
 use App\Models\AiSession;
+use App\Models\Milestone;
+use App\Models\Task;
 use App\Models\Team;
 use App\Services\AI\AiWorkspaceService;
 use App\Services\AI\TeamAiQuotaService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -288,6 +293,126 @@ class AiWorkspaceController extends Controller
         ]);
 
         return response()->json(['success' => true, 'artifact_id' => $artifact->id]);
+    }
+
+    /**
+     * Execute an agentic action on behalf of user into active workspace.
+     */
+    public function executeAction(Request $request, int $sessionId)
+    {
+        $user = $request->user();
+        $validated = $request->validate([
+            'action_type' => 'required|string|in:create_tasks,create_sprint,save_to_proposal,create_checklist',
+            'payload' => 'required|array',
+        ]);
+
+        $session = AiSession::with(['team', 'project'])->where('id', $sessionId)
+            ->whereHas('team', function ($q) use ($user) {
+                $q->where('leader_id', $user->id)
+                  ->orWhereHas('members', fn($m) => $m->where('user_id', $user->id));
+            })->firstOrFail();
+
+        $team = $session->team;
+        $campusId = $team->campus_id ?? $user->campusId() ?? 1;
+
+        return DB::transaction(function () use ($session, $team, $user, $campusId, $validated) {
+            $type = $validated['action_type'];
+            $payload = $validated['payload'];
+
+            if ($type === 'create_tasks') {
+                $tasksData = $payload['tasks'] ?? [];
+                if (empty($tasksData) && !empty($payload['title'])) {
+                    $tasksData = [$payload];
+                }
+
+                $created = [];
+                $maxPos = Task::where('team_id', $team->id)->where('status', 'todo')->max('position') ?? 0;
+
+                foreach ($tasksData as $idx => $t) {
+                    $priority = match (strtolower($t['priority'] ?? 'medium')) {
+                        'urgent' => TaskPriority::Urgent,
+                        'high' => TaskPriority::High,
+                        'low' => TaskPriority::Low,
+                        default => TaskPriority::Medium,
+                    };
+
+                    $roleSuffix = !empty($t['recommended_role']) ? "\n\n[Rekomendasi PIC: {$t['recommended_role']}]" : '';
+
+                    $created[] = Task::create([
+                        'campus_id' => $campusId,
+                        'team_id' => $team->id,
+                        'created_by' => $user->id,
+                        'title' => $t['title'] ?? 'Tugas Baru dari AI',
+                        'description' => ($t['description'] ?? '') . $roleSuffix,
+                        'priority' => $priority,
+                        'status' => TaskStatus::Todo,
+                        'position' => $maxPos + $idx + 1,
+                        'due_on' => !empty($t['estimated_days']) ? now()->addDays((int) $t['estimated_days']) : null,
+                    ]);
+                }
+
+                // Recalculate project progress
+                $total = Task::where('team_id', $team->id)->count();
+                $done = Task::where('team_id', $team->id)->where('status', TaskStatus::Completed->value)->count();
+                $percent = $total > 0 ? (int) round(($done / $total) * 100) : 0;
+                $team->project?->update(['progress' => $percent]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => count($created) . ' tugas berhasil diterapkan ke Kanban Tim!',
+                    'count' => count($created),
+                    'action_type' => 'create_tasks',
+                ]);
+            }
+
+            if ($type === 'create_sprint') {
+                $title = $payload['title'] ?? 'Sprint Baru dari AI';
+                $desc = $payload['description'] ?? null;
+                $days = (int) ($payload['estimated_days'] ?? 14);
+
+                $milestone = Milestone::create([
+                    'campus_id' => $campusId,
+                    'team_id' => $team->id,
+                    'created_by' => $user->id,
+                    'title' => $title,
+                    'description' => $desc,
+                    'status' => 'planned',
+                    'starts_on' => now(),
+                    'due_on' => now()->addDays($days),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Sprint '{$milestone->title}' berhasil dibuat di Workspace Tim!",
+                    'milestone_id' => $milestone->id,
+                    'action_type' => 'create_sprint',
+                ]);
+            }
+
+            if ($type === 'save_to_proposal' || $type === 'create_checklist') {
+                $title = $payload['title'] ?? ($type === 'create_checklist' ? 'Checklist Persiapan AI' : 'Draf Bagian Proposal AI');
+                $content = $payload['content'] ?? json_encode($payload);
+
+                $artifact = AiArtifact::create([
+                    'session_id' => $session->id,
+                    'user_id' => $user->id,
+                    'title' => $title,
+                    'content' => is_string($content) ? $content : json_encode($content, JSON_PRETTY_PRINT),
+                    'artifact_type' => $type === 'create_checklist' ? 'checklist' : 'document',
+                    'is_saved_to_project' => true,
+                    'project_id' => $session->project_id,
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil disimpan sebagai artefak proyek!",
+                    'artifact_id' => $artifact->id,
+                    'action_type' => $type,
+                ]);
+            }
+
+            return response()->json(['error' => 'Jenis aksi tidak didukung.'], 422);
+        });
     }
 
     /**

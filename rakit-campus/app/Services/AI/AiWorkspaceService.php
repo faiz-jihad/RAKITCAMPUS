@@ -99,6 +99,36 @@ class AiWorkspaceService
         $base .= "Selalu jawab dalam Bahasa Indonesia kecuali user menggunakan bahasa lain.\n";
         $base .= "Berikan jawaban yang spesifik, actionable, dan berbasis data nyata — hindari generalisasi kosong.\n\n";
 
+        $agenticInstructions = "\n\nKEMAMPUAN AGENTIC EXECUTION:
+Ketika Anda menyarankan pembagian tugas, rencana aksi sprint, checklist lomba, atau draf bagian proposal, sertakan SATU blok JSON tindakan terstruktur di akhir respon Anda agar pengguna dapat langsung menerapkannya ke Workspace hanya dengan 1 klik:
+```json:action
+{
+  \"type\": \"create_tasks\",
+  \"title\": \"Terapkan Tugas ke Papan Kanban\",
+  \"payload\": {
+    \"tasks\": [
+      { \"title\": \"Judul Tugas\", \"description\": \"Deskripsi singkat kriteria selesai\", \"priority\": \"high|medium|low\", \"recommended_role\": \"Role\" }
+    ]
+  }
+}
+```
+Atau jika menyarankan Sprint baru:
+```json:action
+{
+  \"type\": \"create_sprint\",
+  \"title\": \"Buat Sprint Baru di Roadmap\",
+  \"payload\": {
+    \"title\": \"Sprint 1: ...\",
+    \"description\": \"Fokus dan sasaran sprint\",
+    \"status\": \"planned\",
+    \"estimated_days\": 14
+  }
+}
+```
+Pastikan blok JSON valid dan diletakkan di akhir respon.";
+
+        $base .= $agenticInstructions . "\n\n";
+
         return match ($session->assistant_type) {
             'project' => $base . "Spesialisasi: AI Project Assistant.\n" .
                 "Bantu tim dalam: brainstorming ide proyek, identifikasi masalah, background research, problem statement, tujuan proyek, solusi teknis, metodologi, roadmap pengembangan, analisis kelayakan, dan saran perbaikan dokumentasi proposal.\n" .
