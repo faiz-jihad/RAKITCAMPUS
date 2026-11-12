@@ -700,7 +700,7 @@ export default function CompetitionIndex({
                                 {/* Tile 3: MinSatu Team Formation (lg:col-span-6) */}
                                 <div
                                     onClick={() => setActiveTab('teams')}
-                                    className="bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-blue-200/70 shadow-2xs hover:border-blue-400 transition cursor-pointer flex flex-col justify-between group"
+                                    className="col-span-1 md:col-span-1 lg:col-span-6 bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-blue-200/70 shadow-2xs hover:border-blue-400 transition cursor-pointer flex flex-col justify-between group"
                                 >
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
@@ -737,7 +737,7 @@ export default function CompetitionIndex({
                                 </div>
 
                                 {/* Tile 4: Kategori Unggulan (lg:col-span-6) */}
-                                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                                <div className="col-span-1 md:col-span-1 lg:col-span-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <span className="p-1.5 rounded-lg bg-slate-900 text-white shadow-xs">
