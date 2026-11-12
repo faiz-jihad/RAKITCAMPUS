@@ -29,8 +29,20 @@ class OnboardingWebController extends Controller
         $membership = $user->activeMembership();
         $profile = $user->profile()->with(['skills', 'experiences'])->first();
         $campus = $user->campuses()->first()
+            ?? ($membership ? Campus::find($membership->campus_id) : null)
             ?? Campus::where('slug', 'polindra')->first()
             ?? Campus::first();
+
+        $allCampuses = Campus::where('status', 'active')
+            ->select('id', 'name', 'slug', 'settings')
+            ->orderBy('name')
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'programs' => $c->settings['programs'] ?? [],
+            ]);
 
         $initialNim = $membership?->student_number && !str_starts_with($membership->student_number, 'REG-') && !str_starts_with($membership->student_number, 'MHS-')
             ? $membership->student_number
@@ -73,7 +85,9 @@ class OnboardingWebController extends Controller
             'campus' => [
                 'id' => $campus?->id,
                 'name' => $campus?->name ?? 'Politeknik Negeri Indramayu',
+                'programs' => $campus?->settings['programs'] ?? [],
             ],
+            'campuses' => $allCampuses,
             'popularSkills' => $popularSkills,
         ]);
     }
@@ -126,6 +140,8 @@ class OnboardingWebController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'campus_id' => 'nullable',
+            'custom_campus_name' => 'nullable|string|max:255',
             'student_number' => [
                 'required',
                 'string',
@@ -133,12 +149,19 @@ class OnboardingWebController extends Controller
                 'min:7',
                 'max:20',
                 \Illuminate\Validation\Rule::unique('campus_memberships', 'student_number')
+                    ->where(function ($query) use ($request) {
+                        $campusId = $request->input('campus_id');
+                        if (!empty($campusId) && is_numeric($campusId)) {
+                            return $query->where('campus_id', $campusId);
+                        }
+                        return $query;
+                    })
                     ->ignore($currentMembershipId),
             ],
             'academic_status' => 'nullable|string|in:tpb,prodi',
             'department' => 'nullable|string|max:255',
-            'study_program' => 'nullable|string|max:255',
-            'batch_year' => 'nullable|string|max:10',
+            'study_program' => 'required|string|max:255',
+            'batch_year' => 'nullable|string|max:20',
             'semester' => 'nullable|integer|min:1|max:14',
             'preferred_roles' => 'nullable|array',
             'preferred_roles.*' => 'string|max:100',
@@ -150,10 +173,11 @@ class OnboardingWebController extends Controller
             'phone' => 'nullable|string|max:30',
         ], [
             'name.required' => 'Nama lengkap wajib diisi.',
+            'study_program.required' => 'Program studi wajib dipilih atau diisi.',
             'student_number.required' => 'NIM wajib diisi.',
             'student_number.regex' => 'NIM hanya boleh berisi angka.',
             'student_number.min' => 'NIM minimal 7 digit angka.',
-            'student_number.unique' => 'NIM ini sudah terdaftar oleh mahasiswa lain. Silakan periksa kembali NIM Anda.',
+            'student_number.unique' => 'NIM ini sudah terdaftar oleh mahasiswa lain di kampus yang sama. Silakan periksa kembali NIM Anda.',
         ]);
 
         // 1. Update user name
@@ -161,44 +185,79 @@ class OnboardingWebController extends Controller
             $user->update(['name' => $validated['name']]);
         }
 
-        // 2. Ensure campus membership
-        $campus = $user->campuses()->first()
-            ?? Campus::where('slug', 'polindra')->first()
-            ?? Campus::first();
+        // 2. Resolve Campus (selected or custom)
+        $campus = null;
+        if (!empty($validated['campus_id']) && is_numeric($validated['campus_id'])) {
+            $campus = Campus::find($validated['campus_id']);
+        }
+        if (!$campus && !empty($validated['custom_campus_name'])) {
+            $customName = trim($validated['custom_campus_name']);
+            $campus = Campus::firstOrCreate(
+                ['name' => $customName],
+                [
+                    'slug' => Str::slug($customName),
+                    'status' => 'active',
+                    'settings' => [
+                        'pilot' => false,
+                        'programs' => array_filter([$validated['study_program'] ?? null]),
+                    ],
+                ]
+            );
+        }
+        if (!$campus) {
+            $campus = $user->campuses()->first()
+                ?? Campus::where('slug', 'polindra')->first()
+                ?? Campus::first();
+        }
 
-        $membership = $user->activeMembership();
-        $customNim = !empty($validated['student_number']) ? trim($validated['student_number']) : null;
-
-        if (!$membership && $campus) {
-            $membership = CampusMembership::create([
-                'campus_id' => $campus->id,
-                'user_id' => $user->id,
-                'role' => CampusRole::Student,
-                'status' => MembershipStatus::Active,
-                'verification_status' => VerificationStatus::Verified,
-                'student_number' => $customNim ?? ('MHS-' . substr(abs(crc32($user->email)), 0, 7)),
-                'verified_at' => now(),
-            ]);
-        } elseif ($membership) {
-            if ($customNim) {
-                $membership->update([
-                    'student_number' => $customNim,
-                ]);
-            } elseif (str_starts_with($membership->student_number ?? '', 'REG-')) {
-                $membership->update([
-                    'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
-                ]);
+        // Dynamically append new study_program to campus settings if not present
+        if ($campus && !empty($validated['study_program'])) {
+            $settings = $campus->settings ?? [];
+            $programs = $settings['programs'] ?? [];
+            if (!in_array($validated['study_program'], $programs, true)) {
+                $programs[] = $validated['study_program'];
+                $settings['programs'] = array_values(array_unique($programs));
+                $campus->update(['settings' => $settings]);
             }
         }
 
-        // 3. Update or create StudentProfile
+        // 3. Ensure campus membership
+        $membership = $user->activeMembership() ?? $user->memberships()->first();
+        $customNim = !empty($validated['student_number']) ? trim($validated['student_number']) : null;
+
+        if (!$membership && $campus) {
+            $membership = CampusMembership::updateOrCreate(
+                ['campus_id' => $campus->id, 'user_id' => $user->id],
+                [
+                    'role' => CampusRole::Student,
+                    'status' => MembershipStatus::Active,
+                    'verification_status' => VerificationStatus::Verified,
+                    'student_number' => $customNim ?? ('MHS-' . substr(abs(crc32($user->email)), 0, 7)),
+                    'verified_at' => now(),
+                ]
+            );
+        } elseif ($membership && $campus) {
+            $updateData = [
+                'campus_id' => $campus->id,
+                'status' => MembershipStatus::Active,
+            ];
+            if ($customNim) {
+                $updateData['student_number'] = $customNim;
+            } elseif (str_starts_with($membership->student_number ?? '', 'REG-')) {
+                $updateData['student_number'] = 'MHS-' . substr(abs(crc32($user->email)), 0, 7);
+            }
+            $membership->update($updateData);
+        }
+
+        // 4. Update or create StudentProfile
         $profile = $user->profile;
         $profileData = [
-            'academic_status' => $validated['academic_status'] ?? 'tpb',
-            'department' => $validated['department'] ?? ($validated['academic_status'] === 'tpb' ? 'Tahap Persiapan Bersama' : 'Teknologi Informasi'),
-            'study_program' => $validated['study_program'] ?? ($validated['academic_status'] === 'tpb' ? 'TPB' : 'D4 Rekayasa Perangkat Lunak'),
+            'campus_id' => $campus?->id ?? 1,
+            'academic_status' => $validated['academic_status'] ?? 'prodi',
+            'department' => $validated['department'] ?? 'Teknologi Informasi',
+            'study_program' => $validated['study_program'] ?? 'Teknik Informatika',
             'batch_year' => $validated['batch_year'] ?? '2024',
-            'semester' => $validated['semester'] ?? ($validated['academic_status'] === 'tpb' ? 1 : 3),
+            'semester' => $validated['semester'] ?? 3,
             'bio' => $validated['bio'] ?? null,
             'phone' => $validated['phone'] ?? null,
             'portfolio_url' => $validated['portfolio_url'] ?? null,
