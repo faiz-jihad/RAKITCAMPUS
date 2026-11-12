@@ -35,6 +35,11 @@
             $isPrivate = in_array($component, $privateComponents, true)
                 || \Illuminate\Support\Str::startsWith($component, ['admin/', 'settings/']);
 
+            $atContext = '@context';
+            $atId = '@id';
+            $atType = '@type';
+            $atGraph = '@graph';
+
             // Default Global SEO Meta
             $seoTitle = 'RAKIT Campus — Platform Kolaborasi, Matchmaking Tim Mahasiswa & Hub Kompetisi Kampus';
             $seoDescription = 'Platform terpadu mahasiswa Indonesia untuk matchmaking tim proyek akademik, living proposal, penilaian transparan, dan hub kompetisi kampus berbasis AI.';
@@ -43,35 +48,35 @@
             $ogType = 'website';
             $jsonLdGraph = [
                 [
-                    '@type' => 'WebSite',
-                    '@id' => $baseUrl . '/#website',
+                    $atType => 'WebSite',
+                    $atId => $baseUrl . '/#website',
                     'url' => $baseUrl,
                     'name' => 'RAKIT Campus',
                     'description' => 'Platform Kolaborasi Mahasiswa, Matchmaking Tim, Manajemen Proyek Akademik, dan Kompetisi Kampus Terintegrasi.',
                     'publisher' => [
-                        '@id' => $baseUrl . '/#organization',
+                        $atId => $baseUrl . '/#organization',
                     ],
                     'potentialAction' => [
-                        '@type' => 'SearchAction',
+                        $atType => 'SearchAction',
                         'target' => $baseUrl . '/competitions?search={search_term_string}',
                         'query-input' => 'required name=search_term_string',
                     ],
                 ],
                 [
-                    '@type' => 'EducationalOrganization',
-                    '@id' => $baseUrl . '/#organization',
+                    $atType => 'EducationalOrganization',
+                    $atId => $baseUrl . '/#organization',
                     'name' => 'RAKIT Campus',
                     'url' => $baseUrl,
                     'logo' => asset('favicon.png'),
                     'description' => 'Ekosistem kolaborasi akademik dan kompetisi mahasiswa inter-disiplin.',
                 ],
                 [
-                    '@type' => 'SoftwareApplication',
+                    $atType => 'SoftwareApplication',
                     'name' => 'RAKIT Campus Platform',
                     'operatingSystem' => 'All',
                     'applicationCategory' => 'EducationalApplication',
                     'offers' => [
-                        '@type' => 'Offer',
+                        $atType => 'Offer',
                         'price' => '0',
                         'priceCurrency' => 'IDR',
                     ],
@@ -101,8 +106,8 @@
                 $ogType = 'article';
 
                 $jsonLdGraph[] = [
-                    '@type' => 'EducationEvent',
-                    '@id' => $currentUrl . '#event',
+                    $atType => 'EducationEvent',
+                    $atId => $currentUrl . '#event',
                     'name' => $cName,
                     'description' => $seoDescription,
                     'url' => $currentUrl,
@@ -112,11 +117,11 @@
                     'eventAttendanceMode' => 'https://schema.org/OnlineEventAttendanceMode',
                     'eventStatus' => 'https://schema.org/EventScheduled',
                     'organizer' => [
-                        '@type' => 'Organization',
+                        $atType => 'Organization',
                         'name' => $cOrganizer ?: 'Penyelenggara Kompetisi',
                     ],
                     'offers' => [
-                        '@type' => 'Offer',
+                        $atType => 'Offer',
                         'price' => '0',
                         'priceCurrency' => 'IDR',
                         'availability' => 'https://schema.org/InStock',
@@ -143,8 +148,8 @@
                 $ogType = 'article';
 
                 $jsonLdGraph[] = [
-                    '@type' => 'CreativeWork',
-                    '@id' => $currentUrl . '#work',
+                    $atType => 'CreativeWork',
+                    $atId => $currentUrl . '#work',
                     'name' => $pTitle,
                     'headline' => $pTitle,
                     'description' => $seoDescription,
@@ -152,7 +157,7 @@
                     'url' => $currentUrl,
                     'dateCreated' => $pCreated ? \Illuminate\Support\Carbon::parse($pCreated)->toIso8601String() : null,
                     'author' => [
-                        '@type' => 'Person',
+                        $atType => 'Person',
                         'name' => $pLeaderName ?: 'Mahasiswa RAKIT Campus',
                     ],
                 ];
@@ -232,8 +237,8 @@
         @if (!$isPrivate)
         <script type="application/ld+json">
         {!! json_encode([
-            '@context' => 'https://schema.org',
-            '@graph' => $jsonLdGraph,
+            $atContext => 'https://schema.org',
+            $atGraph => $jsonLdGraph,
         ], JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
         </script>
         @endif
