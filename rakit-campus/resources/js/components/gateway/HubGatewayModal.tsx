@@ -142,7 +142,7 @@ export default function HubGatewayModal({
 
                                 <div>
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block mb-0.5">
-                                        Proyek & Kelas
+                                        Proyek
                                     </span>
                                     <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
                                         Project Hub
@@ -178,7 +178,7 @@ export default function HubGatewayModal({
                                         Competition Hub
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-1 leading-snug">
-                                        Eksplorasi kompetisi & MinSatu matchmaking.
+                                        Eksplorasi kompetisi & rekrutmen tim kolaborasi.
                                     </p>
                                 </div>
                             </button>

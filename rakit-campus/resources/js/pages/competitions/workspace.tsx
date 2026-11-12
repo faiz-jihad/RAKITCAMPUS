@@ -1148,7 +1148,7 @@ export default function CompetitionWorkspace({
                                 <div className="text-center py-6 px-4 bg-slate-50 rounded-xl border border-dashed border-slate-200">
                                     <p className="text-xs font-bold text-slate-700">Belum ada daftar lowongan spesifik</p>
                                     <p className="text-[11px] text-slate-400 mt-0.5">
-                                        Tambahkan posisi yang dicari agar mahasiswa di MinSatu Hub dapat langsung melamar.
+                                        Tambahkan posisi yang dicari agar mahasiswa dapat langsung melamar ke tim Anda.
                                     </p>
                                 </div>
                             ) : (

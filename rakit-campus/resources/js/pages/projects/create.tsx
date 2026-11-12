@@ -11,7 +11,7 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Proyek Kelas', href: '/projects' },
+    { title: 'Proyek', href: '/projects' },
     { title: 'Buat Proyek Baru', href: '/projects/create' },
 ];
 

@@ -152,7 +152,7 @@ export default function ProjectIndex({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                            Proyek Kelas
+                            Proyek
                         </h1>
                     </div>
 

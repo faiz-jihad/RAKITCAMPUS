@@ -324,7 +324,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Cari Tim (MinSatu)
+                                    Cari Tim
                                 </Link>
                                 <Link
                                     href="/competitions?tab=categories"
@@ -387,7 +387,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Proyek Kelas
+                                    Proyek
                                 </Link>
                                 <Link
                                     href="/workspace"
@@ -486,7 +486,7 @@ export default function AppLayout({
                                 <span className="text-[10px] leading-none tracking-tight">Eksplor</span>
                             </Link>
 
-                            {/* 2. MinSatu (Cari Tim) */}
+                            {/* 2. Cari Tim */}
                             <Link
                                 href="/competitions?tab=teams"
                                 className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
@@ -500,7 +500,7 @@ export default function AppLayout({
                                         url.includes('tab=teams') ? 'stroke-[2.25] text-blue-600' : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">MinSatu</span>
+                                <span className="text-[10px] leading-none tracking-tight">Cari Tim</span>
                             </Link>
 
                             {/* 3. Lomba Saya */}

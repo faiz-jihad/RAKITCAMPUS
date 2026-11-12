@@ -140,16 +140,6 @@ export default function LeaderboardIndex({
                 {/* 1. TOP HERO HEADER */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-700 border border-blue-200">
-                                <Trophy className="size-3 text-blue-600" />
-                                <span>Continuous Leaderboard</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>Live & Terverifikasi</span>
-                            </span>
-                        </div>
                         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
                             Klasemen & Peringkat RAKIT Campus
                         </h1>
@@ -518,7 +508,7 @@ export default function LeaderboardIndex({
                         <div className="p-12 text-center text-slate-400">
                             <Target className="size-8 mx-auto mb-2 text-slate-300" />
                             <p className="text-xs font-semibold text-slate-600">Belum ada aktivitas terverifikasi untuk filter ini.</p>
-                            <p className="text-[11px] text-slate-400 mt-1">Selesaikan proyek kelas atau ikuti kompetisi untuk mulai mengumpulkan skor.</p>
+                            <p className="text-[11px] text-slate-400 mt-1">Selesaikan proyek atau ikuti kompetisi untuk mulai mengumpulkan skor.</p>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100 overflow-x-auto">
@@ -682,7 +672,7 @@ export default function LeaderboardIndex({
                             </div>
 
                             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 pt-2">
-                                Kontribusi Proyek Kelas (Project Hub):
+                                Kontribusi Proyek (Project Hub):
                             </h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">

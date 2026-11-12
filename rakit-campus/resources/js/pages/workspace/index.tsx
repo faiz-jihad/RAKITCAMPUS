@@ -54,14 +54,14 @@ export default function WorkspaceIndex({ teams }: Props) {
                             </div>
                             <h3 className="text-sm font-bold text-slate-900">Belum Ada Tim Proyek Aktif</h3>
                             <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
-                                Kelola papan kanban tugas proyek kelas Anda bersama tim secara terstruktur.
+                                Kelola papan kanban tugas proyek Anda bersama tim secara terstruktur.
                             </p>
                             <div className="flex flex-wrap justify-center gap-2.5">
                                 <Link
                                     href="/projects"
                                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-2xs"
                                 >
-                                    Jelajahi Proyek Kelas
+                                    Jelajahi Proyek
                                 </Link>
                                 <Link
                                     href="/projects/create"

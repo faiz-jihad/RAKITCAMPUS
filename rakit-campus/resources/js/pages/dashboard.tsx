@@ -230,7 +230,7 @@ export default function Dashboard({
                                 {recommendedProjects.length}
                             </span>
                             <span className="text-xs text-slate-400 font-medium">
-                                Proyek Kelas
+                                Proyek
                             </span>
                         </div>
                     </div>
@@ -337,7 +337,7 @@ export default function Dashboard({
                                         <div>
                                             <div className="flex items-center justify-between mb-1.5">
                                                 <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                                                    PROYEK KELAS
+                                                    PROYEK
                                                 </span>
                                                 <span className="text-[11px] text-slate-400 font-medium">
                                                     {team.members_count || 1} Anggota

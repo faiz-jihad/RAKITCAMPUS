@@ -273,7 +273,7 @@ export default function LeaderboardAdmin({
                                     {[
                                         { id: 'user', label: 'Mahasiswa (User)' },
                                         { id: 'team', label: 'Tim Kompetisi/Proyek' },
-                                        { id: 'project', label: 'Proyek Kelas' },
+                                        { id: 'project', label: 'Proyek' },
                                     ].map((t) => (
                                         <button
                                             key={t.id}

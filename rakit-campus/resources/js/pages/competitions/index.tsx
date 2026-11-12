@@ -446,14 +446,10 @@ export default function CompetitionIndex({
                 {/* 1. MINIMAL HEADER SECTION */}
                 <header className="space-y-3 sm:space-y-4 pb-5 border-b border-slate-200/80">
                     <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
+                        <div>
                             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
                                 Competition Hub
                             </h1>
-                            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/70">
-                                <span className="w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse" />
-                                Katalog Lomba
-                            </span>
                         </div>
 
                         <Link
@@ -697,7 +693,7 @@ export default function CompetitionIndex({
                                     </div>
                                 </div>
 
-                                {/* Tile 3: MinSatu Team Formation (lg:col-span-6) */}
+                                {/* Tile 3: Cari Rekan Tim (lg:col-span-6) */}
                                 <div
                                     onClick={() => setActiveTab('teams')}
                                     className="col-span-1 md:col-span-1 lg:col-span-6 bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-blue-200/70 shadow-2xs hover:border-blue-400 transition cursor-pointer flex flex-col justify-between group"
@@ -709,7 +705,7 @@ export default function CompetitionIndex({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs font-bold text-slate-900">
-                                                    MinSatu • Cari Rekan Tim
+                                                    Cari Rekan Tim
                                                 </h3>
                                                 <span className="text-[10px] text-slate-500">
                                                     {openRecruitingTeams.length} tim aktif membuka lowongan peran
@@ -1046,7 +1042,7 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 2: CARI TIM (MINSATU)                                 */}
+                {/* TAB 2: CARI TIM                                           */}
                 {/* ========================================================= */}
                 {activeTab === 'teams' && (
                     <div className="space-y-6">
@@ -1054,7 +1050,7 @@ export default function CompetitionIndex({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
                             <div className="flex items-center gap-3">
                                 <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                    Tim Mencari Rekan (MinSatu)
+                                    Tim Mencari Rekan
                                 </h2>
                                 <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200/70">
                                     {openRecruitingTeams.length} tim aktif

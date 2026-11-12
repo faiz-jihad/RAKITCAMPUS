@@ -327,7 +327,7 @@ export default function ProjectShow({
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Kembali ke Proyek Kelas</span>
+                            <span>Kembali ke Proyek</span>
                         </Link>
 
                         <div className="flex items-center gap-2">
