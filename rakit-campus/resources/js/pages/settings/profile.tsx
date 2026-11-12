@@ -233,15 +233,16 @@ export default function Profile({
 
                     {/* 1. LinkedIn-Style Hero Card with Cover Banner & Overlapping Avatar */}
                     <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden">
-                        {/* Cover Banner */}
-                        <div className="h-32 sm:h-44 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 relative">
-                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent" />
-                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                        {/* Cover Banner with Geometric Blue Abstract Wallpaper */}
+                        <div className="h-36 sm:h-52 bg-[#0B1536] bg-[url('/images/profile-banner-abstract.jpg')] bg-cover bg-center relative overflow-hidden">
+                            {/* Subtle dark gradient overlay for depth and high contrast */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-black/20" />
+                            <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
                                 <Link
                                     href={profile?.slug ? `/p/${encodeURIComponent(profile.slug)}` : '#'}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-xs backdrop-blur-md transition"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-bold shadow-md backdrop-blur-md transition border border-white/20 hover:scale-105"
                                 >
-                                    <ExternalLink className="size-3.5 text-blue-600" />
+                                    <ExternalLink className="size-3.5 text-blue-400" />
                                     <span>Lihat Profil Publik</span>
                                 </Link>
                             </div>
@@ -249,9 +250,9 @@ export default function Profile({
 
                         {/* Content Below Banner with Overlapping Avatar */}
                         <div className="px-6 pb-6 pt-0">
-                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-14 sm:-mt-18 mb-4">
                                 <div className="relative inline-block">
-                                    <div className="size-24 sm:size-28 rounded-full border-4 border-white bg-gradient-to-tr from-slate-900 via-blue-900 to-indigo-700 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-md">
+                                    <div className="size-24 sm:size-28 rounded-full border-4 border-white bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-xl ring-2 ring-blue-500/20">
                                         {data.name
                                             .split(' ')
                                             .map((n) => n[0])
@@ -259,7 +260,7 @@ export default function Profile({
                                             .join('')
                                             .toUpperCase() || 'U'}
                                     </div>
-                                    <div className="absolute bottom-1 right-1 size-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-xs cursor-pointer hover:bg-slate-50 transition" title="Ganti Foto">
+                                    <div className="absolute bottom-1 right-1 size-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-md cursor-pointer hover:bg-slate-50 hover:text-blue-600 transition" title="Ganti Foto">
                                         <Camera className="size-3.5" />
                                     </div>
                                 </div>

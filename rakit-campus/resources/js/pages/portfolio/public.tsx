@@ -167,9 +167,9 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
                     <div className="lg:col-span-8 space-y-4 sm:space-y-5">
                         {/* 1. HERO INTRO CARD (Cover Banner + Avatar + Details) */}
                         <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                            {/* Cover Banner */}
-                            <div className="h-36 sm:h-52 w-full bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 relative">
-                                <div className="absolute inset-0 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+                            {/* Cover Banner with Geometric Blue Abstract Wallpaper */}
+                            <div className="h-40 sm:h-56 w-full bg-[#0B1536] bg-[url('/images/profile-banner-abstract.jpg')] bg-cover bg-center relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-black/20" />
                             </div>
 
                             {/* Overlapping Avatar & Action Buttons */}

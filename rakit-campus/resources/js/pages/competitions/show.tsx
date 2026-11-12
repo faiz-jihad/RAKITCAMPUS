@@ -26,6 +26,7 @@ import {
     ShieldCheck,
     Sparkles,
     Trophy,
+    User,
     UserCheck,
     UserPlus,
     Users,
@@ -659,10 +660,32 @@ export default function CompetitionShow({
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-[11px] text-slate-500 mt-1">
-                                                        Ketua: <strong className="text-slate-700">{part.team?.leader?.name || 'Mahasiswa'}</strong> • Kapasitas:{' '}
-                                                        {part.team?.members_count || part.team?.members?.length || 0} / {competition.max_team_size || 5} Anggota
-                                                    </p>
+                                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                                        <span className="text-[11px] text-slate-500">
+                                                            Ketua: <strong className="text-slate-700">{part.team?.leader?.name || 'Mahasiswa'}</strong>
+                                                        </span>
+                                                        <div className="flex items-center gap-1">
+                                                            {Array.from({ length: competition.max_team_size || 5 }).map((_, idx) => {
+                                                                const isFilled = idx < (part.team?.members_count || part.team?.members?.length || 1);
+                                                                return (
+                                                                    <div
+                                                                        key={idx}
+                                                                        className={`flex items-center justify-center size-5 rounded-md ${
+                                                                            isFilled
+                                                                                ? 'bg-blue-600 text-white shadow-2xs'
+                                                                                : 'border border-dashed border-slate-300 text-slate-300'
+                                                                        }`}
+                                                                        title={isFilled ? `Anggota #${idx + 1} Terisi` : `Slot #${idx + 1} Kosong`}
+                                                                    >
+                                                                        <User className="size-3 stroke-[2]" />
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                            <span className="text-[10px] font-bold text-slate-600 ml-1">
+                                                                {part.team?.members_count || part.team?.members?.length || 1}/{competition.max_team_size || 5}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                     {part.team?.recruitment?.roles && part.team.recruitment.roles.length > 0 && (
                                                         <div className="flex flex-wrap gap-1 mt-2">
                                                             {part.team.recruitment.roles.map((r: any) => (

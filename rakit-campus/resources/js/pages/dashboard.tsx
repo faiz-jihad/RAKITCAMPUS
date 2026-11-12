@@ -369,7 +369,7 @@ export default function Dashboard({
                             <div className="py-6 text-center text-xs text-slate-400">
                                 <FolderKanban className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 <p className="font-semibold text-slate-700">Belum tergabung dalam tim proyek</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Mulai dengan membuat proyek baru atau mengajukan diri ke tim proyek.</p>
                                 <Link
                                     href="/projects/create"
                                     className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-xs transition"
