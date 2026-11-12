@@ -1,6 +1,7 @@
 import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
+import SeoHead from '@/components/seo/SeoHead';
 import RecordResultModal from '@/components/competitions/RecordResultModal';
 import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
@@ -196,8 +197,54 @@ export default function CompetitionShow({
         });
     };
 
+    const canonicalUrl = `https://rakitcampus.my.id/competitions/${competition.slug || competition.id}`;
+    const cleanDesc = competition.description
+        ? competition.description.replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim().slice(0, 180)
+        : `Daftar dan ikuti kompetisi ${competition.name} (${competition.level || 'Mahasiswa'}) diselenggarakan oleh ${competition.organizer || 'penyelenggara'}. Bentuk tim dan kirim berkas di RAKIT Campus.`;
+
+    const eventJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'EducationEvent',
+        '@id': `${canonicalUrl}#event`,
+        name: competition.name,
+        description: cleanDesc,
+        url: canonicalUrl,
+        image: competition.cover_image || 'https://rakitcampus.my.id/favicon.png',
+        startDate: competition.starts_at || new Date().toISOString(),
+        endDate: competition.ends_at || undefined,
+        eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+        eventStatus: 'https://schema.org/EventScheduled',
+        organizer: {
+            '@type': 'Organization',
+            name: competition.organizer || 'Penyelenggara Kompetisi',
+            url: competition.official_url || undefined,
+        },
+        offers: {
+            '@type': 'Offer',
+            price: '0',
+            priceCurrency: 'IDR',
+            availability: 'https://schema.org/InStock',
+            url: competition.registration_url || canonicalUrl,
+            validThrough: competition.registration_deadline || undefined,
+        },
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs} activeTab="lomba" title={`${competition.name} — RakitCampus`}>
+            <SeoHead
+                title={`${competition.name} — Info Lomba & Pendaftaran Mahasiswa`}
+                description={cleanDesc}
+                keywords={`kompetisi ${competition.name}, lomba ${competition.category || ''}, hackathon ${competition.level || ''}, ${competition.organizer || ''}, tim lomba mahasiswa, rakit campus`}
+                canonicalUrl={canonicalUrl}
+                ogImage={competition.cover_image || undefined}
+                ogType="article"
+                jsonLd={eventJsonLd}
+                breadcrumbs={[
+                    { name: 'Beranda', url: '/' },
+                    { name: 'Kompetisi', url: '/competitions' },
+                    { name: competition.name, url: `/competitions/${competition.slug || competition.id}` },
+                ]}
+            />
             <div className="pt-2 flex flex-col gap-6">
                 {/* Top Navigation Row */}
                 <div className="flex items-center justify-between">

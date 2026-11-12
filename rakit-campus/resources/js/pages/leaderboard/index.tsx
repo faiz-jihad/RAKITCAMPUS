@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import SeoHead from '@/components/seo/SeoHead';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -134,7 +135,16 @@ export default function LeaderboardIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Klasemen Kontribusi & Prestasi — RAKIT Campus" />
+            <SeoHead
+                title="Klasemen & Peringkat Mahasiswa Berprestasi Nasional — RAKIT Campus"
+                description="Papan peringkat mahasiswa berprestasi, kontributor proyek teraktif, dan tim juara kompetisi kampus terverifikasi di seluruh Indonesia."
+                keywords="peringkat mahasiswa, klasemen kampus, mahasiswa berprestasi, juara lomba, leaderboard rakit campus"
+                canonicalUrl="https://rakitcampus.my.id/leaderboard"
+                breadcrumbs={[
+                    { name: 'Beranda', url: '/' },
+                    { name: 'Leaderboard', url: '/leaderboard' },
+                ]}
+            />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-20">
                 {/* 1. TOP HERO HEADER */}

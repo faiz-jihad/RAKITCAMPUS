@@ -38,6 +38,9 @@ Route::get('/projects/{slug}', [ProjectWebController::class, 'show'])->name('pro
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
 Route::get('/competitions/{slug}', [CompetitionWebController::class, 'show'])->name('competitions.show')->where('slug', '^(?!create$).*$');
 Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
+Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('leaderboard.index');
+Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
+Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
@@ -135,10 +138,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::delete('/workspace/{teamId}/tasks/{taskId}', [WorkspaceWebController::class, 'deleteTask'])->name('workspace.tasks.delete');
     Route::post('/workspace/{teamId}/evaluation', [WorkspaceWebController::class, 'saveEvaluation'])->name('workspace.evaluation.save');
 
-    // Continuous Leaderboard System (Overall, Project Hub, Competition Hub, Admin)
-    Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('leaderboard.index');
-    Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
-    Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
+    // Continuous Leaderboard Administration & Point Actions
     Route::get('/leaderboard/admin', [LeaderboardWebController::class, 'adminIndex'])->name('leaderboard.admin');
     Route::patch('/leaderboard/admin/rules/{id}', [LeaderboardWebController::class, 'updateRule'])->name('leaderboard.rules.update');
     Route::post('/leaderboard/admin/adjust', [LeaderboardWebController::class, 'adjustPoints'])->name('leaderboard.admin.adjust');

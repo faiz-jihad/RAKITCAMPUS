@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import SeoHead from '@/components/seo/SeoHead';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -135,7 +136,16 @@ export default function MatchingIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Cari Teman Tim & Rekomendasi Cerdas — RAKIT Campus" />
+            <SeoHead
+                title="Smart Matchmaking Tim Mahasiswa & Rekomendasi Partner — RAKIT Campus"
+                description="Temukan partner proyek dan rekan lomba yang tepat dengan algoritma AI Smart Matchmaking berdasarkan keahlian komplementer dan minat akademik."
+                keywords="cari teman tim, matchmaking mahasiswa, partner hackathon, kolaborasi tim, rakit campus"
+                canonicalUrl="https://rakitcampus.my.id/matching"
+                breadcrumbs={[
+                    { name: 'Beranda', url: '/' },
+                    { name: 'Matchmaking', url: '/matching' },
+                ]}
+            />
 
             {/* Main container */}
             <div className="min-h-screen bg-[#F8FAFC] relative text-slate-900 pb-24">

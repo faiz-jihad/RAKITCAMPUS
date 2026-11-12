@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import SeoHead from '@/components/seo/SeoHead';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
@@ -145,7 +146,16 @@ export default function ProjectIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Project Hub — Temukan & Bangun Proyek Kolaborasi Kampus" />
+            <SeoHead
+                title="Katalog Proyek & Portofolio Karya Mahasiswa — RAKIT Campus"
+                description="Jelajahi inovasi proyek mahasiswa, prototipe open-source, riset akademik, dan living proposal tugas akhir perguruan tinggi di RAKIT Campus."
+                keywords="proyek mahasiswa, portofolio teknologi, living proposal, tugas akhir inovatif, riset kampus, kolaborasi proyek, rakit campus"
+                canonicalUrl="https://rakitcampus.my.id/projects"
+                breadcrumbs={[
+                    { name: 'Beranda', url: '/' },
+                    { name: 'Proyek', url: '/projects' },
+                ]}
+            />
 
             <div className="space-y-6">
                 {/* Header Section */}

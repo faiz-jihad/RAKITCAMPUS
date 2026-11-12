@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import SeoHead from '@/components/seo/SeoHead';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -314,9 +315,46 @@ export default function ProjectShow({
         { id: 'archive', label: 'Archive', icon: Archive },
     ];
 
+    const canonicalUrl = `https://rakitcampus.my.id/projects/${project.slug || project.id}`;
+    const cleanDesc = (project.description || project.short_description || '')
+        .replace(/<[^>]*>?/gm, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 180) || `Eksplor proyek mahasiswa ${project.title} kategori ${project.category || 'Teknologi'} di RAKIT Campus.`;
+
+    const projectJsonLd = {
+        '@context': 'https://schema.org',
+        '@type': 'CreativeWork',
+        '@id': `${canonicalUrl}#work`,
+        name: project.title,
+        headline: project.title,
+        description: cleanDesc,
+        url: canonicalUrl,
+        image: project.cover_image || 'https://rakitcampus.my.id/favicon.png',
+        dateCreated: project.created_at || undefined,
+        keywords: Array.isArray(project.tech_stack) ? project.tech_stack.join(', ') : undefined,
+        author: {
+            '@type': 'Person',
+            name: project.leader?.name || 'Mahasiswa RAKIT Campus',
+        },
+    };
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`${project.title} — RAKIT Campus Project Hub`} />
+            <SeoHead
+                title={`${project.title} — Showcase Inovasi & Portofolio Mahasiswa`}
+                description={cleanDesc}
+                keywords={`proyek ${project.title}, ${project.category || ''}, karya mahasiswa, portofolio inovasi, living proposal, rakit campus`}
+                canonicalUrl={canonicalUrl}
+                ogImage={project.cover_image || undefined}
+                ogType="article"
+                jsonLd={projectJsonLd}
+                breadcrumbs={[
+                    { name: 'Beranda', url: '/' },
+                    { name: 'Proyek', url: '/projects' },
+                    { name: project.title, url: `/projects/${project.slug || project.id}` },
+                ]}
+            />
 
             <div className="space-y-6">
                 <div className="flex flex-col gap-6">

@@ -1,24 +1,47 @@
 # ==============================================================================
 # RAKIT Campus - Robots.txt
-# Platform Kolaborasi Mahasiswa, Matchmaking Tim, dan Hub Kompetisi Kampus
+# Enterprise SEO & AI Crawler Directives
+# Production Host: https://rakitcampus.my.id
 # ==============================================================================
 
 User-agent: *
 Allow: /
-Allow: /projects
-Allow: /competitions
-Allow: /matching
-Allow: /p/
+Allow: /competitions$
+Allow: /competitions/*
+Allow: /projects$
+Allow: /projects/*
+Allow: /leaderboard$
+Allow: /leaderboard/*
+Allow: /matching$
+Allow: /p/*
+Allow: /build/
+Allow: /images/
+Allow: /favicon.ico
+Allow: /favicon.png
+
+# Prevent Crawlers from Indexing Authenticated & Private Admin Workspaces
 Disallow: /dashboard
 Disallow: /workspace
+Disallow: /workspace/*
 Disallow: /competition-workspace
+Disallow: /competition-workspace/*
 Disallow: /admin
+Disallow: /admin/*
+Disallow: /settings
+Disallow: /settings/*
 Disallow: /notifications
+Disallow: /notifications/*
 Disallow: /api/
 Disallow: /auth/
-Disallow: /profile
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /email/
+Disallow: /storage-download/
+Disallow: /feedback
 
-# Search Engines
+# Search Engine Crawlers
 User-agent: Googlebot
 Allow: /
 
@@ -28,7 +51,7 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-# AI Assistants & Large Language Model Web Crawlers
+# Generative AI & Knowledge Engine Bots
 User-agent: GPTBot
 Allow: /
 
@@ -59,5 +82,6 @@ Allow: /
 User-agent: meta-externalagent
 Allow: /
 
-# XML Sitemap
+# Host & Dynamic XML Sitemap
+Host: https://rakitcampus.my.id
 Sitemap: https://rakitcampus.my.id/sitemap.xml

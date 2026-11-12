@@ -1,4 +1,5 @@
 import { type SharedData } from '@/types';
+import SeoHead from '@/components/seo/SeoHead';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -1716,7 +1717,12 @@ export default function Welcome() {
 
     return (
         <div className="min-h-screen bg-white text-neutral-900 selection:bg-[#2563EB] selection:text-white font-sans antialiased">
-            <Head title="RAKIT Campus — Simplify Student Projects, Boost Campus Achievements" />
+            <SeoHead
+                title="RAKIT Campus — Platform Kolaborasi, Matchmaking Tim Mahasiswa & Hub Kompetisi"
+                description="RAKIT Campus adalah ekosistem kolaborasi mahasiswa terpadu untuk matchmaking tim proyek akademik, living proposal, penilaian transparan, dan hub kompetisi kampus berbasis AI."
+                keywords="RAKIT Campus, matchmaking mahasiswa, proyek kampus, kompetisi mahasiswa, hackathon indonesia, tim lomba, portofolio mahasiswa"
+                canonicalUrl="https://rakitcampus.my.id"
+            />
 
             {/* Initial White Screen Curtain */}
             <div
