@@ -270,6 +270,15 @@ export default function CompetitionWorkspace({
         );
     };
 
+    const handleDeleteTask = (taskId: number, taskTitle: string) => {
+        if (confirm(`Apakah Anda yakin ingin menghapus tugas "${taskTitle}"?`)) {
+            router.delete(
+                route('competitions.tasks.delete', [participation.id, taskId]),
+                { preserveScroll: true }
+            );
+        }
+    };
+
     const handleQuickAddTask = (colKey: string) => {
         if (!inlineTitle.trim()) return;
         router.post(
@@ -1298,19 +1307,35 @@ export default function CompetitionWorkspace({
                                                                 {task.priority}
                                                             </span>
 
-                                                            {isMember && (
-                                                                <select
-                                                                    value={task.status}
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
-                                                                    className="text-[10px] bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-slate-600 cursor-pointer"
-                                                                >
-                                                                    <option value="todo">To Do</option>
-                                                                    <option value="in_progress">In Progress</option>
-                                                                    <option value="in_review">Review</option>
-                                                                    <option value="completed">Done</option>
-                                                                </select>
-                                                            )}
+                                                            <div className="flex items-center gap-1 shrink-0">
+                                                                {isMember && (
+                                                                    <select
+                                                                        value={task.status}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
+                                                                        className="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 cursor-pointer"
+                                                                    >
+                                                                        <option value="todo">To Do</option>
+                                                                        <option value="in_progress">In Progress</option>
+                                                                        <option value="in_review">Review</option>
+                                                                        <option value="completed">Done</option>
+                                                                    </select>
+                                                                )}
+
+                                                                {isMember && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            handleDeleteTask(task.id, task.title);
+                                                                        }}
+                                                                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                                                        title="Hapus tugas ini"
+                                                                    >
+                                                                        <Trash2 className="size-3" />
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </div>
 
                                                         <div className="text-xs font-bold text-slate-900 leading-snug">

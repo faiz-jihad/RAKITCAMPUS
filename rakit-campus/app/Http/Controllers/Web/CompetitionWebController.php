@@ -1681,6 +1681,22 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
+    public function deleteTask(Request $request, int $participationId, int $taskId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+
+        if (!$participation->team || !$participation->team->hasMember($user)) {
+            abort(403, 'Hanya anggota tim yang dapat menghapus tugas.');
+        }
+
+        $task = Task::where('team_id', $participation->team->id)->findOrFail($taskId);
+        $taskTitle = $task->title;
+        $task->delete();
+
+        return back()->with('success', "Tugas '{$taskTitle}' berhasil dihapus.");
+    }
+
     public function generateTasksWithAi(Request $request, int $participationId): RedirectResponse
     {
         $user = $request->user();
