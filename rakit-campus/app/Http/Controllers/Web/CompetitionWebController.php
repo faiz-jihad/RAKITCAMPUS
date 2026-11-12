@@ -1733,8 +1733,6 @@ class CompetitionWebController extends Controller
         if (!$isAuthorized) {
             abort(403, 'Hanya anggota tim yang dapat membuat rekomendasi tugas.');
         }
-            abort(403, 'Hanya anggota tim yang dapat membuat tugas menggunakan AI.');
-        }
 
         try {
             $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban($participation, $user);
