@@ -3,6 +3,7 @@ import SeoHead from '@/components/seo/SeoHead';
 import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
+import CreateCompetitionTeamModal from '@/components/competitions/CreateCompetitionTeamModal';
 import RecordResultModal from '@/components/competitions/RecordResultModal';
 import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
@@ -344,6 +345,10 @@ export default function CompetitionIndex({
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
+    // Create Team Modal State
+    const [createTeamModalOpen, setCreateTeamModalOpen] = useState(false);
+    const [createTeamPreselectedCompId, setCreateTeamPreselectedCompId] = useState<number | null>(null);
+
     // 10 Core Academic Categories (Concise text, ZERO emojis)
     const coreCategoryList = [
         { key: 'technology', name: 'Teknologi & Rekayasa', icon: Terminal, desc: 'Software, IoT, robotika' },
@@ -464,11 +469,14 @@ export default function CompetitionIndex({
 
                         <button
                             type="button"
-                            onClick={() => setActiveTab('teams')}
-                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold shadow-xs transition shrink-0 cursor-pointer"
+                            onClick={() => {
+                                setCreateTeamPreselectedCompId(null);
+                                setCreateTeamModalOpen(true);
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer"
                         >
-                            <Users className="w-3.5 h-3.5" />
-                            <span>Cari & Bikin Tim</span>
+                            <Plus className="w-4 h-4" />
+                            <span>Buat Tim</span>
                         </button>
                     </div>
 
@@ -1138,6 +1146,18 @@ export default function CompetitionIndex({
                                         Reset
                                     </button>
                                 )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCreateTeamPreselectedCompId(null);
+                                        setCreateTeamModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer"
+                                >
+                                    <Plus className="w-3.5 h-3.5" />
+                                    <span>Buat Tim Baru</span>
+                                </button>
                             </div>
                         </div>
 
@@ -1148,13 +1168,17 @@ export default function CompetitionIndex({
                                 <h4 className="text-sm font-bold text-slate-900">
                                     Belum Ada Tim yang Sedang Merekrut
                                 </h4>
-                                <Link
-                                    href="/competitions/create"
-                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition"
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCreateTeamPreselectedCompId(null);
+                                        setCreateTeamModalOpen(true);
+                                    }}
+                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    <span>Bikin Tim</span>
-                                </Link>
+                                    <span>Bentuk Tim Baru</span>
+                                </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -2142,6 +2166,14 @@ export default function CompetitionIndex({
                     </div>
                 </div>
             )}
+
+            {/* CREATE COMPETITION TEAM MODAL */}
+            <CreateCompetitionTeamModal
+                isOpen={createTeamModalOpen}
+                onClose={() => setCreateTeamModalOpen(false)}
+                competitions={competitions.data}
+                preselectedCompId={createTeamPreselectedCompId}
+            />
 
             {/* APPLY COMPETITION TEAM MODAL */}
             {selectedTeamData && (
