@@ -550,7 +550,7 @@ export default function CompetitionIndex({
                             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4.5 items-stretch">
                                 {/* Tile 1: Spotlight Hero (lg:col-span-7 xl:col-span-8) */}
                                 <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between group">
-                                    <div className="relative h-48 md:h-auto md:w-5/12 overflow-hidden bg-slate-900 shrink-0">
+                                    <div className="relative aspect-[4/5] sm:aspect-auto sm:h-64 md:h-auto md:w-5/12 md:aspect-[4/5] overflow-hidden bg-slate-950 shrink-0">
                                         <img
                                             src={getCompetitionCover(spotlightComp)}
                                             alt={spotlightComp.name}
@@ -954,102 +954,104 @@ export default function CompetitionIndex({
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
-                                            className={`bg-white rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
+                                            className={`bg-white rounded-2xl sm:rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
                                                 isExpired
                                                     ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
                                                     : 'border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/70'
                                             }`}
                                         >
-                                            {/* Cover Image Banner with Multi-badge Overlay */}
-                                            <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-900 shrink-0">
+                                            {/* Cover Image Poster — 4:5 Instagram Portrait Aspect Ratio */}
+                                            <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 shrink-0">
                                                 <img
                                                     src={getCompetitionCover(comp)}
                                                     alt={comp.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                                                 />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-slate-950/20 to-black/20" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/25 pointer-events-none" />
 
                                                 {/* Category & Level Badges on Image */}
-                                                <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap max-w-[80%]">
-                                                    <span className="px-2.5 py-0.5 rounded-lg bg-blue-600/95 backdrop-blur-md text-white text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                                                <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[80%] z-10">
+                                                    <span className="px-2 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg bg-blue-600/95 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
                                                         {comp.category?.replace('_', ' ') || 'UMUM'}
                                                     </span>
-                                                    <span className="px-2 py-0.5 rounded-lg bg-black/45 backdrop-blur-md text-white/95 text-[10px] font-semibold uppercase border border-white/10">
-                                                        {comp.level || 'Nasional'}
-                                                    </span>
+                                                    {comp.level && (
+                                                        <span className="px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-black/40 backdrop-blur-md text-white/95 text-[9px] sm:text-[10px] font-semibold uppercase border border-white/10">
+                                                            {comp.level}
+                                                        </span>
+                                                    )}
                                                 </div>
 
                                                 {/* Bookmark Button */}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                    className={`absolute top-2.5 right-2.5 p-2 rounded-full backdrop-blur-md transition cursor-pointer shadow-sm ${
+                                                    className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 size-7 sm:size-8 rounded-full backdrop-blur-md flex items-center justify-center transition cursor-pointer shadow-xs z-10 ${
                                                         isSaved
                                                             ? 'bg-rose-500 text-white'
-                                                            : 'bg-black/35 hover:bg-black/60 text-white'
+                                                            : 'bg-black/35 hover:bg-black/60 text-white border border-white/10'
                                                     }`}
                                                     title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
                                                 >
-                                                    <Bookmark className={`size-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                    <Bookmark className={`size-3 sm:size-3.5 ${isSaved ? 'fill-current' : ''}`} />
                                                 </button>
 
                                                 {/* Bottom Banner Status Pill on Cover */}
-                                                <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between gap-2">
+                                                <div className="absolute bottom-2 left-2 right-2 sm:bottom-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
                                                     {daysLeft !== null ? (
                                                         <span
-                                                            className={`text-[10px] font-bold px-2 py-0.5 rounded-lg backdrop-blur-md shadow-xs ${
+                                                            className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md backdrop-blur-md shadow-xs ${
                                                                 daysLeft <= 3
-                                                                    ? 'bg-rose-600/95 text-white animate-pulse'
+                                                                    ? 'bg-rose-600/95 text-white'
                                                                     : daysLeft <= 14
                                                                         ? 'bg-amber-500/95 text-white'
-                                                                        : 'bg-slate-900/85 text-white'
+                                                                        : 'bg-slate-900/80 text-white border border-white/10'
                                                             }`}
                                                         >
                                                             {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Tutup hari ini'}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-600/90 text-white backdrop-blur-md">
-                                                            Pendaftaran Buka
+                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-emerald-600/90 text-white backdrop-blur-md">
+                                                            Buka
                                                         </span>
                                                     )}
 
-                                                    <span className="text-[10px] font-medium text-white/90 bg-black/40 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/10 truncate">
+                                                    <span className="text-[9px] sm:text-[10px] font-medium text-white/90 bg-black/40 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded-md border border-white/10 truncate">
                                                         {comp.format || 'Online'}
                                                     </span>
                                                 </div>
                                             </div>
 
                                             {/* Body */}
-                                            <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3">
+                                            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between gap-2.5 sm:gap-3">
                                                 <div>
-                                                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
-                                                        <Award className="size-3.5 text-blue-600 shrink-0" />
+                                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
+                                                        <Award className="size-3 sm:size-3.5 text-blue-600 shrink-0" />
                                                         <span className="truncate">{comp.organizer}</span>
                                                     </div>
 
-                                                    <h3 className="text-sm sm:text-base font-extrabold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-1.5">
+                                                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-1">
                                                         {comp.name}
                                                     </h3>
 
                                                     {comp.description && (
-                                                        <p className="line-clamp-2 text-xs text-slate-500 mt-1.5 leading-relaxed">
+                                                        <p className="line-clamp-2 text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed hidden sm:block">
                                                             {comp.description}
                                                         </p>
                                                     )}
                                                 </div>
 
                                                 {/* Structured Bottom Info & CTA */}
-                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                                                    <div className="flex items-center gap-1.5 text-slate-500 truncate">
-                                                        <Clock className="size-3.5 text-slate-400 shrink-0" />
-                                                        <span className="text-[11px] font-semibold text-slate-700 truncate">
+                                                <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs mt-auto">
+                                                    <div className="flex items-center gap-1 sm:gap-1.5 text-slate-500 truncate">
+                                                        <Clock className="size-3 sm:size-3.5 text-slate-400 shrink-0" />
+                                                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-700 truncate">
                                                             {formattedDeadline}
                                                         </span>
                                                     </div>
 
-                                                    <span className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0">
+                                                    <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0">
                                                         <span>Detail</span>
-                                                        <ArrowUpRight className="size-3.5" />
+                                                        <ArrowUpRight className="size-3 sm:size-3.5" />
                                                     </span>
                                                 </div>
                                             </div>

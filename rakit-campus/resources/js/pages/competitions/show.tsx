@@ -352,8 +352,8 @@ export default function CompetitionShow({
                     `}</style>
 
                     <div className="flex flex-col gap-2.5 bento-competition-parent lg:min-h-[460px]">
-                        {/* .div1: span 2 / span 5 */}
-                        <div className="bento-competition-div1 relative rounded-2xl overflow-hidden bg-slate-900 min-h-[300px] lg:min-h-0 border border-slate-200/80 shadow-xs flex flex-col justify-between p-4 sm:p-5 group">
+                        {/* .div1: span 2 / span 5 — 4:5 Poster Aspect Ratio */}
+                        <div className="bento-competition-div1 relative rounded-2xl overflow-hidden bg-slate-950 aspect-[4/5] sm:aspect-auto min-h-[320px] lg:min-h-0 border border-slate-200/80 shadow-xs flex flex-col justify-between p-4 sm:p-5 group">
                             <img
                                 src={getCompetitionCover(competition)}
                                 alt={competition.name}
