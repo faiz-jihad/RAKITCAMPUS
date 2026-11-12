@@ -142,10 +142,10 @@ export default function HubGatewayModal({
 
                                 <div>
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 block mb-0.5">
-                                        Proyek
+                                        Proyek & Kuliah
                                     </span>
                                     <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
-                                        Project Hub
+                                        Campus Hub
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-1 leading-snug">
                                         Living proposal, proyek mandiri & kelas kuliah.
@@ -153,7 +153,7 @@ export default function HubGatewayModal({
                                 </div>
                             </button>
 
-                            {/* Option 2: Competition Hub */}
+                            {/* Option 2: Lomba Hub */}
                             <button
                                 type="button"
                                 onClick={() => handleSelectHub('competition')}
@@ -172,10 +172,10 @@ export default function HubGatewayModal({
 
                                 <div>
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 block mb-0.5">
-                                        Lomba & Prestasi
+                                        Kompetisi & Prestasi
                                     </span>
                                     <h3 className="text-sm font-bold text-slate-900 group-hover:text-amber-600 transition">
-                                        Competition Hub
+                                        Lomba Hub
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-1 leading-snug">
                                         Eksplorasi kompetisi & rekrutmen tim kolaborasi.

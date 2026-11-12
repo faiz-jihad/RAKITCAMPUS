@@ -9,12 +9,19 @@ export default function AppFooter() {
                     {/* Brand & Copyright */}
                     <div className="flex items-center gap-2.5">
                         <Link href="/" className="flex items-center gap-2 group">
-                            <span className="size-6 rounded-lg bg-blue-600 text-white font-black text-xs flex items-center justify-center shadow-xs">
-                                R
-                            </span>
-                            <span className="font-extrabold text-sm text-slate-900 tracking-tight">
-                                RAKIT <span className="text-blue-600">CAMPUS</span>
-                            </span>
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="h-6 w-auto object-contain transition-transform group-hover:scale-105"
+                            />
+                            <div className="flex items-center gap-1.5">
+                                <span className="font-black text-sm text-slate-900 tracking-tight">
+                                    RAKIT
+                                </span>
+                                <span className="text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
+                                    Campus
+                                </span>
+                            </div>
                         </Link>
                         <span className="text-slate-300">·</span>
                         <span className="text-slate-400 text-xs">

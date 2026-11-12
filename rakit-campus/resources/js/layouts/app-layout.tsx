@@ -110,13 +110,6 @@ export default function AppLayout({
     const renderUserActions = () => (
         <div className="flex items-center gap-1.5 sm:gap-2">
             <Link
-                href="/settings/profile"
-                className="hidden sm:flex w-8 h-8 sm:w-9 sm:h-9 rounded-full items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
-                title="Pengaturan"
-            >
-                <Settings className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
-            </Link>
-            <Link
                 href="/notifications"
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative transition"
                 title="Notifikasi"
@@ -213,7 +206,7 @@ export default function AppLayout({
                                 <div className="flex-1 flex items-center justify-between">
                                     <span>Ganti Ruang Kerja</span>
                                     <span className="text-[10px] text-blue-600 font-bold">
-                                        {isCompetitionHub ? 'Competition' : 'Project'} ⇄
+                                        {isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'} ⇄
                                     </span>
                                 </div>
                             </DropdownMenuItem>
@@ -297,21 +290,17 @@ export default function AppLayout({
                         <button
                             type="button"
                             onClick={() => setIsGatewayOpen(true)}
-                            className={`inline-flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group shrink-0 ${
-                                isCompetitionHub
-                                    ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
-                                    : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
-                            }`}
-                            title="Klik untuk berpindah ruang kerja"
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer group shrink-0"
+                            title="Beralih Ruang Kerja (Hub)"
                         >
                             <span
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                    isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
+                                className={`size-1.5 rounded-full shrink-0 ${
+                                    isCompetitionHub ? 'bg-amber-500' : 'bg-blue-600'
                                 }`}
                             />
-                            <span className="hidden sm:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
-                            <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
-                            <ArrowLeftRight className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-700 shrink-0" />
+                            <span className="hidden sm:inline">{isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'}</span>
+                            <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Campus'}</span>
+                            <ArrowLeftRight className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
                         </button>
                     </div>
 
