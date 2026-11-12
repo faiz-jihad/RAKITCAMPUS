@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/react';
-import { Bell, ChevronDown, ChevronRight, KeyRound, Layers, LogOut, Settings, User } from 'lucide-react';
+import { Bell, ChevronDown, ChevronRight, KeyRound, Layers, LogOut, RefreshCw, Settings, User } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 interface AppLayoutProps {
@@ -31,6 +31,7 @@ export default function AppLayout({
     const url = page.url || '';
     const showHubSelectorProp = (page.props as any).show_hub_selector;
 
+    const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer');
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
     // Determine current Hub mode strictly
@@ -40,6 +41,12 @@ export default function AppLayout({
 
     // Check login or initial session trigger
     useEffect(() => {
+        // Dosen langsung diarahkan ke portal dosen tanpa selector ruang kerja
+        if (isLecturer) {
+            setIsGatewayOpen(false);
+            return;
+        }
+
         if (showHubSelectorProp) {
             setIsGatewayOpen(true);
             return;
@@ -59,7 +66,7 @@ export default function AppLayout({
                 }
             }
         }
-    }, [showHubSelectorProp, user, url]);
+    }, [showHubSelectorProp, user, url, isLecturer]);
 
     const initials = useMemo(() => {
         const name = user?.name || 'Mahasiswa';
@@ -173,18 +180,21 @@ export default function AppLayout({
                                     <span>Keamanan Sandi</span>
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onSelect={() => setIsGatewayOpen(true)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                            >
-                                <Layers className="size-4 text-slate-400" />
-                                <div className="flex-1 flex items-center justify-between">
-                                    <span>Ganti Ruang Kerja</span>
-                                    <span className="text-[10px] text-blue-600 font-bold">
-                                        {isCompetitionHub ? 'Competition' : 'Project'} ⇄
-                                    </span>
-                                </div>
-                            </DropdownMenuItem>
+                            {!isLecturer && (
+                                <DropdownMenuItem
+                                    onSelect={() => setIsGatewayOpen(true)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    <Layers className="size-4 text-slate-400" />
+                                    <div className="flex-1 flex items-center justify-between">
+                                        <span>Ganti Ruang Kerja</span>
+                                        <span className="text-[10px] text-blue-600 font-bold inline-flex items-center gap-1">
+                                            <span>{isCompetitionHub ? 'Competition' : 'Project'}</span>
+                                            <RefreshCw className="size-2.5" />
+                                        </span>
+                                    </div>
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem asChild>
                                 <Link
                                     href="/notifications"
@@ -233,15 +243,17 @@ export default function AppLayout({
         <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             {title && <Head title={title} />}
 
-            {/* BIG HUB GATEWAY MODAL (Triggered upon login or clicking switcher) */}
-            <HubGatewayModal
-                isOpen={isGatewayOpen}
-                onClose={() => setIsGatewayOpen(false)}
-                activeHub={isCompetitionHub ? 'competition' : 'project'}
-            />
+            {/* BIG HUB GATEWAY MODAL (Only for students, never for lecturers) */}
+            {!isLecturer && (
+                <HubGatewayModal
+                    isOpen={isGatewayOpen}
+                    onClose={() => setIsGatewayOpen(false)}
+                    activeHub={isCompetitionHub ? 'competition' : 'project'}
+                />
+            )}
 
             {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
-            <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 transition-all">
+            <header className="w-full bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-40 transition-all">
                 <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4">
                     {/* Top Row on Mobile: Brand Logo + Hub Pill on Left, User Actions on Right */}
                     <div className="w-full md:w-auto flex items-center justify-between gap-3">
@@ -254,43 +266,50 @@ export default function AppLayout({
                                     className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
                                 />
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900">
+                                    <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
                                         RAKIT
                                     </span>
-                                    <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
+                                    <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800 tracking-wider">
                                         Campus
                                     </span>
                                 </div>
                             </Link>
 
-                            {/* Interactive Hub Pill Indicator */}
-                            <button
-                                type="button"
-                                onClick={() => setIsGatewayOpen(true)}
-                                className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
-                                    isCompetitionHub
-                                        ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
-                                        : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
-                                }`}
-                                title="Klik untuk berpindah ruang kerja"
-                            >
-                                <span
-                                    className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
-                                        isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
-                                    }`}
-                                />
-                                <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
-                                <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
-                                <span
-                                    className={`text-[9px] sm:text-[10px] font-semibold px-1 sm:px-1.5 py-0.5 rounded-md transition ${
+                            {/* Dosen Portal Pill OR Interactive Student Hub Switcher */}
+                            {isLecturer ? (
+                                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 text-blue-700 dark:text-blue-300 shadow-2xs">
+                                    <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-600 animate-pulse" />
+                                    <span>Portal Dosen Pengampu</span>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsGatewayOpen(true)}
+                                    className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
                                         isCompetitionHub
-                                            ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
-                                            : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
+                                            ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
+                                            : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
                                     }`}
+                                    title="Klik untuk berpindah ruang kerja"
                                 >
-                                    ⇄
-                                </span>
-                            </button>
+                                    <span
+                                        className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
+                                            isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
+                                        }`}
+                                    />
+                                    <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
+                                    <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
+                                    <span
+                                        className={`p-0.5 rounded-md transition ${
+                                            isCompetitionHub
+                                                ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
+                                                : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
+                                        }`}
+                                    >
+                                        <RefreshCw className="size-2.5" />
+                                    </span>
+                                </button>
+                            )}
                         </div>
 
                         {/* Mobile User Actions (visible on mobile only, beside brand) */}
@@ -299,9 +318,42 @@ export default function AppLayout({
                         </div>
                     </div>
 
-                    {/* Navigation Capsule / Pills Tailored strictly to Active Hub */}
+                    {/* Navigation Capsule / Pills */}
                     <div className="w-full md:w-auto flex justify-center md:justify-start overflow-x-auto scrollbar-none -mx-1 px-1">
-                        {isCompetitionHub ? (
+                        {isLecturer ? (
+                            <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] dark:bg-slate-900/80 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 overflow-x-auto max-w-full">
+                                <Link
+                                    href="/dashboard"
+                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
+                                        url.startsWith('/dashboard')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Dashboard Pengampu
+                                </Link>
+                                <Link
+                                    href="/classes"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/classes')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Kelola Ruang Kelas
+                                </Link>
+                                <Link
+                                    href="/projects"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/projects')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Eksplorasi Proyek
+                                </Link>
+                            </nav>
+                        ) : isCompetitionHub ? (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
                                 <Link
                                     href="/competitions?tab=explore"

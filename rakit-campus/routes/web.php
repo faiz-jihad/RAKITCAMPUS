@@ -159,6 +159,9 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/approve-allocation/{sessionId}', [AcademicClassWebController::class, 'approveAllocation'])->name('classes.approve-allocation');
     Route::post('/classes/{id}/co-lecturers', [AcademicClassWebController::class, 'addCoLecturer'])->name('classes.co-lecturers.add');
     Route::delete('/classes/{id}/co-lecturers/{lecturerId}', [AcademicClassWebController::class, 'removeCoLecturer'])->name('classes.co-lecturers.remove');
+    Route::get('/classes/{id}/messages/{otherUserId}', [AcademicClassWebController::class, 'getMessages'])->name('classes.messages.index');
+    Route::post('/classes/{id}/messages/{otherUserId}', [AcademicClassWebController::class, 'sendMessage'])->name('classes.messages.send');
+    Route::post('/classes/{id}/messages/{otherUserId}/read', [AcademicClassWebController::class, 'markMessagesRead'])->name('classes.messages.read');
 
     // Quick Role Switcher for Testing (Restricted to Campus / Platform Admin)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {

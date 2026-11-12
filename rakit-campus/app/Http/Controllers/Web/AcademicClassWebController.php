@@ -173,6 +173,10 @@ class AcademicClassWebController extends Controller
 
     public function show(Request $request, string|int $id): Response
     {
+        if (!\Illuminate\Support\Facades\Schema::hasTable('class_messages')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
+
         $user = $request->user();
         $academicClass = $this->resolveAcademicClass($id, [
             'lecturer:id,name,email',
@@ -222,9 +226,12 @@ class AcademicClassWebController extends Controller
                 'student_number' => $s->pivot?->student_number ?? 'NIM-' . $s->id,
                 'study_program' => $s->profile?->study_program ?? $academicClass->study_program ?? 'Teknik Informatika',
                 'semester' => $s->profile?->semester ?? 4,
+                'phone' => $s->profile?->phone,
+                'bio' => $s->profile?->bio,
+                'portfolio_url' => $s->profile?->portfolio_url,
                 'has_team' => $hasTeam,
                 'project' => $userProject,
-                'skills' => $s->profile?->skills?->pluck('name')->take(4)->all() ?? [],
+                'skills' => $s->profile?->skills?->pluck('name')->all() ?? [],
                 'enrolled_at' => $s->pivot?->enrolled_at ? \Carbon\Carbon::parse($s->pivot->enrolled_at)->format('d M Y') : 'Baru saja',
             ];
         });
@@ -863,5 +870,123 @@ class AcademicClassWebController extends Controller
         $academicClass->coLecturers()->detach($lecturerId);
 
         return back()->with('info', 'Dosen telah dihapus dari tim pengajar kelas.');
+    }
+
+    /**
+     * Get direct chat messages between auth user and student/lecturer in this class
+     */
+    public function getMessages(Request $request, string|int $id, int $otherUserId)
+    {
+        $user = $request->user();
+        $academicClass = $this->resolveAcademicClass($id);
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('class_messages')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
+
+        // Must be participant or lecturer of this class
+        $isLecturer = $user->can('manage', $academicClass) || $user->isCampusAdminOf($academicClass->campus_id);
+        $isStudent = $academicClass->students()->where('users.id', $user->id)->exists();
+
+        if (!$isLecturer && !$isStudent && !$user->isPlatformAdmin()) {
+            abort(403, 'Akses percakapan ditolak.');
+        }
+
+        $messages = \App\Models\ClassMessage::where('academic_class_id', $academicClass->id)
+            ->where(function ($q) use ($user, $otherUserId) {
+                $q->where(function ($sub) use ($user, $otherUserId) {
+                    $sub->where('sender_id', $user->id)->where('recipient_id', $otherUserId);
+                })->orWhere(function ($sub) use ($user, $otherUserId) {
+                    $sub->where('sender_id', $otherUserId)->where('recipient_id', $user->id);
+                });
+            })
+            ->with(['sender:id,name,avatar', 'recipient:id,name'])
+            ->orderBy('id', 'asc')
+            ->get()
+            ->map(function ($m) use ($user) {
+                return [
+                    'id' => $m->id,
+                    'sender' => $m->sender_id === $user->id ? 'me' : 'other',
+                    'sender_name' => $m->sender?->name ?? 'Pengguna',
+                    'sender_id' => $m->sender_id,
+                    'text' => $m->message,
+                    'time' => $m->created_at ? $m->created_at->timezone('Asia/Jakarta')->format('H:i') : '',
+                    'read_at' => $m->read_at?->format('H:i'),
+                ];
+            });
+
+        // Mark incoming messages as read
+        \App\Models\ClassMessage::where('academic_class_id', $academicClass->id)
+            ->where('sender_id', $otherUserId)
+            ->where('recipient_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json([
+            'status' => 'success',
+            'messages' => $messages,
+        ]);
+    }
+
+    /**
+     * Send direct chat message in this class
+     */
+    public function sendMessage(Request $request, string|int $id, int $otherUserId)
+    {
+        $user = $request->user();
+        $academicClass = $this->resolveAcademicClass($id);
+
+        if (!\Illuminate\Support\Facades\Schema::hasTable('class_messages')) {
+            \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
+        }
+
+        $validated = $request->validate([
+            'message' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $recipient = User::findOrFail($otherUserId);
+
+        $message = \App\Models\ClassMessage::create([
+            'academic_class_id' => $academicClass->id,
+            'sender_id' => $user->id,
+            'recipient_id' => $recipient->id,
+            'message' => trim($validated['message']),
+        ]);
+
+        // Broadcast event for real-time delivery via WebSocket (Pusher / Reverb)
+        try {
+            broadcast(new \App\Events\NewClassChatMessage($message))->toOthers();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::info('Broadcasting notice: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'data' => [
+                'id' => $message->id,
+                'sender' => 'me',
+                'sender_name' => $user->name,
+                'sender_id' => $user->id,
+                'text' => $message->message,
+                'time' => $message->created_at ? $message->created_at->timezone('Asia/Jakarta')->format('H:i') : now()->format('H:i'),
+            ],
+        ], 201);
+    }
+
+    /**
+     * Mark messages from a specific user as read
+     */
+    public function markMessagesRead(Request $request, string|int $id, int $otherUserId)
+    {
+        $user = $request->user();
+        $academicClass = $this->resolveAcademicClass($id);
+
+        \App\Models\ClassMessage::where('academic_class_id', $academicClass->id)
+            ->where('sender_id', $otherUserId)
+            ->where('recipient_id', $user->id)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['status' => 'success']);
     }
 }

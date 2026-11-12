@@ -8,6 +8,7 @@ use App\Enums\TaskStatus;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
+use App\Models\AcademicClassGuidance;
 use App\Models\ActivityLog;
 use App\Models\Campus;
 use App\Models\CampusMembership;
@@ -200,42 +201,63 @@ class DashboardWebController extends Controller
                     $q->where('lecturer_id', $user->id)
                       ->orWhereHas('coLecturers', fn ($cl) => $cl->where('users.id', $user->id));
                 })
+                ->with(['students.profile.skills', 'guidances.project', 'projects.team.members.user'])
                 ->withCount(['students', 'projects'])
                 ->latest()
                 ->get();
 
-            $taughtClasses = $taughtClassModels->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'code' => $c->code,
-                'join_code' => $c->join_code,
-                'academic_year' => $c->academic_year,
-                'semester' => $c->semester,
-                'students_count' => $c->students_count,
-                'projects_count' => $c->projects_count,
-            ]);
-
             $taughtClassIds = $taughtClassModels->pluck('id');
+
+            $taughtClasses = $taughtClassModels->map(function ($c) {
+                // Hitung mahasiswa yang belum punya kelompok di kelas ini
+                $assignedUserIds = [];
+                foreach ($c->projects as $p) {
+                    if ($p->team) {
+                        foreach ($p->team->members as $tm) {
+                            $assignedUserIds[] = $tm->user_id;
+                        }
+                    }
+                }
+                $assignedCount = $c->students->filter(fn ($s) => in_array($s->id, $assignedUserIds))->count();
+                $unassignedCount = max(0, $c->students->count() - $assignedCount);
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'code' => $c->code,
+                    'join_code' => $c->join_code,
+                    'academic_year' => $c->academic_year,
+                    'semester' => $c->semester,
+                    'students_count' => $c->students_count,
+                    'projects_count' => $c->projects_count,
+                    'unassigned_students_count' => $unassignedCount,
+                    'target_team_size' => $c->target_team_size ?? 4,
+                ];
+            });
+
             $guidedProjectModels = $taughtClassIds->isNotEmpty()
                 ? Project::whereIn('academic_class_id', $taughtClassIds)
                     ->with([
                         'academicClass:id,name,code',
-                        'leader:id,name',
+                        'leader:id,name,email',
                         'team.members.user:id,name',
                         'team.tasks:id,team_id,status',
+                        'proposal.currentVersion',
                     ])
                     ->latest()
-                    ->take(6)
+                    ->take(10)
                     ->get()
                 : collect();
 
             $guidedProjects = $guidedProjectModels->map(function ($p) {
                 $totalTasks = $p->team ? $p->team->tasks->count() : 0;
                 $doneTasks = $p->team ? $p->team->tasks->where('status', TaskStatus::Completed)->count() : 0;
+                $proposalStatus = $p->proposal?->status ?? 'draft';
 
                 return [
                     'id' => $p->id,
                     'title' => $p->title,
+                    'slug' => $p->slug,
                     'status' => $p->status?->value ?? 'recruiting',
                     'progress' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($p->progress ?? 0),
                     'class_id' => $p->academic_class_id,
@@ -247,8 +269,30 @@ class DashboardWebController extends Controller
                     'members_count' => $p->team ? $p->team->members->count() : 0,
                     'done_tasks' => $doneTasks,
                     'total_tasks' => $totalTasks,
+                    'proposal_status' => $proposalStatus,
+                    'proposal_version' => $p->proposal?->latest_version_number ?? 1,
+                    'is_competition_ready' => ($p->progress ?? 0) >= 60,
                 ];
             });
+
+            // Pending Proposals yang butuh ditinjau dosen
+            $pendingProposals = $guidedProjects->filter(fn ($p) => in_array($p['proposal_status'], ['submitted', 'in_review', 'under_review']))->values();
+
+            // Guidance logs
+            $recentGuidances = AcademicClassGuidance::whereIn('academic_class_id', $taughtClassIds)
+                ->with(['project:id,title', 'academicClass:id,name,code'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'title' => $g->title,
+                    'content' => $g->content,
+                    'type' => $g->type ?? 'feedback',
+                    'project_title' => $g->project?->title,
+                    'class_name' => $g->academicClass?->name,
+                    'created_at' => $g->created_at->diffForHumans(),
+                ]);
 
             $guidedTeamIds = $guidedProjectModels->pluck('team.id')->filter();
             $recentActivities = $guidedTeamIds->isNotEmpty()
@@ -258,6 +302,8 @@ class DashboardWebController extends Controller
                     ->take(6)
                     ->get()
                 : collect();
+
+            $totalUnassigned = $taughtClasses->sum('unassigned_students_count');
 
             return Inertia::render('dashboard', [
                 'user' => [
@@ -282,6 +328,8 @@ class DashboardWebController extends Controller
                     'taught_classes_count' => $taughtClasses->count(),
                     'total_students_count' => $taughtClasses->sum('students_count'),
                     'total_guided_projects_count' => $taughtClasses->sum('projects_count'),
+                    'unassigned_students_count' => $totalUnassigned,
+                    'pending_proposals_count' => $pendingProposals->count(),
                     'enrolled_classes_count' => 0,
                 ],
                 'myTeams' => [],
@@ -294,6 +342,8 @@ class DashboardWebController extends Controller
                 'profileCompletion' => null,
                 'taughtClasses' => $taughtClasses,
                 'guidedProjects' => $guidedProjects,
+                'pendingProposals' => $pendingProposals,
+                'recentGuidances' => $recentGuidances,
                 'enrolledClasses' => [],
             ]);
         }
