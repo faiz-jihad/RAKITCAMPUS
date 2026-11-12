@@ -160,7 +160,7 @@ class CheckSystemHealth extends Command
             // Quota test
             if ($team) {
                 $quota = $quotaService->getQuotaInfo($team);
-                $this->line("   ✓ Team AI Quota Service: {$quota['used_conversations']}/{$quota['max_conversations']} used ({$quota['remaining_conversations']} remaining)");
+                $this->line("   ✓ Team AI Quota Service: {$quota['quota_used']}/{$quota['quota_limit']} used ({$quota['quota_remaining']} remaining)");
             }
         } catch (Throwable $e) {
             $this->error('   ✗ AI Workspace Action Execution Error: ' . $e->getMessage());
