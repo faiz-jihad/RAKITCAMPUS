@@ -165,7 +165,12 @@ export default function TeamFormationTab({
                         ) : formationStatus === 'formation_review' ? (
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-md">
                                 <Clock className="size-4" />
-                                <span>Menunggu Peninjauan Dosen</span>
+                                <span>Menunggu Persetujuan Dosen</span>
+                            </div>
+                        ) : formationStatus === 'formation_rejected' ? (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-600 text-white font-bold text-xs shadow-md">
+                                <AlertCircle className="size-4" />
+                                <span>Ditolak Dosen</span>
                             </div>
                         ) : (
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-md">
@@ -372,13 +377,13 @@ export default function TeamFormationTab({
                                         {hasEnoughMembers ? 'Terpenuhi' : 'Kurang'}
                                     </strong>
                                 </span>
-                                {formationStatus === 'matchmaking_open' && (
+                                {['requirements_configured', 'matchmaking_open', 'formation_rejected', 'draft'].includes(formationStatus) && (
                                     <button
                                         onClick={handleSubmitFormation}
                                         disabled={processing || !hasEnoughMembers}
                                         className="px-3 py-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                                     >
-                                        Ajukan ke Dosen
+                                        {formationStatus === 'formation_rejected' ? 'Ajukan Ulang ke Dosen' : 'Ajukan ke Dosen'}
                                     </button>
                                 )}
                             </div>

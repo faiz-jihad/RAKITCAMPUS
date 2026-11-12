@@ -30,6 +30,7 @@ export default function AppLayout({
     const user = auth?.user;
     const url = page.url || '';
     const showHubSelectorProp = (page.props as any).show_hub_selector;
+    const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer' || user?.campus?.role === 'lecturer');
 
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
@@ -376,6 +377,18 @@ export default function AppLayout({
                                 >
                                     Dashboard
                                 </Link>
+                                {isLecturer && (
+                                    <Link
+                                        href="/classes"
+                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                            url.startsWith('/classes')
+                                                ? 'bg-[#2563eb] text-white shadow-sm'
+                                                : 'text-slate-600 hover:text-slate-900'
+                                        }`}
+                                    >
+                                        Kelola Kelas
+                                    </Link>
+                                )}
                                 <Link
                                     href="/projects"
                                     className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
@@ -384,7 +397,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Proyek Kelas
+                                    {isLecturer ? 'Proyek Bimbingan' : 'Proyek Kelas'}
                                 </Link>
                                 <Link
                                     href="/workspace"
@@ -406,12 +419,14 @@ export default function AppLayout({
                                 >
                                     Leaderboard
                                 </Link>
-                                <Link
-                                    href="/projects/create"
-                                    className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition whitespace-nowrap"
-                                >
-                                    + Buat Proyek
-                                </Link>
+                                {!isLecturer && (
+                                    <Link
+                                        href="/projects/create"
+                                        className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition whitespace-nowrap"
+                                    >
+                                        + Buat Proyek
+                                    </Link>
+                                )}
                             </nav>
                         )}
                     </div>

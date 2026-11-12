@@ -2,6 +2,7 @@
 
 namespace App\Services\Matchmaking;
 
+use App\Contracts\Notifications\NotificationCounterInterface;
 use App\Enums\InvitationStatus;
 use App\Enums\ProjectStatus;
 use App\Enums\TeamPermission;
@@ -12,6 +13,7 @@ use App\Models\RecruitmentRole;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\RecruitmentInvitationNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -78,7 +80,7 @@ class InvitationService
             ]);
         }
 
-        return DB::transaction(function () use ($team, $project, $inviter, $invitee, $role, $message, $expirationDays) {
+        $invitation = DB::transaction(function () use ($team, $project, $inviter, $invitee, $role, $message, $expirationDays) {
             // Check existing pending invitation
             $existing = Invitation::where('team_id', $team->id)
                 ->where('invitee_id', $invitee->id)
@@ -120,6 +122,11 @@ class InvitationService
 
             return $invitation;
         });
+
+        $invitee->notify(new RecruitmentInvitationNotification($invitation));
+        app(NotificationCounterInterface::class)->invalidateUnreadCountCache($invitee);
+
+        return $invitation;
     }
 
     /**
@@ -256,9 +263,15 @@ class InvitationService
             ->where('invitee_id', $student->id)
             ->firstOrFail();
 
+        if ($inv->status !== InvitationStatus::Pending) {
+            throw ValidationException::withMessages([
+                'invitation' => ['Undangan ini sudah tidak aktif atau telah diproses sebelumnya.'],
+            ]);
+        }
+
         $inv->update([
             'status' => InvitationStatus::Declined,
-            'declined_reason' => $reason ?? 'Mahasiswa memilih opsi lain.',
+            'declined_reason' => $reason ?: 'Mahasiswa memilih opsi lain.',
             'responded_at' => now(),
         ]);
 

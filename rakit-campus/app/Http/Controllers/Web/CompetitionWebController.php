@@ -1538,6 +1538,21 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
+    public function deleteTask(Request $request, int $participationId, int $taskId): RedirectResponse
+    {
+        $user = $request->user();
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
+
+        if (!$participation->team || !$participation->team->hasMember($user)) {
+            abort(403, 'Hanya anggota tim yang dapat menghapus tugas.');
+        }
+
+        $task = Task::where('team_id', $participation->team->id)->findOrFail($taskId);
+        $task->delete();
+
+        return back()->with('success', 'Tugas berhasil dihapus dari papan.');
+    }
+
     public function generateTasksWithAi(Request $request, int $participationId): RedirectResponse
     {
         $user = $request->user();
@@ -1547,9 +1562,31 @@ class CompetitionWebController extends Controller
             abort(403, 'Hanya anggota tim yang dapat membuat tugas menggunakan AI.');
         }
 
+        $validated = $request->validate([
+            'focus' => ['nullable', 'string', 'max:500'],
+            'track' => ['nullable', 'string', 'max:150'],
+            'mode' => ['nullable', 'string', 'in:replace,append'],
+        ]);
+
         try {
-            $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban($participation, $user);
-            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI Gemini untuk tim Anda!");
+            $mode = $validated['mode'] ?? 'append';
+            $focus = $validated['focus'] ?? null;
+            $track = $validated['track'] ?? $participation->category_track;
+
+            // In replace mode, remove existing tasks on this team's board first
+            if ($mode === 'replace' && $participation->team) {
+                Task::where('team_id', $participation->team->id)->delete();
+            }
+
+            $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban(
+                $participation,
+                $user,
+                null,
+                $focus,
+                $track
+            );
+
+            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda!");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
         }

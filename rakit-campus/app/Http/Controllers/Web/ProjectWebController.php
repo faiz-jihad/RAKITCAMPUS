@@ -1087,7 +1087,7 @@ class ProjectWebController extends Controller
     public function reviewFormation(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
+        $project = $this->resolveProject($id, ['team.members.user', 'academicClass.coLecturers', 'academicClass.lecturer']);
 
         $request->merge([
             'action' => $request->input('action') ?? $request->input('decision'),
@@ -1099,25 +1099,50 @@ class ProjectWebController extends Controller
             'reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        if ($validated['action'] === 'approve') {
-            $this->teamFormationService->approveFormation($project, $user, $validated['notes'] ?? null);
-            return back()->with('success', 'Susunan tim proyek berhasil disetujui dosen! Tim kini dapat mengaktifkan workspace proyek.');
-        } elseif ($validated['action'] === 'reject') {
-            $reason = $validated['reason'] ?? $validated['notes'] ?? null;
-            if (empty($reason)) {
-                return back()->withErrors(['reason' => 'Alasan penolakan susunan tim wajib diisi.']);
+        try {
+            if ($validated['action'] === 'approve') {
+                $this->teamFormationService->approveFormation($project, $user, $validated['notes'] ?? null);
+                $msg = 'Susunan tim proyek berhasil disetujui dosen! Tim kini dapat mengaktifkan workspace proyek.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg, 'formation_status' => 'lecturer_approved'])
+                    : back()->with('success', $msg);
+            } elseif ($validated['action'] === 'reject') {
+                $reason = $validated['reason'] ?? $validated['notes'] ?? null;
+                if (empty($reason)) {
+                    $msg = 'Alasan penolakan susunan tim wajib diisi.';
+                    return $request->wantsJson()
+                        ? response()->json(['message' => $msg, 'errors' => ['reason' => [$msg]]], 422)
+                        : back()->withErrors(['reason' => $msg]);
+                }
+                $this->teamFormationService->rejectFormation($project, $user, $reason);
+                $msg = 'Susunan tim proyek ditolak. Ketua tim telah menerima status penolakan beserta alasannya.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg, 'formation_status' => 'formation_rejected'])
+                    : back()->with('info', $msg);
+            } elseif ($validated['action'] === 'request_changes') {
+                if (empty($validated['notes'])) {
+                    $msg = 'Catatan revisi susunan tim wajib diisi.';
+                    return $request->wantsJson()
+                        ? response()->json(['message' => $msg, 'errors' => ['notes' => [$msg]]], 422)
+                        : back()->withErrors(['notes' => $msg]);
+                }
+                $this->teamFormationService->requestChanges($project, $user, $validated['notes']);
+                $msg = 'Permintaan revisi susunan tim berhasil diteruskan ke ketua tim.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg, 'formation_status' => 'matchmaking_open'])
+                    : back()->with('info', $msg);
             }
-            $this->teamFormationService->rejectFormation($project, $user, $reason);
-            return back()->with('info', 'Susunan tim proyek ditolak. Ketua tim akan menerima alasan penolakan.');
-        } elseif ($validated['action'] === 'request_changes') {
-            if (empty($validated['notes'])) {
-                return back()->withErrors(['notes' => 'Catatan revisi susunan tim wajib diisi.']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => collect($e->errors())->flatten()->first() ?? 'Tindakan review formasi tidak diizinkan.',
+                    'errors' => $e->errors(),
+                ], 422);
             }
-            $this->teamFormationService->requestChanges($project, $user, $validated['notes']);
-            return back()->with('info', 'Permintaan revisi susunan tim berhasil diteruskan ke ketua tim.');
+            return back()->withErrors($e->errors());
         }
 
-        return back();
+        return $request->wantsJson() ? response()->json(['message' => 'OK']) : back();
     }
 
     /**
@@ -1173,9 +1198,26 @@ class ProjectWebController extends Controller
         $user = $request->user();
         $invitation = Invitation::with('team.project')->findOrFail($invitationId);
 
-        $member = $this->invitationService->acceptInvitation($invitation, $user);
-
-        return back()->with('success', "Selamat! Anda resmi bergabung dengan tim {$invitation->team?->name}.");
+        try {
+            $member = $this->invitationService->acceptInvitation($invitation, $user);
+            $msg = "Selamat! Anda resmi bergabung dengan tim {$invitation->team?->name}.";
+            return $request->wantsJson()
+                ? response()->json(['message' => $msg, 'member_id' => $member->id])
+                : back()->with('success', $msg);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => collect($e->errors())->flatten()->first() ?? 'Undangan tidak dapat diterima.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
@@ -1192,9 +1234,27 @@ class ProjectWebController extends Controller
         ]);
 
         $reason = $validated['reason'] ?? $validated['declined_reason'] ?? null;
-        $this->invitationService->declineInvitation($invitation, $user, $reason);
 
-        return back()->with('info', 'Undangan proyek telah ditolak.');
+        try {
+            $this->invitationService->declineInvitation($invitation, $user, $reason);
+            $msg = 'Undangan kolaborasi tim telah ditolak.';
+            return $request->wantsJson()
+                ? response()->json(['message' => $msg])
+                : back()->with('info', $msg);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'message' => collect($e->errors())->flatten()->first() ?? 'Undangan tidak dapat ditolak.',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+            return back()->withErrors($e->errors());
+        } catch (\Exception $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['message' => $e->getMessage()], 422);
+            }
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     /**
