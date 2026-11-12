@@ -844,6 +844,16 @@ export default function CompetitionWorkspace({
                             </button>
                         );
                     })}
+
+                    {participation.team_id && (
+                        <Link
+                            href={`/ai-workspace?team_id=${participation.team_id}&assistant=competition`}
+                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-lg transition"
+                        >
+                            <Sparkles className="size-3.5 text-blue-600" />
+                            <span>AI Workspace</span>
+                        </Link>
+                    )}
                 </div>
 
                 {/* 3) TAB CONTENT: OVERVIEW & TEAM */}

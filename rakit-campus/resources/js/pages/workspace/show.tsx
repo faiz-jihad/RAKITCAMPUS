@@ -884,6 +884,13 @@ export default function WorkspaceShow({
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
+                                <Link
+                                    href={`/ai-workspace?team_id=${team.id}`}
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-blue-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
+                                >
+                                    <Bot className="size-3.5 text-blue-600" />
+                                    <span>AI Workspace</span>
+                                </Link>
                                 <button
                                     onClick={openAddSprint}
                                     type="button"

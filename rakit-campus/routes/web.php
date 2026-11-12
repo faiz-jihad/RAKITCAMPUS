@@ -17,6 +17,7 @@ use App\Http\Controllers\Web\PortfolioWebController;
 use App\Http\Controllers\Web\ProjectProposalWebController;
 use App\Http\Controllers\Web\ProjectWebController;
 use App\Http\Controllers\Web\SitemapWebController;
+use App\Http\Controllers\Web\AiWorkspaceController;
 use App\Http\Controllers\Web\WorkspaceWebController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -201,6 +202,16 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         Route::patch('/competitions/{id}/status', [AdminCompetitionWebController::class, 'updateStatus'])->name('admin.competitions.status');
         Route::delete('/competitions/{id}', [AdminCompetitionWebController::class, 'destroy'])->name('admin.competitions.destroy');
     });
+
+    // AI Workspace
+    Route::get('/ai-workspace', [AiWorkspaceController::class, 'index'])->name('ai.index');
+    Route::get('/ai-workspace/history', [AiWorkspaceController::class, 'history'])->name('ai.history');
+    Route::post('/ai-workspace/sessions', [AiWorkspaceController::class, 'createSession'])->name('ai.sessions.create');
+    Route::delete('/ai-workspace/sessions/{sessionId}', [AiWorkspaceController::class, 'deleteSession'])->name('ai.sessions.delete');
+    Route::post('/ai-workspace/sessions/{sessionId}/messages', [AiWorkspaceController::class, 'sendMessage'])->name('ai.messages.send');
+    Route::post('/ai-workspace/sessions/{sessionId}/share', [AiWorkspaceController::class, 'shareSession'])->name('ai.sessions.share');
+    Route::post('/ai-workspace/sessions/{sessionId}/artifact', [AiWorkspaceController::class, 'saveArtifact'])->name('ai.artifacts.save');
+    Route::get('/ai-workspace/quota/{teamId}', [AiWorkspaceController::class, 'getQuota'])->name('ai.quota');
 
     // Central Notification Center
     Route::get('/notifications', [NotificationWebController::class, 'index'])->name('notifications.index');
