@@ -54,6 +54,7 @@ class ProfileController extends Controller
             'isMandatory' => $isMandatory || $request->boolean('mandatory'),
             'profile' => $profile ? [
                 'id' => $profile->id,
+                'slug' => $profile->slug,
                 'department' => $profile->department,
                 'study_program' => $profile->study_program,
                 'semester' => $profile->semester,

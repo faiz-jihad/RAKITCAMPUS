@@ -37,6 +37,7 @@ interface Props {
     isMandatory?: boolean;
     profile: {
         id: number;
+        slug?: string | null;
         department: string | null;
         study_program: string | null;
         semester: number | null;
@@ -214,7 +215,7 @@ export default function Profile({
                                         </span>
                                     </div>
                                     <p className="text-xs text-amber-800 mt-1 leading-relaxed max-w-2xl">
-                                        Selamat datang di RAKIT Campus! Agar kamu bisa bergabung ke kelas perkuliahan dan mendapatkan rekomendasi rekan tim yang keahliannya paling nyambung (matchmaking), silakan isi <strong>NIM</strong>, <strong>Program Studi</strong>, <strong>Ketersediaan Waktu</strong>, dan minimal <strong>2 Keahlian Teknis</strong> di bawah ini.
+                                        Selamat datang di RAKIT Campus! Agar kamu bisa bergabung ke perkuliahan dan mendapatkan rekomendasi rekan tim yang keahliannya paling sesuai, silakan isi <strong>Program Studi</strong>, <strong>Ketersediaan Waktu</strong>, dan minimal <strong>2 Keahlian Teknis</strong> di bawah ini (NIM bersifat opsional).
                                     </p>
                                 </div>
                             </div>
@@ -230,69 +231,72 @@ export default function Profile({
                         </div>
                     )}
 
-                    {/* 1. Hero Identity & Profile Completion Bento Banner */}
-                    <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6 relative overflow-hidden">
-                        <div className="flex items-start sm:items-center gap-4">
-                            {/* Avatar Initials with Glow */}
-                            <div className="relative shrink-0">
-                                <div className="size-16 sm:size-20 rounded-3xl bg-gradient-to-tr from-[#181135] via-[#231752] to-[#2563EB] text-white flex items-center justify-center font-extrabold text-xl sm:text-2xl shadow-md shadow-indigo-900/20">
-                                    {data.name
-                                        .split(' ')
-                                        .map((n) => n[0])
-                                        .slice(0, 2)
-                                        .join('')
-                                        .toUpperCase() || 'U'}
-                                </div>
-                                <div className="absolute -bottom-1 -right-1 size-6 rounded-full bg-white border border-neutral-200 flex items-center justify-center text-neutral-500 shadow-xs">
-                                    <Camera className="size-3" />
-                                </div>
-                            </div>
-
-                            {/* User Meta Information */}
-                            <div>
-                                <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                    <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                        <ShieldCheck className="size-3" />
-                                        Mahasiswa Terverifikasi
-                                    </span>
-                                    <span className="px-3 py-0.5 rounded-full text-[11px] font-medium bg-neutral-100 text-neutral-700">
-                                        {campus || 'Perguruan Tinggi'}
-                                    </span>
-                                    {nim && (
-                                        <span className="px-3 py-0.5 rounded-full text-[11px] font-mono bg-purple-50 text-[#2563EB] font-semibold border border-purple-200/60">
-                                            NIM: {nim}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-[#0E121B]">
-                                    {data.name}
-                                </h2>
-                                <p className="text-xs text-neutral-500 mt-0.5">
-                                    {data.study_program} • Semester {data.semester}
-                                </p>
+                    {/* 1. LinkedIn-Style Hero Card with Cover Banner & Overlapping Avatar */}
+                    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-sm overflow-hidden">
+                        {/* Cover Banner */}
+                        <div className="h-32 sm:h-44 bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-900 relative">
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-500/20 via-transparent to-transparent" />
+                            <div className="absolute top-4 right-4 flex items-center gap-2">
+                                <Link
+                                    href={profile?.slug ? `/p/${encodeURIComponent(profile.slug)}` : '#'}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 hover:bg-white text-slate-800 text-xs font-bold shadow-xs backdrop-blur-md transition"
+                                >
+                                    <ExternalLink className="size-3.5 text-blue-600" />
+                                    <span>Lihat Profil Publik</span>
+                                </Link>
                             </div>
                         </div>
 
-                        {/* Profile Completion Meter */}
-                        <div className="bg-[#F8FAFC] border border-purple-100/90 rounded-2xl p-4 sm:p-5 flex items-center gap-4 shrink-0 self-stretch sm:self-auto">
-                            <div className="relative size-14 flex items-center justify-center shrink-0">
-                                <div className="size-14 rounded-full bg-[#EFF6FF] flex items-center justify-center font-extrabold text-sm text-[#2563EB]">
-                                    {completionPercent}%
+                        {/* Content Below Banner with Overlapping Avatar */}
+                        <div className="px-6 pb-6 pt-0">
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-16 mb-4">
+                                <div className="relative inline-block">
+                                    <div className="size-24 sm:size-28 rounded-full border-4 border-white bg-gradient-to-tr from-slate-900 via-blue-900 to-indigo-700 text-white flex items-center justify-center font-black text-2xl sm:text-3xl shadow-md">
+                                        {data.name
+                                            .split(' ')
+                                            .map((n) => n[0])
+                                            .slice(0, 2)
+                                            .join('')
+                                            .toUpperCase() || 'U'}
+                                    </div>
+                                    <div className="absolute bottom-1 right-1 size-7 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-xs cursor-pointer hover:bg-slate-50 transition" title="Ganti Foto">
+                                        <Camera className="size-3.5" />
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex items-center gap-3 shrink-0 self-start sm:self-auto">
+                                    <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center font-extrabold text-xs text-blue-700">
+                                        {completionPercent}%
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                            Kekuatan Profil
+                                        </span>
+                                        <div className="text-xs font-bold text-slate-900">
+                                            {completionPercent >= 100 ? 'Profil All-Star' : 'Tingkat Menengah'}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div>
-                                <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block">
-                                    Kelengkapan Profil
-                                </span>
-                                <div className="text-xs font-bold text-neutral-900 mt-0.5">
-                                    {completionPercent >= 100 ? 'Profil Lengkap' : 'Siap untuk AI Matching'}
+
+                            <div className="space-y-1">
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                                        {data.name}
+                                    </h2>
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <ShieldCheck className="size-3" />
+                                        Mahasiswa Terverifikasi
+                                    </span>
                                 </div>
-                                <p className="text-[11px] text-neutral-500 mt-0.5 max-w-[200px]">
-                                    {completionPercent >= 100
-                                        ? 'Data Anda optimal untuk rekomendasi proyek'
-                                        : 'Lengkapi skill & jam kerja agar rekomendasi akurat'}
+                                <p className="text-xs text-slate-600 font-medium">
+                                    {data.study_program || 'Program Studi Mahasiswa'} • Semester {data.semester || 1} • {campus || 'Perguruan Tinggi Indonesia'}
                                 </p>
+                                {nim && !nim.startsWith('REG-') && (
+                                    <p className="text-[11px] font-mono text-slate-400">
+                                        NIM: {nim}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -355,17 +359,13 @@ export default function Profile({
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                                         <div className="space-y-1.5">
                                             <Label htmlFor="nim-input" className="text-xs font-semibold text-neutral-700 flex items-center justify-between">
-                                                <span>Nomor Induk Mahasiswa (NIM) <span className="text-rose-500">*</span></span>
-                                                {(!data.student_number || data.student_number.startsWith('REG-')) && (
-                                                    <span className="text-[10px] text-amber-600 font-bold">Wajib diisi</span>
-                                                )}
+                                                <span>Nomor Induk Mahasiswa (NIM) <span className="text-xs text-slate-400 font-normal">(Opsional)</span></span>
                                             </Label>
                                             <Input
                                                 id="nim-input"
                                                 value={data.student_number}
                                                 onChange={(e) => setData('student_number', e.target.value)}
-                                                placeholder="Contoh: 2201001"
-                                                required
+                                                placeholder="Contoh: 2201001 (Opsional)"
                                                 className="rounded-2xl text-xs py-2.5 border-neutral-200/90 focus:ring-2 focus:ring-[#2563EB]"
                                             />
                                         </div>
