@@ -2,6 +2,7 @@
 
 namespace App\Services\Matchmaking;
 
+use App\Contracts\Notifications\NotificationCounterInterface;
 use App\Enums\ProjectStatus;
 use App\Enums\RecruitmentStatus;
 use App\Enums\SkillType;
@@ -12,6 +13,7 @@ use App\Models\RecruitmentRole;
 use App\Models\Skill;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\TeamFormationNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -109,12 +111,68 @@ class TeamFormationService
     }
 
     /**
+     * Determine whether a lecturer/supervisor or platform admin may review team formation.
+     */
+    public function canReviewFormation(Project $project, User $lecturer): bool
+    {
+        if ($lecturer->isPlatformAdmin()) {
+            return true;
+        }
+
+        if ($project->primary_supervisor_id && (int) $project->primary_supervisor_id === (int) $lecturer->id) {
+            return true;
+        }
+
+        $class = $project->academicClass;
+
+        return $class !== null && $class->isLecturer($lecturer);
+    }
+
+    /**
+     * Dispatch synchronous database notifications for formation lifecycle events.
+     *
+     * @param  iterable<int, User|null>  $recipients
+     */
+    protected function notifyFormationRecipients(
+        Project $project,
+        iterable $recipients,
+        string $event,
+        ?string $notes = null,
+        ?User $actor = null
+    ): void {
+        $counter = app(NotificationCounterInterface::class);
+        $notifiedIds = [];
+
+        foreach ($recipients as $recipient) {
+            if (! $recipient instanceof User) {
+                continue;
+            }
+            if ($actor && (int) $recipient->id === (int) $actor->id) {
+                continue;
+            }
+            if (isset($notifiedIds[$recipient->id])) {
+                continue;
+            }
+            $notifiedIds[$recipient->id] = true;
+
+            $recipient->notify(new TeamFormationNotification($project, $event, $notes, $actor?->name));
+            $counter->invalidateUnreadCountCache($recipient);
+        }
+    }
+
+    /**
      * Step 3: Submit proposed team composition for lecturer review.
      */
     public function submitForReview(Project $project, User $user): void
     {
         if (! $project->isLeader($user) && ! $user->isPlatformAdmin()) {
             throw ValidationException::withMessages(['auth' => ['Hanya ketua proyek yang dapat mengajukan susunan tim untuk evaluasi dosen.']]);
+        }
+
+        if (in_array($project->formation_status, ['lecturer_approved', 'team_locked', 'workspace_activated'], true)) {
+            throw ValidationException::withMessages([
+                'team' => ['Susunan tim ini sudah disetujui dosen pengampu.'],
+            ]);
         }
 
         $team = $project->team;
@@ -141,6 +199,13 @@ class TeamFormationService
                 $user->id
             );
         });
+
+        $project->loadMissing(['academicClass.lecturer', 'academicClass.coLecturers', 'primarySupervisor', 'team']);
+        $recipients = collect([$project->primarySupervisor, $project->academicClass?->lecturer])
+            ->merge($project->academicClass?->coLecturers ?? collect())
+            ->filter();
+
+        $this->notifyFormationRecipients($project, $recipients, 'formation_submitted', null, $user);
     }
 
     /**
@@ -148,19 +213,22 @@ class TeamFormationService
      */
     public function approveFormation(Project $project, User $lecturer, ?string $notes = null): void
     {
+        $project->loadMissing(['academicClass.coLecturers', 'leader', 'team.members.user']);
         $class = $project->academicClass;
-        if (! $class || (! $class->isLecturer($lecturer) && ! $lecturer->isPlatformAdmin())) {
+        if (! $this->canReviewFormation($project, $lecturer)) {
             throw ValidationException::withMessages([
                 'auth' => ['Hanya dosen pengampu kelas proyek ini yang berwenang menyetujui susunan tim.'],
             ]);
         }
 
-        DB::transaction(function () use ($project, $lecturer, $notes, $class) {
+        $resolvedNotes = $notes ?: 'Susunan tim proyek telah disetujui dosen pengampu.';
+
+        DB::transaction(function () use ($project, $lecturer, $resolvedNotes, $class) {
             $project->update([
                 'formation_status' => 'lecturer_approved',
                 'formation_approved_at' => now(),
                 'formation_approved_by' => $lecturer->id,
-                'formation_notes' => $notes ?? 'Susunan tim proyek telah disetujui dosen pengampu.',
+                'formation_notes' => $resolvedNotes,
                 'status' => ProjectStatus::InProgress,
             ]);
 
@@ -171,12 +239,17 @@ class TeamFormationService
 
             MatchingAuditLog::log(
                 'formation_approved',
-                ['notes' => $notes],
-                $class->id,
+                ['notes' => $resolvedNotes],
+                $class?->id ?? $project->academic_class_id,
                 $project->id,
                 $lecturer->id
             );
         });
+
+        $recipients = collect([$project->leader])
+            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->filter();
+        $this->notifyFormationRecipients($project, $recipients, 'formation_approved', $resolvedNotes, $lecturer);
     }
 
     /**
@@ -184,25 +257,31 @@ class TeamFormationService
      */
     public function rejectFormation(Project $project, User $lecturer, string $reason): void
     {
+        $project->loadMissing(['academicClass.coLecturers', 'leader', 'team.members.user']);
         $class = $project->academicClass;
-        if (! $class || (! $class->isLecturer($lecturer) && ! $lecturer->isPlatformAdmin())) {
+        if (! $this->canReviewFormation($project, $lecturer)) {
             throw ValidationException::withMessages(['auth' => ['Hanya dosen pengampu yang berwenang menolak susunan tim.']]);
         }
 
         DB::transaction(function () use ($project, $reason, $class, $lecturer) {
             $project->update([
-                'formation_status' => 'requirements_configured',
+                'formation_status' => 'formation_rejected',
                 'formation_notes' => $reason,
             ]);
 
             MatchingAuditLog::log(
                 'formation_rejected',
                 ['reason' => $reason],
-                $class->id,
+                $class?->id ?? $project->academic_class_id,
                 $project->id,
                 $lecturer->id
             );
         });
+
+        $recipients = collect([$project->leader])
+            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->filter();
+        $this->notifyFormationRecipients($project, $recipients, 'formation_rejected', $reason, $lecturer);
     }
 
     /**
@@ -210,8 +289,9 @@ class TeamFormationService
      */
     public function requestChanges(Project $project, User $lecturer, string $revisionNotes): void
     {
+        $project->loadMissing(['academicClass.coLecturers', 'leader', 'team.members.user']);
         $class = $project->academicClass;
-        if (! $class || (! $class->isLecturer($lecturer) && ! $lecturer->isPlatformAdmin())) {
+        if (! $this->canReviewFormation($project, $lecturer)) {
             throw ValidationException::withMessages(['auth' => ['Hanya dosen pengampu yang berwenang meminta revisi susunan tim.']]);
         }
 
@@ -224,11 +304,16 @@ class TeamFormationService
             MatchingAuditLog::log(
                 'formation_revision_requested',
                 ['revision_notes' => $revisionNotes],
-                $class->id,
+                $class?->id ?? $project->academic_class_id,
                 $project->id,
                 $lecturer->id
             );
         });
+
+        $recipients = collect([$project->leader])
+            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->filter();
+        $this->notifyFormationRecipients($project, $recipients, 'formation_revision_requested', $revisionNotes, $lecturer);
     }
 
     /**
@@ -317,7 +402,8 @@ class TeamFormationService
             return true;
         }
 
-        $isLecturer = $project->academicClass && $project->academicClass->isLecturer($user);
+        $isLecturer = ($project->primary_supervisor_id && (int) $project->primary_supervisor_id === (int) $user->id)
+            || ($project->academicClass && $project->academicClass->isLecturer($user));
         if ($isLecturer) {
             return true;
         }

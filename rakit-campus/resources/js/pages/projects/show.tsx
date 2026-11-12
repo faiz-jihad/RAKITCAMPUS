@@ -522,7 +522,7 @@ export default function ProjectShow({
                                 </div>
 
                                 {/* Team formation & workspace activation aligned with Lecturer Approval step */}
-                                {isLeader && project.status === 'recruiting' && (
+                                {isLeader && project.formation_status !== 'workspace_activated' && (
                                     (project.formation_status === 'lecturer_approved' || project.formation_status === 'team_locked') ? (
                                         <button
                                             onClick={handleActivateTeam}
@@ -541,6 +541,15 @@ export default function ProjectShow({
                                             <Clock className="size-4" />
                                             <span>Menunggu Persetujuan Dosen</span>
                                         </button>
+                                    ) : project.formation_status === 'formation_rejected' ? (
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('formation')}
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-bold transition cursor-pointer"
+                                        >
+                                            <AlertCircle className="size-4" />
+                                            <span>Pengajuan Tim Ditolak • Tinjau</span>
+                                        </button>
                                     ) : (
                                         <button
                                             type="button"
@@ -553,7 +562,7 @@ export default function ProjectShow({
                                     )
                                 )}
 
-                                {!isLeader && isLecturer && project.status === 'recruiting' && project.formation_status === 'formation_review' && (
+                                {!isLeader && isLecturer && project.formation_status === 'formation_review' && (
                                     <button
                                         type="button"
                                         onClick={() => setActiveTab('formation')}
