@@ -23,6 +23,18 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - rakit_network
+
+  redis:
+    image: redis:alpine
+    container_name: rakit_campus_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass "@Hackathon123"
+    volumes:
+      - rakit_redis_data:/data
     networks:
       - rakit_network
 
@@ -67,4 +79,6 @@ networks:
 
 volumes:
   rakit_db_data:
+    driver: local
+  rakit_redis_data:
     driver: local

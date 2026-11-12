@@ -28,6 +28,16 @@ class AiSession extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
+    public function competition(): BelongsTo
+    {
+        return $this->belongsTo(Competition::class);
+    }
+
     public function messages(): HasMany
     {
         return $this->hasMany(AiMessage::class, 'session_id')->orderBy('created_at');
