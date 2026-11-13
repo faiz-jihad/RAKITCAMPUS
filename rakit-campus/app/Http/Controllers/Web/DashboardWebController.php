@@ -364,7 +364,7 @@ class DashboardWebController extends Controller
                     'name' => $c->name,
                     'organizer' => $c->organizer,
                     'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
-                    'status' => $c->status,
+                    'status' => is_object($c->status) ? ($c->status->value ?? 'open') : ($c->status ?? 'open'),
                 ]);
 
             return Inertia::render('dashboard', [

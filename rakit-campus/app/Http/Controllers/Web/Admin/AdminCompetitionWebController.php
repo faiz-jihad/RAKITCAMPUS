@@ -10,6 +10,7 @@ use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Competition;
 use App\Models\CompetitionSource;
+use App\Services\Storage\ObjectStorageService;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -157,6 +158,7 @@ class AdminCompetitionWebController extends Controller
             'min_team_size' => ['required', 'integer', 'min:1', 'max:20'],
             'max_team_size' => ['required', 'integer', 'gte:min_team_size', 'max:20'],
             'prize_info' => ['nullable', 'string', 'max:255'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
         ], [
             'name.required' => 'Nama kompetisi wajib diisi.',
             'organizer.required' => 'Nama institusi/penyelenggara wajib diisi.',
@@ -169,9 +171,14 @@ class AdminCompetitionWebController extends Controller
         $isGlobal = ($validated['scope'] ?? 'campus') === 'global' || $user->isPlatformAdmin();
         $targetCampusId = $isGlobal ? null : ($campusId ?: $user->campusId());
 
+        $coverImagePath = null;
+        if ($request->hasFile('cover_image')) {
+            $coverImagePath = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers')['path'];
+        }
+
         $slug = Str::slug($validated['name']) . '-' . Str::lower(Str::random(6));
 
-        DB::transaction(function () use ($validated, $user, $targetCampusId, $isGlobal, $slug) {
+        DB::transaction(function () use ($validated, $user, $targetCampusId, $isGlobal, $slug, $coverImagePath) {
             $comp = Competition::create([
                 'campus_id' => $targetCampusId,
                 'scope' => $isGlobal ? CompetitionScope::Global : CompetitionScope::Campus,
@@ -193,6 +200,7 @@ class AdminCompetitionWebController extends Controller
                 'min_team_size' => $validated['min_team_size'],
                 'max_team_size' => $validated['max_team_size'],
                 'prize_info' => $validated['prize_info'] ?? null,
+                'cover_image' => $coverImagePath,
                 'status' => $validated['status'] ?? CompetitionStatus::Open,
                 'verification_status' => VerificationStatus::Verified,
                 'last_verified_at' => now(),
@@ -257,11 +265,17 @@ class AdminCompetitionWebController extends Controller
             'min_team_size' => ['required', 'integer', 'min:1', 'max:20'],
             'max_team_size' => ['required', 'integer', 'gte:min_team_size', 'max:20'],
             'prize_info' => ['nullable', 'string', 'max:255'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:4096'],
         ], [
             'registration_deadline.required' => 'Batas akhir (deadline) pendaftaran wajib diisi.',
             'ends_at.after_or_equal' => 'Tanggal selesai harus sama atau setelah tanggal mulai pelaksanaan.',
             'max_team_size.gte' => 'Maksimal anggota tim harus lebih besar atau sama dengan minimal.',
         ]);
+
+        if ($request->hasFile('cover_image')) {
+            $coverImagePath = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers')['path'];
+            $competition->cover_image = $coverImagePath;
+        }
 
         $competition->update([
             'name' => $validated['name'],

@@ -521,7 +521,7 @@ export default function Dashboard({
                                         >
                                             <div className="flex items-center gap-3 min-w-0">
                                                 <div className="size-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200">
-                                                    {student.name.substring(0, 2).toUpperCase()}
+                                                    {(student.name || 'M').substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="text-xs font-bold text-slate-900 truncate">
@@ -663,7 +663,7 @@ export default function Dashboard({
                                                 </p>
                                             </div>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 capitalize">
-                                                {comp.status || 'Aktif'}
+                                                {typeof comp.status === 'object' ? (comp.status?.value || 'Aktif') : (comp.status || 'Aktif')}
                                             </span>
                                         </div>
                                     ))}

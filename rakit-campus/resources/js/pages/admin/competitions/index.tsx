@@ -122,6 +122,7 @@ export default function AdminCompetitionsIndex({
         official_url: '',
         registration_url: '',
         eligibility: 'Mahasiswa aktif D3/D4/S1 seluruh Indonesia',
+        cover_image: null as File | null,
     });
 
     // Edit Form State
@@ -178,6 +179,7 @@ export default function AdminCompetitionsIndex({
         setFormErrors({});
 
         router.post('/admin/competitions', createForm, {
+            forceFormData: true,
             onSuccess: () => {
                 setIsCreateModalOpen(false);
                 setSubmitting(false);
@@ -744,6 +746,30 @@ export default function AdminCompetitionsIndex({
                                     placeholder="Jelaskan ringkasan perlombaan, cabang kompetisi, dan tema utama..."
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none leading-relaxed"
                                 />
+                            </div>
+
+                            {/* Gambar Poster / Banner Lomba */}
+                            <div>
+                                <label className="block font-semibold text-slate-700 mb-1">
+                                    Poster / Gambar Sampul Lomba (Opsional)
+                                </label>
+                                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
+                                    <input
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                                        onChange={(e) => {
+                                            const file = e.target.files?.[0] || null;
+                                            setCreateForm({ ...createForm, cover_image: file });
+                                        }}
+                                        className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                    />
+                                    <p className="text-[11px] text-slate-400">
+                                        Format: PNG, JPG, JPEG, WEBP. Maksimal ukuran 4MB. Direkomendasikan rasio 4:5 (portrait) atau 16:9.
+                                    </p>
+                                    {formErrors.cover_image && (
+                                        <p className="text-rose-600 text-xs font-medium mt-1">{formErrors.cover_image}</p>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Modal Footer Buttons */}
