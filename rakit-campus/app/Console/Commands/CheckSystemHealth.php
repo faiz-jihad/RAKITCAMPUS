@@ -20,11 +20,19 @@ use Throwable;
 
 class CheckSystemHealth extends Command
 {
-    protected $signature = 'rakit:check-system';
+    protected $signature = 'rakit:check-system {--reset-test-pass : Reset password of student user to password}';
     protected $description = 'Comprehensive health check for database, redis, email, and ai agentic workspace';
 
     public function handle(EmailDeliveryServiceInterface $emailService, TeamAiQuotaService $quotaService): int
     {
+        if ($this->option('reset-test-pass')) {
+            $u = User::where('email', 'ahmad.fauzi@student.polindra.ac.id')->first();
+            if ($u) {
+                $u->password = bcrypt('password');
+                $u->save();
+                $this->info("✓ Password for {$u->email} reset to 'password' using Eloquent bcrypt!");
+            }
+        }
         $this->info('========================================================');
         $this->info('  RAKIT Campus — Comprehensive System Health Verification');
         $this->info('========================================================');
