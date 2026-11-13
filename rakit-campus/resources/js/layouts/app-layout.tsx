@@ -28,6 +28,7 @@ import {
     Layers,
     LayoutDashboard,
     LogOut,
+    Mail,
     PlusCircle,
     Settings,
     ShieldCheck,
@@ -119,14 +120,15 @@ export default function AppLayout({
             ) {
                 detectedHub = 'project';
             } else if (pathname === '/dashboard') {
-                const saved = localStorage.getItem('rakit_active_hub');
-                // If user was in competition hub, prevent sudden jump to project dashboard from system redirects
-                if (saved === 'competition' && !params.has('hub')) {
-                    router.get('/competitions');
-                    return;
-                } else {
-                    detectedHub = 'project';
+                if (!isAdmin) {
+                    const saved = localStorage.getItem('rakit_active_hub');
+                    // If student was in competition hub, prevent sudden jump to project dashboard from system redirects
+                    if (saved === 'competition' && !params.has('hub')) {
+                        router.get('/competitions');
+                        return;
+                    }
                 }
+                detectedHub = 'project';
             }
 
             if (detectedHub) {

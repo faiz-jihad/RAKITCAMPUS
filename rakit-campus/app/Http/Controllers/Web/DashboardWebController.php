@@ -297,7 +297,16 @@ class DashboardWebController extends Controller
         $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
             ->latest('registration_deadline')
             ->take(3)
-            ->get();
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'organizer' => $c->organizer,
+                'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
+                'status' => is_object($c->status) ? ($c->status->value ?? 'open') : ($c->status ?? 'open'),
+                'category' => $c->category ?? 'Umum',
+            ]);
 
         if ($isAdmin) {
             $campus = $membership?->campus ?? Campus::where('slug', 'polindra')->first() ?? Campus::first();
