@@ -628,22 +628,22 @@ export default function Dashboard({
                             )}
                         </div>
 
-                        {/* RECENT COMPETITIONS */}
+                        {/* RECENT COMPETITIONS MONITORING */}
                         <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
                                     <h2 className="text-sm font-bold text-slate-900">
-                                        Kompetisi & Lomba Kampus
+                                        Status Kompetisi Kampus
                                     </h2>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        Kompetisi yang sedang dibuka untuk delegasi mahasiswa.
+                                        Monitoring periode pendaftaran dan delegasi mahasiswa.
                                     </p>
                                 </div>
                                 <Link
                                     href="/admin/competitions"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
                                 >
-                                    Kelola Lomba →
+                                    Kelola Semua Lomba →
                                 </Link>
                             </div>
 

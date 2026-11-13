@@ -478,27 +478,89 @@ export default function AppLayout({
                             </div>
                         </Link>
 
-                        {/* Interactive Hub Pill Indicator */}
-                        <button
-                            type="button"
-                            onClick={() => setIsGatewayOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer group shrink-0"
-                            title="Beralih Ruang Kerja (Hub)"
-                        >
-                            <span
-                                className={`size-1.5 rounded-full shrink-0 ${
-                                    isCompetitionHub ? 'bg-amber-500' : 'bg-blue-600'
-                                }`}
-                            />
-                            <span className="hidden sm:inline">{isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'}</span>
-                            <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Campus'}</span>
-                            <ArrowLeftRight className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
-                        </button>
+                        {/* Interactive Hub Pill Indicator (Mahasiswa & Dosen only) */}
+                        {!isAdmin && (
+                            <button
+                                type="button"
+                                onClick={() => setIsGatewayOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer group shrink-0"
+                                title="Beralih Ruang Kerja (Hub)"
+                            >
+                                <span
+                                    className={`size-1.5 rounded-full shrink-0 ${
+                                        isCompetitionHub ? 'bg-amber-500' : 'bg-blue-600'
+                                    }`}
+                                />
+                                <span className="hidden sm:inline">{isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'}</span>
+                                <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Campus'}</span>
+                                <ArrowLeftRight className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
+                            </button>
+                        )}
+                        {isAdmin && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 shrink-0">
+                                <ShieldCheck className="size-3 text-rose-600" />
+                                <span>Mode Administrator</span>
+                            </div>
+                        )}
                     </div>
 
                     {/* Desktop Navigation Capsule / Pills (Hidden on Mobile, placed in Bottom Nav) */}
                     <div className="hidden md:flex items-center justify-center overflow-x-auto scrollbar-none">
-                        {isCompetitionHub ? (
+                        {isAdmin ? (
+                            <nav className="inline-flex items-center gap-1 bg-[#fff1f2] p-1 rounded-full border border-rose-200/80 overflow-x-auto max-w-full">
+                                <Link
+                                    href="/admin"
+                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
+                                        url === '/admin' || url === '/dashboard'
+                                            ? 'bg-rose-600 text-white shadow-sm'
+                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    <ShieldCheck className="size-3.5" />
+                                    <span>Pusat Kendali</span>
+                                </Link>
+                                <Link
+                                    href="/admin/students"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/admin/students')
+                                            ? 'bg-rose-600 text-white shadow-sm'
+                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    Verifikasi Mahasiswa
+                                </Link>
+                                <Link
+                                    href="/admin/competitions"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/admin/competitions')
+                                            ? 'bg-rose-600 text-white shadow-sm'
+                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    Kelola Kompetisi
+                                </Link>
+                                <Link
+                                    href="/admin/notifications"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/admin/notifications')
+                                            ? 'bg-rose-600 text-white shadow-sm'
+                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    Monitoring Email
+                                </Link>
+                                <Link
+                                    href="/leaderboard/admin"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/leaderboard/admin')
+                                            ? 'bg-rose-600 text-white shadow-sm'
+                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
+                                    }`}
+                                >
+                                    Aturan Poin
+                                </Link>
+                            </nav>
+                        ) : isCompetitionHub ? (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
                                 <Link
                                     href="/competitions?tab=explore"
@@ -710,7 +772,104 @@ export default function AppLayout({
                 className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
             >
                 <div className="grid grid-cols-5 h-16 items-center px-1 max-w-lg mx-auto">
-                    {isCompetitionHub ? (
+                    {isAdmin ? (
+                        <>
+                            {/* 1. Dashboard Admin */}
+                            <Link
+                                href="/admin"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url === '/admin' || url === '/dashboard'
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <LayoutDashboard
+                                    className={`size-5 ${
+                                        url === '/admin' || url === '/dashboard'
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Admin</span>
+                            </Link>
+
+                            {/* 2. Verifikasi Mahasiswa */}
+                            <Link
+                                href="/admin/students"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/students')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Users
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/students')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Verifikasi</span>
+                            </Link>
+
+                            {/* 3. Kelola Lomba */}
+                            <Link
+                                href="/admin/competitions"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/competitions')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Trophy
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/competitions')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Kompetisi</span>
+                            </Link>
+
+                            {/* 4. Monitoring Email */}
+                            <Link
+                                href="/admin/notifications"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/notifications')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Mail
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/notifications')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Email</span>
+                            </Link>
+
+                            {/* 5. Aturan Leaderboard */}
+                            <Link
+                                href="/leaderboard/admin"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/leaderboard/admin')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Award
+                                    className={`size-5 ${
+                                        url.startsWith('/leaderboard/admin')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Poin</span>
+                            </Link>
+                        </>
+                    ) : isCompetitionHub ? (
                         <>
                             {/* 1. Eksplor Lomba */}
                             <Link
