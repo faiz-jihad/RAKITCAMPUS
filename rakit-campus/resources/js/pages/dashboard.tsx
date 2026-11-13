@@ -4,16 +4,27 @@ import {
     AlertCircle,
     ArrowRight,
     ArrowUpRight,
+    Award,
     BookOpen,
+    Bot,
     Briefcase,
     Check,
     CheckCircle2,
     Clock,
+    Copy,
+    ExternalLink,
+    FileText,
     FolderKanban,
     GraduationCap,
     Inbox,
+    Mail,
+    MoreHorizontal,
     Plus,
+    QrCode,
+    ShieldAlert,
     ShieldCheck,
+    Sparkles,
+    Trophy,
     UserCheck,
     Users,
     X,
@@ -23,11 +34,50 @@ import { useState } from 'react';
 
 interface Props {
     isPublic?: boolean;
+    isAdmin?: boolean;
+    isLecturer?: boolean;
+    adminStats?: {
+        total_students: number;
+        verified_students: number;
+        unverified_students: number;
+        total_lecturers: number;
+        active_projects: number;
+        completed_projects: number;
+        active_competitions: number;
+        total_teams: number;
+    };
+    pendingVerifications?: Array<{
+        id: number;
+        user_id: number;
+        name: string;
+        email: string;
+        student_number: string;
+        study_program: string;
+        created_at: string;
+    }>;
+    recentProjects?: Array<{
+        id: number;
+        title: string;
+        status: string;
+        leader_name: string;
+        category: string;
+        progress: number;
+        created_at: string;
+    }>;
+    recentCompetitions?: Array<{
+        id: number;
+        name: string;
+        organizer?: string;
+        registration_deadline?: string;
+        status: string;
+    }>;
+    upcomingCompetitions?: any[];
     user: {
         id: number;
         name: string;
         email: string;
         role: string;
+        is_admin?: boolean;
         is_lecturer?: boolean;
         campus: string;
         major: string;
@@ -71,6 +121,12 @@ interface Props {
 }
 
 export default function Dashboard({
+    isAdmin = false,
+    adminStats,
+    pendingVerifications = [],
+    recentProjects = [],
+    recentCompetitions = [],
+    upcomingCompetitions = [],
     user = {} as any,
     stats = {} as any,
     myTeams = [],
@@ -240,7 +296,553 @@ export default function Dashboard({
         );
     };
 
-    if (isLecturer) {
+    const isUserAdmin = Boolean(isAdmin || user?.is_admin || user?.role === 'campus_admin' || user?.role === 'platform_admin');
+    const isUserLecturer = Boolean(isLecturer || user?.role === 'lecturer');
+
+    const [pendingList, setPendingList] = useState(pendingVerifications || []);
+    const [verifyingId, setVerifyingId] = useState<number | null>(null);
+
+    const getXsrfToken = () => {
+        if (typeof document === 'undefined') return '';
+        const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+        if (match) return decodeURIComponent(match[1]);
+        const meta = document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement | null;
+        return meta?.content || '';
+    };
+
+    const handleVerifyStudent = async (membershipId: number, status: 'verified' | 'rejected') => {
+        setVerifyingId(membershipId);
+        try {
+            const res = await fetch(`/api/v1/admin/students/${membershipId}/verify`, {
+                method: 'PATCH',
+                credentials: 'same-origin',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-XSRF-TOKEN': getXsrfToken(),
+                },
+                body: JSON.stringify({ status }),
+            });
+
+            if (res.ok) {
+                setPendingList(pendingList.filter((p: any) => p.id !== membershipId));
+            } else {
+                router.reload();
+            }
+        } catch {
+            router.reload();
+        } finally {
+            setVerifyingId(null);
+        }
+    };
+
+    // ==========================================
+    // 1. ADMIN DASHBOARD VIEW
+    // ==========================================
+    if (isUserAdmin) {
+        return (
+            <AppLayout activeTab="dashboard" title="Admin Dashboard — RAKIT Campus">
+                {/* 1. HEADER ROW */}
+                <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
+                                <ShieldCheck className="size-3.5 text-rose-600" />
+                                <span>{user.role === 'platform_admin' ? 'Super Admin Platform' : 'Admin Kampus'}</span>
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">{user.campus || 'Kampus Anda'}</span>
+                        </div>
+                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                            Pusat Kendali Administrator
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                            Manajemen verifikasi mahasiswa, pengawasan kompetisi, dan tata kelola ekosistem kampus.
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                            href="/admin/competitions"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                        >
+                            <Plus className="size-3.5" />
+                            <span>+ Tambah Kompetisi</span>
+                        </Link>
+                        <Link
+                            href="/admin/students"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <Users className="size-3.5 text-slate-500" />
+                            <span>Verifikasi Mahasiswa</span>
+                        </Link>
+                        <Link
+                            href="/admin/notifications"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <Mail className="size-3.5 text-slate-500" />
+                            <span>Uji Email</span>
+                        </Link>
+                    </div>
+                </section>
+
+                {/* FLASH & ERROR BANNERS */}
+                {flash?.success && (
+                    <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
+                        {flash.success}
+                    </div>
+                )}
+                {flash?.info && (
+                    <div className="mb-5 p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-medium text-blue-800">
+                        {flash.info}
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
+                        {flash.error}
+                    </div>
+                )}
+
+                {/* 2. ADMIN KPI STAT CARDS */}
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 mb-6">
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Total Mahasiswa</span>
+                            <Users className="size-4 text-blue-600" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">
+                            {adminStats?.total_students ?? stats?.total_students_count ?? 0}
+                        </div>
+                        <div className="text-[11px] text-emerald-600 font-semibold mt-1">
+                            {adminStats?.verified_students ?? 0} Terverifikasi
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-amber-200/80 bg-amber-50/20 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Antrean Verifikasi</span>
+                            <ShieldAlert className="size-4 text-amber-600" />
+                        </div>
+                        <div className="text-2xl font-black text-amber-900">
+                            {adminStats?.unverified_students ?? pendingList.length}
+                        </div>
+                        <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                            Perlu ditinjau segera
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Dosen Pembimbing</span>
+                            <GraduationCap className="size-4 text-emerald-600" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">
+                            {adminStats?.total_lecturers ?? 1}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-medium mt-1">
+                            Dosen Terdaftar
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Proyek Inovasi</span>
+                            <FolderKanban className="size-4 text-indigo-600" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">
+                            {adminStats?.active_projects ?? 0}
+                        </div>
+                        <div className="text-[11px] text-indigo-600 font-semibold mt-1">
+                            {adminStats?.completed_projects ?? 0} Selesai
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Kompetisi Aktif</span>
+                            <Trophy className="size-4 text-amber-500" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">
+                            {adminStats?.active_competitions ?? 0}
+                        </div>
+                        <div className="text-[11px] text-amber-600 font-semibold mt-1">
+                            Periode berjalan
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
+                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider">Total Tim</span>
+                            <UserCheck className="size-4 text-purple-600" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">
+                            {adminStats?.total_teams ?? 0}
+                        </div>
+                        <div className="text-[11px] text-purple-600 font-semibold mt-1">
+                            Tim Kolaborasi
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. MAIN DASHBOARD CONTENT */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* LEFT COLUMN: PENDING VERIFICATIONS & RECENT ACTIVITIES */}
+                    <div className="lg:col-span-8 space-y-6">
+                        {/* PENDING STUDENT VERIFICATIONS PANEL */}
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <span>Antrean Verifikasi Mahasiswa Baru</span>
+                                        {pendingList.length > 0 && (
+                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                                {pendingList.length} Menunggu
+                                            </span>
+                                        )}
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Tinjau dan setujui status registrasi mahasiswa untuk akses penuh ke ekosistem kampus.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/admin/students"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition shrink-0"
+                                >
+                                    Kelola Semua Mahasiswa →
+                                </Link>
+                            </div>
+
+                            {pendingList.length > 0 ? (
+                                <div className="divide-y divide-slate-100">
+                                    {pendingList.slice(0, 5).map((student: any) => (
+                                        <div
+                                            key={student.id}
+                                            className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-slate-50/60 rounded-lg px-2 -mx-2 transition"
+                                        >
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="size-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200">
+                                                    {student.name.substring(0, 2).toUpperCase()}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="text-xs font-bold text-slate-900 truncate">
+                                                        {student.name}
+                                                    </div>
+                                                    <div className="text-[11px] text-slate-500 truncate flex items-center gap-2">
+                                                        <span>NIM: <strong className="text-slate-700">{student.student_number}</strong></span>
+                                                        <span>•</span>
+                                                        <span className="text-slate-600">{student.study_program}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button
+                                                    type="button"
+                                                    disabled={verifyingId === student.id}
+                                                    onClick={() => handleVerifyStudent(student.id, 'verified')}
+                                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    Setujui
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={verifyingId === student.id}
+                                                    onClick={() => handleVerifyStudent(student.id, 'rejected')}
+                                                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+                                                >
+                                                    Tolak
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-8 text-center text-slate-400">
+                                    <CheckCircle2 className="size-8 mx-auto text-emerald-500 mb-2 opacity-80" />
+                                    <p className="text-xs font-semibold text-slate-700">Semua Mahasiswa Telah Terverifikasi</p>
+                                    <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada antrean verifikasi baru saat ini.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* RECENT INNOVATION PROJECTS */}
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Proyek Inovasi Mahasiswa Terkini
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Progres inovasi riset dan tugas akhir lintas program studi.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/projects"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                >
+                                    Eksplor Semua Proyek →
+                                </Link>
+                            </div>
+
+                            {recentProjects && recentProjects.length > 0 ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                    {recentProjects.slice(0, 4).map((proj: any) => (
+                                        <div
+                                            key={proj.id}
+                                            className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-200 transition shadow-2xs flex flex-col justify-between gap-3"
+                                        >
+                                            <div>
+                                                <div className="flex items-center justify-between gap-2 mb-1">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                                        {proj.category || 'Inovasi'}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        {proj.created_at}
+                                                    </span>
+                                                </div>
+                                                <h3 className="text-xs font-bold text-slate-900 line-clamp-1">
+                                                    {proj.title}
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                                    Ketua: {proj.leader_name}
+                                                </p>
+                                            </div>
+
+                                            <div>
+                                                <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500 mb-1">
+                                                    <span>Progres</span>
+                                                    <span>{proj.progress}%</span>
+                                                </div>
+                                                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                                                    <div
+                                                        className="bg-blue-600 h-1.5 rounded-full transition-all"
+                                                        style={{ width: `${proj.progress}%` }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 py-4 text-center">Belum ada proyek yang terdaftar.</p>
+                            )}
+                        </div>
+
+                        {/* RECENT COMPETITIONS */}
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Kompetisi & Lomba Kampus
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Kompetisi yang sedang dibuka untuk delegasi mahasiswa.
+                                    </p>
+                                </div>
+                                <Link
+                                    href="/admin/competitions"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                >
+                                    Kelola Lomba →
+                                </Link>
+                            </div>
+
+                            {recentCompetitions && recentCompetitions.length > 0 ? (
+                                <div className="divide-y divide-slate-100">
+                                    {recentCompetitions.map((comp: any) => (
+                                        <div
+                                            key={comp.id}
+                                            className="py-3 flex items-center justify-between gap-3"
+                                        >
+                                            <div className="min-w-0">
+                                                <h3 className="text-xs font-bold text-slate-900 truncate">
+                                                    {comp.name}
+                                                </h3>
+                                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                                    Batas Pendaftaran: <strong className="text-slate-700">{comp.registration_deadline}</strong> {comp.organizer && `• ${comp.organizer}`}
+                                                </p>
+                                            </div>
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 capitalize">
+                                                {comp.status || 'Aktif'}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 py-4 text-center">Belum ada kompetisi aktif.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: ADMIN PROFILE & QUICK SHORTCUTS */}
+                    <div className="lg:col-span-4 space-y-6">
+                        {/* ADMIN PROFILE CARD */}
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Profil Administrator
+                                </h2>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">
+                                    Super Admin
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="size-11 rounded-full bg-gradient-to-tr from-rose-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                                    AD
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-sm font-bold text-slate-900 truncate">
+                                        {user?.name || 'Administrator'}
+                                    </h3>
+                                    <p className="text-xs text-slate-500 truncate">
+                                        {user?.email || 'admin@rakitcampus.id'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 pt-3 border-t border-slate-100 text-xs">
+                                <div className="flex items-center justify-between text-slate-500">
+                                    <span>Lembaga Kampus:</span>
+                                    <span className="font-semibold text-slate-800">{user?.campus || 'Kampus Anda'}</span>
+                                </div>
+                                <div className="flex items-center justify-between text-slate-500">
+                                    <span>Hak Akses:</span>
+                                    <span className="font-semibold text-emerald-600">Akses Penuh (Full Control)</span>
+                                </div>
+                                <div className="flex items-center justify-between text-slate-500">
+                                    <span>Layanan Email:</span>
+                                    <span className="font-semibold text-blue-600">rakitcampus@gmail.com</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* QUICK ADMIN ACTION SHORTCUTS */}
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                            <h2 className="text-sm font-bold text-slate-900 pb-3.5 border-b border-slate-100 mb-3.5">
+                                Pintasan Menu Administrator
+                            </h2>
+
+                            <div className="space-y-2">
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <ShieldCheck className="size-4 text-rose-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                                                Panel Administrasi Utama
+                                            </div>
+                                            <div className="text-[10px] text-slate-400">
+                                                Ikhtisar metrik dan log sistem
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+
+                                <Link
+                                    href="/admin/students"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Users className="size-4 text-blue-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                                                Verifikasi & Kelola Mahasiswa
+                                            </div>
+                                            <div className="text-[10px] text-slate-400">
+                                                Status akun, program studi & NIM
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+
+                                <Link
+                                    href="/admin/competitions"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Trophy className="size-4 text-amber-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition">
+                                                Kelola Kompetisi Kampus
+                                            </div>
+                                            <div className="text-[10px] text-slate-400">
+                                                Batas waktu, status & aturan lomba
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+
+                                <Link
+                                    href="/admin/notifications"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Mail className="size-4 text-purple-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-purple-600 transition">
+                                                Monitoring & Uji Email
+                                            </div>
+                                            <div className="text-[10px] text-slate-400">
+                                                Log pengiriman & uji SMTP
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+
+                                <Link
+                                    href="/leaderboard/admin"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Award className="size-4 text-emerald-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-600 transition">
+                                                Aturan Leaderboard & Poin
+                                            </div>
+                                            <div className="text-[10px] text-slate-400">
+                                                Konfigurasi bobot penilaian
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+
+                                <Link
+                                    href="/ai-workspace"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-blue-100 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-200 hover:shadow-xs transition group"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <Bot className="size-4 text-blue-600" />
+                                        <div>
+                                            <div className="text-xs font-bold text-blue-900 group-hover:text-blue-700 transition">
+                                                AI Workspace Copilot
+                                            </div>
+                                            <div className="text-[10px] text-blue-600/80">
+                                                Asisten AI cerdas ruang kerja
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <ArrowRight className="size-3.5 text-blue-500 group-hover:text-blue-700 group-hover:translate-x-0.5 transition" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </AppLayout>
+        );
+    }
+
+    // ==========================================
+    // 2. LECTURER DASHBOARD VIEW
+    // ==========================================
+    if (isUserLecturer) {
         const displayedApprovals = approvalTab === 'pending' ? pendingTeamApprovals : teamApprovalHistory;
 
         return (

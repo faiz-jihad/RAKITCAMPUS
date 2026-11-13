@@ -145,7 +145,7 @@ class DashboardWebController extends Controller
         // 1. Guest / Public Access Mode
         if (!$user) {
             $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
-            $campusName = $campus?->name ?? 'Politeknik Negeri Indramayu';
+            $campusName = $campus?->name ?? 'Kampus Anda';
 
             // Public sample teams
             $publicTeams = Team::with([
@@ -248,7 +248,7 @@ class DashboardWebController extends Controller
                 'user' => [
                     'id' => 0,
                     'name' => 'Tamu (Eksplorasi Publik)',
-                    'email' => 'tamu@polindra.ac.id',
+                    'email' => 'tamu@rakitcampus.id',
                     'role' => 'guest',
                     'is_lecturer' => false,
                     'campus' => $campusName,
@@ -275,8 +275,8 @@ class DashboardWebController extends Controller
             $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
             if (!$campus) {
                 $campus = Campus::create([
-                    'name' => 'Politeknik Negeri Indramayu',
-                    'slug' => 'polindra',
+                    'name' => 'Kampus RAKIT',
+                    'slug' => 'kampus-rakit',
                 ]);
             }
             $membership = CampusMembership::firstOrCreate(
@@ -291,12 +291,136 @@ class DashboardWebController extends Controller
             );
         }
         $membership?->loadMissing('campus');
+        $isAdmin = $user->isCampusAdmin() || $user->isPlatformAdmin() || $membership?->role === CampusRole::CampusAdmin;
         $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
 
         $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
             ->latest('registration_deadline')
             ->take(3)
             ->get();
+
+        if ($isAdmin) {
+            $campus = $membership?->campus ?? Campus::where('slug', 'polindra')->first() ?? Campus::first();
+            $campusId = $campus?->id;
+
+            $totalStudents = CampusMembership::where('role', CampusRole::Student->value)
+                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
+                ->count();
+
+            $verifiedStudents = CampusMembership::where('role', CampusRole::Student->value)
+                ->where('verification_status', VerificationStatus::Verified->value)
+                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
+                ->count();
+
+            $unverifiedStudents = CampusMembership::where('role', CampusRole::Student->value)
+                ->where('verification_status', VerificationStatus::Pending->value)
+                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
+                ->count();
+
+            $totalLecturers = CampusMembership::where('role', CampusRole::Lecturer->value)
+                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
+                ->count();
+
+            $activeProjects = Project::where('status', '!=', 'completed')->count();
+            $completedProjects = Project::where('status', 'completed')->count();
+            $activeCompetitions = Competition::whereIn('status', ['open', 'upcoming'])->count();
+            $totalTeams = Team::count();
+
+            $pendingVerifications = CampusMembership::where('verification_status', VerificationStatus::Pending->value)
+                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
+                ->with(['user.profile'])
+                ->latest()
+                ->take(8)
+                ->get()
+                ->map(fn ($m) => [
+                    'id' => $m->id,
+                    'user_id' => $m->user_id,
+                    'name' => $m->user?->name ?? 'Mahasiswa',
+                    'email' => $m->user?->email ?? '',
+                    'student_number' => $m->student_number ?? '-',
+                    'study_program' => $m->user?->profile?->study_program ?? 'Teknik Informatika',
+                    'created_at' => $m->created_at?->diffForHumans() ?? 'Baru saja',
+                ]);
+
+            $recentProjects = Project::with(['leader:id,name', 'academicClass:id,name,code'])
+                ->latest()
+                ->take(6)
+                ->get()
+                ->map(fn ($p) => [
+                    'id' => $p->id,
+                    'title' => $p->title,
+                    'status' => $p->status?->value ?? 'recruiting',
+                    'leader_name' => $p->leader?->name ?? 'Mahasiswa',
+                    'category' => $p->category?->label() ?? 'Umum',
+                    'progress' => (int) ($p->progress ?? 0),
+                    'created_at' => $p->created_at?->diffForHumans() ?? 'Baru saja',
+                ]);
+
+            $recentCompetitions = Competition::latest()
+                ->take(4)
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'organizer' => $c->organizer,
+                    'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
+                    'status' => $c->status,
+                ]);
+
+            return Inertia::render('dashboard', [
+                'isAdmin' => true,
+                'adminStats' => [
+                    'total_students' => $totalStudents,
+                    'verified_students' => $verifiedStudents,
+                    'unverified_students' => $unverifiedStudents,
+                    'total_lecturers' => $totalLecturers,
+                    'active_projects' => $activeProjects,
+                    'completed_projects' => $completedProjects,
+                    'active_competitions' => $activeCompetitions,
+                    'total_teams' => $totalTeams,
+                ],
+                'pendingVerifications' => $pendingVerifications,
+                'recentProjects' => $recentProjects,
+                'recentCompetitions' => $recentCompetitions,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->isPlatformAdmin() ? 'platform_admin' : 'campus_admin',
+                    'is_admin' => true,
+                    'campus' => $campus?->name ?? 'Kampus Anda',
+                    'major' => 'Administrator Kampus',
+                    'nim' => $membership?->student_number ?? 'ADM-001',
+                    'availability' => null,
+                    'skills' => [],
+                ],
+                'stats' => [
+                    'my_teams_count' => 0,
+                    'pending_tasks_count' => 0,
+                    'completed_tasks_count' => 0,
+                    'team_readiness_avg' => 100,
+                    'recommended_matches_count' => 0,
+                    'upcoming_competitions_count' => $activeCompetitions,
+                    'taught_classes_count' => 0,
+                    'total_students_count' => $totalStudents,
+                    'total_guided_projects_count' => $activeProjects,
+                    'enrolled_classes_count' => 0,
+                ],
+                'myTeams' => [],
+                'myTasks' => [],
+                'teammates' => [],
+                'monthlyActivity' => [],
+                'recommendedProjects' => [],
+                'receivedInvitations' => [],
+                'upcomingCompetitions' => $upcomingCompetitions,
+                'recentActivities' => [],
+                'profileCompletion' => null,
+                'taughtClasses' => [],
+                'guidedProjects' => [],
+                'pendingTeamApprovals' => [],
+                'teamApprovalHistory' => [],
+            ]);
+        }
 
         if ($isLecturer) {
             $taughtClassModels = AcademicClass::query()
@@ -411,13 +535,14 @@ class DashboardWebController extends Controller
                 : collect();
 
             return Inertia::render('dashboard', [
+                'isLecturer' => true,
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'role' => $membership?->role?->value ?? 'lecturer',
                     'is_lecturer' => true,
-                    'campus' => $membership?->campus?->name ?? 'Politeknik Negeri Indramayu',
+                    'campus' => $membership?->campus?->name ?? 'Kampus Anda',
                     'major' => 'Dosen Pengampu & Pembimbing',
                     'nim' => $membership?->student_number,
                     'availability' => null,
@@ -458,8 +583,8 @@ class DashboardWebController extends Controller
             $campus = $membership?->campus ?? Campus::where('slug', 'polindra')->first() ?? Campus::first();
             if (!$campus) {
                 $campus = Campus::create([
-                    'name' => 'Politeknik Negeri Indramayu',
-                    'slug' => 'polindra',
+                    'name' => 'Kampus RAKIT',
+                    'slug' => 'kampus-rakit',
                 ]);
             }
             $profile = StudentProfile::firstOrCreate(
@@ -687,7 +812,7 @@ class DashboardWebController extends Controller
                 'email' => $user->email,
                 'role' => $membership?->role?->value ?? 'student',
                 'is_lecturer' => false,
-                'campus' => $membership?->campus?->name ?? 'Politeknik Negeri Indramayu',
+                'campus' => $membership?->campus?->name ?? 'Kampus Anda',
                 'major' => $profile?->study_program ?? $profile?->department ?? $profile?->major ?? 'Teknik Informatika',
                 'nim' => $membership?->student_number ?? $profile?->nim,
                 'academic_status' => $profile?->academic_status ?? 'prodi',
