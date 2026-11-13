@@ -26,11 +26,18 @@ class CheckSystemHealth extends Command
     public function handle(EmailDeliveryServiceInterface $emailService, TeamAiQuotaService $quotaService): int
     {
         if ($this->option('reset-test-pass')) {
-            $u = User::where('email', 'ahmad.fauzi@student.polindra.ac.id')->first();
-            if ($u) {
-                $u->password = bcrypt('password');
-                $u->save();
-                $this->info("✓ Password for {$u->email} reset to 'password' using Eloquent bcrypt!");
+            $emails = [
+                'admin@polindra.ac.id',
+                'superadmin@rakitcampus.id',
+                'ahmad.fauzi@student.polindra.ac.id',
+            ];
+            foreach ($emails as $email) {
+                $u = User::where('email', $email)->first();
+                if ($u) {
+                    $u->password = bcrypt('password');
+                    $u->save();
+                    $this->info("✓ Password for {$u->email} reset to 'password' using Eloquent bcrypt!");
+                }
             }
         }
         $this->info('========================================================');
