@@ -34,8 +34,16 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = $request->user();
+        $membership = $user?->activeMembership();
+        $isLecturer = $user && ($user->isLecturer() || ($membership?->role === \App\Enums\CampusRole::Lecturer));
+
+        if ($isLecturer) {
+            // Dosen langsung masuk ke halaman dosen tanpa selector ruang kerja
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
         $profile = $user?->profile;
-        if ($user && !$user->isLecturer() && !$user->isPlatformAdmin() && (!$profile || !$profile->is_onboarded)) {
+        if ($user && !$user->isPlatformAdmin() && (!$profile || !$profile->is_onboarded)) {
             return redirect()->route('onboarding');
         }
 

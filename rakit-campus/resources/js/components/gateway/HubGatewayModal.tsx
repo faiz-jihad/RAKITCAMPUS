@@ -328,9 +328,10 @@ export default function HubGatewayModal({
                                         }
                                         onClose();
                                     }}
-                                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline text-center block pt-0.5"
+                                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 hover:underline text-center flex items-center justify-center gap-1 pt-0.5"
                                 >
-                                    Daftar Kelas Saya →
+                                    <span>Daftar Kelas Saya</span>
+                                    <ArrowUpRight className="size-3" />
                                 </Link>
                             </div>
                         </div>

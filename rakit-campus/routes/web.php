@@ -106,6 +106,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/projects/{id}/requirements', [ProjectWebController::class, 'updateRequirements'])->name('projects.requirements.update');
     Route::post('/projects/{id}/formation/open', [ProjectWebController::class, 'openMatchmaking'])->name('projects.formation.open');
     Route::post('/projects/{id}/formation/submit', [ProjectWebController::class, 'submitFormation'])->name('projects.formation.submit');
+    Route::post('/projects/{id}/formation/simulate-fill', [ProjectWebController::class, 'simulateFillTeam'])->name('projects.formation.simulate-fill');
     Route::post('/projects/{id}/formation/review', [ProjectWebController::class, 'reviewFormation'])->name('projects.formation.review');
     Route::post('/projects/{id}/formation/activate-workspace', [ProjectWebController::class, 'activateWorkspace'])->name('projects.formation.activate-workspace');
     Route::post('/projects/{id}/invitations', [ProjectWebController::class, 'sendInvitation'])->name('projects.invitations.send');
@@ -160,6 +161,9 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/classes/{id}/approve-allocation/{sessionId}', [AcademicClassWebController::class, 'approveAllocation'])->name('classes.approve-allocation');
     Route::post('/classes/{id}/co-lecturers', [AcademicClassWebController::class, 'addCoLecturer'])->name('classes.co-lecturers.add');
     Route::delete('/classes/{id}/co-lecturers/{lecturerId}', [AcademicClassWebController::class, 'removeCoLecturer'])->name('classes.co-lecturers.remove');
+    Route::get('/classes/{id}/messages/{otherUserId}', [AcademicClassWebController::class, 'getMessages'])->name('classes.messages.index');
+    Route::post('/classes/{id}/messages/{otherUserId}', [AcademicClassWebController::class, 'sendMessage'])->name('classes.messages.send');
+    Route::post('/classes/{id}/messages/{otherUserId}/read', [AcademicClassWebController::class, 'markMessagesRead'])->name('classes.messages.read');
 
     // Quick Role Switcher for Testing (Restricted to Campus / Platform Admin)
     Route::post('/switch-role', function (\Illuminate\Http\Request $request) {

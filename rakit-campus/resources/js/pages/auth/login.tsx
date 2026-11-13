@@ -220,7 +220,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                                     <UserCircle2 className="size-4 text-indigo-600 shrink-0" />
                                     <div className="min-w-0">
                                         <span className="text-xs font-semibold text-slate-800 block truncate">Siti Rahma</span>
-                                        <span className="text-[10px] text-slate-500 block truncate">Mobile Flutter</span>
+                                        <span className="text-[10px] text-slate-500 block truncate">Anggota / Mobile Flutter</span>
                                     </div>
                                 </button>
                             </div>

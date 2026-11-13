@@ -23,11 +23,20 @@ class OnboardingWebController extends Controller
     /**
      * Show the 5-step MinSatu onboarding wizard.
      */
-    public function show(Request $request): Response
+    public function show(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         $user = $request->user();
         $membership = $user->activeMembership();
         $profile = $user->profile()->with(['skills', 'experiences'])->first();
+
+        // Jika profil sudah berstatus onboarded atau data biodata sudah lengkap (seperti akun demo),
+        // otomatis aktifkan status onboarded dan arahkan langsung ke Dashboard tanpa perlu mengisi ulang
+        if ($profile && ($profile->is_onboarded || ($profile->study_program && $membership?->student_number)) && !$request->has('edit')) {
+            if (!$profile->is_onboarded) {
+                $profile->update(['is_onboarded' => true]);
+            }
+            return redirect()->route('dashboard');
+        }
         $campus = $user->campuses()->first()
             ?? ($membership ? Campus::find($membership->campus_id) : null)
             ?? Campus::where('slug', 'polindra')->first()
