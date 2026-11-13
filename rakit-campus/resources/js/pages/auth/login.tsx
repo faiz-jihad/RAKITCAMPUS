@@ -2,11 +2,9 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
     Eye,
     EyeOff,
-    GraduationCap,
     LoaderCircle,
     Lock,
     Mail,
-    UserCircle2,
 } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
@@ -28,7 +26,6 @@ interface LoginProps {
 export default function Login({ status, canResetPassword = true }: LoginProps) {
     const { flash } = usePage<{ flash?: { success?: string; warning?: string; error?: string; status?: string } }>().props;
     const [showPassword, setShowPassword] = useState(false);
-    const [demoRole, setDemoRole] = useState<'student' | 'lecturer'>('student');
 
     const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
         email: '',
@@ -40,14 +37,6 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
         e.preventDefault();
         post(route('login'), {
             onFinish: () => reset('password'),
-        });
-    };
-
-    const fillDemo = (email: string) => {
-        setData({
-            email,
-            password: 'password123',
-            remember: true,
         });
     };
 
@@ -163,87 +152,6 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                         <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
                             Selamat datang kembali
                         </h2>
-                    </div>
-
-                    {/* Role Switcher Tabs (Mahasiswa vs Dosen) */}
-                    <div className="mb-4 sm:mb-4.5">
-                        <div className="bg-slate-100 p-1 rounded-xl flex items-center">
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setDemoRole('student');
-                                    fillDemo('ahmad.fauzi@student.polindra.ac.id');
-                                }}
-                                className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                                    demoRole === 'student'
-                                        ? 'bg-white text-blue-600 shadow-2xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Mahasiswa
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setDemoRole('lecturer');
-                                    fillDemo('budi@polindra.ac.id');
-                                }}
-                                className={`flex-1 py-1.5 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
-                                    demoRole === 'lecturer'
-                                        ? 'bg-white text-blue-600 shadow-2xs'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                Dosen
-                            </button>
-                        </div>
-
-                        {/* Pilot Demo Quick-Picks */}
-                        {demoRole === 'student' ? (
-                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => fillDemo('ahmad.fauzi@student.polindra.ac.id')}
-                                    className="px-2.5 py-1.5 sm:py-2 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-xl text-left transition flex items-center gap-2 cursor-pointer shadow-2xs"
-                                >
-                                    <UserCircle2 className="size-4 text-blue-600 shrink-0" />
-                                    <div className="min-w-0">
-                                        <span className="text-xs font-semibold text-slate-800 block truncate">Ahmad Fauzi</span>
-                                        <span className="text-[10px] text-slate-500 block truncate">Ketua / Backend</span>
-                                    </div>
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => fillDemo('siti@polindra.ac.id')}
-                                    className="px-2.5 py-1.5 sm:py-2 bg-slate-50 hover:bg-blue-50/60 border border-slate-200 hover:border-blue-300 rounded-xl text-left transition flex items-center gap-2 cursor-pointer shadow-2xs"
-                                >
-                                    <UserCircle2 className="size-4 text-indigo-600 shrink-0" />
-                                    <div className="min-w-0">
-                                        <span className="text-xs font-semibold text-slate-800 block truncate">Siti Rahma</span>
-                                        <span className="text-[10px] text-slate-500 block truncate">Mobile Flutter</span>
-                                    </div>
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="mt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => fillDemo('budi@polindra.ac.id')}
-                                    className="w-full px-3 py-2 bg-slate-50 hover:bg-emerald-50/60 border border-slate-200 hover:border-emerald-300 rounded-xl text-left transition flex items-center justify-between cursor-pointer shadow-2xs"
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <GraduationCap className="size-4.5 text-emerald-600 shrink-0" />
-                                        <div>
-                                            <span className="text-xs font-semibold text-slate-800 block">Budi Santoso, M.Kom.</span>
-                                            <span className="text-[10px] text-slate-500">Dosen Pengampu & Pembimbing</span>
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-semibold">
-                                        1-Klik Dosen
-                                    </span>
-                                </button>
-                            </div>
-                        )}
                     </div>
 
                     {/* Form Inputs */}
