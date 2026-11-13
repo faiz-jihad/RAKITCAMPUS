@@ -90,8 +90,11 @@ class GeminiAgentService
     /**
      * Generate structured Kanban tasks for a competition team using Gemini AI.
      */
-    public static function generateKanbanTasks(CompetitionParticipation $participation, ?string $additionalFocus = null): array
-    {
+    public static function generateKanbanTasks(
+        CompetitionParticipation $participation,
+        ?string $additionalFocus = null,
+        ?string $categoryTrack = null
+    ): array {
         $competition = $participation->competition;
         $team = $participation->team;
 
@@ -101,6 +104,8 @@ class GeminiAgentService
         
         $level = $competition?->level;
         $level = $level instanceof \BackedEnum ? $level->value : (string) ($level ?? 'Nasional');
+
+        $track = $categoryTrack ?: ($participation->category_track ?: $category);
 
         $deadline = $competition?->registration_deadline ? $competition->registration_deadline->format('d M Y') : 'Mendatang';
         $requiredDocs = is_array($competition?->required_documents) ? implode(', ', $competition->required_documents) : 'Proposal, Pitch Deck';
@@ -112,9 +117,9 @@ class GeminiAgentService
 
         $existingTaskTitles = $team ? $team->tasks()->pluck('title')->take(10)->implode('; ') : '';
 
-        $systemPrompt = "Anda adalah Lead Technical Mentor & Project Orchestrator untuk tim mahasiswa peserta kompetisi/hackathon tingkat nasional dan global. 
+        $systemPrompt = "Anda adalah Lead Technical Mentor & Project Orchestrator untuk tim mahasiswa peserta kompetisi (PKM, Gemastik, Hackathon, KTI, Business Plan) tingkat nasional dan global. 
 Tugas Anda adalah merumuskan rencana aksi konkret (Kanban tasks) yang tajam, terstruktur, realistis, dan berorientasi juara.
-Output WAJIB berupa JSON dengan format:
+Output WAJIB berupa JSON murni dengan format:
 {
   \"summary\": \"Ringkasan strategi persiapan 1-2 kalimat\",
   \"recommended_roles\": [\"Peran 1\", \"Peran 2\"],
@@ -125,22 +130,22 @@ Output WAJIB berupa JSON dengan format:
       \"priority\": \"urgent|high|medium|low\",
       \"stage\": \"todo|in_progress|in_review|completed\",
       \"estimated_days\": 3,
-      \"recommended_role\": \"UI/UX Designer | Fullstack | Hustler | ML Engineer\"
+      \"recommended_role\": \"Contoh: UI/UX Designer | Video Editor | Peneliti | Hustler\"
     }
   ]
 }";
 
         $userPrompt = "Kompetisi: {$competitionName}
-Kategori: {$category}
-Tingkat: {$level}
+Kategori / Jalur Bidang: {$track}
+Level: {$level}
 Batas Akhir: {$deadline}
 Tahap Tim Saat Ini: {$stage}
 Berkas Wajib: {$requiredDocs}
 Jumlah Anggota Saat Ini: {$teamSize}
 Tugas Yang Sudah Ada: " . ($existingTaskTitles ?: 'Belum ada tugas') . "
-Fokus Tambahan: " . ($additionalFocus ?: 'Prioritaskan penyelesaian MVP prototype, proposal proyek, pitch deck, dan validasi riset.') . "
+Fokus / Gagasan Tim: " . ($additionalFocus ?: 'Optimalkan karya terbaik sesuai panduan resmi lomba untuk lolos ke babak final.') . "
 
-Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saat ini agar siap menang.";
+Buatkan antara 6 sampai 8 tugas Kanban terpenting yang harus dikerjakan tim saat ini agar siap menang.";
 
         $rawResponse = self::call($systemPrompt, $userPrompt);
 
@@ -159,20 +164,25 @@ Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saa
         }
 
         // Fallback domain-specific tasks if AI service is temporarily unreachable
-        return self::fallbackTasks($participation);
+        return self::fallbackTasks($participation, $additionalFocus, $track);
     }
 
     /**
      * Automatically populate Kanban tasks into the database under a DB transaction.
      */
-    public static function applyTasksToKanban(CompetitionParticipation $participation, User $creator, ?array $tasksData = null): array
-    {
+    public static function applyTasksToKanban(
+        CompetitionParticipation $participation,
+        User $creator,
+        ?array $tasksData = null,
+        ?string $additionalFocus = null,
+        ?string $categoryTrack = null
+    ): array {
         $team = $participation->team;
         if (!$team) {
             throw new \RuntimeException('Tim kompetisi tidak ditemukan.');
         }
 
-        $data = $tasksData ?: self::generateKanbanTasks($participation);
+        $data = $tasksData ?: self::generateKanbanTasks($participation, $additionalFocus, $categoryTrack);
         $tasksList = $data['tasks'] ?? [];
 
         $createdTasks = [];
@@ -220,71 +230,365 @@ Buatkan antara 6 sampai 10 tugas Kanban terpenting yang harus dikerjakan tim saa
     /**
      * Fallback high-quality tasks when AI is offline.
      */
-    protected static function fallbackTasks(CompetitionParticipation $participation): array
-    {
+    protected static function fallbackTasks(
+        CompetitionParticipation $participation,
+        ?string $additionalFocus = null,
+        ?string $categoryTrack = null
+    ): array {
         $comp = $participation->competition;
-        $categoryStr = $comp?->category instanceof \BackedEnum ? $comp->category->value : (string) ($comp?->category ?? '');
-        $isHackathon = str_contains(strtolower($categoryStr), 'hackathon') || str_contains(strtolower($comp?->name ?? ''), 'hackathon');
+        $compName = strtolower($comp?->name ?? '');
+        $categoryStr = strtolower($comp?->category instanceof \BackedEnum ? $comp->category->value : (string) ($comp?->category ?? ''));
+        $trackStr = strtolower($categoryTrack ?: ($participation->category_track ?: ''));
 
+        $isPkm = str_contains($compName, 'pkm') || str_contains($compName, 'kreativitas mahasiswa') || str_contains($compName, 'pimnas');
+        $isVgk = str_contains($trackStr, 'vgk') || str_contains($trackStr, 'video') || str_contains($compName, 'vgk');
+        $isRiset = str_contains($trackStr, 're') || str_contains($trackStr, 'rsh') || str_contains($trackStr, 'riset') || str_contains($categoryStr, 'research');
+        $isKewirausahaan = str_contains($trackStr, 'kewirausahaan') || str_contains($trackStr, 'pkm-k') || str_contains($categoryStr, 'business');
+        $isKarsaCipta = str_contains($trackStr, 'karsa cipta') || str_contains($trackStr, 'pkm-kc') || str_contains($trackStr, 'pkm-ki');
+        $isHackathon = str_contains($categoryStr, 'hackathon') || str_contains($compName, 'hackathon') || str_contains($trackStr, 'hackathon') || str_contains($compName, 'gemastik');
+
+        // PKM-VGK (Video Gagasan Konstruktif)
+        if ($isPkm && $isVgk) {
+            return [
+                'summary' => 'Rencana aksi persiapan PKM-VGK berfokus pada penguatan narasi isu strategis, storyboard skenario, produksi video animasi/footage berstandar PIMNAS, dan proposal Belmawa.',
+                'recommended_roles' => ['Ketua Tim / Konseptor', 'Scriptwriter & Narator', 'Video Editor / Animator', 'Desainer Aset & Grafis'],
+                'tasks' => [
+                    [
+                        'title' => 'Perumusan Isu Strategis & Gagasan Solutif Futuristik',
+                        'description' => 'Tentukan topik berbasis SDGs atau isu nasional terkini' . ($additionalFocus ? " (Fokus: {$additionalFocus})" : '') . ', telaah data faktual, dan rumuskan keunikan gagasan futuristik konstruktif.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim / Konseptor',
+                    ],
+                    [
+                        'title' => 'Penulisan Naskah Narasi & Skenario Cerita Video (2-4 Menit)',
+                        'description' => 'Susun naskah narasi komprehensif: hook masalah di 30 detik pertama, penjelasan solusi sistemik, dan visual call-to-action sesuai panduan Simbelmawa.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Scriptwriter & Narator',
+                    ],
+                    [
+                        'title' => 'Perancangan Storyboard & Visual Scene Direction',
+                        'description' => 'Gambarkan adegan per detik (scene-by-scene), transisi, gaya visual (2D/3D/motion graphics/live footage), dan soundscape/BGM yang bebas hak cipta.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 4,
+                        'recommended_role' => 'Desainer Aset & Visual',
+                    ],
+                    [
+                        'title' => 'Produksi Animasi, Rendering Video HD, & Voiceover Narasi',
+                        'description' => 'Proses pembuatan animasi, pengambilan footage video, rekaman suara narasi berartikulasi jelas, dan perakitan timeline video di software editing.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 7,
+                        'recommended_role' => 'Video Editor & Animator',
+                    ],
+                    [
+                        'title' => 'Penyusunan Living Proposal PKM Format Simbelmawa',
+                        'description' => 'Tuliskan naskah proposal sesuai format baku: Pendahuluan, Gagasan, Kesimpulan, Biodata Ketua & Anggota, Justifikasi Anggaran, dan Susunan Organisasi.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 4,
+                        'recommended_role' => 'Ketua Tim & Administrasi',
+                    ],
+                    [
+                        'title' => 'Bimbingan Dosen & Validasi Lembar Pengesahan',
+                        'description' => 'Konsultasikan naskah proposal dan preview video ke Dosen Pendamping untuk mendapatkan revisi dan tanda tangan lembar pengesahan resmi ber-NIDN.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim & Dosen Pendamping',
+                    ],
+                    [
+                        'title' => 'Final Mastering Video, Unggah YouTube (Unlisted), & Submit Simbelmawa',
+                        'description' => 'Pastikan resolusi video 1080p, sertakan subtitle Bahasa Indonesia/Inggris, unggah ke YouTube, serta periksa ukuran file proposal PDF sebelum submit ke portal.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 1,
+                        'recommended_role' => 'Semua Anggota Tim',
+                    ],
+                ],
+            ];
+        }
+
+        // PKM Riset Eksakta / Sosial Humaniora (PKM-RE / PKM-RSH)
+        if ($isPkm && $isRiset) {
+            return [
+                'summary' => 'Rencana aksi persiapan PKM Riset difokuskan pada ketajaman tinjauan pustaka, metodologi eksperimental, validitas instrumen, dan kepatuhan format Belmawa.',
+                'recommended_roles' => ['Ketua Tim / Peneliti Utama', 'Data Analyst / Laboran', 'Dokumentasi & Administrasi'],
+                'tasks' => [
+                    [
+                        'title' => 'Studi Literatur Jurnal Terakreditasi & Gap Analisis',
+                        'description' => 'Kumpulkan minimal 10 jurnal rujukan bereputasi untuk memperkuat latar belakang riset dan novelty penelitian.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Ketua Tim & Peneliti',
+                    ],
+                    [
+                        'title' => 'Perancangan Metodologi Penelitian & Prosedur Uji',
+                        'description' => 'Rumuskan tahapan penelitian, variabel kontrol, instrumen uji laboratorium/kuesioner, dan teknik analisis statistik.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 4,
+                        'recommended_role' => 'Peneliti Utama',
+                    ],
+                    [
+                        'title' => 'Penyusunan Rincian Anggaran Biaya & Jadwal Kegiatan Belmawa',
+                        'description' => 'Susun justifikasi anggaran sesuai standar biaya masukan PKM (bahan habis pakai, sewa alat, perjalanan, lain-lain).',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Administrasi & Keuangan',
+                    ],
+                    [
+                        'title' => 'Penulisan Draft Lengkap Proposal PKM Riset',
+                        'description' => 'Tulis bab Pendahuluan, Tinjauan Pustaka, Metode Riset, Biaya & Jadwal, serta Daftar Pustaka format Harvard/Vancouver.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 5,
+                        'recommended_role' => 'Seluruh Tim',
+                    ],
+                    [
+                        'title' => 'Review Bersama Dosen Pendamping & Uji Kelayakan Proposal',
+                        'description' => 'Lakukan asistensi intensif dengan dosen pembimbing untuk memvalidasi metodologi dan kejelasan instrumen riset.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim',
+                    ],
+                    [
+                        'title' => 'Finalisasi Lembar Pengesahan & Validasi Format Simbelmawa',
+                        'description' => 'Cek batas jumlah halaman (maks. 10 halaman inti), kelengkapan biodata bertanda tangan, surat pernyataan bermaterai, dan konversi ke PDF.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 1,
+                        'recommended_role' => 'Semua Anggota',
+                    ],
+                ],
+            ];
+        }
+
+        // PKM Kewirausahaan / Inovasi Produk (PKM-K / PKM-PI)
+        if ($isPkm && $isKewirausahaan) {
+            return [
+                'summary' => 'Rencana aksi PKM Kewirausahaan berfokus pada validasi pasar sasaran, pembuatan sampel produk & kemasan, proyeksi keuangan (BEP, B/C), dan strategi komersialisasi.',
+                'recommended_roles' => ['Hustler / CEO Tim', 'Product Designer / Maker', 'Finance & Operations'],
+                'tasks' => [
+                    [
+                        'title' => 'Riset Pasar & Validasi Masalah Konsumen Sasaran',
+                        'description' => 'Lakukan survei kebutuhan pasar untuk membuktikan adanya peluang nyata dan keunggulan komparatif produk dibanding kompetitor.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Hustler / Lead',
+                    ],
+                    [
+                        'title' => 'Pembuatan Prototipe Sampel Produk & Desain Kemasan',
+                        'description' => 'Rancang identitas brand, kemasan ramah lingkungan, dan prototipe fisik produk yang siap diproduksi massal.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 5,
+                        'recommended_role' => 'Product Designer',
+                    ],
+                    [
+                        'title' => 'Analisis Kelayakan Finansial & Proyeksi Laba Rugi',
+                        'description' => 'Hitung Harga Pokok Produksi (HPP), Break-Even Point (BEP), rasio B/C, dan proyeksi arus kas operasional selama 4-6 bulan.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Finance Specialist',
+                    ],
+                    [
+                        'title' => 'Penyusunan Proposal PKM-K Sesuai Pedoman Belmawa',
+                        'description' => 'Susun bab Pendahuluan, Gambaran Umum Rencana Usaha, Metode Pelaksanaan, Biaya & Jadwal, dan Lampiran wajib.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 4,
+                        'recommended_role' => 'Seluruh Tim',
+                    ],
+                    [
+                        'title' => 'Asistensi Dosen Pembimbing & Kelengkapan Administrasi',
+                        'description' => 'Dapatkan arahan dosen pendamping, surat pernyataan orisinalitas bermaterai, dan biodata ketua/anggota.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim',
+                    ],
+                    [
+                        'title' => 'Final Review Berkas & Unggah ke Portal Simbelmawa',
+                        'description' => 'Validasi format margin kertas, ukuran font, penomoran halaman Romawi & Arab, serta kelayakan dokumen PDF sebelum submit.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 1,
+                        'recommended_role' => 'Ketua Tim',
+                    ],
+                ],
+            ];
+        }
+
+        // PKM Umum Lainnya (GFT, AI, KC)
+        if ($isPkm) {
+            return [
+                'summary' => 'Rencana aksi persiapan Program Kreativitas Mahasiswa (PKM) standar nasional menuju PIMNAS: proposal, metodologi, dan berkas administrasi.',
+                'recommended_roles' => ['Ketua Tim', 'Anggota Teknis/Riset', 'Dokumentasi & Administrasi'],
+                'tasks' => [
+                    [
+                        'title' => 'Pemantapan Topik & Novelty Gagasan PKM',
+                        'description' => 'Pastikan topik memiliki kebaruan ilmiah/teknologis dan menjawab permasalahan nyata masyarakat atau industri.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim',
+                    ],
+                    [
+                        'title' => 'Studi Kepustakaan & Perumusan Metode Pelaksanaan',
+                        'description' => 'Susun alur metodologi atau perancangan karya secara sistematis dari awal hingga evaluasi ketercapaian program.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Anggota Riset',
+                    ],
+                    [
+                        'title' => 'Penyusunan Naskah Proposal Format Resmi Belmawa',
+                        'description' => 'Tuliskan seluruh isi naskah sesuai buku panduan PKM tahun berjalan tanpa melanggar batasan halaman.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 4,
+                        'recommended_role' => 'Seluruh Tim',
+                    ],
+                    [
+                        'title' => 'Bimbingan Proposal Bersama Dosen Pendamping',
+                        'description' => 'Konsultasikan draf proposal, perbaiki masukan substansi, dan peroleh persetujuan dosen pembimbing.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Ketua Tim & Dosen',
+                    ],
+                    [
+                        'title' => 'Pemeriksaan Kepatuhan Administrasi & Format Simbelmawa',
+                        'description' => 'Verifikasi format penamaan file, kelengkapan tanda tangan, surat pernyataan, dan ukuran file PDF sebelum submit.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 1,
+                        'recommended_role' => 'Semua Anggota',
+                    ],
+                ],
+            ];
+        }
+
+        // Hackathon & Gemastik / App Development
+        if ($isHackathon) {
+            return [
+                'summary' => 'Rencana aksi persiapan kompetisi teknologi & hackathon untuk membangun MVP fungsional, UI/UX memukau, dan pitch deck berorientasi dewan juri.',
+                'recommended_roles' => ['Tech Lead / Developer', 'UI/UX Designer', 'Hustler / Pitcher'],
+                'tasks' => [
+                    [
+                        'title' => 'Validasi Problem Statement & Arsitektur Solusi',
+                        'description' => 'Definisikan pain points pengguna sasaran dan rancang arsitektur teknis sistem yang realistis dikerjakan.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Semua Anggota',
+                    ],
+                    [
+                        'title' => 'Perancangan High-Fidelity UI/UX & Flow Interaktif',
+                        'description' => 'Buat desain antarmuka modern di Figma dengan komponen interaktif yang siap diimplementasikan dan didemokan.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'UI/UX Designer',
+                    ],
+                    [
+                        'title' => 'Pengembangan Core MVP Feature & Backend Integration',
+                        'description' => 'Kembangkan fitur inti aplikasi, integrasi API, dan pastikan aplikasi dapat berjalan lancar tanpa error kritis.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 6,
+                        'recommended_role' => 'Fullstack Developer',
+                    ],
+                    [
+                        'title' => 'Penyusunan Proposal Teknis / Executive Summary',
+                        'description' => 'Tuliskan deskripsi solusi, keunggulan teknologi, analisis dampak, dan rencana skalabilitas sistem.',
+                        'priority' => 'high',
+                        'stage' => 'todo',
+                        'estimated_days' => 3,
+                        'recommended_role' => 'Hustler / Lead',
+                    ],
+                    [
+                        'title' => 'Pembuatan Pitch Deck Presentasi (Maks. 10 Slide)',
+                        'description' => 'Susun slide presentasi singkat yang memikat: Problem, Solution, Live Demo, Tech Stack, Business Value, Team.',
+                        'priority' => 'medium',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'Pitcher',
+                    ],
+                    [
+                        'title' => 'Perekaman Video Demo Produk & Walkthrough (2-3 Menit)',
+                        'description' => 'Rekam demo live berdurasi singkat yang menunjukkan implementasi nyata solusi tanpa kendala teknis.',
+                        'priority' => 'medium',
+                        'stage' => 'todo',
+                        'estimated_days' => 2,
+                        'recommended_role' => 'All Team',
+                    ],
+                    [
+                        'title' => 'Review Akhir & Validasi Kelengkapan Submission',
+                        'description' => 'Cek ulang repositori GitHub, deployment live URL, format berkas proposal, dan persyaratan panitia sebelum submit.',
+                        'priority' => 'urgent',
+                        'stage' => 'todo',
+                        'estimated_days' => 1,
+                        'recommended_role' => 'Team Leader',
+                    ],
+                ],
+            ];
+        }
+
+        // Standar / Kategori Umum
         return [
             'summary' => 'Rencana aksi persiapan standar kompetisi untuk memastikan deliverable teknis dan dokumen tersusun tepat waktu.',
-            'recommended_roles' => ['Tech Lead / Developer', 'UI/UX Designer', 'Hustler / Pitcher', 'Researcher'],
+            'recommended_roles' => ['Ketua Tim', 'Spesialis Konten / Teknis', 'Presenter / Pitcher', 'Administrasi'],
             'tasks' => [
                 [
-                    'title' => 'Riset Problem Statement & Validasi Kebutuhan Pengguna',
+                    'title' => 'Riset Problem Statement & Validasi Kebutuhan Sasaran',
                     'description' => 'Kumpulkan data faktual, pain points pengguna sasaran, dan studi literatur yang mendukung urgensi solusi proyek.',
                     'priority' => 'high',
                     'stage' => 'todo',
                     'estimated_days' => 3,
-                    'recommended_role' => 'Researcher / Hustler',
+                    'recommended_role' => 'Riset & Konseptor',
                 ],
                 [
-                    'title' => 'Perancangan Wireframe & High-Fidelity UI/UX',
-                    'description' => 'Desain arsitektur informasi, alur interaksi pengguna, dan prototipe interaktif di Figma sesuai tema lomba.',
-                    'priority' => 'high',
-                    'stage' => 'todo',
-                    'estimated_days' => 5,
-                    'recommended_role' => 'UI/UX Designer',
-                ],
-                [
-                    'title' => 'Pengembangan Core Feature & MVP Prototype',
-                    'description' => 'Implementasikan backend API dan antarmuka fungsional utama yang siap didemokan ke dewan juri.',
+                    'title' => 'Penyusunan Kerangka Karya & Prototipe Solusi',
+                    'description' => 'Rancang kerangka karya utama, purwarupa produk/dokumen, dan langkah-langkah implementasi terukur.',
                     'priority' => 'urgent',
                     'stage' => 'todo',
-                    'estimated_days' => 7,
-                    'recommended_role' => 'Fullstack Developer',
+                    'estimated_days' => 5,
+                    'recommended_role' => 'Spesialis Teknis',
                 ],
                 [
-                    'title' => 'Penyusunan Executive Summary & Proposal Karya',
-                    'description' => 'Tuliskan latar belakang, solusi teknologis, keunggulan kompetitif, analisis dampak, dan rencana implementasi.',
+                    'title' => 'Penulisan Proposal / Naskah Karya Lengkap',
+                    'description' => 'Tuliskan latar belakang, solusi inovatif, keunggulan kompetitif, analisis dampak, dan rencana implementasi.',
                     'priority' => 'high',
                     'stage' => 'todo',
                     'estimated_days' => 4,
-                    'recommended_role' => 'Hustler / Lead',
+                    'recommended_role' => 'Ketua Tim',
                 ],
                 [
-                    'title' => 'Pembuatan Slide Pitch Deck (Maks. 10-12 Slide)',
-                    'description' => 'Susun presentasi singkat yang memukau: Problem, Solution, Demo, Tech Stack, Business Model, Team.',
+                    'title' => 'Pembuatan Slide Presentasi & Media Pendukung',
+                    'description' => 'Susun presentasi visual yang memukau dan ringkas untuk kebutuhan pitching atau seleksi berkas.',
                     'priority' => 'medium',
                     'stage' => 'todo',
                     'estimated_days' => 3,
-                    'recommended_role' => 'Pitcher',
+                    'recommended_role' => 'Presenter',
                 ],
                 [
-                    'title' => 'Perekaman Video Demo Produk & Walkthrough',
-                    'description' => 'Rekam demo live berdurasi 2-3 menit yang menunjukkan implementasi nyata solusi tanpa glitch.',
-                    'priority' => 'medium',
-                    'stage' => 'todo',
-                    'estimated_days' => 2,
-                    'recommended_role' => 'All Team',
-                ],
-                [
-                    'title' => 'Ulasan Akhir & Validasi Kelengkapan Berkas',
-                    'description' => 'Cek ulang format file, ukuran berkas, tautan repositori, dan persyaratan administrasi penyelenggara sebelum submit.',
+                    'title' => 'Ulasan Bersama Dosen Pembimbing & Validasi Final',
+                    'description' => 'Cek ulang format file, kelengkapan berkas pendukung, dan persyaratan administrasi penyelenggara sebelum submit.',
                     'priority' => 'urgent',
                     'stage' => 'todo',
                     'estimated_days' => 1,
-                    'recommended_role' => 'Team Leader',
+                    'recommended_role' => 'Semua Anggota',
                 ],
             ],
         ];

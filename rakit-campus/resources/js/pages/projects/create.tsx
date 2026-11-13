@@ -4,10 +4,19 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, BookOpen, CheckCircle2, ChevronRight, FolderPlus, GraduationCap, Users } from 'lucide-react';
 import { FormEventHandler, useState } from 'react';
 
+interface EnrolledClass {
+    id: number;
+    name: string;
+    code: string;
+    target_team_size?: number;
+}
+
 interface Props {
     categories: string[];
     visibilities: string[];
-    enrolledClasses?: { id: number; name: string; code: string }[];
+    enrolledClasses?: EnrolledClass[];
+    selectedClassId?: number | null;
+    userHasActiveProject?: boolean;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -15,12 +24,27 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Buat Proyek Baru', href: '/projects/create' },
 ];
 
-export default function ProjectCreate({ categories = [], visibilities = [], enrolledClasses = [] }: Props) {
+export default function ProjectCreate({
+    categories = [],
+    visibilities = [],
+    enrolledClasses = [],
+    selectedClassId = null,
+    userHasActiveProject = false,
+}: Props) {
     const [submitting, setSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    const urlClassId = typeof window !== 'undefined'
+        ? Number(new URLSearchParams(window.location.search).get('academic_class_id') || 0)
+        : 0;
+    const preferredClassId = selectedClassId || urlClassId;
+    const initialClass =
+        enrolledClasses.find((cls) => Number(cls.id) === Number(preferredClassId)) ||
+        enrolledClasses[0];
+    const initialMaxCapacity = initialClass?.target_team_size || 4;
+
     const { data, setData } = useForm({
-        academic_class_id: (enrolledClasses && enrolledClasses.length > 0 ? enrolledClasses[0].id : '') as string | number,
+        academic_class_id: (initialClass ? initialClass.id : '') as string | number,
         title: '',
         team_name: '',
         short_description: '',
@@ -30,10 +54,28 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
         objectives: '',
         proposed_solution: '',
         tech_stack_input: 'Laravel, React, Tailwind CSS',
-        capacity: 4,
+        capacity: Math.min(4, Math.max(2, initialMaxCapacity)),
+        expected_weekly_hours: 10,
+        starts_on: '',
+        target_completion_on: '',
         visibility: 'campus',
         required_skills_input: 'Frontend: 3, Backend: 3, UI/UX: 3',
     });
+
+    const selectedClass = enrolledClasses.find(
+        (cls) => Number(cls.id) === Number(data.academic_class_id)
+    );
+    const maxClassCapacity = selectedClass?.target_team_size || 10;
+
+    const handleClassChange = (classIdValue: string) => {
+        const nextClass = enrolledClasses.find((cls) => String(cls.id) === classIdValue);
+        const nextMax = nextClass?.target_team_size || 10;
+        setData((prev) => ({
+            ...prev,
+            academic_class_id: classIdValue,
+            capacity: Math.min(Math.max(2, prev.capacity), Math.max(2, nextMax)),
+        }));
+    };
 
     const getXsrfToken = () => {
         const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -84,7 +126,10 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                     objectives: data.objectives,
                     proposed_solution: data.proposed_solution,
                     tech_stack,
-                    capacity: data.capacity,
+                    capacity: Math.min(Math.max(2, data.capacity), maxClassCapacity),
+                    expected_weekly_hours: data.expected_weekly_hours,
+                    starts_on: data.starts_on || null,
+                    target_completion_on: data.target_completion_on || null,
                     visibility: data.visibility,
                     required_skills,
                 }),
@@ -107,7 +152,14 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
             } else if (res.status === 401) {
                 window.location.href = '/login';
             } else {
-                setErrorMessage(json.message || 'Gagal membuat proyek. Silakan periksa kembali isian formulir.');
+                const firstFieldError = json.errors
+                    ? (Object.values(json.errors).flat()[0] as string | undefined)
+                    : undefined;
+                setErrorMessage(
+                    firstFieldError ||
+                        json.message ||
+                        'Gagal membuat proyek. Silakan periksa kembali isian formulir.'
+                );
             }
         } catch {
             setErrorMessage('Terjadi kendala jaringan saat menghubungi server. Silakan coba kembali.');
@@ -133,6 +185,16 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                     </Link>
                 </div>
 
+                {/* Active Project Rule 1 Warning */}
+                {userHasActiveProject && (
+                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
+                        <p className="font-bold">Aturan 1 Mahasiswa 1 Proyek Aktif</p>
+                        <p className="text-amber-800 leading-relaxed">
+                            Saat ini Anda masih terdaftar dalam proyek aktif. Selesaikan proyek yang sedang berjalan terlebih dahulu sebelum membentuk proyek baru.
+                        </p>
+                    </div>
+                )}
+
                 {/* Error Banner */}
                 {errorMessage && (
                     <div className="p-3.5 rounded-lg bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
@@ -156,19 +218,19 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                                 </label>
                                 <select
                                     value={data.academic_class_id}
-                                    onChange={(e) => setData('academic_class_id', e.target.value)}
+                                    onChange={(e) => handleClassChange(e.target.value)}
                                     required
                                     className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                                 >
                                     <option value="">-- Pilih Kelas --</option>
                                     {enrolledClasses.map((cls) => (
                                         <option key={cls.id} value={cls.id}>
-                                            {cls.name} ({cls.code})
+                                            {cls.name} ({cls.code}){cls.target_team_size ? ` • Maks ${cls.target_team_size} orang/tim` : ''}
                                         </option>
                                     ))}
                                 </select>
                                 <p className="text-[11px] text-slate-400 mt-1.5">
-                                    Proyek ini akan terhubung ke dashboard dosen pengampu untuk evaluasi UTS dan UAS.
+                                    Proyek ini akan terhubung ke dashboard dosen pengampu untuk persetujuan formasi, evaluasi UTS, dan UAS.
                                 </p>
                             </div>
                         ) : (
@@ -256,14 +318,17 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
 
                             <div>
                                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Kapasitas Tim
+                                    Kapasitas Tim (Maks {maxClassCapacity})
                                 </label>
                                 <input
                                     type="number"
                                     min={2}
-                                    max={10}
+                                    max={maxClassCapacity}
                                     value={data.capacity}
-                                    onChange={(e) => setData('capacity', parseInt(e.target.value, 10) || 4)}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value, 10) || 2;
+                                        setData('capacity', Math.min(Math.max(2, val), maxClassCapacity));
+                                    }}
                                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                                 />
                             </div>
@@ -328,10 +393,104 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                             <textarea
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
-                                rows={4}
+                                rows={3}
                                 placeholder="Jelaskan gambaran umum perancangan, pembagian tugas awal, atau metodologi yang akan digunakan."
                                 className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                             />
+                        </div>
+                    </div>
+
+                    {/* 4. Living Proposal Awal (Draft v1) */}
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs space-y-4">
+                        <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <FolderPlus className="w-4 h-4 text-blue-600" />
+                                <h2 className="text-sm font-bold text-slate-900">Proposal Awal Proyek (Living Proposal v1)</h2>
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-medium">
+                                Dapat disempurnakan lagi di tab Proposal
+                            </span>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                Rumusan Masalah
+                            </label>
+                            <textarea
+                                value={data.problem_statement}
+                                onChange={(e) => setData('problem_statement', e.target.value)}
+                                rows={2}
+                                placeholder="Masalah utama atau kendala nyata yang ingin diselesaikan oleh proyek ini."
+                                className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Tujuan Proyek
+                                </label>
+                                <textarea
+                                    value={data.objectives}
+                                    onChange={(e) => setData('objectives', e.target.value)}
+                                    rows={3}
+                                    placeholder="Target luaran atau manfaat yang ingin dicapai pada akhir semester."
+                                    className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Solusi yang Ditawarkan
+                                </label>
+                                <textarea
+                                    value={data.proposed_solution}
+                                    onChange={(e) => setData('proposed_solution', e.target.value)}
+                                    rows={3}
+                                    placeholder="Gambaran sistem, fitur utama, atau pendekatan teknis yang diusulkan."
+                                    className="w-full px-3.5 py-2 rounded-lg border border-slate-200 bg-white text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Komitmen (Jam / Minggu)
+                                </label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={40}
+                                    value={data.expected_weekly_hours}
+                                    onChange={(e) => setData('expected_weekly_hours', parseInt(e.target.value, 10) || 10)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Tanggal Mulai (Opsional)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={data.starts_on}
+                                    onChange={(e) => setData('starts_on', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Target Selesai (Opsional)
+                                </label>
+                                <input
+                                    type="date"
+                                    value={data.target_completion_on}
+                                    onChange={(e) => setData('target_completion_on', e.target.value)}
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -345,7 +504,7 @@ export default function ProjectCreate({ categories = [], visibilities = [], enro
                         </Link>
                         <button
                             type="submit"
-                            disabled={submitting || (enrolledClasses.length > 0 && !data.academic_class_id)}
+                            disabled={submitting || userHasActiveProject || (enrolledClasses.length > 0 && !data.academic_class_id)}
                             className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                         >
                             {submitting ? (

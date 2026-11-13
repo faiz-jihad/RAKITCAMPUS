@@ -1724,6 +1724,19 @@ export default function Welcome() {
                 canonicalUrl="https://rakitcampus.my.id"
             />
 
+            {/* Suppress blue NProgress bar on Landing Page when navigating into website */}
+            <style>{`
+                #nprogress,
+                #nprogress .bar,
+                #nprogress .peg,
+                #nprogress .spinner {
+                    display: none !important;
+                    opacity: 0 !important;
+                    visibility: hidden !important;
+                    height: 0 !important;
+                }
+            `}</style>
+
             {/* Initial White Screen Curtain */}
             <div
                 onClick={handleSkipIntro}
@@ -1933,7 +1946,7 @@ export default function Welcome() {
                                 <>
                                     <Link
                                         href="/login"
-                                        className="hidden xs:flex hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                     >
                                         MASUK
                                     </Link>

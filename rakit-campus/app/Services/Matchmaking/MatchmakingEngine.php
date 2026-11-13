@@ -149,14 +149,17 @@ class MatchmakingEngine
 
         $candidates = $candidateQuery->get();
 
-        // Batch pre-fetch active project memberships (Zero N+1)
+        // Batch pre-fetch active project memberships (Zero N+1, scoped per class when applicable)
         $activeUserIds = \App\Models\TeamMember::where('status', 'active')
             ->whereIn('user_id', $candidates->pluck('id'))
-            ->whereHas('team.project', function ($q) {
+            ->whereHas('team.project', function ($q) use ($project) {
                 $q->whereNotIn('status', [
                     ProjectStatus::Archived->value,
                     ProjectStatus::Completed->value,
                 ]);
+                if ($project->academic_class_id !== null) {
+                    $q->where('academic_class_id', $project->academic_class_id);
+                }
             })
             ->pluck('user_id')
             ->flip();

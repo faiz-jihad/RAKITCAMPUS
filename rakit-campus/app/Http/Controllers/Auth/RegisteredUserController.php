@@ -76,10 +76,9 @@ class RegisteredUserController extends Controller
                     'user_id' => $user->id,
                     'campus_id' => $campus->id,
                     'slug' => Str::slug($request->name) . '-' . Str::random(4),
-                    'nim' => !empty($request->nim) ? trim($request->nim) : null,
-                    'headline' => 'Mahasiswa Baru ' . $campus->name,
-                    'interests' => ['Teknologi', 'Proyek Mahasiswa'],
-                    'preferred_roles' => ['Developer', 'Anggota Tim'],
+                    'bio' => '',
+                    'interests' => [],
+                    'preferred_roles' => [],
                 ]);
             }
 

@@ -143,7 +143,17 @@ class Project extends Model
 
     public function hasCapacity(): bool
     {
-        $maxCapacity = $this->max_team_size ?: ($this->team?->capacity ?: 5);
+        $maxCapacity = (int) ($this->max_team_size ?: ($this->team?->capacity ?: 5));
+        if ($this->academic_class_id) {
+            $classTarget = $this->relationLoaded('academicClass')
+                ? $this->academicClass?->target_team_size
+                : AcademicClass::where('id', $this->academic_class_id)->value('target_team_size');
+
+            if ($classTarget && (int) $classTarget > 0) {
+                $maxCapacity = min($maxCapacity, (int) $classTarget);
+            }
+        }
+
         return $this->activeMembersCount() < $maxCapacity;
     }
 
@@ -195,7 +205,11 @@ class Project extends Model
 
         return $query->where(function (Builder $q) use ($user, $campusIds, $adminCampusIds) {
             $q->whereIn('projects.campus_id', $adminCampusIds)
+                ->orWhere('projects.leader_id', $user->id)
+                ->orWhere('projects.primary_supervisor_id', $user->id)
                 ->orWhereHas('team.members', fn (Builder $m) => $m->where('team_members.user_id', $user->id))
+                ->orWhereHas('academicClass', fn (Builder $ac) => $ac->where('lecturer_id', $user->id)
+                    ->orWhereHas('coLecturers', fn (Builder $cl) => $cl->where('users.id', $user->id)))
                 ->orWhere(function (Builder $q) use ($campusIds) {
                     $q->where('projects.moderation_status', 'visible')
                         ->where('projects.status', '!=', ProjectStatus::Draft->value)

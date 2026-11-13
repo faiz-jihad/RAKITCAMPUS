@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { router, Link } from '@inertiajs/react';
+import { router, Link, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
@@ -36,7 +36,9 @@ export default function TeamFormationTab({
     isLecturer,
     canAccessWorkspace,
 }: Props) {
+    const { errors: pageErrors } = usePage().props as any;
     const formationStatus = project.formation_status || 'draft';
+    const formationApprover = project.formation_approver || project.formationApprover;
     const activeMembers = project.team?.members || [];
     const minRequired = project.min_team_size || 2;
     const maxCapacity = project.max_team_size || 4;
@@ -101,8 +103,9 @@ export default function TeamFormationTab({
         router.post(
             `/projects/${project.id}/formation/review`,
             {
-                decision: reviewDecision,
+                action: reviewDecision,
                 notes: reviewNotes,
+                reason: reviewDecision === 'reject' ? reviewNotes : undefined,
             },
             {
                 preserveScroll: true,
@@ -162,7 +165,12 @@ export default function TeamFormationTab({
                         ) : formationStatus === 'formation_review' ? (
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-md">
                                 <Clock className="size-4" />
-                                <span>Menunggu Peninjauan Dosen</span>
+                                <span>Menunggu Persetujuan Dosen</span>
+                            </div>
+                        ) : formationStatus === 'formation_rejected' ? (
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-rose-600 text-white font-bold text-xs shadow-md">
+                                <AlertCircle className="size-4" />
+                                <span>Ditolak Dosen</span>
                             </div>
                         ) : (
                             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-md">
@@ -226,6 +234,13 @@ export default function TeamFormationTab({
                 </div>
             </div>
 
+            {/* Validation Errors if any */}
+            {pageErrors && (pageErrors.team || pageErrors.workspace || pageErrors.notes || pageErrors.reason || pageErrors.action || pageErrors.auth) && (
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-800">
+                    {pageErrors.team || pageErrors.workspace || pageErrors.reason || pageErrors.notes || pageErrors.action || pageErrors.auth}
+                </div>
+            )}
+
             {/* Formation Notes & Feedback History (If any) */}
             {project.formation_notes && (
                 <div className="glass-surface p-5 rounded-3xl border border-blue-200 bg-blue-50/40">
@@ -238,9 +253,9 @@ export default function TeamFormationTab({
                             <p className="text-xs text-slate-700 mt-1 leading-relaxed">
                                 "{project.formation_notes}"
                             </p>
-                            {project.formationApprover && (
+                            {formationApprover && (
                                 <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
-                                    Oleh: <span className="font-semibold text-slate-800">{project.formationApprover.name}</span>
+                                    Oleh: <span className="font-semibold text-slate-800">{formationApprover.name}</span>
                                     {project.formation_approved_at && ` • Disetujui pada ${new Date(project.formation_approved_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
                                 </p>
                             )}
@@ -362,13 +377,13 @@ export default function TeamFormationTab({
                                         {hasEnoughMembers ? 'Terpenuhi' : 'Kurang'}
                                     </strong>
                                 </span>
-                                {formationStatus === 'matchmaking_open' && (
+                                {['requirements_configured', 'matchmaking_open', 'formation_rejected', 'draft'].includes(formationStatus) && (
                                     <button
                                         onClick={handleSubmitFormation}
                                         disabled={processing || !hasEnoughMembers}
                                         className="px-3 py-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
                                     >
-                                        Ajukan ke Dosen
+                                        {formationStatus === 'formation_rejected' ? 'Ajukan Ulang ke Dosen' : 'Ajukan ke Dosen'}
                                     </button>
                                 )}
                             </div>

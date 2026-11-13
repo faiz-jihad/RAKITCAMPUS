@@ -49,6 +49,7 @@ Route::inertia('/privacy', 'privacy/index')->name('privacy');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
+    Route::post('/onboarding/check-nim', [OnboardingWebController::class, 'checkNim'])->name('onboarding.check-nim');
     Route::post('/onboarding', [OnboardingWebController::class, 'store'])->name('onboarding.store');
     Route::post('/onboarding/skip', [OnboardingWebController::class, 'skip'])->name('onboarding.skip');
 });
@@ -101,13 +102,14 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-workspace/{participationId}/tasks', [CompetitionWebController::class, 'createTask'])->name('competitions.tasks.create');
     Route::post('/competition-workspace/{participationId}/tasks/ai-generate', [CompetitionWebController::class, 'generateTasksWithAi'])->name('competitions.tasks.ai-generate');
     Route::patch('/competition-workspace/{participationId}/tasks/{taskId}', [CompetitionWebController::class, 'updateTask'])->name('competitions.tasks.update');
-    Route::delete('/competition-workspace/{participationId}/tasks/{taskId}', [CompetitionWebController::class, 'deleteTask'])->name('competitions.tasks.delete');
+    Route::delete('/competition-workspace/{participationId}/tasks/{taskId}', [CompetitionWebController::class, 'deleteTask'])->name('competitions.tasks.destroy');
     Route::get('/storage-download/{path}', [\App\Http\Controllers\Api\v1\UploadController::class, 'download'])->where('path', '.*')->name('storage.download');
 
     // Project Actions
     Route::get('/projects/create', [ProjectWebController::class, 'create'])->name('projects.create');
     Route::post('/projects', [ProjectWebController::class, 'store'])->name('projects.store');
     Route::post('/projects/{id}/apply', [ProjectWebController::class, 'apply'])->name('projects.apply');
+    Route::post('/projects/{id}/recruitment/toggle', [ProjectWebController::class, 'toggleRecruitment'])->name('projects.recruitment.toggle');
     Route::post('/projects/{id}/applications/{appId}/respond', [ProjectWebController::class, 'respondApplication'])->name('projects.applications.respond');
     Route::post('/projects/{id}/activate-team', [ProjectWebController::class, 'activateTeam'])->name('projects.activate-team');
     Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');

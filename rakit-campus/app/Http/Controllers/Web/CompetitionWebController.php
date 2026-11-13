@@ -1758,29 +1758,21 @@ class CompetitionWebController extends Controller
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
 
-    public function deleteTask(Request $request, int|string $participationId, int $taskId): RedirectResponse
+    public function deleteTask(Request $request, int $participationId, int $taskId): RedirectResponse
     {
         $user = $request->user();
-        $participation = $this->resolveParticipation($participationId, ['team']);
+        $participation = CompetitionParticipation::with('team')->findOrFail($participationId);
 
-        $isAuthorized = $participation->team && (
-            $participation->team->hasMember($user) ||
-            $participation->team->leader_id === $user->id ||
-            $user->role === 'admin' ||
-            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
-        );
-
-        if (!$isAuthorized) {
+        if (!$participation->team || !$participation->team->hasMember($user)) {
             abort(403, 'Hanya anggota tim yang dapat menghapus tugas.');
         }
 
         $task = Task::where('team_id', $participation->team->id)->findOrFail($taskId);
-        $taskTitle = $task->title;
         $task->delete();
 
-        return back()->with('success', "Tugas '{$taskTitle}' berhasil dihapus.");
+        return back()->with('success', 'Tugas berhasil dihapus dari papan.');
     }
-
+    
     public function generateTasksWithAi(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
@@ -1797,9 +1789,31 @@ class CompetitionWebController extends Controller
             abort(403, 'Hanya anggota tim yang dapat membuat rekomendasi tugas.');
         }
 
+        $validated = $request->validate([
+            'focus' => ['nullable', 'string', 'max:500'],
+            'track' => ['nullable', 'string', 'max:150'],
+            'mode' => ['nullable', 'string', 'in:replace,append'],
+        ]);
+
         try {
-            $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban($participation, $user);
-            return back()->with('success', "{$result['count']} tugas persiapan berhasil disusun otomatis oleh AI Gemini untuk tim Anda!");
+            $mode = $validated['mode'] ?? 'append';
+            $focus = $validated['focus'] ?? null;
+            $track = $validated['track'] ?? $participation->category_track;
+
+            // In replace mode, remove existing tasks on this team's board first
+            if ($mode === 'replace' && $participation->team) {
+                Task::where('team_id', $participation->team->id)->delete();
+            }
+
+            $result = \App\Services\AI\GeminiAgentService::applyTasksToKanban(
+                $participation,
+                $user,
+                null,
+                $focus,
+                $track
+            );
+
+            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda!");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
         }

@@ -803,7 +803,7 @@ export default function WorkspaceShow({
                                                 Catatan & Nilai dari Dosen Pengampu
                                             </h3>
                                             <p className="text-[11px] text-slate-500">
-                                                Dosen: {project.academicClass?.lecturer?.name || 'Dosen Pembimbing'}
+                                                Dosen: {(project.academic_class || project.academicClass)?.lecturer?.name || 'Dosen Pembimbing'}
                                             </p>
                                         </div>
                                     </div>

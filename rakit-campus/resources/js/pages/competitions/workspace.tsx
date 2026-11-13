@@ -1,17 +1,20 @@
 import { formatWhatsAppUrl } from '@/components/competitions/ApplyCompetitionTeamModal';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link, router, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     Briefcase,
     Check,
     CheckCircle2,
     ChevronDown,
     Clock,
+    Copy,
     Download,
     ExternalLink,
     FileText,
+    Filter,
     FolderKanban,
     Globe,
     GraduationCap,
@@ -22,6 +25,7 @@ import {
     Phone,
     Plus,
     RefreshCw,
+    Search,
     Send,
     ShieldCheck,
     Sparkles,
@@ -107,6 +111,21 @@ export default function CompetitionWorkspace({
     const [mentorModalOpen, setMentorModalOpen] = useState(false);
     const [resultModalOpen, setResultModalOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
+
+    // AI Task Orchestrator Modal State
+    const [aiModalOpen, setAiModalOpen] = useState(false);
+    const [aiFocus, setAiFocus] = useState('');
+    const [aiTrack, setAiTrack] = useState(participation.category_track || '');
+    const [aiMode, setAiMode] = useState<'append' | 'replace'>('replace');
+
+    // Kanban filtering, search, and export
+    const [kanbanPriorityFilter, setKanbanPriorityFilter] = useState<string>('all');
+    const [kanbanSearch, setKanbanSearch] = useState<string>('');
+    const [copiedRoadmap, setCopiedRoadmap] = useState(false);
+
+    // Page Flash Props
+    const { flash } = usePage().props as any;
+    const [dismissedFlash, setDismissedFlash] = useState(false);
 
     // Form states
     const stageForm = useForm({
@@ -313,15 +332,6 @@ export default function CompetitionWorkspace({
         );
     };
 
-    const handleDeleteTask = (taskId: number, taskTitle: string) => {
-        if (confirm(`Apakah Anda yakin ingin menghapus tugas "${taskTitle}"?`)) {
-            router.delete(
-                route('competitions.tasks.delete', [participation.id, taskId]),
-                { preserveScroll: true }
-            );
-        }
-    };
-
     const handleQuickAddTask = (colKey: string) => {
         if (!inlineTitle.trim()) return;
         router.post(
@@ -341,20 +351,85 @@ export default function CompetitionWorkspace({
         );
     };
 
-    const handleGenerateAiTasks = () => {
-        if (confirm('AI Gemini akan menganalisis profil kompetisi dan otomatis merumuskan paket tugas Kanban prioritas juara untuk tim Anda. Lanjutkan?')) {
-            setAiGenerating(true);
-            router.post(
-                route('competitions.tasks.ai-generate', participation.id),
-                {},
-                {
-                    preserveScroll: true,
-                    onFinish: () => {
-                        setAiGenerating(false);
-                    },
-                }
-            );
+    const handleOpenAiModal = () => {
+        if (!aiTrack) {
+            setAiTrack(participation.category_track || participation.competition?.category || '');
         }
+        setAiModalOpen(true);
+    };
+
+    const handleExecuteAiGenerate = (e: React.FormEvent) => {
+        e.preventDefault();
+        setAiGenerating(true);
+        router.post(
+            route('competitions.tasks.ai-generate', participation.id),
+            {
+                focus: aiFocus.trim() || null,
+                track: aiTrack.trim() || null,
+                mode: aiMode,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setAiModalOpen(false);
+                    setActiveTab('kanban');
+                    setDismissedFlash(false);
+                },
+                onFinish: () => {
+                    setAiGenerating(false);
+                },
+            }
+        );
+    };
+
+    const handleDeleteTask = (taskId: number, taskTitle: string) => {
+        if (confirm(`Hapus tugas "${taskTitle}" dari papan tugas?`)) {
+            router.delete(route('competitions.tasks.destroy', [participation.id, taskId]), {
+                preserveScroll: true,
+            });
+        }
+    };
+
+    const handleCopyRoadmap = () => {
+        const tasks = participation.team?.tasks || [];
+        if (tasks.length === 0) {
+            alert('Belum ada tugas di papan untuk disalin.');
+            return;
+        }
+
+        let text = `📋 ROADMAP & CHECKLIST TUGAS TIM: ${participation.team?.name || 'Tim'}\n`;
+        text += `Kompetisi: ${participation.competition?.name}\n`;
+        text += `Jalur: ${participation.category_track || '-'}\n`;
+        text += `Total Tugas: ${tasks.length} | Selesai: ${tasks.filter((t: any) => t.status === 'completed').length}\n`;
+        text += `=====================================\n\n`;
+
+        const cols = [
+            { key: 'todo', label: 'To Do (Belum Dimulai)' },
+            { key: 'in_progress', label: 'In Progress (Sedang Dikerjakan)' },
+            { key: 'in_review', label: 'In Review (Ulasan / Evaluasi)' },
+            { key: 'completed', label: 'Done (Selesai)' },
+        ];
+
+        cols.forEach(col => {
+            const colTasks = tasks.filter((t: any) => t.status === col.key);
+            text += `📌 ${col.label.toUpperCase()} (${colTasks.length}):\n`;
+            if (colTasks.length === 0) {
+                text += `  - (Belum ada tugas)\n`;
+            } else {
+                colTasks.forEach((t: any) => {
+                    const check = col.key === 'completed' ? '[x]' : '[ ]';
+                    const assignee = t.assignee?.name ? ` @${t.assignee.name.split(' ')[0]}` : '';
+                    const due = t.due_on ? ` (Tenggat: ${t.due_on})` : '';
+                    text += `  ${check} ${t.title} [${t.priority}]${assignee}${due}\n`;
+                });
+            }
+            text += `\n`;
+        });
+
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedRoadmap(true);
+            setTimeout(() => setCopiedRoadmap(false), 3000);
+        });
     };
 
     const handleDragStart = (e: React.DragEvent, taskId: number, fromCol: string) => {
@@ -506,6 +581,38 @@ export default function CompetitionWorkspace({
             <Head title={`Workspace: ${participation.team?.name} — ${participation.competition?.name}`} />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-16">
+                {/* GLOBAL FLASH ALERTS */}
+                {flash?.success && !dismissedFlash && (
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
+                        <div className="flex items-center gap-2.5">
+                            <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
+                            <span className="font-semibold leading-relaxed">{flash.success}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setDismissedFlash(true)}
+                            className="text-emerald-600 hover:text-emerald-900 p-1 rounded-md"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+                )}
+                {flash?.error && !dismissedFlash && (
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
+                        <div className="flex items-center gap-2.5">
+                            <AlertCircle className="size-4.5 text-rose-600 shrink-0" />
+                            <span className="font-semibold leading-relaxed">{flash.error}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setDismissedFlash(true)}
+                            className="text-rose-600 hover:text-rose-900 p-1 rounded-md"
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+                )}
+
                 {/* 1. TOP UTILITY BAR & ACTIONS */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                     <Link
@@ -542,7 +649,41 @@ export default function CompetitionWorkspace({
                             </a>
                         )}
 
-                        {/* Dropdown Kelola Tim for Administrative actions */}
+                        {isMember && (
+                            <button
+                                type="button"
+                                onClick={handleOpenAiModal}
+                                disabled={aiGenerating}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
+                                title="Susun otomatis rencana tugas Kanban menggunakan Google Gemini AI"
+                            >
+                                <Sparkles className="size-3.5" />
+                                <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI'}</span>
+                            </button>
+                        )}
+
+                        {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
+                            <button
+                                type="button"
+                                onClick={handleApproveFormation}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                            >
+                                <ShieldCheck className="size-3.5" />
+                                <span>Setujui Susunan Tim</span>
+                            </button>
+                        )}
+
+                        {isLeader && !participation.is_formation_locked && (
+                            <button
+                                type="button"
+                                onClick={handleLockFormation}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                            >
+                                <Lock className="size-3.5 text-slate-500" />
+                                <span>Kunci Tim</span>
+                            </button>
+                        )}
+
                         {(isLeader || isMentor || isAdmin) && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -680,8 +821,8 @@ export default function CompetitionWorkspace({
                             </div>
                         </div>
 
-                        {/* Readiness Meter */}
-                        <div className="bg-slate-50/80 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[210px] self-start md:self-auto">
+                        {/* Readiness KPI Card */}
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[220px] self-start md:self-auto">
                             <div className="flex items-center justify-between text-xs">
                                 <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kesiapan Tim</span>
                                 <span className="font-extrabold text-blue-600 font-mono text-sm">{readinessScore}%</span>
@@ -692,8 +833,12 @@ export default function CompetitionWorkspace({
                                     style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
                                 />
                             </div>
-                            <span className="text-[10px] text-slate-400">
-                                Berdasarkan tugas & berkas terunggah
+                            <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
+                                <span>Tugas: {(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}/{participation.team?.tasks?.length || 0} Selesai</span>
+                                <span>Berkas: {(participation.documents || []).filter((d: any) => d.path || d.url).length}/{(participation.competition?.required_documents || ['proposal', 'pitch_deck']).length} Terunggah</span>
+                            </div>
+                            <span className="text-[9px] text-slate-400">
+                                Formula: 50% Tugas Kanban + 50% Berkas Wajib
                             </span>
                         </div>
                     </div>
@@ -1370,18 +1515,27 @@ export default function CompetitionWorkspace({
                 {/* 4) TAB CONTENT: KANBAN TASKS */}
                 {activeTab === 'kanban' && (
                     <div className="space-y-4">
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                     <FolderKanban className="size-4 text-blue-600 shrink-0" />
                                     <span>Papan Tugas</span>
                                 </h3>
                             </div>
-                            {canManageTasks && (
-                                <div className="flex items-center gap-2">
+                            {isMember && (
+                                <div className="flex items-center gap-2 flex-wrap">
                                     <button
                                         type="button"
-                                        onClick={handleGenerateAiTasks}
+                                        onClick={handleCopyRoadmap}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer shadow-2xs"
+                                        title="Salin checklist tugas rapi untuk laporan ke dosen atau WhatsApp tim"
+                                    >
+                                        {copiedRoadmap ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5 text-slate-500" />}
+                                        <span>{copiedRoadmap ? 'Checklist Tersalin!' : 'Salin Roadmap'}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleOpenAiModal}
                                         disabled={aiGenerating}
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
                                         title="Susun Kanban Tasks Otomatis Menggunakan AI Gemini"
@@ -1401,29 +1555,54 @@ export default function CompetitionWorkspace({
                             )}
                         </div>
 
-                        {/* Mobile Column Switcher (Zero horizontal scrollbar) */}
-                        <div className="flex lg:hidden items-center gap-1 overflow-x-auto no-scrollbar bg-slate-100 p-1 rounded-xl">
-                            {[
-                                { key: 'all', label: 'Semua', count: totalTasks },
-                                { key: 'todo', label: 'To Do', count: todoTasks },
-                                { key: 'in_progress', label: 'In Progress', count: inProgressTasks },
-                                { key: 'in_review', label: 'Review', count: reviewTasks },
-                                { key: 'completed', label: 'Selesai', count: completedTasks },
-                            ].map((mCol) => (
-                                <button
-                                    key={mCol.key}
-                                    type="button"
-                                    onClick={() => setMobileKanbanCol(mCol.key as any)}
-                                    className={`flex-1 min-w-[70px] py-1.5 px-2 rounded-lg text-xs font-bold transition whitespace-nowrap text-center cursor-pointer ${
-                                        mobileKanbanCol === mCol.key
-                                            ? 'bg-white text-slate-900 shadow-2xs'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    <span>{mCol.label}</span>
-                                    <span className="ml-1 text-[10px] text-slate-400">({mCol.count})</span>
-                                </button>
-                            ))}
+                        {/* Kanban Filter Toolbar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-slate-50/80 border border-slate-200/80">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <div className="relative">
+                                    <Search className="size-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        value={kanbanSearch}
+                                        onChange={(e) => setKanbanSearch(e.target.value)}
+                                        placeholder="Cari kartu tugas..."
+                                        className="pl-8 pr-6 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 w-40 sm:w-52"
+                                    />
+                                    {kanbanSearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setKanbanSearch('')}
+                                            className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                                        >
+                                            ×
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-semibold text-slate-600">
+                                    <span className="px-1.5 text-slate-400 flex items-center gap-1">
+                                        <Filter className="size-3" />
+                                        <span className="text-[10px]">Prioritas:</span>
+                                    </span>
+                                    {['all', 'urgent', 'high', 'medium', 'low'].map((p) => (
+                                        <button
+                                            key={p}
+                                            type="button"
+                                            onClick={() => setKanbanPriorityFilter(p)}
+                                            className={`px-2 py-0.5 rounded capitalize text-[10px] sm:text-xs transition cursor-pointer ${
+                                                kanbanPriorityFilter === p
+                                                    ? 'bg-blue-600 text-white font-bold'
+                                                    : 'hover:bg-slate-100 text-slate-600'
+                                            }`}
+                                        >
+                                            {p === 'all' ? 'Semua' : p}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="text-[11px] text-slate-500 font-medium self-end sm:self-auto">
+                                Total: <strong className="text-slate-800">{participation.team?.tasks?.length || 0}</strong> tugas • Selesai: <strong className="text-emerald-700 font-bold">{(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}</strong>
+                            </div>
                         </div>
 
                         {/* 4-Column Board */}
@@ -1436,7 +1615,17 @@ export default function CompetitionWorkspace({
                                     { key: 'completed', label: 'Selesai', dot: 'bg-emerald-500' },
                                 ] as const
                             ).map((col) => {
-                                const colTasks = participation.team?.tasks?.filter((t: any) => t.status === col.key) || [];
+                                const colTasks = (participation.team?.tasks || []).filter((t: any) => {
+                                    if (t.status !== col.key) return false;
+                                    if (kanbanPriorityFilter !== 'all' && t.priority !== kanbanPriorityFilter) return false;
+                                    if (kanbanSearch) {
+                                        const query = kanbanSearch.toLowerCase();
+                                        const matchesTitle = t.title?.toLowerCase().includes(query);
+                                        const matchesDesc = (t.description || '').toLowerCase().includes(query);
+                                        if (!matchesTitle && !matchesDesc) return false;
+                                    }
+                                    return true;
+                                });
                                 const isDragTarget = dragOverCol === col.key;
                                 const isAddingHere = inlineAddingCol === col.key;
                                 const isColVisibleOnMobile = mobileKanbanCol === 'all' || mobileKanbanCol === col.key;
@@ -1507,12 +1696,12 @@ export default function CompetitionWorkspace({
                                                             </span>
 
                                                             <div className="flex items-center gap-1 shrink-0">
-                                                                {canManageTasks && (
+                                                                {isMember && (
                                                                     <select
                                                                         value={task.status}
                                                                         onClick={(e) => e.stopPropagation()}
                                                                         onChange={(e) => handleUpdateTaskStatus(task.id, e.target.value)}
-                                                                        className="text-[10px] bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 text-slate-600 cursor-pointer"
+                                                                        className="text-[10px] bg-slate-50 border border-slate-200 rounded px-1 py-0.5 text-slate-600 cursor-pointer"
                                                                     >
                                                                         <option value="todo">To Do</option>
                                                                         <option value="in_progress">In Progress</option>
@@ -1520,16 +1709,15 @@ export default function CompetitionWorkspace({
                                                                         <option value="completed">Done</option>
                                                                     </select>
                                                                 )}
-
-                                                                {canManageTasks && (
+                                                                {isMember && (
                                                                     <button
                                                                         type="button"
                                                                         onClick={(e) => {
                                                                             e.stopPropagation();
                                                                             handleDeleteTask(task.id, task.title);
                                                                         }}
-                                                                        className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                                                         title="Hapus tugas ini"
+                                                                        className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
                                                                     >
                                                                         <Trash2 className="size-3" />
                                                                     </button>
@@ -2739,56 +2927,137 @@ export default function CompetitionWorkspace({
                 </div>
             )}
 
-            {/* RENAME TEAM MODAL */}
-            {renameModalOpen && (
+            {/* MODAL 6: AI TASK ORCHESTRATOR */}
+            {aiModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div
-                        className="bg-white rounded-3xl w-full max-w-md p-6 border border-slate-200 shadow-2xl relative"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="flex items-start justify-between pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">Ubah Nama Tim</h3>
-                                <p className="text-xs text-slate-500 mt-0.5">Perbarui nama tim kompetisi Anda</p>
+                    <div className="w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-9 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-xs">
+                                    <Sparkles className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900">Susun Tugas AI (Google Gemini)</h3>
+                                    <p className="text-xs text-slate-500">Orkestrasi roadmap kerja sprint berorientasi juara</p>
+                                </div>
                             </div>
                             <button
                                 type="button"
-                                onClick={() => setRenameModalOpen(false)}
-                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+                                onClick={() => !aiGenerating && setAiModalOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleRenameTeam} className="mt-4 space-y-4">
+                        <form onSubmit={handleExecuteAiGenerate} className="mt-4 space-y-4">
+                            <div className="p-3.5 rounded-xl bg-purple-50/70 border border-purple-100 text-xs text-purple-950 space-y-1">
+                                <div className="font-bold flex items-center gap-1.5 text-purple-900">
+                                    <Sparkles className="size-3.5 text-purple-600 shrink-0" />
+                                    <span>AI Technical Mentor & Sprint Orchestrator</span>
+                                </div>
+                                <p className="text-purple-800/90 leading-relaxed text-[11px]">
+                                    AI menganalisis kompetisi <strong>{participation.competition?.name}</strong>, memetakan deliverable wajib, dan merumuskan daftar tugas Kanban terstruktur lengkap dengan estimasi waktu dan rekomendasi peran PIC.
+                                </p>
+                            </div>
+
                             <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                                    Nama Tim Baru <span className="text-rose-500">*</span>
+                                <label className="block text-xs font-bold text-slate-800 mb-1">
+                                    Jalur / Kategori Bidang Kompetisi
                                 </label>
                                 <input
                                     type="text"
-                                    value={newTeamName}
-                                    onChange={(e) => setNewTeamName(e.target.value)}
-                                    placeholder="Contoh: Garuda Tech, Tim Inovasi Alpha"
-                                    required
-                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-semibold focus:outline-none focus:border-blue-500"
+                                    value={aiTrack}
+                                    onChange={(e) => setAiTrack(e.target.value)}
+                                    placeholder="Contoh: PKM-VGK (Video Gagasan Konstruktif), Hackathon, Business Plan..."
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-purple-500"
                                 />
+                                <span className="text-[10px] text-slate-400 mt-1 block">
+                                    Format disesuaikan otomatis dengan panduan resmi (misal: PKM Belmawa, Gemastik, KTI).
+                                </span>
                             </div>
 
-                            <div className="pt-2 border-t border-slate-100 flex items-center justify-end gap-2">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-800 mb-1">
+                                    Fokus / Gagasan Proyek Tim <span className="text-slate-400 font-normal">(Opsional)</span>
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={aiFocus}
+                                    onChange={(e) => setAiFocus(e.target.value)}
+                                    placeholder="Contoh: Video animasi 3D dan gagasan konstruktif tentang sistem tata air pintar pencegah rob pesisir berbasis kecerdasan buatan..."
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                />
+                                <span className="text-[10px] text-slate-400 mt-1 block">
+                                    Beri tahu AI topik atau gagasan karya tim Anda agar tugas yang dihasilkan semakin tajam dan kontekstual.
+                                </span>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                    Mode Penyusunan Kartu Tugas
+                                </label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                    <label className={`p-3 rounded-xl border text-xs cursor-pointer flex flex-col gap-1 transition ${
+                                        aiMode === 'replace'
+                                            ? 'border-purple-500 bg-purple-50/50 text-purple-950 ring-1 ring-purple-400'
+                                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                    }`}>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="aiMode"
+                                                value="replace"
+                                                checked={aiMode === 'replace'}
+                                                onChange={() => setAiMode('replace')}
+                                                className="text-purple-600 focus:ring-purple-500"
+                                            />
+                                            <span className="font-bold text-slate-900">Fresh Start (Rapi)</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 pl-5 leading-normal">
+                                            Bersihkan tugas lama dan buat rencana kerja baru yang rapi dari awal.
+                                        </span>
+                                    </label>
+
+                                    <label className={`p-3 rounded-xl border text-xs cursor-pointer flex flex-col gap-1 transition ${
+                                        aiMode === 'append'
+                                            ? 'border-purple-500 bg-purple-50/50 text-purple-950 ring-1 ring-purple-400'
+                                            : 'border-slate-200 hover:bg-slate-50 text-slate-700'
+                                    }`}>
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                name="aiMode"
+                                                value="append"
+                                                checked={aiMode === 'append'}
+                                                onChange={() => setAiMode('append')}
+                                                className="text-purple-600 focus:ring-purple-500"
+                                            />
+                                            <span className="font-bold text-slate-900">Tambahkan (Append)</span>
+                                        </div>
+                                        <span className="text-[10px] text-slate-500 pl-5 leading-normal">
+                                            Pertahankan tugas yang ada dan tambahkan tugas baru ke kolom Todo.
+                                        </span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setRenameModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                    disabled={aiGenerating}
+                                    onClick={() => setAiModalOpen(false)}
+                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isRenaming || !newTeamName.trim()}
-                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs disabled:opacity-50"
+                                    disabled={aiGenerating}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-60 cursor-pointer"
                                 >
-                                    {isRenaming ? 'Menyimpan...' : 'Simpan Nama'}
+                                    <Sparkles className="size-3.5" />
+                                    <span>{aiGenerating ? 'AI Sedang Menganalisis & Menyusun...' : 'Mulai Susun Roadmap AI'}</span>
                                 </button>
                             </div>
                         </form>

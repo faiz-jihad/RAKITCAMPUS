@@ -92,8 +92,8 @@ class TeamOptimizationService
                     continue;
                 }
 
-                // Strictly enforce Rule 1
-                if ($this->eligibilityService->hasActiveProjectMembership($student)) {
+                // Strictly enforce Rule 1 (scoped to project's academic class)
+                if ($this->eligibilityService->hasActiveProjectMembership($student, $project->academic_class_id)) {
                     continue;
                 }
 
