@@ -119,6 +119,8 @@ class AdminCompetitionWebController extends Controller
                     'registration_url' => $comp->registration_url,
                     'participations_count' => $comp->participations_count,
                     'campus_name' => $comp->campus?->name,
+                    'cover_image' => $comp->cover_image,
+                    'cover_image_url' => $comp->cover_image_url ?? $comp->cover_image,
                 ];
             });
 
@@ -272,9 +274,11 @@ class AdminCompetitionWebController extends Controller
             'max_team_size.gte' => 'Maksimal anggota tim harus lebih besar atau sama dengan minimal.',
         ]);
 
-        if ($request->hasFile('cover_image')) {
+        $coverImagePath = $competition->getRawOriginal('cover_image');
+        if ($request->boolean('remove_cover_image')) {
+            $coverImagePath = null;
+        } elseif ($request->hasFile('cover_image')) {
             $coverImagePath = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers')['path'];
-            $competition->cover_image = $coverImagePath;
         }
 
         $competition->update([
@@ -296,6 +300,7 @@ class AdminCompetitionWebController extends Controller
             'min_team_size' => $validated['min_team_size'],
             'max_team_size' => $validated['max_team_size'],
             'prize_info' => $validated['prize_info'] ?? null,
+            'cover_image' => $coverImagePath,
         ]);
 
         return back()->with('success', 'Masa aktif dan detail kompetisi "' . $competition->name . '" berhasil diperbarui!');

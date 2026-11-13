@@ -200,7 +200,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         // Admin Competitions Management & Deadline/Active Period Controls
         Route::get('/competitions', [AdminCompetitionWebController::class, 'index'])->name('admin.competitions.index');
         Route::post('/competitions', [AdminCompetitionWebController::class, 'store'])->name('admin.competitions.store');
-        Route::put('/competitions/{id}', [AdminCompetitionWebController::class, 'update'])->name('admin.competitions.update');
+        Route::match(['put', 'post'], '/competitions/{id}', [AdminCompetitionWebController::class, 'update'])->name('admin.competitions.update');
         Route::patch('/competitions/{id}/status', [AdminCompetitionWebController::class, 'updateStatus'])->name('admin.competitions.status');
         Route::delete('/competitions/{id}', [AdminCompetitionWebController::class, 'destroy'])->name('admin.competitions.destroy');
     });

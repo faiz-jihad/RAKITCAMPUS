@@ -9,12 +9,14 @@ import {
     Edit3,
     ExternalLink,
     Filter,
+    Image as ImageIcon,
     Plus,
     RotateCw,
     Search,
     ShieldCheck,
     Trash2,
     Trophy,
+    Upload,
     Users,
     X,
 } from 'lucide-react';
@@ -45,6 +47,8 @@ interface CompetitionItem {
     registration_url?: string;
     participations_count: number;
     campus_name?: string;
+    cover_image?: string | null;
+    cover_image_url?: string | null;
 }
 
 interface Props {
@@ -169,6 +173,8 @@ export default function AdminCompetitionsIndex({
             official_url: comp.official_url || '',
             registration_url: comp.registration_url || '',
             eligibility: '',
+            cover_image: null as File | null,
+            remove_cover_image: false,
         });
         setFormErrors({});
     };
@@ -199,7 +205,11 @@ export default function AdminCompetitionsIndex({
         setSubmitting(true);
         setFormErrors({});
 
-        router.put(`/admin/competitions/${editingCompetition.slug || editingCompetition.id}`, editForm, {
+        router.post(`/admin/competitions/${editingCompetition.slug || editingCompetition.id}`, {
+            ...editForm,
+            _method: 'PUT',
+        }, {
+            forceFormData: true,
             onSuccess: () => {
                 setEditingCompetition(null);
                 setSubmitting(false);
@@ -405,13 +415,28 @@ export default function AdminCompetitionsIndex({
                                         <tr key={comp.id} className="hover:bg-slate-50/60 transition">
                                             {/* Nama & Penyelenggara */}
                                             <td className="py-3 px-4">
-                                                <div className="font-bold text-slate-900">{comp.name}</div>
-                                                <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5">
-                                                    <span>{comp.organizer}</span>
-                                                    <span>•</span>
-                                                    <span className="capitalize">{comp.level}</span>
-                                                    <span>•</span>
-                                                    <span className="text-blue-600 font-medium">{comp.category_label}</span>
+                                                <div className="flex items-center gap-3">
+                                                    {comp.cover_image ? (
+                                                        <img
+                                                            src={comp.cover_image}
+                                                            alt={comp.name}
+                                                            className="w-10 h-10 rounded-lg object-cover border border-slate-200 shrink-0 shadow-2xs"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-200/80 flex items-center justify-center shrink-0 text-blue-600 shadow-2xs">
+                                                            <Trophy className="size-5" />
+                                                        </div>
+                                                    )}
+                                                    <div className="min-w-0">
+                                                        <div className="font-bold text-slate-900 truncate max-w-[260px] sm:max-w-[340px]">{comp.name}</div>
+                                                        <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                                            <span>{comp.organizer}</span>
+                                                            <span>•</span>
+                                                            <span className="capitalize">{comp.level}</span>
+                                                            <span>•</span>
+                                                            <span className="text-blue-600 font-medium">{comp.category_label}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </td>
 
@@ -1016,6 +1041,86 @@ export default function AdminCompetitionsIndex({
                                     onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 resize-none leading-relaxed"
                                 />
+                            </div>
+
+                            {/* Gambar Poster / Banner Lomba */}
+                            <div>
+                                <label className="block font-semibold text-slate-700 mb-1">
+                                    Poster / Gambar Sampul Lomba
+                                </label>
+                                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+                                    {/* Existing image display */}
+                                    {editingCompetition.cover_image && !editForm.remove_cover_image && (
+                                        <div className="flex items-center justify-between p-2.5 bg-white border border-slate-200 rounded-lg">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <img
+                                                    src={editingCompetition.cover_image}
+                                                    alt="Poster saat ini"
+                                                    className="w-12 h-12 rounded-lg object-cover border border-slate-200 shrink-0 shadow-2xs"
+                                                />
+                                                <div className="min-w-0">
+                                                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 mb-0.5">
+                                                        Poster Saat Ini
+                                                    </span>
+                                                    <p className="text-xs text-slate-600 truncate max-w-[260px]">
+                                                        {editingCompetition.name}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditForm({ ...editForm, remove_cover_image: true, cover_image: null })}
+                                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 border border-rose-200 transition cursor-pointer"
+                                                title="Hapus gambar sampul ini"
+                                            >
+                                                <Trash2 className="size-3" />
+                                                <span>Hapus</span>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* If marked for removal */}
+                                    {editForm.remove_cover_image && (
+                                        <div className="flex items-center justify-between p-2.5 bg-amber-50 border border-amber-200 rounded-lg">
+                                            <div className="flex items-center gap-2 text-amber-800 text-xs font-medium">
+                                                <AlertCircle className="size-4 text-amber-600 shrink-0" />
+                                                <span>Gambar sampul akan dihapus saat disimpan.</span>
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => setEditForm({ ...editForm, remove_cover_image: false })}
+                                                className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                                            >
+                                                Batal Hapus
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* File input for new cover image */}
+                                    <div className="space-y-1.5">
+                                        <label className="block text-[11px] font-medium text-slate-600">
+                                            {editingCompetition.cover_image && !editForm.remove_cover_image
+                                                ? 'Unggah gambar baru untuk mengganti poster saat ini:'
+                                                : 'Pilih file gambar poster (Opsional):'}
+                                        </label>
+                                        <input
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/jpg,image/webp"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0] || null;
+                                                setEditForm({ ...editForm, cover_image: file, remove_cover_image: false });
+                                            }}
+                                            className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer"
+                                        />
+                                        <p className="text-[11px] text-slate-400">
+                                            Format yang didukung: PNG, JPG, JPEG, WEBP. Maksimal 4MB.
+                                        </p>
+                                    </div>
+
+                                    {formErrors.cover_image && (
+                                        <p className="text-rose-600 text-xs font-medium mt-1">{formErrors.cover_image}</p>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Modal Footer Buttons */}
