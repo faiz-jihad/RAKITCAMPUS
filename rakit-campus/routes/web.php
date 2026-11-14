@@ -58,6 +58,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     // Competition Hub Management, Team Formation & Workspace
     Route::get('/competitions/create', [CompetitionWebController::class, 'create'])->name('competitions.create');
     Route::post('/competitions', [CompetitionWebController::class, 'store'])->name('competitions.store');
+    Route::post('/competitions/create-with-team', [CompetitionWebController::class, 'storeWithTeam'])->name('competitions.store-with-team');
     Route::post('/competitions/{id}/verify', [CompetitionWebController::class, 'verify'])->name('competitions.verify');
     Route::post('/competitions/{id}/participate', [CompetitionWebController::class, 'participate'])->name('competitions.participate');
     Route::post('/competitions/{id}/bookmark', [CompetitionWebController::class, 'toggleBookmark'])->name('competitions.bookmark');

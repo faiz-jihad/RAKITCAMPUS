@@ -656,6 +656,73 @@ class CompetitionWebController extends Controller
         return redirect()->route('competitions.show', $competition->slug ?? $competition->id)->with('success', $message);
     }
 
+    /**
+     * Create a new competition and form a team for it in one seamless flow.
+     */
+    public function storeWithTeam(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return redirect()->route('login');
+        }
+
+        $this->authorize('create', Competition::class);
+
+        $validated = $request->validate([
+            'competition_name' => ['required', 'string', 'max:255'],
+            'organizer' => ['required', 'string', 'max:255'],
+            'category' => ['required', Rule::enum(CompetitionCategory::class)],
+            'max_team_size' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'official_url' => ['nullable', 'url', 'max:255'],
+            'registration_deadline' => ['nullable', 'date'],
+            'team_name' => ['nullable', 'string', 'max:100'],
+            'category_track' => ['nullable', 'string', 'max:100'],
+            'roles_needed' => ['nullable', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $campusId = $user->campusId();
+        $isPrivileged = $user->isCampusAdminOf($campusId) || $user->isPlatformAdmin() || $user->isLecturer();
+
+        $participation = DB::transaction(function () use ($validated, $user, $campusId, $isPrivileged) {
+            $slug = Str::slug($validated['competition_name']) . '-' . Str::lower(Str::random(6));
+
+            $competition = Competition::create([
+                'campus_id' => $campusId,
+                'scope' => CompetitionScope::Campus,
+                'created_by' => $user->id,
+                'name' => $validated['competition_name'],
+                'slug' => $slug,
+                'organizer' => $validated['organizer'],
+                'description' => $validated['description'] ?? null,
+                'category' => $validated['category'],
+                'level' => 'national',
+                'competition_type' => 'team',
+                'min_team_size' => 1,
+                'max_team_size' => $validated['max_team_size'] ?? 4,
+                'official_url' => $validated['official_url'] ?? null,
+                'registration_deadline' => $validated['registration_deadline'] ?? null,
+                'status' => CompetitionStatus::Open,
+                'verification_status' => $isPrivileged ? VerificationStatus::Verified : VerificationStatus::Unverified,
+                'last_verified_at' => $isPrivileged ? now() : null,
+                'verified_by' => $isPrivileged ? $user->id : null,
+            ]);
+
+            $teamName = !empty($validated['team_name']) ? trim($validated['team_name']) : "Tim {$user->name}";
+
+            return $this->teamFormationService->createTeam($competition, $user, [
+                'team_name' => $teamName,
+                'category_track' => $validated['category_track'] ?? null,
+                'description' => $validated['description'] ?? null,
+                'roles_needed' => $validated['roles_needed'] ?? null,
+                'initial_status' => 'planning',
+            ]);
+        });
+
+        return redirect()->route('competitions.workspace', $participation->id)
+            ->with('success', "Kompetisi '{$validated['competition_name']}' dan Tim berhasil dibentuk! Selamat berkolaborasi di Workspace.");
+    }
+
     private function resolveCompetition(string|int $idOrSlug): Competition
     {
         return Competition::where(function ($q) use ($idOrSlug) {
