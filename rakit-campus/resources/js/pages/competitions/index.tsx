@@ -1146,18 +1146,6 @@ export default function CompetitionIndex({
                                         Reset
                                     </button>
                                 )}
-
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setCreateTeamPreselectedCompId(null);
-                                        setCreateTeamModalOpen(true);
-                                    }}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer"
-                                >
-                                    <Plus className="w-3.5 h-3.5" />
-                                    <span>Buat Tim Baru</span>
-                                </button>
                             </div>
                         </div>
 
