@@ -3,6 +3,8 @@
 use App\Http\Controllers\Api\v1\AdminController;
 use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\CompetitionController;
+use App\Http\Controllers\Api\v1\GitHubWebhookController;
+use App\Http\Controllers\Api\v1\GitHubWorkspaceController;
 use App\Http\Controllers\Api\v1\MatchingController;
 use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\PortfolioController;
@@ -30,6 +32,9 @@ Route::prefix('v1')->group(function () {
     // Public Profiles & Portfolios
     Route::get('/students/{identifier}', [ProfileController::class, 'publicProfile']);
     Route::get('/portfolio/public/{slug}', [PortfolioController::class, 'publicPortfolio']);
+
+    // GitHub Webhook Integration (Signature Verified via HMAC SHA-256)
+    Route::post('/integrations/github/webhook', [GitHubWebhookController::class, 'handle']);
 
     // Authenticated Endpoints (Sanctum + Web Session)
     Route::middleware(['auth:sanctum,web'])->group(function () {
@@ -86,6 +91,23 @@ Route::prefix('v1')->group(function () {
         Route::post('/teams/{id}/milestones', [TeamWorkspaceController::class, 'storeMilestone']);
         Route::get('/teams/{id}/posts', [TeamWorkspaceController::class, 'posts']);
         Route::post('/teams/{id}/posts', [TeamWorkspaceController::class, 'storePost']);
+
+        // GitHub Contribution Monitoring
+        Route::prefix('workspaces/{workspace}/github')->group(function () {
+            Route::get('/repository', [GitHubWorkspaceController::class, 'repository']);
+            Route::post('/repository', [GitHubWorkspaceController::class, 'connect']);
+            Route::delete('/repository', [GitHubWorkspaceController::class, 'disconnect']);
+            Route::post('/repository/sync', [GitHubWorkspaceController::class, 'triggerSync']);
+            Route::get('/overview', [GitHubWorkspaceController::class, 'overview']);
+            Route::get('/contributors', [GitHubWorkspaceController::class, 'contributors']);
+            Route::get('/contributors/{id}', [GitHubWorkspaceController::class, 'contributor']);
+            Route::get('/branches', [GitHubWorkspaceController::class, 'branches']);
+            Route::get('/commits', [GitHubWorkspaceController::class, 'commits']);
+            Route::get('/pull-requests', [GitHubWorkspaceController::class, 'pullRequests']);
+            Route::get('/activity', [GitHubWorkspaceController::class, 'activity']);
+            Route::get('/mappings', [GitHubWorkspaceController::class, 'mappings']);
+            Route::put('/mappings/{id}', [GitHubWorkspaceController::class, 'updateMapping']);
+        });
 
         // Portfolio & Achievements
         Route::get('/portfolio/me', [PortfolioController::class, 'me']);

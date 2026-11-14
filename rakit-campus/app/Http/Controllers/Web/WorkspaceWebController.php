@@ -161,6 +161,17 @@ class WorkspaceWebController extends Controller
             'skills' => $m->user->profile?->skills?->pluck('name')->toArray() ?? [],
         ]);
 
+        $githubRepo = $team->githubRepository;
+        $githubData = null;
+        if ($githubRepo && $githubRepo->isConnected()) {
+            try {
+                $analyticsService = app(\App\Services\GitHub\GitHubAnalyticsService::class);
+                $githubData = $analyticsService->getOverview($githubRepo);
+            } catch (\Throwable $e) {
+                // Ignore analytics error on page load so workspace renders reliably
+            }
+        }
+
         return Inertia::render('workspace/show', [
             'team' => $team,
             'kanban' => $kanban,
@@ -172,6 +183,20 @@ class WorkspaceWebController extends Controller
             'isFull' => $team->isFull(),
             'project' => $team->project,
             'storageQuota' => \App\Services\Storage\ObjectStorageService::getTeamStorageQuotaInfo($team->id),
+            'githubRepo' => $githubRepo ? [
+                'id' => $githubRepo->id,
+                'full_name' => $githubRepo->full_name,
+                'html_url' => $githubRepo->html_url,
+                'default_branch' => $githubRepo->default_branch,
+                'is_private' => $githubRepo->is_private,
+                'status' => $githubRepo->status,
+                'sync_status' => $githubRepo->sync_status,
+                'sync_error' => $githubRepo->sync_error,
+                'last_synced_at' => $githubRepo->last_synced_at?->toIso8601String(),
+                'webhook_url' => url('/api/v1/integrations/github/webhook'),
+            ] : null,
+            'githubData' => $githubData,
+            'canManageGitHub' => $user->can('manageGitHub', $team),
         ]);
     }
 

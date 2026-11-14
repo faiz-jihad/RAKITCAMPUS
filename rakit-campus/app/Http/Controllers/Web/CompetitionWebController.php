@@ -614,7 +614,9 @@ class CompetitionWebController extends Controller
             'min_team_size' => ['required', 'integer', 'min:1', 'max:10'],
             'max_team_size' => ['required', 'integer', 'gte:min_team_size', 'max:10'],
             'prize_info' => ['nullable', 'string'],
-            'cover_image' => ['nullable', 'image', 'max:4096'],
+            'cover_image' => ['nullable', 'image', 'max:5120'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             // Provenance source
             'source_label' => ['nullable', 'string', 'max:255'],
             'source_url' => ['nullable', 'url', 'max:255'],
@@ -624,12 +626,26 @@ class CompetitionWebController extends Controller
         $campusId = $user->campusId();
         $isGlobal = ($validated['scope'] ?? 'campus') === 'global' && $user->isPlatformAdmin();
 
-        $coverImagePath = null;
-        if ($request->hasFile('cover_image')) {
-            $coverImagePath = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers')['path'];
+        $storedImages = [];
+        if ($request->hasFile('images')) {
+            $files = $request->file('images');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach (array_slice($files, 0, 5) as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $stored = ObjectStorageService::store($imgFile, 'competitions/covers');
+                    $storedImages[] = $stored['path'];
+                }
+            }
+        } elseif ($request->hasFile('cover_image')) {
+            $stored = ObjectStorageService::store($request->file('cover_image'), 'competitions/covers');
+            $storedImages[] = $stored['path'];
         }
 
-        $competition = DB::transaction(function () use ($validated, $user, $campusId, $isGlobal, $coverImagePath) {
+        $coverImagePath = !empty($storedImages) ? $storedImages[0] : null;
+
+        $competition = DB::transaction(function () use ($validated, $user, $campusId, $isGlobal, $coverImagePath, $storedImages) {
             $slug = Str::slug($validated['name']) . '-' . Str::lower(Str::random(6));
 
             $isPrivileged = $user->isCampusAdminOf($campusId) || $user->isPlatformAdmin() || $user->isLecturer();
@@ -656,6 +672,7 @@ class CompetitionWebController extends Controller
                 'max_team_size' => $validated['max_team_size'],
                 'prize_info' => $validated['prize_info'] ?? null,
                 'cover_image' => $coverImagePath,
+                'required_documents' => !empty($storedImages) ? ['gallery' => $storedImages] : null,
                 'status' => CompetitionStatus::Open,
                 'verification_status' => $isPrivileged ? VerificationStatus::Verified : VerificationStatus::Unverified,
                 'last_verified_at' => $isPrivileged ? now() : null,

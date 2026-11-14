@@ -88,7 +88,21 @@ return new class extends Migration
 
     private function indexExists(string $table, string $indexName): bool
     {
-        $indexes = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
-        return count($indexes) > 0;
+        if (DB::getDriverName() === 'sqlite') {
+            $indexes = DB::select("PRAGMA index_list('{$table}')");
+            foreach ($indexes as $idx) {
+                if (($idx->name ?? null) === $indexName) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        if (DB::getDriverName() === 'mysql') {
+            $indexes = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
+            return count($indexes) > 0;
+        }
+
+        return false;
     }
 };

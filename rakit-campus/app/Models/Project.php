@@ -88,6 +88,11 @@ class Project extends Model
         return $this->hasOne(Team::class);
     }
 
+    public function githubRepository(): HasOne
+    {
+        return $this->hasOne(\App\Models\GitHub\GitHubRepository::class);
+    }
+
     public function proposal(): HasOne
     {
         return $this->hasOne(ProjectProposal::class);

@@ -43,4 +43,47 @@ class TeamPolicy
     {
         return $this->manageRecruitment($user, $team);
     }
+
+    /**
+     * Determine whether the user can connect, disconnect, trigger sync, or manage contributor mappings.
+     * Allowed: Team Owner, Team Admin, Campus Admin, Platform Admin.
+     */
+    public function manageGitHub(User $user, Team $team): bool
+    {
+        if ($user->isPlatformAdmin()) {
+            return true;
+        }
+
+        if ($user->isCampusAdminOf($team->campus_id)) {
+            return true;
+        }
+
+        return $team->isLeader($user);
+    }
+
+    /**
+     * Determine whether the user can view GitHub analytics and repository status.
+     * Allowed: Team members, leaders, class lecturers, supervisors, admins.
+     */
+    public function viewGitHub(User $user, Team $team): bool
+    {
+        if ($this->manageGitHub($user, $team)) {
+            return true;
+        }
+
+        if ($team->hasMember($user)) {
+            return true;
+        }
+
+        // Project leader or class lecturer
+        if ($team->project?->leader_id === $user->id) {
+            return true;
+        }
+
+        if ($team->project?->academicClass && $team->project->academicClass->isLecturer($user)) {
+            return true;
+        }
+
+        return false;
+    }
 }

@@ -14,6 +14,8 @@ import {
     FileText,
     Filter,
     FolderKanban,
+    GitBranch,
+    Github,
     GraduationCap,
     HardDrive,
     Kanban,
@@ -32,6 +34,7 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import GitHubContributionMonitor from '@/components/github/GitHubContributionMonitor';
 
 interface Props {
     team: any;
@@ -57,6 +60,9 @@ interface Props {
         remaining_mb: number;
         percent_used: number;
     };
+    githubRepo?: any;
+    githubData?: any;
+    canManageGitHub?: boolean;
 }
 
 export default function WorkspaceShow({
@@ -70,7 +76,19 @@ export default function WorkspaceShow({
     isFull,
     project: initialProject,
     storageQuota,
+    githubRepo,
+    githubData,
+    canManageGitHub = false,
 }: Props) {
+    const [mainTab, setMainTab] = useState<'kanban' | 'github'>(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'github' || window.location.hash === '#github') {
+                return 'github';
+            }
+        }
+        return 'kanban';
+    });
     const [kanban, setKanban] = useState(initialKanban);
     const [milestones, setMilestones] = useState(initialMilestones);
     const [project, setProject] = useState(initialProject || team.project);
@@ -659,7 +677,7 @@ export default function WorkspaceShow({
                             </div>
                         </div>
 
-                        {/* Top Action Pills: Capacity, Progress, & Add Task */}
+                        {/* Top Action Pills: Capacity, GitHub status, & Add Task */}
                         <div className="flex flex-wrap items-center gap-3">
                             {/* Capacity Pill */}
                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
@@ -676,18 +694,98 @@ export default function WorkspaceShow({
                                 )}
                             </span>
 
-                            {/* Add Task Button */}
+                            {/* GitHub Status Pill */}
                             <button
-                                onClick={() => {
-                                    setTargetColumn('todo');
-                                    setTaskModalOpen(true);
-                                }}
-                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                                type="button"
+                                onClick={() => setMainTab(mainTab === 'github' ? 'kanban' : 'github')}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 hover:border-blue-300 shadow-2xs transition cursor-pointer"
+                                title="Buka Monitoring GitHub"
                             >
-                                <Plus className="size-4" />
-                                <span>Tambah Tugas</span>
+                                <Github className="size-3.5 text-slate-700" />
+                                {githubRepo ? (
+                                    <>
+                                        <span className="font-mono text-[11px] truncate max-w-[120px] text-slate-800">
+                                            {githubRepo.full_name}
+                                        </span>
+                                        <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                                    </>
+                                ) : (
+                                    <span className="text-[11px] font-semibold text-slate-500">
+                                        Monitoring GitHub
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Add Task Button */}
+                            {mainTab === 'kanban' && (
+                                <button
+                                    onClick={() => {
+                                        setTargetColumn('todo');
+                                        setTaskModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
+                                >
+                                    <Plus className="size-4" />
+                                    <span>Tambah Tugas</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Navigation Tabs Bar */}
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 gap-2">
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => setMainTab('kanban')}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    mainTab === 'kanban'
+                                        ? 'bg-blue-600 text-white shadow-xs'
+                                        : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80'
+                                }`}
+                            >
+                                <FolderKanban className="size-4" />
+                                <span>Kanban & Roadmap</span>
+                                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
+                                    mainTab === 'kanban' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                    {totalTasksCount}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => setMainTab('github')}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                    mainTab === 'github'
+                                        ? 'bg-blue-600 text-white shadow-xs'
+                                        : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/80'
+                                }`}
+                            >
+                                <GitBranch className="size-4" />
+                                <span>Monitoring GitHub</span>
+                                {githubRepo ? (
+                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                        mainTab === 'github' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                    }`}>
+                                        <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                        Aktif
+                                    </span>
+                                ) : (
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] ${
+                                        mainTab === 'github' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'
+                                    }`}>
+                                        Belum Terhubung
+                                    </span>
+                                )}
                             </button>
                         </div>
+
+                        {mainTab === 'kanban' && (
+                            <span className="hidden sm:inline-flex text-xs text-slate-400 font-medium">
+                                Progres: <strong className="text-slate-700 ml-1">{progressPercent}%</strong>
+                            </span>
+                        )}
                     </div>
 
                     {/* AI Feedback Banner */}
@@ -697,6 +795,17 @@ export default function WorkspaceShow({
                             <span>{aiFeedback}</span>
                         </div>
                     )}
+
+                    {mainTab === 'github' ? (
+                        <GitHubContributionMonitor
+                            teamId={team.id}
+                            initialRepo={githubRepo}
+                            initialData={githubData}
+                            canManage={canManageGitHub}
+                            allMembers={allMembers}
+                        />
+                    ) : (
+                        <>
 
                     {/* 1. DOSEN EVALUATION & FEEDBACK PANEL */}
                     {isLecturer ? (
@@ -1303,6 +1412,8 @@ export default function WorkspaceShow({
                             </div>
                         </div>
                     )}
+                    </>
+                )}
                 </div>
 
                 {/* MODAL: TAMBAH TUGAS BARU */}

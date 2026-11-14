@@ -91,6 +91,11 @@ class Team extends Model
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function githubRepository(): HasOne
+    {
+        return $this->hasOne(\App\Models\GitHub\GitHubRepository::class);
+    }
+
     public function hasMember(User|int $user): bool
     {
         $userId = $user instanceof User ? $user->id : (int) $user;

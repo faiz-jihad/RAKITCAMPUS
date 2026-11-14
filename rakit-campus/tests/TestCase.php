@@ -13,6 +13,10 @@ abstract class TestCase extends BaseTestCase
             @touch($dbPath);
         }
 
+        putenv('APP_ENV=testing');
+        $_ENV['APP_ENV'] = 'testing';
+        $_SERVER['APP_ENV'] = 'testing';
+
         putenv('DB_CONNECTION=sqlite');
         putenv('DB_DATABASE='.$dbPath);
         $_ENV['DB_CONNECTION'] = 'sqlite';
@@ -35,6 +39,14 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         $this->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class);
+    }
+
+    protected function migrateFreshUsing()
+    {
+        return [
+            '--drop-views' => true,
+            '--force' => true,
+        ];
     }
 }
 
