@@ -4,7 +4,7 @@ FROM php:8.4-fpm-alpine
 COPY --from=mlocati/php-extension-installer:latest /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install PHP extensions fast
-RUN install-php-extensions pdo_mysql mbstring zip bcmath exif pcntl gd
+RUN install-php-extensions pdo_mysql mbstring zip bcmath exif pcntl gd redis
 
 # Install tools, nodejs, npm, git
 RUN apk add --no-cache git curl nodejs npm bash

@@ -36,4 +36,8 @@ echo "Setting permissions..."
 chmod -R 775 storage bootstrap/cache
 chown -R www-data:www-data storage bootstrap/cache
 
+# 8. Restart queue workers
+echo "Restarting queue workers..."
+php artisan queue:restart || true
+
 echo "=== RAKIT Campus Deployment Completed Successfully ==="
