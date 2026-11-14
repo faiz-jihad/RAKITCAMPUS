@@ -23,6 +23,7 @@ use App\Models\StudentProfile;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
+use App\Services\Dashboard\DashboardCacheService;
 use App\Services\MatchingService;
 use App\Services\Matchmaking\DemoProjectAligner;
 use Illuminate\Http\Request;
@@ -34,7 +35,8 @@ use Inertia\Response;
 class DashboardWebController extends Controller
 {
     public function __construct(
-        protected MatchingService $matchingService
+        protected MatchingService $matchingService,
+        protected DashboardCacheService $dashboardCache,
     ) {}
 
     private function formationStatusLabel(?string $status): string
@@ -184,11 +186,8 @@ class DashboardWebController extends Controller
             // Public recommended open recruiting projects
             $publicProjects = $this->openRecruitingProjectsPayload(null, null, 4);
 
-            // Upcoming competitions
-            $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
-                ->latest('registration_deadline')
-                ->take(3)
-                ->get();
+            // Upcoming competitions (cached)
+            $upcomingCompetitions = $this->dashboardCache->upcomingCompetitions();
 
             // Recent activity logs
             $recentActivities = ActivityLog::with(['actor:id,name', 'team:id,name'])
@@ -196,33 +195,13 @@ class DashboardWebController extends Controller
                 ->take(6)
                 ->get();
 
-            $completedTasksCount = Task::where('status', TaskStatus::Completed)->count();
-            $pendingTasksCount = Task::where('status', '!=', TaskStatus::Completed)->count();
+            // Global stats (cached 5 min)
+            $globalStats = $this->dashboardCache->guestGlobalStats();
+            $completedTasksCount = $globalStats['completed_tasks_count'];
+            $pendingTasksCount   = $globalStats['pending_tasks_count'];
 
-            // Monthly activity across platform
-            $monthlyActivity = collect();
-            for ($i = 5; $i >= 0; $i--) {
-                $monthDate = now()->subMonths($i);
-                $monthLabel = $monthDate->translatedFormat('M');
-
-                $tasksDone = Task::where('status', TaskStatus::Completed)
-                    ->whereYear('updated_at', $monthDate->year)
-                    ->whereMonth('updated_at', $monthDate->month)
-                    ->count();
-
-                $logs = ActivityLog::whereYear('created_at', $monthDate->year)
-                    ->whereMonth('created_at', $monthDate->month)
-                    ->count();
-
-                $val = max(15, min(95, ($tasksDone * 15) + ($logs * 8)));
-
-                $monthlyActivity->push([
-                    'month' => $monthLabel,
-                    'done_tasks' => $tasksDone,
-                    'logs' => $logs,
-                    'percent' => $val,
-                ]);
-            }
+            // Monthly activity across platform (cached 1 hour)
+            $monthlyActivity = $this->dashboardCache->guestMonthlyActivity();
 
             // Real campus peers
             $publicPeers = User::with(['profile:id,user_id,study_program,bio'])
@@ -236,15 +215,15 @@ class DashboardWebController extends Controller
                 ]);
 
             $stats = [
-                'my_teams_count' => Team::where('type', '!=', 'competition')->count(),
-                'pending_tasks_count' => $pendingTasksCount,
-                'completed_tasks_count' => $completedTasksCount,
-                'team_readiness_avg' => 80,
-                'recommended_matches_count' => Project::where('status', 'recruiting')->count(),
-                'taught_classes_count' => 0,
-                'total_students_count' => User::count(),
-                'total_guided_projects_count' => Project::count(),
-                'enrolled_classes_count' => 0,
+                'my_teams_count'               => $globalStats['my_teams_count'],
+                'pending_tasks_count'          => $pendingTasksCount,
+                'completed_tasks_count'        => $completedTasksCount,
+                'team_readiness_avg'           => 80,
+                'recommended_matches_count'    => $globalStats['recommended_matches_count'],
+                'taught_classes_count'         => 0,
+                'total_students_count'         => $globalStats['total_students_count'],
+                'total_guided_projects_count'  => $globalStats['total_guided_projects_count'],
+                'enrolled_classes_count'       => 0,
             ];
 
             return Inertia::render('dashboard', [
@@ -298,46 +277,24 @@ class DashboardWebController extends Controller
         $isAdmin = $user->isCampusAdmin() || $user->isPlatformAdmin() || $membership?->role === CampusRole::CampusAdmin;
         $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
 
-        $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
-            ->latest('registration_deadline')
-            ->take(3)
-            ->get()
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'slug' => $c->slug,
-                'organizer' => $c->organizer,
-                'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
-                'status' => is_object($c->status) ? ($c->status->value ?? 'open') : ($c->status ?? 'open'),
-                'category' => $c->category ?? 'Umum',
-            ]);
+        // Upcoming competitions (cached 5 min — shared across all roles)
+        $upcomingCompetitions = $this->dashboardCache->upcomingCompetitions();
 
         if ($isAdmin) {
             $campus = $membership?->campus ?? Campus::where('slug', 'polindra')->first() ?? Campus::first();
             $campusId = $campus?->id;
 
-            $totalStudents = CampusMembership::where('role', CampusRole::Student->value)
-                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
-                ->count();
+            // Single aggregated query replaces 8 separate COUNT queries (cached 2 min)
+            $adminStats = $this->dashboardCache->adminStats($campusId ?? 0);
 
-            $verifiedStudents = CampusMembership::where('role', CampusRole::Student->value)
-                ->where('verification_status', VerificationStatus::Verified->value)
-                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
-                ->count();
-
-            $unverifiedStudents = CampusMembership::where('role', CampusRole::Student->value)
-                ->where('verification_status', VerificationStatus::Pending->value)
-                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
-                ->count();
-
-            $totalLecturers = CampusMembership::where('role', CampusRole::Lecturer->value)
-                ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
-                ->count();
-
-            $activeProjects = Project::where('status', '!=', 'completed')->count();
-            $completedProjects = Project::where('status', 'completed')->count();
-            $activeCompetitions = Competition::whereIn('status', ['open', 'upcoming'])->count();
-            $totalTeams = Team::count();
+            $totalStudents      = $adminStats['total_students']      ?? 0;
+            $verifiedStudents   = $adminStats['verified_students']   ?? 0;
+            $unverifiedStudents = $adminStats['unverified_students'] ?? 0;
+            $totalLecturers     = $adminStats['total_lecturers']     ?? 0;
+            $activeProjects     = $adminStats['active_projects']     ?? 0;
+            $completedProjects  = $adminStats['completed_projects']  ?? 0;
+            $activeCompetitions = $adminStats['active_competitions'] ?? 0;
+            $totalTeams         = $adminStats['total_teams']         ?? 0;
 
             $pendingVerifications = CampusMembership::where('verification_status', VerificationStatus::Pending->value)
                 ->when($campusId, fn ($q) => $q->where('campus_id', $campusId))
@@ -829,37 +786,8 @@ class DashboardWebController extends Controller
             ? (int) round($myTeams->avg('progress_percent'))
             : (int) ($profile?->completion()['percent'] ?? 0);
 
-        // 7. Monthly dynamic activity
-        $monthlyActivity = collect();
-        for ($i = 5; $i >= 0; $i--) {
-            $monthDate = now()->subMonths($i);
-            $monthLabel = $monthDate->translatedFormat('M');
-
-            $tasksDone = Task::where('assignee_id', $user->id)
-                ->where('status', TaskStatus::Completed)
-                ->whereYear('updated_at', $monthDate->year)
-                ->whereMonth('updated_at', $monthDate->month)
-                ->count();
-
-            $logs = ActivityLog::where(function ($q) use ($user, $teamIds) {
-                $q->where('actor_id', $user->id);
-                if ($teamIds->isNotEmpty()) {
-                    $q->orWhereIn('team_id', $teamIds);
-                }
-            })
-            ->whereYear('created_at', $monthDate->year)
-            ->whereMonth('created_at', $monthDate->month)
-            ->count();
-
-            $val = ($tasksDone === 0 && $logs === 0) ? 0 : min(100, ($tasksDone * 20) + ($logs * 10));
-
-            $monthlyActivity->push([
-                'month' => $monthLabel,
-                'done_tasks' => $tasksDone,
-                'logs' => $logs,
-                'percent' => $val,
-            ]);
-        }
+        // 7. Monthly dynamic activity (cached 1 hour per user per month)
+        $monthlyActivity = $this->dashboardCache->studentMonthlyActivity($user->id, $teamIds);
 
         // 8. Real Teammates (strictly from user's active project teams)
         $realTeammates = collect();

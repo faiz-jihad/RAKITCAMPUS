@@ -33,12 +33,12 @@ Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitema
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
 // Public Discovery Hubs (Open for browsing, enriched when authenticated)
-Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard');
+Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard')->middleware('throttle:dashboard');
 Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
 Route::get('/projects/{slug}', [ProjectWebController::class, 'show'])->name('projects.show')->where('slug', '^(?!create$).*$');
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
 Route::get('/competitions/{slug}', [CompetitionWebController::class, 'show'])->name('competitions.show')->where('slug', '^(?!create$).*$');
-Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index');
+Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index')->middleware('throttle:matchmaking');
 Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('leaderboard.index');
 Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
 Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
