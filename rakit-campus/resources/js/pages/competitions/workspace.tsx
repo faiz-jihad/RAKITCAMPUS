@@ -1,4 +1,5 @@
 import { formatWhatsAppUrl } from '@/components/competitions/ApplyCompetitionTeamModal';
+import { getCompetitionCover } from '@/lib/competition-cover';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
@@ -827,63 +828,78 @@ export default function CompetitionWorkspace({
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
                         {/* BENTO CARD 1: Master Team Identity & Readiness Hero (lg:col-span-8) */}
                         <div className="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-5">
-                            <div className="space-y-3">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                        {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'} • Tingkat {participation.competition?.level || 'Nasional'}
+                            <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
+                                {/* Competition Poster / Cover Image */}
+                                <div className="relative w-24 sm:w-28 md:w-32 aspect-[4/5] rounded-xl overflow-hidden bg-slate-950 border border-slate-200/90 shadow-2xs shrink-0 group">
+                                    <img
+                                        src={getCompetitionCover(participation.competition)}
+                                        alt={participation.competition?.name || 'Poster Kompetisi'}
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
+                                    <span className="absolute bottom-1.5 left-1.5 right-1.5 text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-white text-center truncate px-1 py-0.5 rounded bg-black/40 backdrop-blur-xs">
+                                        {participation.competition?.level || 'NASIONAL'}
                                     </span>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
-                                        className={`text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 transition ${
-                                            (isLeader || isMentor || isAdmin)
-                                                ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer'
-                                                : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
-                                        }`}
-                                        title="Klik untuk mengubah tahap seleksi"
-                                    >
-                                        <span className="size-1.5 rounded-full bg-blue-600" />
-                                        <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
-                                        {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600 shrink-0" />}
-                                    </button>
-
-                                    {participation.category_track && (
-                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[260px]">
-                                            Jalur: {participation.category_track}
-                                        </span>
-                                    )}
-
-                                    {participation.is_formation_locked && (
-                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
-                                            <Lock className="size-3" />
-                                            <span>Terkunci</span>
-                                        </span>
-                                    )}
                                 </div>
 
-                                <div>
-                                    <div className="flex items-center gap-2.5 flex-wrap">
-                                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                                            {participation.team?.name || 'Tim Mahasiswa'}
-                                        </h2>
+                                <div className="flex-1 min-w-0 space-y-3">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                            {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'} • Tingkat {participation.competition?.level || 'Nasional'}
+                                        </span>
+
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setNewTeamName(participation.team?.name || '');
-                                                setRenameModalOpen(true);
-                                            }}
-                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
-                                            title="Ubah Nama Tim"
+                                            onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
+                                            className={`text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 transition ${
+                                                (isLeader || isMentor || isAdmin)
+                                                    ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer'
+                                                    : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
+                                            }`}
+                                            title="Klik untuk mengubah tahap seleksi"
                                         >
-                                            <PenLine className="size-3" />
-                                            <span>Ubah Nama Tim</span>
+                                            <span className="size-1.5 rounded-full bg-blue-600" />
+                                            <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
+                                            {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600 shrink-0" />}
                                         </button>
+
+                                        {participation.category_track && (
+                                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[260px]">
+                                                Jalur: {participation.category_track}
+                                            </span>
+                                        )}
+
+                                        {participation.is_formation_locked && (
+                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                                                <Lock className="size-3" />
+                                                <span>Terkunci</span>
+                                            </span>
+                                        )}
                                     </div>
-                                    <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
-                                        Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
-                                        {participation.competition?.organizer ? ` • ${participation.competition.organizer}` : ''}
-                                    </p>
+
+                                    <div>
+                                        <div className="flex items-center gap-2.5 flex-wrap">
+                                            <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                                                {participation.team?.name || 'Tim Mahasiswa'}
+                                            </h2>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setNewTeamName(participation.team?.name || '');
+                                                    setRenameModalOpen(true);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
+                                                title="Ubah Nama Tim"
+                                            >
+                                                <PenLine className="size-3" />
+                                                <span>Ubah Nama Tim</span>
+                                            </button>
+                                        </div>
+                                        <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
+                                            Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
+                                            {participation.competition?.organizer ? ` • ${participation.competition.organizer}` : ''}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1027,14 +1043,23 @@ export default function CompetitionWorkspace({
                                     </span>
                                 </div>
                                 {participation.mentor ? (
-                                    <div className="my-1">
-                                        <div className="text-base sm:text-lg font-bold text-slate-900 truncate">
-                                            {participation.mentor.name}
+                                    <div className="my-1 flex items-start gap-3">
+                                        <div className="size-10 rounded-xl overflow-hidden bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-xs shrink-0">
+                                            {participation.mentor.avatar ? (
+                                                <img src={participation.mentor.avatar} alt={participation.mentor.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                participation.mentor.name?.charAt(0) || 'D'
+                                            )}
                                         </div>
-                                        <p className="text-xs text-slate-500 truncate mt-0.5">{participation.mentor.email}</p>
-                                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
-                                            {participation.mentor_notes || 'Dosen pendamping resmi untuk kompetisi ini.'}
-                                        </p>
+                                        <div className="min-w-0">
+                                            <div className="text-base font-bold text-slate-900 truncate">
+                                                {participation.mentor.name}
+                                            </div>
+                                            <p className="text-xs text-slate-500 truncate mt-0.5">{participation.mentor.email}</p>
+                                            <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                                                {participation.mentor_notes || 'Dosen pendamping resmi untuk kompetisi ini.'}
+                                            </p>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="my-1">
@@ -1089,8 +1114,12 @@ export default function CompetitionWorkspace({
                                     return (
                                         <div key={member.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                                                    {member.user?.name?.charAt(0) || 'U'}
+                                                <div className="size-10 rounded-xl overflow-hidden bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
+                                                    {member.user?.avatar ? (
+                                                        <img src={member.user.avatar} alt={member.user.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        member.user?.name?.charAt(0) || 'U'
+                                                    )}
                                                 </div>
                                                 <div className="min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">

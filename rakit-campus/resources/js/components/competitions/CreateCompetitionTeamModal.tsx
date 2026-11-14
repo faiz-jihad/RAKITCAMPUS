@@ -9,10 +9,12 @@ import {
     CheckCircle2,
     FileText,
     Globe,
+    Image as ImageIcon,
     Layers,
     Plus,
     Sparkles,
     Trophy,
+    Upload,
     Users,
     X,
 } from 'lucide-react';
@@ -104,6 +106,10 @@ export default function CreateCompetitionTeamModal({
     const [newOfficialUrl, setNewOfficialUrl] = useState('');
     const [newCompDescription, setNewCompDescription] = useState('');
 
+    // Uploaded poster files (max 5)
+    const [posterFiles, setPosterFiles] = useState<File[]>([]);
+    const [posterPreviews, setPosterPreviews] = useState<string[]>([]);
+
     // Team Form (shared in existing step 2 or new step 3)
     const [teamName, setTeamName] = useState(currentUser?.name ? `Tim ${currentUser.name}` : '');
     const [rolesNeeded, setRolesNeeded] = useState('');
@@ -143,6 +149,32 @@ export default function CreateCompetitionTeamModal({
 
     // Today's date string in YYYY-MM-DD for min date picker
     const todayDateString = new Date().toISOString().split('T')[0];
+
+    // File change handler (Max 5 images)
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files) return;
+        const incoming = Array.from(e.target.files);
+
+        if (posterFiles.length + incoming.length > 5) {
+            setErrorMsg('Maksimal 5 poster/gambar kompetisi yang dapat diunggah.');
+        } else {
+            setErrorMsg(null);
+        }
+
+        const combined = [...posterFiles, ...incoming].slice(0, 5);
+        setPosterFiles(combined);
+
+        // Previews
+        const previews = combined.map((file) => URL.createObjectURL(file));
+        setPosterPreviews(previews);
+    };
+
+    const handleRemovePoster = (index: number) => {
+        const nextFiles = posterFiles.filter((_, i) => i !== index);
+        setPosterFiles(nextFiles);
+        const nextPreviews = posterPreviews.filter((_, i) => i !== index);
+        setPosterPreviews(nextPreviews);
+    };
 
     // Validate step 2 for new competition before moving to step 3
     const handleNextToTeamStep = () => {
@@ -216,8 +248,10 @@ export default function CreateCompetitionTeamModal({
                     team_name: teamName.trim(),
                     roles_needed: rolesNeeded.trim() || null,
                     team_description: teamDescription.trim() || null,
+                    images: posterFiles,
                 },
                 {
+                    forceFormData: true,
                     onSuccess: () => {
                         setLoading(false);
                         onClose();
@@ -291,7 +325,7 @@ export default function CreateCompetitionTeamModal({
                                     : mode === 'existing'
                                     ? 'Pilih lomba yang masih membuka pendaftaran dan tentukan nama tim Anda.'
                                     : step === 2
-                                    ? 'Isi ketentuan lengkap lomba. Semua field wajib diisi sesuai ketentuan.'
+                                    ? 'Isi ketentuan lengkap lomba dan unggah poster lomba (maksimal 5 gambar).'
                                     : 'Beri nama tim dan tentukan peran rekan yang dicari.'}
                             </p>
                         </div>
@@ -317,7 +351,7 @@ export default function CreateCompetitionTeamModal({
                         ) : (
                             <>
                                 <span className={step === 2 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-md' : 'text-slate-400'}>
-                                    2. Ketentuan Lomba
+                                    2. Ketentuan & Poster
                                 </span>
                                 <span>›</span>
                                 <span className={step === 3 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-md' : 'text-slate-400'}>
@@ -396,11 +430,11 @@ export default function CreateCompetitionTeamModal({
                                                 Lomba Belum Ada? Daftarkan Lomba Baru
                                             </h4>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                                Baru
+                                                Baru & Unggah Poster
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                            Punya info lomba dari luar kampus? Lengkapi data resmi lomba sesuai ketentuan, kemudian langsung bentuk tim Anda.
+                                            Punya info lomba dari luar kampus? Lengkapi data resmi lomba, unggah poster/gambar lomba, kemudian langsung bentuk tim Anda.
                                         </p>
                                     </div>
                                 </div>
@@ -579,7 +613,7 @@ export default function CreateCompetitionTeamModal({
                 {mode === 'new' && step === 2 && (
                     <div className="space-y-3.5 pt-1">
                         <div className="p-3 bg-blue-50/40 rounded-xl border border-blue-100 text-xs text-slate-600">
-                            Silakan lengkapi ketentuan data kompetisi di bawah ini secara lengkap sebelum lanjut membuat tim.
+                            Silakan lengkapi ketentuan data kompetisi dan unggah poster lomba (maksimal 5 gambar) sebelum lanjut membuat tim.
                         </div>
 
                         {/* Nama & Penyelenggara */}
@@ -709,6 +743,71 @@ export default function CreateCompetitionTeamModal({
                             />
                         </div>
 
+                        {/* POSTER / GAMBAR LOMBA (Maksimal 5 Foto) */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                    <ImageIcon className="size-3.5 text-blue-600" />
+                                    <span>Poster / Gambar Lomba</span>
+                                    <span className="text-[10px] text-slate-400 font-normal">(Maksimal 5 gambar)</span>
+                                </label>
+                                <span className="text-[11px] font-bold text-slate-500">
+                                    {posterFiles.length} / 5 Gambar
+                                </span>
+                            </div>
+
+                            {/* Upload Area */}
+                            {posterFiles.length < 5 && (
+                                <label className="flex flex-col items-center justify-center p-3.5 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-500 bg-slate-50/60 hover:bg-blue-50/30 transition cursor-pointer group text-center mb-2.5">
+                                    <Upload className="size-5 text-slate-400 group-hover:text-blue-600 mb-1 transition-colors" />
+                                    <span className="text-xs font-bold text-slate-700 group-hover:text-blue-600">
+                                        Pilih Poster atau Gambar Lomba
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 mt-0.5">
+                                        JPG, PNG, WEBP (Maksimal 5MB per gambar • Sisa kuota: {5 - posterFiles.length} gambar)
+                                    </span>
+                                    <input
+                                        type="file"
+                                        accept="image/png,image/jpeg,image/jpg,image/webp"
+                                        multiple
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                </label>
+                            )}
+
+                            {/* Preview Grid */}
+                            {posterPreviews.length > 0 && (
+                                <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
+                                    {posterPreviews.map((previewUrl, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="relative aspect-[4/5] rounded-xl overflow-hidden border border-slate-200 bg-slate-100 group shadow-2xs"
+                                        >
+                                            <img
+                                                src={previewUrl}
+                                                alt={`Poster ${idx + 1}`}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            {idx === 0 && (
+                                                <span className="absolute top-1 left-1 px-1.5 py-0.5 bg-blue-600 text-white text-[8px] font-black uppercase rounded shadow-xs">
+                                                    Cover Utama
+                                                </span>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemovePoster(idx)}
+                                                className="absolute top-1 right-1 size-5 rounded-full bg-slate-900/80 hover:bg-rose-600 text-white flex items-center justify-center transition cursor-pointer"
+                                                title="Hapus gambar"
+                                            >
+                                                <X className="size-3" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
                         {/* ACTIONS STEP 2 NEW */}
                         <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                             <button
@@ -740,28 +839,48 @@ export default function CreateCompetitionTeamModal({
                 {/* ========================================================= */}
                 {mode === 'new' && step === 3 && (
                     <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-                        {/* Summary of new competition */}
-                        <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white uppercase tracking-wider">
-                                    Lomba Baru
-                                </span>
-                                <button
-                                    type="button"
-                                    onClick={() => setStep(2)}
-                                    className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
-                                >
-                                    Ubah Data Lomba
-                                </button>
-                            </div>
-                            <h4 className="text-sm font-bold text-slate-900 mt-1.5">{newCompName}</h4>
-                            <p className="text-xs text-slate-500">
-                                Penyelenggara: <strong className="text-slate-700">{newOrganizer}</strong> • Tingkat: {newLevel.toUpperCase()}
-                            </p>
-                            <div className="text-[11px] text-slate-600 mt-1 flex items-center gap-3">
-                                <span>Deadline: {newDeadline}</span>
-                                <span>•</span>
-                                <span>Maks. {newMaxTeamSize} Anggota</span>
+                        {/* Summary of new competition with poster preview */}
+                        <div className="p-3.5 rounded-2xl bg-blue-50/50 border border-blue-100 flex gap-3 items-start">
+                            {posterPreviews.length > 0 && (
+                                <div className="relative w-16 aspect-[4/5] rounded-xl overflow-hidden border border-slate-200 bg-slate-950 shrink-0">
+                                    <img
+                                        src={posterPreviews[0]}
+                                        alt="Cover"
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <span className="absolute bottom-0 inset-x-0 bg-black/60 text-white text-[8px] text-center font-bold py-0.5">
+                                        Cover
+                                    </span>
+                                </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-600 text-white uppercase tracking-wider">
+                                        Lomba Baru
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={() => setStep(2)}
+                                        className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                                    >
+                                        Ubah Data Lomba
+                                    </button>
+                                </div>
+                                <h4 className="text-sm font-bold text-slate-900 mt-1 truncate">{newCompName}</h4>
+                                <p className="text-xs text-slate-500">
+                                    Penyelenggara: <strong className="text-slate-700">{newOrganizer}</strong> • {newLevel.toUpperCase()}
+                                </p>
+                                <div className="text-[11px] text-slate-600 mt-0.5 flex items-center gap-2.5 flex-wrap">
+                                    <span>Deadline: {newDeadline}</span>
+                                    <span>•</span>
+                                    <span>Maks. {newMaxTeamSize} Anggota</span>
+                                    {posterPreviews.length > 0 && (
+                                        <>
+                                            <span>•</span>
+                                            <span className="font-bold text-blue-600">{posterPreviews.length} Foto Terunggah</span>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

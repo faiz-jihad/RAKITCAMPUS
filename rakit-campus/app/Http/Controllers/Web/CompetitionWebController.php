@@ -708,6 +708,9 @@ class CompetitionWebController extends Controller
             'category_track' => ['nullable', 'string', 'max:100'],
             'roles_needed' => ['nullable', 'string', 'max:255'],
             'team_description' => ['nullable', 'string', 'max:1000'],
+            'images' => ['nullable', 'array', 'max:5'],
+            'images.*' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
         ], [
             'competition_name.required' => 'Nama kompetisi wajib diisi.',
             'organizer.required' => 'Penyelenggara kompetisi wajib diisi.',
@@ -718,6 +721,8 @@ class CompetitionWebController extends Controller
             'max_team_size.required' => 'Kapasitas maksimal anggota tim wajib ditentukan.',
             'competition_description.required' => 'Deskripsi kompetisi wajib diisi (minimal 10 karakter).',
             'team_name.required' => 'Nama tim kompetisi wajib diisi.',
+            'images.max' => 'Maksimal 5 poster/gambar kompetisi yang dapat diunggah.',
+            'images.*.max' => 'Ukuran setiap gambar maksimal 5MB.',
         ]);
 
         $campusId = $user->campusId() ?? $user->memberships()->first()?->campus_id ?? \App\Models\Campus::first()?->id;
@@ -735,7 +740,25 @@ class CompetitionWebController extends Controller
         }
         $isPrivileged = ($campusId && $user->isCampusAdminOf($campusId)) || $user->isPlatformAdmin() || $user->isLecturer();
 
-        $participation = DB::transaction(function () use ($validated, $user, $campusId, $isPrivileged) {
+        // Process uploaded poster images (up to 5)
+        $storedImages = [];
+        if ($request->hasFile('images')) {
+            $files = $request->file('images');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach (array_slice($files, 0, 5) as $imgFile) {
+                if ($imgFile && $imgFile->isValid()) {
+                    $stored = \App\Services\Storage\ObjectStorageService::store($imgFile, 'competitions/covers');
+                    $storedImages[] = $stored['path'];
+                }
+            }
+        } elseif ($request->hasFile('cover_image')) {
+            $stored = \App\Services\Storage\ObjectStorageService::store($request->file('cover_image'), 'competitions/covers');
+            $storedImages[] = $stored['path'];
+        }
+
+        $participation = DB::transaction(function () use ($validated, $user, $campusId, $isPrivileged, $storedImages) {
             $slug = Str::slug($validated['competition_name']) . '-' . Str::lower(Str::random(6));
 
             $competition = Competition::create([
@@ -753,6 +776,8 @@ class CompetitionWebController extends Controller
                 'max_team_size' => (int) $validated['max_team_size'],
                 'official_url' => $validated['official_url'] ?? null,
                 'registration_deadline' => $validated['registration_deadline'],
+                'cover_image' => !empty($storedImages) ? $storedImages[0] : null,
+                'required_documents' => !empty($storedImages) ? ['gallery' => $storedImages] : null,
                 'status' => CompetitionStatus::Open,
                 'verification_status' => $isPrivileged ? VerificationStatus::Verified : VerificationStatus::Unverified,
                 'last_verified_at' => $isPrivileged ? now() : null,

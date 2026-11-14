@@ -115,6 +115,8 @@ export default function CompetitionShow({
     const deadlineDate = competition.registration_deadline ? new Date(competition.registration_deadline) : null;
     const now = new Date();
     const daysLeft = deadlineDate ? Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const isExpired = deadlineDate ? deadlineDate < now : false;
+    const isRegistrationClosed = isExpired || competition.status === 'closed' || competition.status === 'completed' || competition.status === 'cancelled';
 
     const toggleBookmark = () => {
         router.post(route('competitions.bookmark', competition.id), {}, {
@@ -131,6 +133,10 @@ export default function CompetitionShow({
 
     const handleCreateParticipation = (e: React.FormEvent) => {
         e.preventDefault();
+        if (isRegistrationClosed) {
+            alert('Pendaftaran untuk kompetisi ini telah ditutup.');
+            return;
+        }
         setSubmitting(true);
 
         const payload: any = {
@@ -456,8 +462,12 @@ export default function CompetitionShow({
                                                       })
                                                     : 'Terbuka'}
                                             </span>
-                                            <span className="text-[10px] text-amber-700 font-semibold block">
-                                                {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini') : 'Jadwal terbuka'}
+                                            <span className={`text-[10px] font-semibold block ${isRegistrationClosed ? 'text-rose-600 font-bold' : 'text-amber-700'}`}>
+                                                {isRegistrationClosed
+                                                    ? 'Pendaftaran Ditutup'
+                                                    : daysLeft !== null
+                                                    ? (daysLeft > 0 ? `${daysLeft} hari lagi` : 'Hari ini')
+                                                    : 'Jadwal terbuka'}
                                             </span>
                                         </div>
                                     </div>
@@ -735,7 +745,15 @@ export default function CompetitionShow({
                                     <span className="text-xs text-slate-500 font-medium">Kontingen Kampus</span>
                                 </div>
 
-                                {competition.participations?.length === 0 ? (
+                                {isRegistrationClosed ? (
+                                    <div className="text-center py-6 px-4 bg-slate-50/70 rounded-2xl border border-slate-200">
+                                        <Trophy className="size-8 text-slate-400 mx-auto mb-2" />
+                                        <p className="text-xs font-semibold text-slate-700">Pendaftaran Kompetisi Telah Ditutup</p>
+                                        <p className="text-[11px] text-slate-500 mt-1">
+                                            Batas akhir pendaftaran telah berakhir sehingga pembentukan tim baru tidak lagi dibuka.
+                                        </p>
+                                    </div>
+                                ) : competition.participations?.length === 0 ? (
                                     <div className="text-center py-8 px-4 bg-slate-50/70 rounded-2xl border border-dashed border-slate-200">
                                         <Trophy className="size-8 text-slate-400 mx-auto mb-2" />
                                         <p className="text-xs font-semibold text-slate-700">Belum ada tim kampus yang mendaftar</p>
