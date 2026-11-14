@@ -231,6 +231,7 @@ interface Props {
         last_page: number;
         total: number;
     };
+    openCompetitionOptions?: any[];
     openRecruitingTeams?: RecruitingTeam[];
     totalNeededSlots?: number;
     myApplications?: MyApplication[];
@@ -290,6 +291,7 @@ interface Props {
 
 export default function CompetitionIndex({
     competitions = { data: [], current_page: 1, last_page: 1, total: 0 },
+    openCompetitionOptions,
     openRecruitingTeams = [],
     totalNeededSlots = 0,
     myApplications = [],
@@ -946,6 +948,7 @@ export default function CompetitionIndex({
                                 {catalogCompetitions.map((comp) => {
                                     const isSaved = bookmarkedIds.includes(comp.id);
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
+                                    const isClosed = isExpired || comp.status === 'closed' || comp.status === 'completed' || comp.status === 'cancelled';
                                     const formattedDeadline = comp.registration_deadline
                                         ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
                                               day: 'numeric',
@@ -965,8 +968,8 @@ export default function CompetitionIndex({
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
                                             className={`bg-white rounded-2xl sm:rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
-                                                isExpired
-                                                    ? 'border-slate-200/60 opacity-70 bg-slate-50/50'
+                                                isClosed
+                                                    ? 'border-slate-200/60 opacity-75 bg-slate-50/60'
                                                     : 'border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/70'
                                             }`}
                                         >
@@ -975,7 +978,9 @@ export default function CompetitionIndex({
                                                 <img
                                                     src={getCompetitionCover(comp)}
                                                     alt={comp.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                                                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${
+                                                        isClosed ? 'grayscale-30' : ''
+                                                    }`}
                                                 />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/25 pointer-events-none" />
 
@@ -1007,7 +1012,11 @@ export default function CompetitionIndex({
 
                                                 {/* Bottom Banner Status Pill on Cover */}
                                                 <div className="absolute bottom-2 left-2 right-2 sm:bottom-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
-                                                    {daysLeft !== null ? (
+                                                    {isClosed ? (
+                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 backdrop-blur-md border border-white/10">
+                                                            Pendaftaran Ditutup
+                                                        </span>
+                                                    ) : daysLeft !== null ? (
                                                         <span
                                                             className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md backdrop-blur-md shadow-xs ${
                                                                 daysLeft <= 3
@@ -1017,10 +1026,10 @@ export default function CompetitionIndex({
                                                                         : 'bg-slate-900/80 text-white border border-white/10'
                                                             }`}
                                                         >
-                                                            {daysLeft > 0 ? `${daysLeft} hari lagi` : 'Tutup hari ini'}
+                                                            {daysLeft === 0 ? 'Tutup hari ini' : `${daysLeft} hari lagi`}
                                                         </span>
                                                     ) : (
-                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-emerald-600/90 text-white backdrop-blur-md">
+                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-blue-600/90 text-white backdrop-blur-md">
                                                             Buka
                                                         </span>
                                                     )}
@@ -1054,12 +1063,16 @@ export default function CompetitionIndex({
                                                 <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs mt-auto">
                                                     <div className="flex items-center gap-1 sm:gap-1.5 text-slate-500 truncate">
                                                         <Clock className="size-3 sm:size-3.5 text-slate-400 shrink-0" />
-                                                        <span className="text-[10px] sm:text-[11px] font-semibold text-slate-700 truncate">
-                                                            {formattedDeadline}
+                                                        <span className={`text-[10px] sm:text-[11px] font-semibold truncate ${
+                                                            isClosed ? 'text-slate-400' : 'text-slate-700'
+                                                        }`}>
+                                                            {isClosed ? 'Pendaftaran Selesai' : formattedDeadline}
                                                         </span>
                                                     </div>
 
-                                                    <span className="inline-flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform shrink-0">
+                                                    <span className={`inline-flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-bold transition-transform shrink-0 ${
+                                                        isClosed ? 'text-slate-400' : 'text-blue-600 group-hover:translate-x-0.5'
+                                                    }`}>
                                                         <span>Detail</span>
                                                         <ArrowUpRight className="size-3 sm:size-3.5" />
                                                     </span>
@@ -2159,7 +2172,7 @@ export default function CompetitionIndex({
             <CreateCompetitionTeamModal
                 isOpen={createTeamModalOpen}
                 onClose={() => setCreateTeamModalOpen(false)}
-                competitions={competitions.data}
+                competitions={openCompetitionOptions || competitions.data}
                 preselectedCompId={createTeamPreselectedCompId}
             />
 

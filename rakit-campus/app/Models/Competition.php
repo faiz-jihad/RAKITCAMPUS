@@ -63,6 +63,34 @@ class Competition extends Model
         return $this->getCoverImageAttribute($this->attributes['cover_image'] ?? null);
     }
 
+    public function isRegistrationClosed(): bool
+    {
+        if ($this->status === CompetitionStatus::Closed ||
+            $this->status === CompetitionStatus::Completed ||
+            $this->status === CompetitionStatus::Cancelled) {
+            return true;
+        }
+
+        if ($this->registration_deadline && $this->registration_deadline->isPast()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public function scopeRegistrationOpen(Builder $query): Builder
+    {
+        return $query->whereNotIn('competitions.status', [
+                CompetitionStatus::Closed->value,
+                CompetitionStatus::Completed->value,
+                CompetitionStatus::Cancelled->value,
+            ])
+            ->where(function ($q) {
+                $q->whereNull('competitions.registration_deadline')
+                  ->orWhere('competitions.registration_deadline', '>=', now());
+            });
+    }
+
     public function campus(): BelongsTo
     {
         return $this->belongsTo(Campus::class);

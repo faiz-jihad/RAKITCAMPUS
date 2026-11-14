@@ -85,12 +85,20 @@ class CompetitionWebController extends Controller
         if ($request->filled('status')) {
             $statusVal = $request->input('status');
             if ($statusVal === 'open') {
-                $query->where('registration_deadline', '>=', now());
+                $query->whereNotIn('status', [CompetitionStatus::Closed->value, CompetitionStatus::Completed->value, CompetitionStatus::Cancelled->value])
+                      ->where(function ($sub) {
+                          $sub->whereNull('registration_deadline')
+                              ->orWhere('registration_deadline', '>=', now());
+                      });
             } elseif ($statusVal === 'closing_soon') {
-                $query->where('registration_deadline', '>=', now())
+                $query->whereNotIn('status', [CompetitionStatus::Closed->value, CompetitionStatus::Completed->value, CompetitionStatus::Cancelled->value])
+                      ->where('registration_deadline', '>=', now())
                       ->where('registration_deadline', '<=', now()->addDays(7));
             } elseif ($statusVal === 'closed') {
-                $query->where('registration_deadline', '<', now());
+                $query->where(function ($sub) {
+                    $sub->whereIn('status', [CompetitionStatus::Closed->value, CompetitionStatus::Completed->value, CompetitionStatus::Cancelled->value])
+                        ->orWhere('registration_deadline', '<', now());
+                });
             } else {
                 $query->where('status', $statusVal);
             }
@@ -137,7 +145,16 @@ class CompetitionWebController extends Controller
         $recruitingQuery = CompetitionParticipation::where('is_formation_locked', false)
             ->whereIn('stage', ['recruiting', 'team_formation'])
             ->whereHas('competition', function ($q) use ($user) {
-                $q->visibleTo($user);
+                $q->visibleTo($user)
+                  ->whereNotIn('competitions.status', [
+                      CompetitionStatus::Closed->value,
+                      CompetitionStatus::Completed->value,
+                      CompetitionStatus::Cancelled->value,
+                  ])
+                  ->where(function ($sub) {
+                      $sub->whereNull('competitions.registration_deadline')
+                          ->orWhere('competitions.registration_deadline', '>=', now());
+                  });
             })
             ->with([
                 'competition:id,name,slug,organizer,category,level,registration_deadline,min_team_size,max_team_size,cover_image,official_url,registration_url,competition_type,description',
@@ -531,8 +548,18 @@ class CompetitionWebController extends Controller
             'study_program' => $user->profile?->study_program,
         ] : null;
 
+        $openCompetitionOptions = Competition::visibleTo($user)
+            ->whereNotIn('status', [CompetitionStatus::Closed->value, CompetitionStatus::Completed->value, CompetitionStatus::Cancelled->value])
+            ->where(function ($sub) {
+                $sub->whereNull('registration_deadline')
+                    ->orWhere('registration_deadline', '>=', now()->startOfDay());
+            })
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'slug', 'organizer', 'category', 'level', 'max_team_size', 'registration_deadline', 'status']);
+
         return Inertia::render('competitions/index', [
             'competitions' => $competitions,
+            'openCompetitionOptions' => $openCompetitionOptions,
             'openRecruitingTeams' => $openRecruitingTeams,
             'totalNeededSlots' => $totalNeededSlots,
             'myApplications' => $myApplications,
@@ -672,13 +699,25 @@ class CompetitionWebController extends Controller
             'competition_name' => ['required', 'string', 'max:255'],
             'organizer' => ['required', 'string', 'max:255'],
             'category' => ['required', Rule::enum(CompetitionCategory::class)],
-            'max_team_size' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'level' => ['required', 'string', 'in:local,regional,national,international'],
+            'registration_deadline' => ['required', 'date', 'after_or_equal:today'],
+            'max_team_size' => ['required', 'integer', 'min:1', 'max:10'],
             'official_url' => ['nullable', 'url', 'max:255'],
-            'registration_deadline' => ['nullable', 'date'],
-            'team_name' => ['nullable', 'string', 'max:100'],
+            'competition_description' => ['required', 'string', 'min:10', 'max:2000'],
+            'team_name' => ['required', 'string', 'max:100'],
             'category_track' => ['nullable', 'string', 'max:100'],
             'roles_needed' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:500'],
+            'team_description' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'competition_name.required' => 'Nama kompetisi wajib diisi.',
+            'organizer.required' => 'Penyelenggara kompetisi wajib diisi.',
+            'category.required' => 'Kategori kompetisi wajib dipilih.',
+            'level.required' => 'Tingkat kompetisi wajib dipilih.',
+            'registration_deadline.required' => 'Batas akhir pendaftaran wajib ditentukan.',
+            'registration_deadline.after_or_equal' => 'Batas akhir pendaftaran tidak boleh di masa lampau.',
+            'max_team_size.required' => 'Kapasitas maksimal anggota tim wajib ditentukan.',
+            'competition_description.required' => 'Deskripsi kompetisi wajib diisi (minimal 10 karakter).',
+            'team_name.required' => 'Nama tim kompetisi wajib diisi.',
         ]);
 
         $campusId = $user->campusId() ?? $user->memberships()->first()?->campus_id ?? \App\Models\Campus::first()?->id;
@@ -706,26 +745,26 @@ class CompetitionWebController extends Controller
                 'name' => $validated['competition_name'],
                 'slug' => $slug,
                 'organizer' => $validated['organizer'],
-                'description' => $validated['description'] ?? null,
+                'description' => $validated['competition_description'],
                 'category' => $validated['category'],
-                'level' => 'national',
+                'level' => $validated['level'],
                 'competition_type' => 'team',
                 'min_team_size' => 1,
-                'max_team_size' => $validated['max_team_size'] ?? 4,
+                'max_team_size' => (int) $validated['max_team_size'],
                 'official_url' => $validated['official_url'] ?? null,
-                'registration_deadline' => $validated['registration_deadline'] ?? null,
+                'registration_deadline' => $validated['registration_deadline'],
                 'status' => CompetitionStatus::Open,
                 'verification_status' => $isPrivileged ? VerificationStatus::Verified : VerificationStatus::Unverified,
                 'last_verified_at' => $isPrivileged ? now() : null,
                 'verified_by' => $isPrivileged ? $user->id : null,
             ]);
 
-            $teamName = !empty($validated['team_name']) ? trim($validated['team_name']) : "Tim {$user->name}";
+            $teamName = trim($validated['team_name']);
 
             return $this->teamFormationService->createTeam($competition, $user, [
                 'team_name' => $teamName,
                 'category_track' => $validated['category_track'] ?? null,
-                'description' => $validated['description'] ?? null,
+                'description' => $validated['team_description'] ?? null,
                 'roles_needed' => $validated['roles_needed'] ?? null,
                 'initial_status' => 'planning',
             ]);
@@ -1014,6 +1053,12 @@ class CompetitionWebController extends Controller
     {
         $user = $request->user();
         $competition = $this->resolveCompetition($id);
+
+        if ($competition->isRegistrationClosed()) {
+            return back()->withErrors([
+                'competition' => 'Pendaftaran untuk kompetisi ini telah ditutup karena sudah melewati batas akhir pendaftaran.',
+            ]);
+        }
 
         $validated = $request->validate([
             'project_id' => ['nullable', 'exists:projects,id'],
