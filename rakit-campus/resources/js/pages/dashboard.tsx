@@ -405,14 +405,14 @@ export default function Dashboard({
                 {/* 1. HEADER ROW */}
                 <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 border border-rose-200">
-                                <ShieldCheck className="size-3.5 text-rose-600" />
+                        <div className="flex items-center gap-2 mb-1.5">
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-900 text-white">
+                                <ShieldCheck className="size-3.5 text-blue-400" />
                                 <span>{user.role === 'platform_admin' ? 'Super Admin Platform' : 'Admin Kampus'}</span>
                             </span>
                             <span className="text-xs text-slate-500 font-medium">{user.campus || 'Kampus Anda'}</span>
                         </div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                        <h1 className="text-2xl font-black text-slate-900 tracking-tight">
                             Pusat Kendali Administrator
                         </h1>
                         <p className="text-xs text-slate-500 mt-0.5">
@@ -423,21 +423,21 @@ export default function Dashboard({
                     <div className="flex flex-wrap items-center gap-2">
                         <Link
                             href="/admin/competitions"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
                         >
                             <Plus className="size-3.5" />
-                            <span>+ Tambah Kompetisi</span>
+                            <span>Tambah Kompetisi</span>
                         </Link>
                         <Link
                             href="/admin/students"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                         >
                             <Users className="size-3.5 text-slate-500" />
                             <span>Verifikasi Mahasiswa</span>
                         </Link>
                         <Link
                             href="/admin/notifications"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                         >
                             <Mail className="size-3.5 text-slate-500" />
                             <span>Uji Email</span>
@@ -447,8 +447,9 @@ export default function Dashboard({
 
                 {/* FLASH & ERROR BANNERS */}
                 {flash?.success && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
-                        {flash.success}
+                    <div className="mb-5 p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-white flex items-center gap-2">
+                        <CheckCircle2 className="size-4 text-blue-400 shrink-0" />
+                        <span>{flash.success}</span>
                     </div>
                 )}
                 {flash?.info && (
@@ -457,88 +458,105 @@ export default function Dashboard({
                     </div>
                 )}
                 {flash?.error && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
-                        {flash.error}
+                    <div className="mb-5 p-3.5 rounded-xl bg-slate-100 border border-slate-300 text-xs font-medium text-slate-900 flex items-center gap-2">
+                        <AlertCircle className="size-4 text-slate-700 shrink-0" />
+                        <span>{flash.error}</span>
                     </div>
                 )}
 
                 {/* 2. ADMIN KPI STAT CARDS */}
-                <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 mb-6">
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Total Mahasiswa</span>
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4 mb-6">
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Mahasiswa</span>
                             <Users className="size-4 text-blue-600" />
                         </div>
-                        <div className="text-2xl font-black text-slate-900">
-                            {adminStats?.total_students ?? stats?.total_students_count ?? 0}
-                        </div>
-                        <div className="text-[11px] text-emerald-600 font-semibold mt-1">
-                            {adminStats?.verified_students ?? 0} Terverifikasi
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-amber-200/80 bg-amber-50/20 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Antrean Verifikasi</span>
-                            <ShieldAlert className="size-4 text-amber-600" />
-                        </div>
-                        <div className="text-2xl font-black text-amber-900">
-                            {adminStats?.unverified_students ?? pendingList.length}
-                        </div>
-                        <div className="text-[11px] text-amber-700 font-semibold mt-1">
-                            Perlu ditinjau segera
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.total_students ?? stats?.total_students_count ?? 0}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-1">
+                                {adminStats?.verified_students ?? 0} Terverifikasi
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Dosen Pembimbing</span>
-                            <GraduationCap className="size-4 text-emerald-600" />
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Antrean Verifikasi</span>
+                            <ShieldAlert className="size-4 text-slate-700" />
                         </div>
-                        <div className="text-2xl font-black text-slate-900">
-                            {adminStats?.total_lecturers ?? 1}
-                        </div>
-                        <div className="text-[11px] text-slate-500 font-medium mt-1">
-                            Dosen Terdaftar
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Proyek Inovasi</span>
-                            <FolderKanban className="size-4 text-indigo-600" />
-                        </div>
-                        <div className="text-2xl font-black text-slate-900">
-                            {adminStats?.active_projects ?? 0}
-                        </div>
-                        <div className="text-[11px] text-indigo-600 font-semibold mt-1">
-                            {adminStats?.completed_projects ?? 0} Selesai
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.unverified_students ?? pendingList.length}
+                            </div>
+                            <div className="text-[10px] font-bold mt-1">
+                                {pendingList.length > 0 ? (
+                                    <span className="text-blue-700 font-semibold">{pendingList.length} Perlu Ditinjau</span>
+                                ) : (
+                                    <span className="text-slate-400">Semua Terverifikasi</span>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Kompetisi Aktif</span>
-                            <Trophy className="size-4 text-amber-500" />
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Dosen Pembimbing</span>
+                            <GraduationCap className="size-4 text-slate-700" />
                         </div>
-                        <div className="text-2xl font-black text-slate-900">
-                            {adminStats?.active_competitions ?? 0}
-                        </div>
-                        <div className="text-[11px] text-amber-600 font-semibold mt-1">
-                            Periode berjalan
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.total_lecturers ?? 1}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-1">
+                                Dosen Terdaftar
+                            </div>
                         </div>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 border border-slate-200/80 shadow-2xs">
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider">Total Tim</span>
-                            <UserCheck className="size-4 text-purple-600" />
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Proyek Inovasi</span>
+                            <FolderKanban className="size-4 text-blue-600" />
                         </div>
-                        <div className="text-2xl font-black text-slate-900">
-                            {adminStats?.total_teams ?? 0}
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.active_projects ?? 0}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-1">
+                                {adminStats?.completed_projects ?? 0} Selesai
+                            </div>
                         </div>
-                        <div className="text-[11px] text-purple-600 font-semibold mt-1">
-                            Tim Kolaborasi
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Kompetisi Aktif</span>
+                            <Trophy className="size-4 text-slate-700" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.active_competitions ?? 0}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-1">
+                                Periode Berjalan
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Tim</span>
+                            <UserCheck className="size-4 text-blue-600" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.total_teams ?? 0}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-medium mt-1">
+                                Tim Kolaborasi
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -548,13 +566,13 @@ export default function Dashboard({
                     {/* LEFT COLUMN: PENDING VERIFICATIONS & RECENT ACTIVITIES */}
                     <div className="lg:col-span-8 space-y-6">
                         {/* PENDING STUDENT VERIFICATIONS PANEL */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
                                     <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <span>Antrean Verifikasi Mahasiswa Baru</span>
                                         {pendingList.length > 0 && (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                                 {pendingList.length} Menunggu
                                             </span>
                                         )}
@@ -579,7 +597,7 @@ export default function Dashboard({
                                             className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 group hover:bg-slate-50/60 rounded-lg px-2 -mx-2 transition"
                                         >
                                             <div className="flex items-center gap-3 min-w-0">
-                                                <div className="size-9 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 border border-slate-200">
+                                                <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                                     {(student.name || 'M').substring(0, 2).toUpperCase()}
                                                 </div>
                                                 <div className="min-w-0">
@@ -599,7 +617,7 @@ export default function Dashboard({
                                                     type="button"
                                                     disabled={verifyingId === student.id}
                                                     onClick={() => handleVerifyStudent(student.id, 'verified')}
-                                                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                                                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition disabled:opacity-50 cursor-pointer"
                                                 >
                                                     Setujui
                                                 </button>
@@ -607,7 +625,7 @@ export default function Dashboard({
                                                     type="button"
                                                     disabled={verifyingId === student.id}
                                                     onClick={() => handleVerifyStudent(student.id, 'rejected')}
-                                                    className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
+                                                    className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 text-xs font-semibold transition disabled:opacity-50 cursor-pointer"
                                                 >
                                                     Tolak
                                                 </button>
@@ -617,7 +635,7 @@ export default function Dashboard({
                                 </div>
                             ) : (
                                 <div className="py-8 text-center text-slate-400">
-                                    <CheckCircle2 className="size-8 mx-auto text-emerald-500 mb-2 opacity-80" />
+                                    <CheckCircle2 className="size-8 mx-auto text-blue-600 mb-2 opacity-80" />
                                     <p className="text-xs font-semibold text-slate-700">Semua Mahasiswa Telah Terverifikasi</p>
                                     <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada antrean verifikasi baru saat ini.</p>
                                 </div>
@@ -625,7 +643,7 @@ export default function Dashboard({
                         </div>
 
                         {/* RECENT INNOVATION PROJECTS */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
                                     <h2 className="text-sm font-bold text-slate-900">
@@ -648,11 +666,11 @@ export default function Dashboard({
                                     {recentProjects.slice(0, 4).map((proj: any) => (
                                         <div
                                             key={proj.id}
-                                            className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-slate-200 transition shadow-2xs flex flex-col justify-between gap-3"
+                                            className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-blue-300 transition shadow-2xs flex flex-col justify-between gap-3"
                                         >
                                             <div>
                                                 <div className="flex items-center justify-between gap-2 mb-1">
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
                                                         {proj.category || 'Inovasi'}
                                                     </span>
                                                     <span className="text-[10px] text-slate-400">
@@ -688,7 +706,7 @@ export default function Dashboard({
                         </div>
 
                         {/* RECENT COMPETITIONS MONITORING */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
                                     <h2 className="text-sm font-bold text-slate-900">
@@ -721,7 +739,7 @@ export default function Dashboard({
                                                     Batas Pendaftaran: <strong className="text-slate-700">{comp.registration_deadline}</strong> {comp.organizer && `• ${comp.organizer}`}
                                                 </p>
                                             </div>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0 capitalize">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 shrink-0 capitalize">
                                                 {typeof comp.status === 'object' ? (comp.status?.value || 'Aktif') : (comp.status || 'Aktif')}
                                             </span>
                                         </div>
@@ -736,19 +754,19 @@ export default function Dashboard({
                     {/* RIGHT COLUMN: ADMIN PROFILE & QUICK SHORTCUTS */}
                     <div className="lg:col-span-4 space-y-6">
                         {/* ADMIN PROFILE CARD */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Profil Administrator
                                 </h2>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">
-                                    Super Admin
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                    {user.role === 'platform_admin' ? 'Super Admin' : 'Admin Kampus'}
                                 </span>
                             </div>
 
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="size-11 rounded-full bg-gradient-to-tr from-rose-600 to-indigo-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
-                                    AD
+                                <div className="size-11 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                                    {(user?.name || 'AD').substring(0, 2).toUpperCase()}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-sm font-bold text-slate-900 truncate">
@@ -767,7 +785,7 @@ export default function Dashboard({
                                 </div>
                                 <div className="flex items-center justify-between text-slate-500">
                                     <span>Hak Akses:</span>
-                                    <span className="font-semibold text-emerald-600">Akses Penuh (Full Control)</span>
+                                    <span className="font-semibold text-slate-800">Akses Penuh (Full Control)</span>
                                 </div>
                                 <div className="flex items-center justify-between text-slate-500">
                                     <span>Layanan Email:</span>
@@ -777,7 +795,7 @@ export default function Dashboard({
                         </div>
 
                         {/* QUICK ADMIN ACTION SHORTCUTS */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
                             <h2 className="text-sm font-bold text-slate-900 pb-3.5 border-b border-slate-100 mb-3.5">
                                 Pintasan Menu Administrator
                             </h2>
@@ -785,12 +803,12 @@ export default function Dashboard({
                             <div className="space-y-2">
                                 <Link
                                     href="/admin"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <ShieldCheck className="size-4 text-rose-600" />
+                                        <ShieldCheck className="size-4 text-blue-600" />
                                         <div>
-                                            <div className="text-xs font-bold text-slate-900 group-hover:text-rose-600 transition">
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                 Panel Administrasi Utama
                                             </div>
                                             <div className="text-[10px] text-slate-400">
@@ -798,12 +816,12 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
 
                                 <Link
                                     href="/admin/students"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <Users className="size-4 text-blue-600" />
@@ -816,17 +834,17 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
 
                                 <Link
                                     href="/admin/competitions"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <Trophy className="size-4 text-amber-600" />
+                                        <Trophy className="size-4 text-slate-700" />
                                         <div>
-                                            <div className="text-xs font-bold text-slate-900 group-hover:text-amber-600 transition">
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                 Kelola Kompetisi Kampus
                                             </div>
                                             <div className="text-[10px] text-slate-400">
@@ -834,17 +852,17 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
 
                                 <Link
                                     href="/admin/notifications"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <Mail className="size-4 text-purple-600" />
+                                        <Mail className="size-4 text-slate-700" />
                                         <div>
-                                            <div className="text-xs font-bold text-slate-900 group-hover:text-purple-600 transition">
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                 Monitoring & Uji Email
                                             </div>
                                             <div className="text-[10px] text-slate-400">
@@ -852,17 +870,17 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
 
                                 <Link
                                     href="/leaderboard/admin"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-100 bg-slate-50 hover:bg-white hover:border-slate-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
-                                        <Award className="size-4 text-emerald-600" />
+                                        <Award className="size-4 text-slate-700" />
                                         <div>
-                                            <div className="text-xs font-bold text-slate-900 group-hover:text-emerald-600 transition">
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                 Aturan Leaderboard & Poin
                                             </div>
                                             <div className="text-[10px] text-slate-400">
@@ -870,25 +888,25 @@ export default function Dashboard({
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
 
                                 <Link
                                     href="/ai-workspace"
-                                    className="flex items-center justify-between p-3 rounded-xl border border-blue-100 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-200 hover:shadow-xs transition group"
+                                    className="flex items-center justify-between p-3 rounded-xl border border-slate-200/80 bg-slate-50 hover:bg-white hover:border-blue-400 hover:shadow-xs transition group cursor-pointer"
                                 >
                                     <div className="flex items-center gap-2.5">
                                         <Bot className="size-4 text-blue-600" />
                                         <div>
-                                            <div className="text-xs font-bold text-blue-900 group-hover:text-blue-700 transition">
+                                            <div className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                 AI Workspace Copilot
                                             </div>
-                                            <div className="text-[10px] text-blue-600/80">
+                                            <div className="text-[10px] text-slate-400">
                                                 Asisten AI cerdas ruang kerja
                                             </div>
                                         </div>
                                     </div>
-                                    <ArrowRight className="size-3.5 text-blue-500 group-hover:text-blue-700 group-hover:translate-x-0.5 transition" />
+                                    <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition" />
                                 </Link>
                             </div>
                         </div>

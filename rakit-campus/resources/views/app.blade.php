@@ -41,7 +41,7 @@
             $atGraph = '@graph';
 
             // Default Global SEO Meta
-            $seoTitle = 'RAKIT Campus — Platform Kolaborasi, Matchmaking Tim Mahasiswa & Hub Kompetisi Kampus';
+            $seoTitle = 'RAKIT Campus | Platform Kolaborasi, Matchmaking Tim Mahasiswa & Hub Kompetisi Kampus';
             $seoDescription = 'Platform terpadu mahasiswa Indonesia untuk matchmaking tim proyek akademik, living proposal, penilaian transparan, dan hub kompetisi kampus berbasis AI.';
             $seoKeywords = 'RAKIT Campus, matchmaking mahasiswa, proyek kampus, kompetisi mahasiswa, hackathon Indonesia, tim proyek, living proposal, portofolio mahasiswa';
             $seoImage = asset('favicon.png');

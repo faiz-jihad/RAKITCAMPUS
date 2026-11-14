@@ -104,19 +104,16 @@ class GoogleAuthController extends Controller
                     ]
                 );
 
-                // Ensure Student Profile with all required fields
+                // Ensure Student Profile with un-onboarded initial state
                 $profile = StudentProfile::firstOrCreate(
                     ['user_id' => $user->id],
                     [
                         'campus_id' => $campus->id,
                         'slug' => Str::slug($name) . '-' . substr(md5($email), 0, 6),
-                        'department' => 'Teknologi Informasi',
-                        'study_program' => 'Teknik Informatika',
-                        'semester' => 5,
-                        'availability_hours' => 20,
-                        'bio' => 'Mahasiswa ' . $campus->name . ' (Akun Google)',
-                        'interests' => ['Teknologi', 'Inovasi Kampus', 'Software Development'],
-                        'preferred_roles' => ['Software Engineer', 'Frontend Developer', 'UI/UX Designer'],
+                        'bio' => '',
+                        'is_onboarded' => false,
+                        'interests' => [],
+                        'preferred_roles' => [],
                     ]
                 );
 

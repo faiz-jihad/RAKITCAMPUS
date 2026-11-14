@@ -681,8 +681,20 @@ class CompetitionWebController extends Controller
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        $campusId = $user->campusId();
-        $isPrivileged = $user->isCampusAdminOf($campusId) || $user->isPlatformAdmin() || $user->isLecturer();
+        $campusId = $user->campusId() ?? $user->memberships()->first()?->campus_id ?? \App\Models\Campus::first()?->id;
+        if (!$user->activeMembership() && $campusId) {
+            \App\Models\CampusMembership::firstOrCreate(
+                ['campus_id' => $campusId, 'user_id' => $user->id],
+                [
+                    'role' => \App\Enums\CampusRole::Student,
+                    'status' => \App\Enums\MembershipStatus::Active,
+                    'verification_status' => \App\Enums\VerificationStatus::Verified,
+                    'student_number' => 'MHS-' . substr(abs(crc32($user->email)), 0, 7),
+                    'verified_at' => now(),
+                ]
+            );
+        }
+        $isPrivileged = ($campusId && $user->isCampusAdminOf($campusId)) || $user->isPlatformAdmin() || $user->isLecturer();
 
         $participation = DB::transaction(function () use ($validated, $user, $campusId, $isPrivileged) {
             $slug = Str::slug($validated['competition_name']) . '-' . Str::lower(Str::random(6));

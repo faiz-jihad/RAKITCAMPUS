@@ -21,7 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function Appearance() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Tema & Tampilan — RAKIT Campus" />
+            <Head title="Tema & Tampilan RAKIT Campus" />
 
             <SettingsLayout>
                 <div className="space-y-6 max-w-2xl">

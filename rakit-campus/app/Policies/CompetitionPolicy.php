@@ -36,7 +36,7 @@ class CompetitionPolicy
 
     public function create(User $user): bool
     {
-        return $user->activeMembership() !== null;
+        return $user->activeMembership() !== null || $user->memberships()->exists() || $user->profile !== null;
     }
 
     public function update(User $user, Competition $competition): bool

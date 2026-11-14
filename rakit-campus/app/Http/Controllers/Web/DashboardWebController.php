@@ -143,7 +143,7 @@ class DashboardWebController extends Controller
         return $mapped->take($limit)->values();
     }
 
-    public function index(Request $request): Response
+    public function index(Request $request): Response|\Illuminate\Http\RedirectResponse
     {
         DemoProjectAligner::alignOnce();
         $user = $request->user();
@@ -276,6 +276,15 @@ class DashboardWebController extends Controller
         $membership?->loadMissing('campus');
         $isAdmin = $user->isCampusAdmin() || $user->isPlatformAdmin() || $membership?->role === CampusRole::CampusAdmin;
         $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
+
+        // Enforce onboarding for authenticated students before accessing dashboard
+        if (!$isAdmin && !$isLecturer) {
+            $profile = $user->profile;
+            if (!$profile || !$profile->is_onboarded) {
+                return redirect()->route('onboarding')
+                    ->with('info', 'Yuk lengkapi biodata singkatmu agar rekan tim dan ketua lomba dapat mengenalimu!');
+            }
+        }
 
         // Upcoming competitions (cached 5 min — shared across all roles)
         $upcomingCompetitions = $this->dashboardCache->upcomingCompetitions();

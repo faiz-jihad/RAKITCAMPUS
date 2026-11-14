@@ -29,12 +29,9 @@ class OnboardingWebController extends Controller
         $membership = $user->activeMembership();
         $profile = $user->profile()->with(['skills', 'experiences'])->first();
 
-        // Jika profil sudah berstatus onboarded atau data biodata sudah lengkap (seperti akun demo),
-        // otomatis aktifkan status onboarded dan arahkan langsung ke Dashboard tanpa perlu mengisi ulang
-        if ($profile && ($profile->is_onboarded || ($profile->study_program && $membership?->student_number)) && !$request->has('edit')) {
-            if (!$profile->is_onboarded) {
-                $profile->update(['is_onboarded' => true]);
-            }
+        // Hanya arahkan ke Dashboard jika profil sudah secara eksplisit berstatus onboarded
+        // dan tidak sedang dalam mode edit biodata (?edit=1)
+        if ($profile && $profile->is_onboarded && !$request->has('edit')) {
             return redirect()->route('dashboard');
         }
         $campus = $user->campuses()->first()

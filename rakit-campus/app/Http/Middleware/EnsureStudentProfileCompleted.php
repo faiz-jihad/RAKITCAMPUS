@@ -53,15 +53,6 @@ class EnsureStudentProfileCompleted
         // Check student profile completeness
         $profile = $user->profile()->first();
 
-        // Auto-heal: Jika profil mahasiswa sudah terisi lengkap (prodi/jurusan dan NIM/membership ada),
-        // otomatis set is_onboarded = true agar akun demo / yang sudah mengisi tidak dipaksa mengisi ulang
-        if ($profile && ($profile->study_program || $profile->department) && $user->activeMembership()?->student_number) {
-            if (!$profile->is_onboarded) {
-                $profile->update(['is_onboarded' => true]);
-            }
-            return $next($request);
-        }
-
         // If profile is not yet onboarded, redirect to 5-step onboarding wizard
         if (!$profile || !$profile->is_onboarded) {
             if ($request->wantsJson()) {

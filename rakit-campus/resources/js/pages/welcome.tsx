@@ -3912,9 +3912,9 @@ export default function Welcome() {
                                 <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
                                     Saran & Masukan Sistem
                                 </h2>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 sm:mt-2 leading-relaxed">
+                                {/* <p className="text-xs sm:text-sm text-slate-500 mt-1.5 sm:mt-2 leading-relaxed">
                                     Bantu kami mengembangkan RAKIT Campus menjadi platform kolaborasi yang lebih baik. Kami menerima aspirasi fitur, laporan kendala, atau masukan desain dari Anda.
-                                </p>
+                                </p> */}
                             </div>
 
                             {feedbackSubmitted ? (

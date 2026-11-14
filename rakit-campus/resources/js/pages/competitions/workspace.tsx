@@ -583,45 +583,68 @@ export default function CompetitionWorkspace({
             <div className="max-w-7xl mx-auto space-y-6 pb-16">
                 {/* GLOBAL FLASH ALERTS */}
                 {flash?.success && !dismissedFlash && (
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs sm:text-sm shadow-xs transition animate-in fade-in">
                         <div className="flex items-center gap-2.5">
-                            <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
+                            <CheckCircle2 className="size-4.5 text-blue-400 shrink-0" />
                             <span className="font-semibold leading-relaxed">{flash.success}</span>
                         </div>
                         <button
                             type="button"
                             onClick={() => setDismissedFlash(true)}
-                            className="text-emerald-600 hover:text-emerald-900 p-1 rounded-md"
+                            className="text-slate-400 hover:text-white p-1 rounded-md cursor-pointer transition"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
                 )}
                 {flash?.error && !dismissedFlash && (
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
+                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-900 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
                         <div className="flex items-center gap-2.5">
-                            <AlertCircle className="size-4.5 text-rose-600 shrink-0" />
+                            <AlertCircle className="size-4.5 text-slate-700 shrink-0" />
                             <span className="font-semibold leading-relaxed">{flash.error}</span>
                         </div>
                         <button
                             type="button"
                             onClick={() => setDismissedFlash(true)}
-                            className="text-rose-600 hover:text-rose-900 p-1 rounded-md"
+                            className="text-slate-500 hover:text-slate-900 p-1 rounded-md cursor-pointer transition"
                         >
                             <X className="size-4" />
                         </button>
                     </div>
                 )}
 
-                {/* 1. TOP UTILITY BAR & ACTIONS */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                    <Link
-                        href={`/competitions/${participation.competition?.slug || participation.competition?.id}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
-                    >
-                        <ArrowLeft className="size-3.5" />
-                        <span>Kembali ke Detail Kompetisi</span>
-                    </Link>
+                {/* 1. TOP HEADER & ACTIONS */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pt-1">
+                    <div className="space-y-1">
+                        <Link
+                            href={`/competitions/${participation.competition?.slug || participation.competition?.id}`}
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition"
+                        >
+                            <ArrowLeft className="size-3.5" />
+                            <span>Kembali ke Detail Kompetisi</span>
+                        </Link>
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight">
+                                {participation.team?.name || 'Tim Mahasiswa'}
+                            </h1>
+                            <span className="text-xs font-semibold text-slate-300">•</span>
+                            <span className="text-xs sm:text-sm font-semibold text-slate-600 truncate max-w-sm sm:max-w-md">
+                                {participation.competition?.name}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setNewTeamName(participation.team?.name || '');
+                                    setRenameModalOpen(true);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-slate-600 hover:text-blue-600 transition cursor-pointer"
+                                title="Ubah Nama Tim"
+                            >
+                                <PenLine className="size-3" />
+                                <span>Ubah</span>
+                            </button>
+                        </div>
+                    </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
                         {participation.competition?.official_url && (
@@ -632,7 +655,7 @@ export default function CompetitionWorkspace({
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
                             >
                                 <Globe className="size-3.5 text-slate-400 shrink-0" />
-                                <span className="hidden xs:inline">Website Resmi</span>
+                                <span className="hidden sm:inline">Website Resmi</span>
                                 <ExternalLink className="size-3 text-slate-400 shrink-0" />
                             </a>
                         )}
@@ -654,10 +677,10 @@ export default function CompetitionWorkspace({
                                 type="button"
                                 onClick={handleOpenAiModal}
                                 disabled={aiGenerating}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50"
-                                title="Susun otomatis rencana tugas Kanban menggunakan Google Gemini AI"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-300 text-slate-800 hover:text-blue-700 text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50"
+                                title="Susun otomatis rencana tugas Kanban menggunakan AI"
                             >
-                                <Sparkles className="size-3.5" />
+                                <Sparkles className="size-3.5 text-blue-600" />
                                 <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI'}</span>
                             </button>
                         )}
@@ -666,10 +689,10 @@ export default function CompetitionWorkspace({
                             <button
                                 type="button"
                                 onClick={handleApproveFormation}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
                             >
                                 <ShieldCheck className="size-3.5" />
-                                <span>Setujui Susunan Tim</span>
+                                <span>Setujui Tim</span>
                             </button>
                         )}
 
@@ -708,7 +731,7 @@ export default function CompetitionWorkspace({
                                         onClick={() => setResultModalOpen(true)}
                                         className="cursor-pointer gap-2"
                                     >
-                                        <Trophy className="size-3.5 text-amber-600" />
+                                        <Trophy className="size-3.5 text-slate-700" />
                                         <span>Catat Prestasi</span>
                                     </DropdownMenuItem>
 
@@ -724,24 +747,10 @@ export default function CompetitionWorkspace({
                                             </DropdownMenuItem>
                                         </>
                                     )}
-
-                                    {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                onClick={handleApproveFormation}
-                                                className="cursor-pointer gap-2 text-emerald-700"
-                                            >
-                                                <ShieldCheck className="size-3.5 text-emerald-600" />
-                                                <span>Setujui Susunan Tim</span>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
 
-                        {/* Primary Action Button: Tambah Tugas */}
                         {canManageTasks && (
                             <button
                                 type="button"
@@ -755,203 +764,15 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
 
-                {/* 2. UNIFIED COMMAND CENTER HERO CARD */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                    {/* Upper Section: Team Identity & Readiness */}
-                    <div className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
-                        <div className="space-y-2 min-w-0 flex-1">
-                            {/* Badges line: subtle & organized */}
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
-                                    {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'} • Tingkat {participation.competition?.level || 'Nasional'}
-                                </span>
-
-                                <button
-                                    type="button"
-                                    onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
-                                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition ${
-                                        (isLeader || isMentor || isAdmin)
-                                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 cursor-pointer'
-                                            : 'bg-amber-50 text-amber-800 border border-amber-200 cursor-default'
-                                    }`}
-                                    title="Klik untuk mengubah tahap seleksi"
-                                >
-                                    <span className="size-1.5 rounded-full bg-amber-500" />
-                                    <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
-                                    {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-amber-700 shrink-0" />}
-                                </button>
-
-                                {participation.category_track && (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 truncate max-w-[260px]">
-                                        Jalur: {participation.category_track}
-                                    </span>
-                                )}
-
-                                {participation.is_formation_locked && (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                                        <Lock className="size-3" />
-                                        <span>Terkunci</span>
-                                    </span>
-                                )}
-                            </div>
-
-                            {/* Team Title & Competition Name */}
-                            <div>
-                                <div className="flex items-center gap-2.5 flex-wrap">
-                                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
-                                        {participation.team?.name || 'Tim Mahasiswa'}
-                                    </h1>
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setNewTeamName(participation.team?.name || '');
-                                            setRenameModalOpen(true);
-                                        }}
-                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
-                                        title="Ubah Nama Tim"
-                                    >
-                                        <PenLine className="size-3" />
-                                        <span>Ubah Nama Tim</span>
-                                    </button>
-                                </div>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
-                                    Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
-                                    {participation.competition?.organizer ? ` • ${participation.competition.organizer}` : ''}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Readiness KPI Card */}
-                        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5 shrink-0 flex flex-col gap-1.5 min-w-[220px] self-start md:self-auto">
-                            <div className="flex items-center justify-between text-xs">
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kesiapan Tim</span>
-                                <span className="font-extrabold text-blue-600 font-mono text-sm">{readinessScore}%</span>
-                            </div>
-                            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                                <div
-                                    className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                    style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
-                                />
-                            </div>
-                            <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium">
-                                <span>Tugas: {(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}/{participation.team?.tasks?.length || 0} Selesai</span>
-                                <span>Berkas: {(participation.documents || []).filter((d: any) => d.path || d.url).length}/{(participation.competition?.required_documents || ['proposal', 'pitch_deck']).length} Terunggah</span>
-                            </div>
-                            <span className="text-[9px] text-slate-400">
-                                Formula: 50% Tugas Kanban + 50% Berkas Wajib
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Integrated Metric Strip: 3 Clean Interactive Stat Tiles */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-100 border-t border-slate-100 bg-slate-50/50">
-                        {/* Metric 1: Sprint & Tasks */}
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('kanban')}
-                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
-                        >
-                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-blue-600 transition">
-                                    <FolderKanban className="size-3.5 text-blue-600" />
-                                    <span>Sprint & Tugas</span>
-                                </span>
-                                <span className="text-[11px] font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                                    Buka Papan &rarr;
-                                </span>
-                            </div>
-                            <div className="flex items-baseline justify-between mb-1.5">
-                                <span className="text-lg font-black text-slate-900">
-                                    {completedTasks}/{totalTasks} <span className="text-xs font-semibold text-slate-500 font-sans">Selesai</span>
-                                </span>
-                                <span className="text-xs font-bold px-2 py-0.2 rounded-md bg-blue-50 text-blue-700">
-                                    {taskPercentage}%
-                                </span>
-                            </div>
-                            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden mb-1.5">
-                                <div
-                                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
-                                    style={{ width: `${taskPercentage}%` }}
-                                />
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium">
-                                <span>{inProgressTasks} Dalam Proses</span>
-                                <span>{todoTasks} To Do</span>
-                            </div>
-                        </button>
-
-                        {/* Metric 2: Timeline & Deadlines */}
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('rounds')}
-                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
-                        >
-                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-amber-600 transition">
-                                    <Clock className="size-3.5 text-amber-600" />
-                                    <span>Linimasa & Babak</span>
-                                </span>
-                                <span className="text-[11px] font-bold text-amber-600 group-hover:translate-x-0.5 transition-transform">
-                                    Jadwal &rarr;
-                                </span>
-                            </div>
-                            <div className="flex items-baseline justify-between mb-1">
-                                <span className="text-lg font-black text-slate-900">
-                                    {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini') : 'Terbuka'}
-                                    <span className="text-xs font-semibold text-slate-500 font-sans ml-1">
-                                        {daysLeft !== null && daysLeft > 0 ? 'Tersisa' : ''}
-                                    </span>
-                                </span>
-                                <span className="text-xs text-slate-500 font-medium">
-                                    Deadline: <strong className="text-slate-800">{formattedDeadline}</strong>
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-2">
-                                <span>{rounds.length > 0 ? `${rounds.length} Babak Seleksi` : `Format: ${participation.competition?.competition_type || 'Tim'}`}</span>
-                                <span className="text-slate-600">{selectionStages[participation.stage]?.label || participation.stage}</span>
-                            </div>
-                        </button>
-
-                        {/* Metric 3: Team Formasi & Dokumen */}
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('documents')}
-                            className="p-4 sm:px-6 sm:py-4 text-left hover:bg-white transition group cursor-pointer"
-                        >
-                            <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
-                                <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700 group-hover:text-emerald-600 transition">
-                                    <FileText className="size-3.5 text-emerald-600" />
-                                    <span>Kesiapan Berkas & Tim</span>
-                                </span>
-                                <span className="text-[11px] font-bold text-emerald-600 group-hover:translate-x-0.5 transition-transform">
-                                    Berkas &rarr;
-                                </span>
-                            </div>
-                            <div className="flex items-baseline justify-between mb-1">
-                                <span className="text-lg font-black text-slate-900">
-                                    {membersCount}/{capacity} <span className="text-xs font-semibold text-slate-500 font-sans">Anggota</span>
-                                </span>
-                                <span className="text-xs font-bold px-2 py-0.2 rounded-md bg-emerald-50 text-emerald-700">
-                                    {totalDocs} Berkas
-                                </span>
-                            </div>
-                            <div className="flex items-center justify-between text-[11px] text-slate-500 font-medium mt-2">
-                                <span>{totalDocs > 0 ? `${totalDocs} Berkas Terunggah` : 'Belum Ada Berkas'}</span>
-                                <span>{pendingAppsCount > 0 ? `${pendingAppsCount} Pelamar Baru` : 'Formasi Lengkap'}</span>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                {/* 3) WORKSPACE TABS NAVIGATION */}
+                {/* 2. WORKSPACE TABS NAVIGATION */}
                 <div
                     style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                     className="flex items-center gap-1 overflow-x-auto border-b border-slate-200 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
                 >
                     {[
-                        { id: 'overview', label: 'Tim & Formasi', icon: Users, count: participation.team?.members?.length || 0 },
-                        { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
+                        { id: 'overview', label: 'Ikhtisar Tim', icon: Users },
                         { id: 'kanban', label: 'Papan Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
+                        { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
                         { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
                         { id: 'rounds', label: 'Babak Seleksi', icon: Clock, count: rounds.length },
                         { id: 'mentoring', label: 'Bimbingan', icon: GraduationCap },
@@ -976,13 +797,13 @@ export default function CompetitionWorkspace({
                                 <span>{tab.label}</span>
                                 {typeof tab.count === 'number' && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md min-w-[18px] text-center shrink-0 ${
-                                        isActive ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
+                                        isActive ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600'
                                     }`}>
                                         {tab.count}
                                     </span>
                                 )}
                                 {tab.badge && (
-                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-rose-500 text-white shrink-0">
+                                    <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-slate-900 text-white shrink-0">
                                         {tab.badge}
                                     </span>
                                 )}
@@ -993,7 +814,7 @@ export default function CompetitionWorkspace({
                     {participation.team_id && (
                         <Link
                             href={`/ai-workspace?team_id=${participation.team_id}&assistant=competition`}
-                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 rounded-lg transition"
+                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-bold text-slate-700 hover:text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition"
                         >
                             <Sparkles className="size-3.5 text-blue-600" />
                             <span>AI Workspace</span>
@@ -1001,213 +822,342 @@ export default function CompetitionWorkspace({
                     )}
                 </div>
 
-                {/* 3) TAB CONTENT: OVERVIEW & TEAM */}
+                {/* 3. TAB CONTENT: BENTO GRID OVERVIEW */}
                 {activeTab === 'overview' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
-                        {/* Left Main (lg:col-span-2): Members List & Allocations */}
-                        <div className="lg:col-span-2 space-y-5">
-                            {/* Current Members Card */}
-                            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-                                    <div>
-                                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                            <Users className="size-4 text-blue-600 shrink-0" />
-                                            <span>Susunan Anggota Tim</span>
-                                        </h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                            {participation.team?.members?.length || 0} dari {participation.team?.capacity || participation.competition?.max_team_size || 5} kuota terisi
-                                        </p>
-                                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 sm:gap-5 items-stretch">
+                        {/* BENTO CARD 1: Master Team Identity & Readiness Hero (lg:col-span-8) */}
+                        <div className="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-5">
+                            <div className="space-y-3">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                        {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'} • Tingkat {participation.competition?.level || 'Nasional'}
+                                    </span>
 
-                                    {isLeader && !participation.is_formation_locked && (
+                                    <button
+                                        type="button"
+                                        onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
+                                        className={`text-[10px] font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 transition ${
+                                            (isLeader || isMentor || isAdmin)
+                                                ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer'
+                                                : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
+                                        }`}
+                                        title="Klik untuk mengubah tahap seleksi"
+                                    >
+                                        <span className="size-1.5 rounded-full bg-blue-600" />
+                                        <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
+                                        {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600 shrink-0" />}
+                                    </button>
+
+                                    {participation.category_track && (
+                                        <span className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[260px]">
+                                            Jalur: {participation.category_track}
+                                        </span>
+                                    )}
+
+                                    {participation.is_formation_locked && (
+                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">
+                                            <Lock className="size-3" />
+                                            <span>Terkunci</span>
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center gap-2.5 flex-wrap">
+                                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight leading-tight">
+                                            {participation.team?.name || 'Tim Mahasiswa'}
+                                        </h2>
                                         <button
                                             type="button"
-                                            onClick={() => setActiveTab('applicants')}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold transition cursor-pointer"
+                                            onClick={() => {
+                                                setNewTeamName(participation.team?.name || '');
+                                                setRenameModalOpen(true);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-bold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
+                                            title="Ubah Nama Tim"
                                         >
-                                            <UserPlus className="size-3.5 shrink-0" />
-                                            <span>Buka Lowongan Peran</span>
+                                            <PenLine className="size-3" />
+                                            <span>Ubah Nama Tim</span>
                                         </button>
-                                    )}
-                                </div>
-
-                                <div className="divide-y divide-slate-100">
-                                    {participation.team?.members?.map((member: any) => {
-                                        const isCurrentUser = member.user_id === participation.team?.members?.find((m: any) => m.user_id === member.user_id)?.user_id;
-                                        const phone = member.user?.phone || member.user?.student_profile?.phone;
-                                        const waUrl = phone ? formatWhatsAppUrl(phone, `Halo ${member.user?.name}, terkait progres tim kompetisi ${participation.team?.name}`) : null;
-
-                                        return (
-                                            <div key={member.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <div className="size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                                                        {member.user?.name?.charAt(0) || 'U'}
-                                                    </div>
-                                                    <div className="min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="text-xs font-bold text-slate-900 truncate">{member.user?.name}</span>
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                                                                member.permission === 'leader'
-                                                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                                    : 'bg-slate-100 text-slate-700'
-                                                            }`}>
-                                                                {member.role_name || (member.permission === 'leader' ? 'Ketua Tim' : 'Anggota')}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                                                            NIM: {member.user?.student_profile?.nim || 'Aktif'} • Bergabung: {new Date(member.joined_at || member.created_at).toLocaleDateString('id-ID')}
-                                                        </p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="flex items-center gap-2 flex-wrap sm:justify-end shrink-0">
-                                                    {member.user?.skills?.slice(0, 2).map((sk: any) => (
-                                                        <span key={sk.id} className="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-600 border border-slate-200/80 font-medium">
-                                                            {sk.name}
-                                                        </span>
-                                                    ))}
-
-                                                    {waUrl && (
-                                                        <a
-                                                            href={waUrl}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="p-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 transition"
-                                                            title={`Chat WhatsApp: ${phone}`}
-                                                        >
-                                                            <Phone className="size-3.5" />
-                                                        </a>
-                                                    )}
-
-                                                    {/* Withdraw Button */}
-                                                    {(isLeader || isCurrentUser) && member.permission !== 'leader' && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleWithdrawMember(member.user_id, member.user?.name)}
-                                                            title="Lepas keanggotaan"
-                                                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                                                        >
-                                                            <UserMinus className="size-3.5" />
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
+                                    </div>
+                                    <p className="text-xs sm:text-sm text-slate-500 mt-1 line-clamp-1">
+                                        Kompetisi: <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
+                                        {participation.competition?.organizer ? ` • ${participation.competition.organizer}` : ''}
+                                    </p>
                                 </div>
                             </div>
 
-                            {/* Invitations + Allocations (Render wrapper ONLY if either has content) */}
-                            {(hasInvitations || hasAllocations) && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    {/* Sent Invitations */}
-                                    {hasInvitations && (
-                                        <div className={`bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 ${!hasAllocations ? 'md:col-span-2' : ''}`}>
-                                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                                <Send className="size-3.5 text-blue-600 shrink-0" />
-                                                <span>Undangan Terkirim ({participation.team.invitations.length})</span>
-                                            </h4>
-
-                                            <div className="space-y-2">
-                                                {participation.team.invitations.map((inv: any) => (
-                                                    <div
-                                                        key={inv.id}
-                                                        className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
-                                                    >
-                                                        <div className="min-w-0">
-                                                            <span className="font-bold text-slate-900 block truncate">{inv.invitee?.name || 'Mahasiswa'}</span>
-                                                            <span className="text-[11px] text-slate-400">({inv.role_name || 'Anggota'})</span>
-                                                            {inv.message && <p className="text-[11px] text-slate-500 italic mt-0.5 truncate">"{inv.message}"</p>}
-                                                        </div>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                                                            inv.status === 'accepted' ? 'bg-emerald-50 text-emerald-700' : inv.status === 'declined' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
-                                                        }`}>
-                                                            {inv.status}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Lecturer Allocations */}
-                                    {hasAllocations && (
-                                        <div className={`bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3 ${!hasInvitations ? 'md:col-span-2' : ''}`}>
-                                            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                                <GraduationCap className="size-3.5 text-purple-600 shrink-0" />
-                                                <span>Alokasi Mahasiswa Dosen ({teamAllocations.length})</span>
-                                            </h4>
-
-                                            <div className="space-y-2">
-                                                {teamAllocations.map((alloc: any) => (
-                                                    <div
-                                                        key={alloc.id}
-                                                        className="p-3 bg-purple-50/40 rounded-xl border border-purple-200/70 flex items-center justify-between gap-3 text-xs"
-                                                    >
-                                                        <div className="min-w-0">
-                                                            <span className="font-bold text-purple-950 block truncate">{alloc.student?.name}</span>
-                                                            <span className="text-[11px] text-purple-700">• Peran: {alloc.suggested_role || 'Anggota'}</span>
-                                                            <p className="text-[10px] text-slate-400 mt-0.5 truncate">Oleh: {alloc.lecturer?.name || 'Dosen'}</p>
-                                                        </div>
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800 shrink-0">
-                                                            {alloc.status}
-                                                        </span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
+                            {/* Readiness KPI Strip */}
+                            <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 flex flex-col gap-2">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Kesiapan Tim & Berkas</span>
+                                    <span className="font-extrabold text-blue-600 font-mono text-lg">{readinessScore}%</span>
                                 </div>
-                            )}
+                                <div className="w-full h-2.5 bg-slate-200 rounded-full overflow-hidden">
+                                    <div
+                                        className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                        style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
+                                    />
+                                </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-slate-500 font-medium">
+                                    <div className="flex items-center gap-3">
+                                        <span>Tugas: <strong className="text-slate-800 font-bold">{(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}/{participation.team?.tasks?.length || 0}</strong> Selesai</span>
+                                        <span>Berkas: <strong className="text-slate-800 font-bold">{(participation.documents || []).filter((d: any) => d.path || d.url).length}/{(participation.competition?.required_documents || ['proposal', 'pitch_deck']).length}</strong> Terunggah</span>
+                                    </div>
+                                    <span className="text-[10px] text-slate-400">
+                                        Formula: 50% Tugas Kanban + 50% Berkas Wajib
+                                    </span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* Right Sidebar (1 col): Competition Details & Matchmaking */}
-                        <div className="space-y-5">
-                            {/* Competition Quick Info */}
-                            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
-                                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                    Informasi Lomba
-                                </h4>
-                                <dl className="space-y-3 text-xs">
-                                    <div>
-                                        <dt className="text-[11px] text-slate-400">Batas Pendaftaran</dt>
-                                        <dd className="font-bold text-slate-800 mt-0.5">
-                                            {participation.competition?.registration_deadline
-                                                ? new Date(participation.competition.registration_deadline).toLocaleDateString('id-ID', {
-                                                      day: 'numeric',
-                                                      month: 'long',
-                                                      year: 'numeric',
-                                                  })
-                                                : 'Terbuka'}
-                                        </dd>
-                                    </div>
-                                    <div>
-                                        <dt className="text-[11px] text-slate-400">Format Tim</dt>
-                                        <dd className="font-bold text-slate-800 mt-0.5">
-                                            {participation.competition?.min_team_size || 1} - {participation.competition?.max_team_size || 5} Orang
-                                        </dd>
-                                    </div>
-                                    {participation.competition?.prize_info && (
-                                        <div>
-                                            <dt className="text-[11px] text-slate-400">Total Hadiah</dt>
-                                            <dd className="font-bold text-emerald-700 mt-0.5">{participation.competition.prize_info}</dd>
+                        {/* BENTO CARD 2: Sprint & Task Progress (lg:col-span-4) */}
+                        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+                            <div>
+                                <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                    <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
+                                        <FolderKanban className="size-4 text-blue-600 shrink-0" />
+                                        <span>Sprint & Tugas</span>
+                                    </span>
+                                    <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                        {taskPercentage}% Selesai
+                                    </span>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1">
+                                    {completedTasks} <span className="text-sm font-semibold text-slate-500 font-sans">/ {totalTasks} Tugas</span>
+                                </div>
+                                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden my-2.5">
+                                    <div
+                                        className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                                        style={{ width: `${taskPercentage}%` }}
+                                    />
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
+                                    <span>{inProgressTasks} Dalam Proses</span>
+                                    <span>{todoTasks} Belum Mulai</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('kanban')}
+                                className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <span>Buka Papan Tugas</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+
+                        {/* BENTO CARD 3: Linimasa & Deadline (lg:col-span-4) */}
+                        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+                            <div>
+                                <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                    <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
+                                        <Clock className="size-4 text-blue-600 shrink-0" />
+                                        <span>Linimasa & Batas</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                        {selectionStages[participation.stage]?.label || participation.stage}
+                                    </span>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1">
+                                    {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini') : 'Terbuka'}
+                                    <span className="text-xs font-semibold text-slate-500 font-sans ml-1">
+                                        {daysLeft !== null && daysLeft > 0 ? 'Tersisa' : ''}
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Batas Pendaftaran: <strong className="text-slate-800 font-semibold">{formattedDeadline}</strong>
+                                </p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                    {rounds.length > 0 ? `${rounds.length} Babak Seleksi Resmi` : `Format: ${participation.competition?.competition_type || 'Tim'}`}
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('rounds')}
+                                className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <span>Lihat Jadwal Seleksi</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+
+                        {/* BENTO CARD 4: Kesiapan Dokumen & Deliverables (lg:col-span-4) */}
+                        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+                            <div>
+                                <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                    <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
+                                        <FileText className="size-4 text-blue-600 shrink-0" />
+                                        <span>Berkas & Karya</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                                        {totalDocs} Berkas
+                                    </span>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight my-1">
+                                    {totalDocs} <span className="text-sm font-semibold text-slate-500 font-sans">Dokumen Siap</span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-2">
+                                    Penyimpanan: <strong className="text-slate-800 font-semibold">{storageQuota ? `${storageQuota.used_mb}MB / ${storageQuota.max_mb}MB` : 'Aktif'}</strong>
+                                </p>
+                                <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                    Proposal, Pitch Deck, & Kelengkapan Lomba
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('documents')}
+                                className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <span>Kelola Berkas</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+
+                        {/* BENTO CARD 5: Bimbingan Dosen (lg:col-span-4) */}
+                        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+                            <div>
+                                <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
+                                    <span className="font-bold text-[11px] uppercase tracking-wider flex items-center gap-1.5 text-slate-700">
+                                        <GraduationCap className="size-4 text-blue-600 shrink-0" />
+                                        <span>Bimbingan Dosen</span>
+                                    </span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                        {participation.mentor ? 'Terhubung' : 'Mandiri'}
+                                    </span>
+                                </div>
+                                {participation.mentor ? (
+                                    <div className="my-1">
+                                        <div className="text-base sm:text-lg font-bold text-slate-900 truncate">
+                                            {participation.mentor.name}
                                         </div>
-                                    )}
-                                </dl>
+                                        <p className="text-xs text-slate-500 truncate mt-0.5">{participation.mentor.email}</p>
+                                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-1">
+                                            {participation.mentor_notes || 'Dosen pendamping resmi untuk kompetisi ini.'}
+                                        </p>
+                                    </div>
+                                ) : (
+                                    <div className="my-1">
+                                        <div className="text-base font-bold text-slate-900">Belum Ada Pembimbing</div>
+                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                            Hubungkan tim dengan dosen kampus untuk review substansi karya & strategi presentasi.
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('mentoring')}
+                                className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                            >
+                                <span>{participation.mentor ? 'Ruang Bimbingan' : 'Ajukan Bimbingan Dosen'}</span>
+                                <span>&rarr;</span>
+                            </button>
+                        </div>
+
+                        {/* BENTO CARD 6: Susunan Tim & Kontak (lg:col-span-8) */}
+                        <div className="lg:col-span-8 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
+                            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <Users className="size-4 text-blue-600 shrink-0" />
+                                        <span>Susunan Anggota Tim</span>
+                                    </h3>
+                                    <p className="text-xs text-slate-400 mt-0.5">
+                                        {participation.team?.members?.length || 0} dari {participation.team?.capacity || participation.competition?.max_team_size || 5} kuota terisi
+                                    </p>
+                                </div>
+
+                                {isLeader && !participation.is_formation_locked && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('applicants')}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                                    >
+                                        <UserPlus className="size-3.5 shrink-0" />
+                                        <span>Buka Lowongan Peran</span>
+                                    </button>
+                                )}
                             </div>
 
-                            {/* Smart Matchmaking Recommendations */}
-                            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-2xs space-y-3">
-                                <div className="flex items-center justify-between">
+                            <div className="divide-y divide-slate-100">
+                                {participation.team?.members?.map((member: any) => {
+                                    const isCurrentUser = member.user_id === participation.team?.members?.find((m: any) => m.user_id === member.user_id)?.user_id;
+                                    const phone = member.user?.phone || member.user?.student_profile?.phone;
+                                    const waUrl = phone ? formatWhatsAppUrl(phone, `Halo ${member.user?.name}, terkait progres tim kompetisi ${participation.team?.name}`) : null;
+
+                                    return (
+                                        <div key={member.id} className="py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <div className="size-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                                                    {member.user?.name?.charAt(0) || 'U'}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-xs font-bold text-slate-900 truncate">{member.user?.name}</span>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                            member.permission === 'leader'
+                                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                                : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                                        }`}>
+                                                            {member.role_name || (member.permission === 'leader' ? 'Ketua Tim' : 'Anggota')}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                                        NIM: {member.user?.student_profile?.nim || 'Aktif'} • Bergabung: {new Date(member.joined_at || member.created_at).toLocaleDateString('id-ID')}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 flex-wrap sm:justify-end shrink-0">
+                                                {member.user?.skills?.slice(0, 2).map((sk: any) => (
+                                                    <span key={sk.id} className="text-[10px] px-2 py-0.5 rounded bg-slate-50 text-slate-600 border border-slate-200 font-medium">
+                                                        {sk.name}
+                                                    </span>
+                                                ))}
+
+                                                {waUrl && (
+                                                    <a
+                                                        href={waUrl}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-slate-50 transition border border-slate-200"
+                                                        title={`Chat WhatsApp: ${phone}`}
+                                                    >
+                                                        <Phone className="size-3.5" />
+                                                    </a>
+                                                )}
+
+                                                {(isLeader || isCurrentUser) && member.permission !== 'leader' && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleWithdrawMember(member.user_id, member.user?.name)}
+                                                        title="Lepas keanggotaan"
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                                    >
+                                                        <UserMinus className="size-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* BENTO CARD 7: Rekomendasi Rekan Tim / Smart Matchmaking (lg:col-span-4) */}
+                        <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-4">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                                     <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                                        <Sparkles className="size-3.5 text-amber-500 shrink-0" />
+                                        <Sparkles className="size-3.5 text-blue-600 shrink-0" />
                                         <span>Rekomendasi Rekan</span>
                                     </h4>
                                     <span className="text-[10px] text-slate-400 shrink-0">Matchmaking</span>
                                 </div>
 
                                 {recommendedCandidates.length === 0 ? (
-                                    <p className="text-xs text-slate-400 py-3 text-center">
+                                    <p className="text-xs text-slate-400 py-6 text-center">
                                         Tidak ada rekomendasi rekan tambahan saat ini.
                                     </p>
                                 ) : (
@@ -1215,21 +1165,21 @@ export default function CompetitionWorkspace({
                                         {recommendedCandidates.slice(0, 3).map((cand: any) => (
                                             <div
                                                 key={cand.user.id}
-                                                className="p-3.5 rounded-xl border border-slate-200/80 hover:border-blue-300 transition space-y-2"
+                                                className="p-3 rounded-xl border border-slate-200/80 hover:border-blue-300 transition space-y-2 bg-slate-50/50"
                                             >
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0 flex-1">
                                                         <div className="text-xs font-bold text-slate-900 truncate">{cand.user.name}</div>
                                                         <p className="text-[10px] text-slate-400 truncate">{cand.explanation}</p>
                                                     </div>
-                                                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
+                                                    <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                                                         {cand.final_score}%
                                                     </span>
                                                 </div>
 
-                                                <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-slate-100">
+                                                <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-slate-200/60">
                                                     {cand.matched_skills?.slice(0, 2).map((sk: string, i: number) => (
-                                                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-medium">
+                                                        <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200 font-medium">
                                                             {sk}
                                                         </span>
                                                     ))}
@@ -1242,9 +1192,9 @@ export default function CompetitionWorkspace({
                                                             setSelectedCandidate(cand);
                                                             setInviteModalOpen(true);
                                                         }}
-                                                        className="w-full py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer"
+                                                        className="w-full py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer"
                                                     >
-                                                        Undang
+                                                        Undang ke Tim
                                                     </button>
                                                 )}
                                             </div>
@@ -1252,7 +1202,73 @@ export default function CompetitionWorkspace({
                                     </div>
                                 )}
                             </div>
+
+                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                                <span>Format Tim: {participation.competition?.min_team_size || 1}-{participation.competition?.max_team_size || 5} Orang</span>
+                                {participation.competition?.prize_info && (
+                                    <span className="font-semibold text-slate-700">{participation.competition.prize_info}</span>
+                                )}
+                            </div>
                         </div>
+
+                        {/* BENTO CARD 8: Undangan Terkirim & Alokasi Dosen (lg:col-span-12, shown if either exists) */}
+                        {(hasInvitations || hasAllocations) && (
+                            <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                                {hasInvitations && (
+                                    <div className={`bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-3 ${!hasAllocations ? 'md:col-span-2' : ''}`}>
+                                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Send className="size-3.5 text-blue-600 shrink-0" />
+                                            <span>Undangan Terkirim ({participation.team.invitations.length})</span>
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {participation.team.invitations.map((inv: any) => (
+                                                <div
+                                                    key={inv.id}
+                                                    className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
+                                                >
+                                                    <div className="min-w-0">
+                                                        <span className="font-bold text-slate-900 block truncate">{inv.invitee?.name || 'Mahasiswa'}</span>
+                                                        <span className="text-[11px] text-slate-400">({inv.role_name || 'Anggota'})</span>
+                                                        {inv.message && <p className="text-[11px] text-slate-500 italic mt-0.5 truncate">"{inv.message}"</p>}
+                                                    </div>
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                        inv.status === 'accepted' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-700 border border-slate-200'
+                                                    }`}>
+                                                        {inv.status}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {hasAllocations && (
+                                    <div className={`bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-3 ${!hasInvitations ? 'md:col-span-2' : ''}`}>
+                                        <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <GraduationCap className="size-3.5 text-blue-600 shrink-0" />
+                                            <span>Alokasi Mahasiswa Dosen ({teamAllocations.length})</span>
+                                        </h4>
+                                        <div className="space-y-2">
+                                            {teamAllocations.map((alloc: any) => (
+                                                <div
+                                                    key={alloc.id}
+                                                    className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 flex items-center justify-between gap-3 text-xs"
+                                                >
+                                                    <div className="min-w-0">
+                                                        <span className="font-bold text-slate-900 block truncate">{alloc.student?.name}</span>
+                                                        <span className="text-[11px] text-slate-600">• Peran: {alloc.suggested_role || 'Anggota'}</span>
+                                                        <p className="text-[10px] text-slate-400 mt-0.5 truncate">Oleh: {alloc.lecturer?.name || 'Dosen'}</p>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                                                        {alloc.status}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1264,7 +1280,7 @@ export default function CompetitionWorkspace({
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <Briefcase className="size-4 text-purple-600 shrink-0" />
+                                        <Briefcase className="size-4 text-blue-600 shrink-0" />
                                         <span>Posisi / Peran Dicari ({recruitmentRoles.length})</span>
                                     </h3>
                                 </div>
@@ -1273,7 +1289,7 @@ export default function CompetitionWorkspace({
                                     <button
                                         type="button"
                                         onClick={() => setAddingRole(!addingRole)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition cursor-pointer self-start sm:self-auto shrink-0"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer self-start sm:self-auto shrink-0 shadow-2xs"
                                     >
                                         <Plus className="size-3.5" />
                                         <span>Tambah Posisi</span>
@@ -1283,11 +1299,11 @@ export default function CompetitionWorkspace({
 
                             {/* Add Role Form Drawer */}
                             {addingRole && (
-                                <form onSubmit={handleAddRecruitmentRole} className="p-4 rounded-xl bg-purple-50/50 border border-purple-200 space-y-3">
+                                <form onSubmit={handleAddRecruitmentRole} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div className="sm:col-span-2">
                                             <label className="block text-xs font-bold text-slate-800 mb-1">
-                                                Nama Peran / Posisi <span className="text-rose-500">*</span>
+                                                Nama Peran / Posisi <span className="text-blue-600">*</span>
                                             </label>
                                             <input
                                                 type="text"
@@ -1295,12 +1311,12 @@ export default function CompetitionWorkspace({
                                                 placeholder="Contoh: UI/UX Designer, Frontend Developer, Pitcher"
                                                 value={newRoleName}
                                                 onChange={(e) => setNewRoleName(e.target.value)}
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
+                                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                                             />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-800 mb-1">
-                                                Jumlah Slot <span className="text-rose-500">*</span>
+                                                Jumlah Slot <span className="text-blue-600">*</span>
                                             </label>
                                             <input
                                                 type="number"
@@ -1309,7 +1325,7 @@ export default function CompetitionWorkspace({
                                                 required
                                                 value={newRoleSlots}
                                                 onChange={(e) => setNewRoleSlots(parseInt(e.target.value, 10) || 1)}
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
+                                                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                                             />
                                         </div>
                                     </div>
@@ -1323,7 +1339,7 @@ export default function CompetitionWorkspace({
                                             placeholder="Contoh: Menguasai Figma, familiar dengan React, atau mampu riset pasar"
                                             value={newRoleReqs}
                                             onChange={(e) => setNewRoleReqs(e.target.value)}
-                                            className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
+                                            className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                                         />
                                     </div>
 
@@ -1331,13 +1347,13 @@ export default function CompetitionWorkspace({
                                         <button
                                             type="button"
                                             onClick={() => setAddingRole(false)}
-                                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
                                         >
                                             Batal
                                         </button>
                                         <button
                                             type="submit"
-                                            className="px-4 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold cursor-pointer"
+                                            className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition shadow-2xs"
                                         >
                                             Simpan Lowongan
                                         </button>
@@ -1364,7 +1380,7 @@ export default function CompetitionWorkspace({
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0 flex-1">
                                                         <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
-                                                        <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 mt-1 shrink-0">
+                                                        <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 mt-1 shrink-0">
                                                             {r.slots} Slot
                                                         </span>
                                                     </div>
@@ -1372,7 +1388,7 @@ export default function CompetitionWorkspace({
                                                         <button
                                                             type="button"
                                                             onClick={() => handleDeleteRecruitmentRole(r.id)}
-                                                            className="text-slate-400 hover:text-rose-600 p-1 rounded transition shrink-0"
+                                                            className="text-slate-400 hover:text-slate-900 p-1 rounded transition shrink-0 cursor-pointer"
                                                             title="Hapus lowongan"
                                                         >
                                                             <Trash2 className="size-3.5" />
