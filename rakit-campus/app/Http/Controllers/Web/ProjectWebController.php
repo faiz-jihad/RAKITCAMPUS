@@ -26,6 +26,7 @@ use App\Models\Skill;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Services\Matchmaking\DemoProjectAligner;
 use App\Services\Matchmaking\EligibilityService;
 use App\Services\Matchmaking\InvitationService;
 use App\Services\Matchmaking\MatchmakingEngine;
@@ -54,6 +55,7 @@ class ProjectWebController extends Controller
 
     public function index(Request $request): Response
     {
+        DemoProjectAligner::alignOnce();
         $user = $request->user();
         $query = Project::visibleTo($user)
             ->with([
@@ -205,6 +207,7 @@ class ProjectWebController extends Controller
 
     public function show(Request $request, string|int $id): Response
     {
+        DemoProjectAligner::alignOnce();
         $user = $request->user();
         $project = $this->resolveProject($id, [
             'leader:id,name,email',
@@ -213,10 +216,42 @@ class ProjectWebController extends Controller
             'academicClass.coLecturers:id,name,email',
             'campus:id,name,slug',
             'skills',
-            'team.members.user:id,name',
+            'team.members.user:id,name,email',
             'team.recruitment.roles',
             'participations.competition:id,name,slug',
         ]);
+
+        // Auto-heal / synchronize accepted applicants into team_members if missing
+        if ($project->team && $project->team->recruitment) {
+            $acceptedApps = Application::where('recruitment_id', $project->team->recruitment->id)
+                ->whereIn('status', [\App\Enums\ApplicationStatus::Accepted->value, 'accepted'])
+                ->with('role')
+                ->get();
+
+            $needsReload = false;
+            foreach ($acceptedApps as $acceptedApp) {
+                $exists = TeamMember::where('team_id', $project->team->id)
+                    ->where('user_id', $acceptedApp->user_id)
+                    ->exists();
+
+                if (!$exists) {
+                    TeamMember::create([
+                        'team_id' => $project->team->id,
+                        'user_id' => $acceptedApp->user_id,
+                        'permission' => 'member',
+                        'status' => 'active',
+                        'role_name' => $acceptedApp->role?->name ?? 'Kolaborator Proyek',
+                        'recruitment_role_id' => $acceptedApp->recruitment_role_id,
+                        'joined_at' => $acceptedApp->decided_at ?? now(),
+                    ]);
+                    $needsReload = true;
+                }
+            }
+
+            if ($needsReload) {
+                $project->load(['team.members.user:id,name,email']);
+            }
+        }
 
         if ($user) {
             $this->authorize('view', $project);
@@ -233,10 +268,13 @@ class ProjectWebController extends Controller
 
         $isLeader = $user ? $project->isLeader($user) : false;
         $isLecturer = $user ? (
-            ($project->academicClass && $project->academicClass->isLecturer($user))
+            $user->isLecturer()
+            || ($project->academicClass && $project->academicClass->isLecturer($user))
             || $project->primary_supervisor_id === $user->id
             || $user->isPlatformAdmin()
+            || $user->isCampusAdmin()
         ) : false;
+        $isLecturerAccount = $isLecturer;
         $userHasActiveProject = $user ? $user->hasActiveProject($project->academic_class_id) : false;
 
         $applications = [];
@@ -429,7 +467,7 @@ class ProjectWebController extends Controller
 
         $project->setAttribute('has_capacity', $project->hasCapacity());
         $project->setAttribute('has_open_recruitment', $hasOpenRecruitment);
-        $isLecturerAccount = $user ? ($user->isLecturer() || $user->isPlatformAdmin() || $user->isCampusAdmin()) : false;
+        $isLecturerAccount = $isLecturer || ($user ? ($user->isLecturer() || $user->isPlatformAdmin() || $user->isCampusAdmin()) : false);
         $isMember = $user ? ($project->isLeader($user) || ($project->team?->hasMember($user) ?? false)) : false;
         $myApplication = ($user && $recruitment)
             ? Application::where('recruitment_id', $recruitment->id)
@@ -438,7 +476,7 @@ class ProjectWebController extends Controller
                 ->latest('id')
                 ->first()
             : null;
-        $eligibility = ($user && !$isLecturerAccount && !$isMember)
+        $eligibility = ($user && !$isLecturerAccount && !$isLecturer && !$isMember)
             ? $this->eligibilityService->checkStudentEligibility($user, $project)
             : ['eligible' => false, 'reason' => null];
 
@@ -620,6 +658,7 @@ class ProjectWebController extends Controller
                 'team_id' => $team->id,
                 'user_id' => $user->id,
                 'permission' => TeamPermission::Leader,
+                'status' => 'active',
                 'role_name' => 'Project Leader',
                 'joined_at' => now(),
             ]);
@@ -1162,6 +1201,72 @@ class ProjectWebController extends Controller
 
         return redirect()->route('workspace.show', $project->team->id)
             ->with('success', 'Selamat! Ruang kerja proyek (Project Workspace) resmi aktif.');
+    }
+
+    /**
+     * Demo helper: Simulate filling the team quota so user can test lecturer submission flow.
+     */
+    public function simulateFillTeam(Request $request, string|int $id)
+    {
+        $user = $request->user();
+        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
+
+        if (!$project->isLeader($user) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya ketua tim yang dapat melakukan simulasi pengisian tim.');
+        }
+
+        $team = $project->team;
+        if (!$team) {
+            return back()->with('error', 'Tim proyek belum tersedia.');
+        }
+
+        $academicClass = $project->academicClass;
+        $campusId = $project->campus_id;
+        $targetCapacity = $academicClass?->target_team_size ?? $project->max_team_size ?? 4;
+
+        $currentCount = $team->members()->where('status', 'active')->count();
+        $needed = $targetCapacity - $currentCount;
+
+        if ($needed <= 0) {
+            return back()->with('info', "Kapasitas tim sudah penuh ({$currentCount}/{$targetCapacity} anggota).");
+        }
+
+        $existingMemberUserIds = $team->members()->pluck('user_id')->all();
+        $availableStudents = \App\Models\User::whereHas('enrolledClasses', function ($q) use ($academicClass) {
+                if ($academicClass) {
+                    $q->where('academic_classes.id', $academicClass->id);
+                }
+            })
+            ->whereNotIn('id', $existingMemberUserIds)
+            ->take($needed)
+            ->get();
+
+        if ($availableStudents->count() < $needed) {
+            $fallbackStudents = \App\Models\User::whereHas('campusMemberships', function ($q) use ($campusId) {
+                    $q->where('campus_id', $campusId)->where('role', \App\Enums\CampusRole::Student->value);
+                })
+                ->whereNotIn('id', array_merge($existingMemberUserIds, $availableStudents->pluck('id')->all()))
+                ->take($needed - $availableStudents->count())
+                ->get();
+            $availableStudents = $availableStudents->merge($fallbackStudents);
+        }
+
+        $rolesToFill = ['AI / Computer Vision Specialist', 'Backend Engineer', 'Frontend Developer', 'System Analyst'];
+        $roleIdx = 0;
+
+        foreach ($availableStudents as $student) {
+            \App\Models\TeamMember::create([
+                'team_id' => $team->id,
+                'user_id' => $student->id,
+                'permission' => \App\Enums\TeamPermission::Member,
+                'role_name' => $rolesToFill[$roleIdx % count($rolesToFill)],
+                'status' => 'active',
+                'joined_at' => now(),
+            ]);
+            $roleIdx++;
+        }
+
+        return back()->with('success', "Simulasi berhasil! Formasi tim kini PENUH ({$team->members()->where('status', 'active')->count()}/{$targetCapacity} anggota). Tombol 'Ajukan ke Dosen' sekarang sudah aktif!");
     }
 
     /**

@@ -41,11 +41,12 @@ class HandleInertiaRequests extends Middleware
         $user = $request->user();
         $membership = $user?->activeMembership();
         $membership?->loadMissing('campus');
+        $isLecturer = $user && ($user->isLecturer() || ($membership?->role === \App\Enums\CampusRole::Lecturer));
 
         return array_merge(parent::share($request), [
             ...parent::share($request),
             'name' => config('app.name'),
-            'show_hub_selector' => (bool) $request->session()->pull('show_hub_selector', false),
+            'show_hub_selector' => false,
             'quote' => ['message' => trim($message), 'author' => trim($author)],
             'flash' => [
                 'success' => $request->session()->get('success'),

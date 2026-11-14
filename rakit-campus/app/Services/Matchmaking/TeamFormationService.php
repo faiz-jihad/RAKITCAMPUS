@@ -115,7 +115,7 @@ class TeamFormationService
      */
     public function canReviewFormation(Project $project, User $lecturer): bool
     {
-        if ($lecturer->isPlatformAdmin()) {
+        if ($lecturer->isPlatformAdmin() || $lecturer->isCampusAdmin()) {
             return true;
         }
 
@@ -125,7 +125,11 @@ class TeamFormationService
 
         $class = $project->academicClass;
 
-        return $class !== null && $class->isLecturer($lecturer);
+        if ($class !== null && $class->isLecturer($lecturer)) {
+            return true;
+        }
+
+        return $lecturer->isLecturer($project->campus_id);
     }
 
     /**
@@ -177,11 +181,22 @@ class TeamFormationService
 
         $team = $project->team;
         $activeMembersCount = $team ? $team->members()->where('status', 'active')->count() : 0;
-        $minRequired = $project->min_team_size ?: 2;
+        $targetCapacity = $project->academicClass?->target_team_size 
+            ?? $project->max_team_size 
+            ?? $project->team?->capacity 
+            ?? 4;
 
-        if ($activeMembersCount < $minRequired) {
+        if ($activeMembersCount < $targetCapacity) {
             throw ValidationException::withMessages([
-                'team' => ["Jumlah anggota tim aktif ({$activeMembersCount}) belum memenuhi batas minimum ({$minRequired} orang)."],
+                'team' => ["Pengajuan ke dosen pengampu mewajibkan formasi anggota tim sudah penuh ({$activeMembersCount}/{$targetCapacity} orang). Silakan penuhi kuota anggota tim terlebih dahulu sebelum mengajukan."],
+            ]);
+        }
+
+        $proposal = \App\Models\ProjectProposal::where('project_id', $project->id)->first();
+        $hasProposal = $proposal && ($proposal->current_version_id !== null || !empty($project->description));
+        if (!$hasProposal) {
+            throw ValidationException::withMessages([
+                'proposal' => ['Draft Living Proposal proyek wajib tersedia sebelum diajukan kepada Dosen Pengampu untuk ditinjau.'],
             ]);
         }
 
@@ -225,16 +240,20 @@ class TeamFormationService
 
         DB::transaction(function () use ($project, $lecturer, $resolvedNotes, $class) {
             $project->update([
-                'formation_status' => 'lecturer_approved',
+                'formation_status' => 'workspace_activated',
                 'formation_approved_at' => now(),
                 'formation_approved_by' => $lecturer->id,
                 'formation_notes' => $resolvedNotes,
                 'status' => ProjectStatus::InProgress,
             ]);
 
-            // Close recruitment
-            if ($project->team?->recruitment) {
-                $project->team->recruitment->update(['status' => RecruitmentStatus::Closed]);
+            // Close recruitment & activate team workspace
+            if ($project->team) {
+                $project->team->update(['status' => \App\Enums\TeamStatus::Active]);
+                if ($project->team->recruitment) {
+                    $project->team->recruitment->update(['status' => RecruitmentStatus::Closed]);
+                }
+                self::ensureStarterMilestones($project, $lecturer);
             }
 
             MatchingAuditLog::log(

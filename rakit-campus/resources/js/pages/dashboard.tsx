@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    Activity,
     AlertCircle,
     ArrowRight,
     ArrowUpRight,
@@ -8,27 +9,38 @@ import {
     BookOpen,
     Bot,
     Briefcase,
+    Building2,
+    Calendar,
     Check,
     CheckCircle2,
     Clock,
     Copy,
     ExternalLink,
+    FileCheck,
     FileText,
     FolderKanban,
     GraduationCap,
+    HelpCircle,
     Inbox,
+    Layers,
     Mail,
+    MessageSquare,
     MoreHorizontal,
     Plus,
     QrCode,
+    RefreshCw,
+    Scale,
+    Send,
     ShieldAlert,
     ShieldCheck,
+    Shuffle,
     Sparkles,
     Trophy,
     UserCheck,
     Users,
     X,
     XCircle,
+    Zap,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -100,6 +112,9 @@ interface Props {
         total_students_count?: number;
         total_guided_projects_count?: number;
         enrolled_classes_count?: number;
+        upcoming_competitions_count?: number;
+        unassigned_students_count?: number;
+        pending_proposals_count?: number;
     };
     myTeams?: any[];
     myTasks?: any[];
@@ -113,11 +128,14 @@ interface Props {
     recommendedProjects?: any[];
     receivedInvitations?: any[];
     recentActivities?: any[];
-    profileCompletion?: { percent: number; missing: string[] };
     taughtClasses?: any[];
     guidedProjects?: any[];
+    pendingProposals?: any[];
+    pendingEvaluations?: any[];
+    recentGuidances?: any[];
     pendingTeamApprovals?: any[];
     teamApprovalHistory?: any[];
+    profileCompletion?: { percent: number; missing: string[] };
 }
 
 export default function Dashboard({
@@ -136,14 +154,19 @@ export default function Dashboard({
     recommendedProjects = [],
     receivedInvitations = [],
     recentActivities = [],
-    profileCompletion,
     taughtClasses = [],
     guidedProjects = [],
+    pendingProposals = [],
+    pendingEvaluations = [],
+    recentGuidances = [],
     pendingTeamApprovals = [],
     teamApprovalHistory = [],
+    profileCompletion,
 }: Props) {
     const { flash, errors: pageErrors } = usePage().props as any;
-    const [hoveredMonth, setHoveredMonth] = useState<number | null>(null);
+    const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer');
+
+    // State untuk persetujuan tim & undangan
     const [approvalTab, setApprovalTab] = useState<'pending' | 'history'>('pending');
     const [processingProjectId, setProcessingProjectId] = useState<number | null>(null);
     const [rejectModalProject, setRejectModalProject] = useState<any | null>(null);
@@ -152,7 +175,13 @@ export default function Dashboard({
     const [declineModalInvite, setDeclineModalInvite] = useState<any | null>(null);
     const [declineReason, setDeclineReason] = useState('');
 
-    const isLecturer = Boolean(user?.is_lecturer);
+    // State untuk bimbingan & simulasi tim
+    const [selectedProjectForGuidance, setSelectedProjectForGuidance] = useState<any | null>(null);
+    const [guidanceTitle, setGuidanceTitle] = useState('');
+    const [guidanceContent, setGuidanceContent] = useState('');
+    const [guidanceType, setGuidanceType] = useState('feedback');
+    const [submittingGuidance, setSubmittingGuidance] = useState(false);
+    const [simulatingClassId, setSimulatingClassId] = useState<number | null>(null);
 
     const initials = (user?.name || (isLecturer ? 'Dosen' : 'Mahasiswa'))
         .split(' ')
@@ -167,26 +196,7 @@ export default function Dashboard({
     const taskPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     const readinessScore = profileCompletion?.percent ?? stats?.team_readiness_avg ?? 0;
 
-    // Monthly activity data
-    const displayMonthlyActivity = monthlyActivity && monthlyActivity.length === 6
-        ? monthlyActivity
-        : [
-              { month: 'Jan', done_tasks: 0, logs: 0, percent: 0 },
-              { month: 'Feb', done_tasks: completedTasks, logs: 0, percent: taskPercent },
-              { month: 'Mar', done_tasks: 0, logs: 0, percent: 0 },
-              { month: 'Apr', done_tasks: 0, logs: 0, percent: 0 },
-              { month: 'Mei', done_tasks: 0, logs: 0, percent: 0 },
-              { month: 'Jun', done_tasks: 0, logs: 0, percent: 0 },
-          ];
-
-    const defaultActiveIndex = displayMonthlyActivity.reduce(
-        (maxIdx, item, idx, arr) => (item.percent > arr[maxIdx].percent ? idx : maxIdx),
-        1
-    );
-    const activeMonthIdx = hoveredMonth !== null ? hoveredMonth : defaultActiveIndex;
-
-    const displayTeammates = teammates || [];
-
+    // Helper Badge Status Formasi Tim
     const getFormationBadgeStyle = (formationStatus?: string) => {
         switch (formationStatus) {
             case 'formation_review':
@@ -227,6 +237,7 @@ export default function Dashboard({
         }
     };
 
+    // Handler Dosen: Setujui Formasi Tim
     const handleApproveTeam = (item: any) => {
         if (!confirm(`Setujui pengajuan tim "${item.team_name}" untuk proyek "${item.title}"?`)) return;
         setProcessingProjectId(item.id);
@@ -234,7 +245,7 @@ export default function Dashboard({
             `/projects/${item.id}/formation/review`,
             {
                 action: 'approve',
-                notes: 'Susunan tim disetujui dosen melalui Dashboard Dosen.',
+                notes: 'Susunan tim dan pembimbing disetujui dosen melalui Dashboard Dosen.',
             },
             {
                 preserveScroll: true,
@@ -243,6 +254,7 @@ export default function Dashboard({
         );
     };
 
+    // Handler Dosen: Tolak Formasi Tim dengan Catatan
     const handleRejectTeamSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!rejectModalProject || !rejectReason.trim()) return;
@@ -265,6 +277,7 @@ export default function Dashboard({
         );
     };
 
+    // Handler Mahasiswa: Terima Undangan Kolaborasi
     const handleAcceptInvitation = (inv: any) => {
         if (!confirm(`Terima undangan kolaborasi dari tim "${inv.team_name}" (${inv.project_title})?`)) return;
         setProcessingInviteId(inv.id);
@@ -278,6 +291,7 @@ export default function Dashboard({
         );
     };
 
+    // Handler Mahasiswa: Tolak Undangan Kolaborasi
     const handleDeclineInvitationSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!declineModalInvite) return;
@@ -292,6 +306,51 @@ export default function Dashboard({
                     setDeclineReason('');
                 },
                 onFinish: () => setProcessingInviteId(null),
+            }
+        );
+    };
+
+    // Handler Dosen: Catat Arahan Bimbingan Cepat
+    const handleSendGuidance = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedProjectForGuidance || !guidanceTitle.trim() || !guidanceContent.trim()) {
+            alert('Mohon isi judul dan catatan arahan bimbingan.');
+            return;
+        }
+
+        setSubmittingGuidance(true);
+        router.post(
+            `/classes/${selectedProjectForGuidance.class_id}/guidance`,
+            {
+                project_id: selectedProjectForGuidance.id,
+                title: guidanceTitle.trim(),
+                content: guidanceContent.trim(),
+                type: guidanceType,
+            },
+            {
+                onSuccess: () => {
+                    setSelectedProjectForGuidance(null);
+                    setGuidanceTitle('');
+                    setGuidanceContent('');
+                },
+                onFinish: () => setSubmittingGuidance(false),
+            }
+        );
+    };
+
+    // Handler Dosen: 1-Click Simulasi Tim Otomatis
+    const handleRunAutoGrouping = (classId: number, className: string) => {
+        if (!confirm(`Jalankan Simulasi Tim Otomatis untuk kelas "${className}"? Sistem akan mendistribusikan sisa mahasiswa ke kelompok berimbang tanpa ketimpangan keahlian.`)) {
+            return;
+        }
+
+        setSimulatingClassId(classId);
+        router.post(
+            `/classes/${classId}/auto-form-teams`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setSimulatingClassId(null),
             }
         );
     };
@@ -843,43 +902,50 @@ export default function Dashboard({
     // 2. LECTURER DASHBOARD VIEW
     // ==========================================
     if (isUserLecturer) {
+
         const displayedApprovals = approvalTab === 'pending' ? pendingTeamApprovals : teamApprovalHistory;
 
         return (
-            <AppLayout activeTab="dashboard" title="Dashboard Dosen — RakitCampus">
-                {/* 1. HEADER ROW */}
-                <section className="flex flex-wrap items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
+            <AppLayout activeTab="dashboard" title="Dashboard Dosen Pengampu — RakitCampus">
+                {/* 1. HEADER ROW DOSEN */}
+                <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
                     <div>
-                        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                            Dashboard Dosen
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80">
+                                Portal Dosen Pengampu & Pembimbing
+                            </span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                            Selamat Datang, {user?.name}
                         </h1>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Kelola kelas perkuliahan, persetujuan pengajuan tim, dan progres proyek bimbingan.
+                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                            Kelola ruang kelas, persetujuan pengajuan tim, bimbing proyek & persiapan lomba, tinjau proposal, serta simulasi tim mahasiswa.
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-2.5 shrink-0">
                         <Link
                             href="/classes"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
                         >
-                            <GraduationCap className="w-3.5 h-3.5" />
-                            <span>Kelola Kelas</span>
+                            <GraduationCap className="w-4 h-4" />
+                            <span>Kelola Ruang Kelas</span>
                         </Link>
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs sm:text-sm font-semibold shadow-2xs transition cursor-pointer"
                         >
-                            <span>Proyek Bimbingan</span>
-                            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                            <FolderKanban className="w-4 h-4 text-slate-400" />
+                            <span>Eksplorasi Proyek</span>
                         </Link>
                     </div>
                 </section>
 
                 {/* FLASH & ERROR BANNERS */}
                 {flash?.success && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
-                        {flash.success}
+                    <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{flash.success}</span>
                     </div>
                 )}
                 {flash?.info && (
@@ -888,23 +954,25 @@ export default function Dashboard({
                     </div>
                 )}
                 {(flash?.error || pageErrors?.auth || pageErrors?.reason || pageErrors?.notes) && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
-                        {flash?.error || pageErrors?.auth || pageErrors?.reason || pageErrors?.notes}
+                    <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>{flash?.error || pageErrors?.auth || pageErrors?.reason || pageErrors?.notes}</span>
                     </div>
                 )}
 
-                {/* 2. LECTURER SUMMARY CARDS */}
+                {/* 2. STATISTIK KPI DOSEN PENGAMPU (4 KPI CARDS GABUNGAN) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+                    {/* KPI 1: Persetujuan Pengajuan Tim */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
                         <div>
                             <div className="flex items-center justify-between text-slate-400 mb-1">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Persetujuan Tim
                                 </span>
-                                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                                <ShieldCheck className="w-5 h-5 text-amber-600" />
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-slate-900 tracking-tight">
+                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {pendingTeamApprovals.length}
                                 </span>
                                 <span className="text-xs text-slate-400 font-medium">
@@ -914,23 +982,24 @@ export default function Dashboard({
                         </div>
                         <a
                             href="#persetujuan-tim"
-                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
+                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
                         >
-                            <span>Proses pengajuan tim</span>
-                            <ArrowUpRight className="w-3 h-3" />
+                            <span>Tinjau ajuan formasi</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                         </a>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+                    {/* KPI 2: Kelas Kuliah Diampu */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
                         <div>
                             <div className="flex items-center justify-between text-slate-400 mb-1">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Kelas Diampu
                                 </span>
-                                <GraduationCap className="w-4 h-4 text-blue-600" />
+                                <GraduationCap className="w-5 h-5 text-blue-600" />
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-slate-900 tracking-tight">
+                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {stats?.taught_classes_count ?? taughtClasses.length}
                                 </span>
                                 <span className="text-xs text-slate-400 font-medium">
@@ -940,76 +1009,76 @@ export default function Dashboard({
                         </div>
                         <Link
                             href="/classes"
-                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
+                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
                         >
-                            <span>Buka daftar kelas</span>
-                            <ArrowUpRight className="w-3 h-3" />
+                            <span>Buka manajemen kelas</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+                    {/* KPI 3: Proyek & Kelompok Bimbingan */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
                         <div>
                             <div className="flex items-center justify-between text-slate-400 mb-1">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Proyek Bimbingan
                                 </span>
-                                <FolderKanban className="w-4 h-4 text-slate-500" />
+                                <FolderKanban className="w-5 h-5 text-indigo-600" />
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-slate-900 tracking-tight">
+                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                     {stats?.total_guided_projects_count ?? guidedProjects.length}
                                 </span>
                                 <span className="text-xs text-slate-400 font-medium">
-                                    Proyek Terdaftar
+                                    Tim Proyek
                                 </span>
                             </div>
                         </div>
                         <Link
                             href="/projects"
-                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
+                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
                         >
-                            <span>Lihat semua proyek</span>
-                            <ArrowUpRight className="w-3 h-3" />
+                            <span>Tinjau progres proyek</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                     </div>
 
-                    <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+                    {/* KPI 4: Living Proposal Menunggu Review */}
+                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
                         <div>
                             <div className="flex items-center justify-between text-slate-400 mb-1">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Tugas Tim Selesai
+                                    Proposal Masuk
                                 </span>
-                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                <FileCheck className="w-5 h-5 text-amber-500" />
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-2xl font-bold text-slate-900 tracking-tight">
-                                    {completedTasks}
+                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                                    {stats?.pending_proposals_count ?? pendingProposals.length}
                                 </span>
                                 <span className="text-xs text-slate-400 font-medium">
-                                    Item Terverifikasi
+                                    Menunggu Persetujuan
                                 </span>
                             </div>
                         </div>
-                        <Link
-                            href="/workspace"
-                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
-                        >
-                            <span>Pantau workspace tim</span>
-                            <ArrowUpRight className="w-3 h-3" />
-                        </Link>
+                        <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
+                            Living Proposal mahasiswa kelas
+                        </div>
                     </div>
                 </div>
 
-                {/* 3. LECTURER MAIN CONTENT */}
+                {/* 3. MAIN CONTENT LAYOUT DOSEN (8 COLS / 4 COLS) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* LEFT COLUMN: PERSETUJUAN TIM & 5 PILAR DOSEN */}
                     <div className="lg:col-span-8 space-y-6">
-                        {/* PANEL PERSETUJUAN PENGAJUAN TIM */}
-                        <div id="persetujuan-tim" className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+
+                        {/* PANEL PERSETUJUAN PENGAJUAN TIM (FITUR UTAMA PERSETUJUAN DOSEN) */}
+                        <div id="persetujuan-tim" className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
-                                    <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <ShieldCheck className="w-4 h-4 text-amber-600" />
-                                        <span>Persetujuan Pengajuan Tim</span>
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <ShieldCheck className="w-5 h-5 text-amber-600" />
+                                        <span>Persetujuan Pengajuan Tim & Pembimbing</span>
                                         {pendingTeamApprovals.length > 0 && (
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
                                                 {pendingTeamApprovals.length} Baru
@@ -1136,7 +1205,7 @@ export default function Dashboard({
                                                             className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                                         >
                                                             <XCircle className="w-3.5 h-3.5" />
-                                                            <span>Tolak</span>
+                                                            <span>Tolak dengan Catatan</span>
                                                         </button>
                                                         <button
                                                             type="button"
@@ -1145,7 +1214,7 @@ export default function Dashboard({
                                                             className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                                         >
                                                             <CheckCircle2 className="w-3.5 h-3.5" />
-                                                            <span>{isBusy ? 'Memproses...' : 'Terima Pengajuan Tim'}</span>
+                                                            <span>{isBusy ? 'Memproses...' : 'Setujui Tim & Jadi Pembimbing'}</span>
                                                         </button>
                                                     </div>
                                                 )}
@@ -1168,173 +1237,510 @@ export default function Dashboard({
                             )}
                         </div>
 
-                        {/* KELAS YANG DIAMPU */}
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                        {/* PILAR 1: MEMBIMBING PROYEK & PERSIAPAN LOMBA */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
                                 <div>
-                                    <h2 className="text-sm font-bold text-slate-900">
-                                        Kelas Kuliah Diampu
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <Trophy className="w-4 h-4 text-blue-600" />
+                                        <span>Membimbing Proyek & Persiapan Lomba</span>
                                     </h2>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        Daftar kelas dan kode gabung untuk mahasiswa
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Pantau progres tim mahasiswa, beri arahan bimbingan berkala, dan siapkan tim unggulan untuk kompetisi kampus.
                                     </p>
                                 </div>
                                 <Link
-                                    href="/classes"
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                    href="/projects"
+                                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
                                 >
-                                    Kelola Semua →
+                                    <span>Lihat Semua Proyek</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                             </div>
 
-                            {taughtClasses.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                    {taughtClasses.map((cls: any) => (
-                                        <Link
-                                            key={cls.id}
-                                            href={`/classes/${cls.code || cls.id}`}
-                                            className="p-4 rounded-xl border border-slate-200/80 hover:border-blue-400 bg-slate-50/50 transition flex flex-col justify-between gap-2.5 group"
+                            {guidedProjects && guidedProjects.length > 0 ? (
+                                <div className="space-y-3.5">
+                                    {guidedProjects.map((proj: any) => (
+                                        <div
+                                            key={proj.id}
+                                            className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                                         >
-                                            <div>
-                                                <div className="flex items-center justify-between gap-2 mb-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                                                        {cls.code}
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                                                        {proj.class_code || 'KELAS'}
                                                     </span>
-                                                    <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-slate-200/70 text-slate-700">
-                                                        Kode: {cls.join_code}
+                                                    <span className="text-xs text-slate-500 truncate">
+                                                        {proj.class_name}
                                                     </span>
+                                                    {proj.is_competition_ready && (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
+                                                            <Trophy className="w-2.5 h-2.5" />
+                                                            <span>Potensi Lomba</span>
+                                                        </span>
+                                                    )}
                                                 </div>
-                                                <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
-                                                    {cls.name}
+                                                <h3 className="text-sm font-bold text-slate-900 truncate">
+                                                    {proj.title}
                                                 </h3>
+                                                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
+                                                    <span>Ketua: <strong>{proj.leader_name || 'Mahasiswa'}</strong></span>
+                                                    <span>•</span>
+                                                    <span>{proj.members_count || 1} Anggota</span>
+                                                    <span>•</span>
+                                                    <span>{proj.done_tasks}/{proj.total_tasks} Tugas Selesai</span>
+                                                    <span>•</span>
+                                                    <span className="font-semibold text-slate-700">Proposal: {(proj.proposal_status || 'draft').toUpperCase()}</span>
+                                                </div>
                                             </div>
-                                            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
-                                                <span>{cls.students_count} Mahasiswa • {cls.projects_count} Proyek</span>
-                                                <span className="font-bold text-blue-600">Buka Kelas →</span>
+
+                                            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 shrink-0">
+                                                <div className="text-right">
+                                                    <span className="text-xs font-bold text-slate-800">
+                                                        {proj.progress}%
+                                                    </span>
+                                                    <div className="w-28 bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+                                                        <div
+                                                            className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                                                            style={{ width: `${proj.progress}%` }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setSelectedProjectForGuidance(proj)}
+                                                        className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[11px] font-bold text-blue-700 transition cursor-pointer flex items-center gap-1"
+                                                    >
+                                                        <MessageSquare className="w-3 h-3" />
+                                                        <span>Beri Arahan</span>
+                                                    </button>
+                                                    <Link
+                                                        href={`/projects/${proj.slug || proj.id}`}
+                                                        className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition flex items-center gap-1"
+                                                    >
+                                                        <span>Detail</span>
+                                                        <ArrowRight className="w-3 h-3" />
+                                                    </Link>
+                                                </div>
                                             </div>
-                                        </Link>
+                                        </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="py-6 text-center text-xs text-slate-400">
-                                    <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                    <p className="font-semibold text-slate-700">Belum ada kelas perkuliahan</p>
-                                    <Link href="/classes" className="text-blue-600 font-semibold hover:underline mt-1 inline-block">
-                                        Buat kelas baru →
+                                <div className="py-10 text-center text-slate-400">
+                                    <FolderKanban className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                    <p className="font-semibold text-slate-700 text-sm">
+                                        Belum ada proyek bimbingan aktif
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                                        Proyek yang diajukan mahasiswa pada ruang kelas Anda akan otomatis muncul di sini untuk ditinjau, dibimbing, dan diarahkan ke persiapan lomba.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* PILAR 2: MENINJAU SERTA MENYETUJUI PROPOSAL (LIVING PROPOSAL) */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <FileCheck className="w-4 h-4 text-emerald-600" />
+                                        <span>Meninjau serta Menyetujui Proposal (Living Proposal)</span>
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Verifikasi proposal rancangan proyek mahasiswa sebelum pengerjaan sprint dimulai.
+                                    </p>
+                                </div>
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                    {pendingProposals.length} Menunggu
+                                </span>
+                            </div>
+
+                            {pendingProposals && pendingProposals.length > 0 ? (
+                                <div className="space-y-3">
+                                    {pendingProposals.map((prop: any) => (
+                                        <div
+                                            key={prop.id}
+                                            className="p-3.5 rounded-xl border border-amber-200/70 bg-amber-50/30 flex items-center justify-between gap-3"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/70 text-amber-900 uppercase">
+                                                        Revisi V{prop.proposal_version}
+                                                    </span>
+                                                    <span className="text-xs font-bold text-slate-800 truncate">
+                                                        {prop.title}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-500 truncate">
+                                                    Diajukan oleh: {prop.leader_name} • Kelas {prop.class_name}
+                                                </p>
+                                            </div>
+
+                                            <Link
+                                                href={`/projects/${prop.slug || prop.id}`}
+                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs"
+                                            >
+                                                <span>Tinjau & Setujui</span>
+                                                <ArrowRight className="w-3.5 h-3.5" />
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-500 flex items-center gap-2">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <span>Semua proposal proyek telah ditinjau dan disetujui. Tidak ada proposal yang tertunda saat ini.</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* PILAR 4: EVALUASI & SNAPSHOT IMUTABEL (UTS & UAS) - ALUR 4 */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <Award className="w-4 h-4 text-purple-600" />
+                                        <span>Evaluasi & Snapshot Imutabel (UTS & UAS)</span>
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Penilaian rubrik berkala UTS/UAS dan penguncian snapshot proposal & progres yang tidak tertimpa revisi.
+                                    </p>
+                                </div>
+                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                    pendingEvaluations.length > 0
+                                        ? 'bg-purple-100 text-purple-800'
+                                        : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                    {pendingEvaluations.length} Menunggu Penilaian
+                                </span>
+                            </div>
+
+                            {pendingEvaluations && pendingEvaluations.length > 0 ? (
+                                <div className="space-y-3">
+                                    {pendingEvaluations.map((ev: any) => (
+                                        <div
+                                            key={ev.id}
+                                            className="p-3.5 rounded-xl border border-purple-200/80 bg-purple-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
+                                                        ev.period_type === 'uas'
+                                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                    }`}>
+                                                        {ev.period_name || ev.period_type.toUpperCase()}
+                                                    </span>
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
+                                                        Snapshot V{ev.version_number} • Progress {ev.progress_percentage}%
+                                                    </span>
+                                                    {ev.class_code && (
+                                                        <span className="text-[10px] font-mono text-slate-400">
+                                                            {ev.class_code}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <h3 className="text-sm font-bold text-slate-900 truncate">
+                                                    {ev.team_name} — <span className="text-purple-700">{ev.project_title}</span>
+                                                </h3>
+                                                <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                                    Pengumpul: {ev.submitter_name} • Diserahkan {ev.submitted_at}
+                                                </p>
+                                            </div>
+
+                                            <Link
+                                                href={`/projects/${ev.project_slug || ev.project_id}?tab=${ev.period_type || 'uts'}`}
+                                                className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs"
+                                            >
+                                                <span>Beri Nilai & Review Rubrik</span>
+                                                <ArrowRight className="w-3.5 h-3.5" />
+                                            </Link>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-500 flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+                                        <span>Semua evaluasi UTS/UAS telah dinilai. Saat mahasiswa menyerahkan berkas laporan, sistem otomatis mengunci snapshot imutabel di sini.</span>
+                                    </div>
+                                    <Link
+                                        href="/projects"
+                                        className="text-xs font-bold text-purple-600 hover:underline shrink-0 inline-flex items-center gap-1"
+                                    >
+                                        <span>Lihat Proyek</span>
+                                        <ArrowRight className="w-3.5 h-3.5" />
                                     </Link>
                                 </div>
                             )}
                         </div>
 
-                        {/* PROYEK BIMBINGAN TERBARU */}
-                        {guidedProjects.length > 0 && (
-                            <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
-                                    <div>
-                                        <h2 className="text-sm font-bold text-slate-900">
-                                            Proyek Bimbingan Terbaru
-                                        </h2>
-                                        <p className="text-xs text-slate-400 mt-0.5">
-                                            Status formasi tim dan progres implementasi mahasiswa
-                                        </p>
-                                    </div>
-                                    <Link
-                                        href="/projects"
-                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
-                                    >
-                                        Semua Proyek →
-                                    </Link>
+                        {/* PILAR 3: RUANG KELAS & SIMULASI PEMBAGIAN TIM OTOMATIS */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <Shuffle className="w-4 h-4 text-indigo-600" />
+                                        <span>Ruang Kelas & Simulasi Pembagian Tim Cerdas</span>
+                                    </h2>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Kelola kelas kuliah dan jalankan simulasi distribusi mahasiswa yang belum memiliki kelompok agar merata tanpa ketimpangan.
+                                    </p>
                                 </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                    {guidedProjects.map((proj: any) => {
-                                        const badge = getFormationBadgeStyle(proj.formation_status);
-                                        return (
-                                            <Link
-                                                key={proj.id}
-                                                href={`/projects/${proj.slug || proj.id}`}
-                                                className="p-4 rounded-xl border border-slate-200/80 hover:border-blue-400 bg-slate-50/50 transition flex flex-col justify-between gap-2.5 group"
-                                            >
-                                                <div>
-                                                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                                                            {proj.class_code || 'PROYEK'}
-                                                        </span>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge.className}`}>
-                                                            {proj.formation_status_label || badge.label}
-                                                        </span>
-                                                    </div>
-                                                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
-                                                        {proj.title}
-                                                    </h3>
-                                                    <p className="text-[11px] text-slate-500 mt-0.5">
-                                                        Tim: {proj.team_name} • Ketua: {proj.leader_name || 'Mahasiswa'}
-                                                    </p>
-                                                </div>
-                                                <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
-                                                    <span>{proj.members_count} Anggota • Progress {proj.progress ?? 0}%</span>
-                                                    <span className="font-bold text-blue-600">Tinjau →</span>
-                                                </div>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* RIGHT COLUMN: PROFIL DOSEN & AKTIVITAS */}
-                    <div className="lg:col-span-4 space-y-6">
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Profil Dosen
-                                </h2>
                                 <Link
-                                    href="/settings/profile"
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                    href="/classes"
+                                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
                                 >
-                                    Pengaturan
+                                    <span>Kelola Semua Kelas</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                             </div>
 
-                            <div className="flex items-center gap-3 py-2">
-                                <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 font-bold text-xs flex items-center justify-center shrink-0">
+                            {taughtClasses && taughtClasses.length > 0 ? (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {taughtClasses.map((cls: any) => {
+                                        const hasUnassigned = (cls.unassigned_students_count ?? 0) > 0;
+                                        const isThisSimulating = simulatingClassId === cls.id;
+
+                                        return (
+                                            <div
+                                                key={cls.id}
+                                                className="p-4 rounded-xl border border-slate-200/80 bg-white hover:border-blue-500 transition flex flex-col justify-between gap-3 group"
+                                            >
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                                            Kode: {cls.join_code || cls.code}
+                                                        </span>
+                                                        <span className="text-xs text-slate-400">
+                                                            Semester {cls.semester} • {cls.academic_year || '2026/2027'}
+                                                        </span>
+                                                    </div>
+                                                    <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
+                                                        {cls.name}
+                                                    </h3>
+                                                    <p className="text-xs text-slate-500 mt-1">
+                                                        {cls.students_count || 0} Mahasiswa Terdaftar • {cls.projects_count || 0} Kelompok
+                                                    </p>
+                                                </div>
+
+                                                {/* Action Bar Simulasi Tim */}
+                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                                                    {hasUnassigned ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled={isThisSimulating}
+                                                            onClick={() => handleRunAutoGrouping(cls.id, cls.name)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-xs transition disabled:opacity-50 cursor-pointer"
+                                                            title="Otomatis bagi sisa mahasiswa ke kelompok berimbang"
+                                                        >
+                                                            <Zap className="w-3.5 h-3.5" />
+                                                            <span>
+                                                                {isThisSimulating ? 'Memproses...' : `Bagi ${cls.unassigned_students_count} Mhs Tersisa`}
+                                                            </span>
+                                                        </button>
+                                                    ) : (
+                                                        <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1">
+                                                            <Check className="w-3.5 h-3.5" />
+                                                            <span>Semua mahasiswa berkelompok</span>
+                                                        </span>
+                                                    )}
+
+                                                    <Link
+                                                        href={`/classes/${cls.code || cls.id}`}
+                                                        className="font-bold text-blue-600 flex items-center gap-1 hover:underline"
+                                                    >
+                                                        <span>Ruang Kelas</span>
+                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="py-8 text-center text-slate-400">
+                                    <GraduationCap className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                                    <p className="font-semibold text-slate-700 text-sm">
+                                        Belum ada ruang kelas yang dibuat
+                                    </p>
+                                    <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                                        Buat ruang kelas kuliah perdana untuk mengorganisasi mahasiswa dan menjalankan simulasi pembentukan tim.
+                                    </p>
+                                    <Link
+                                        href="/classes"
+                                        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition"
+                                    >
+                                        <Plus className="w-3.5 h-3.5" />
+                                        <span>Buat Kelas Perkuliahan</span>
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* RIGHT COLUMN: IDENTITAS DOSEN & FITUR PENGAMPU */}
+                    <div className="lg:col-span-4 space-y-6">
+                        {/* KARTU IDENTITAS DOSEN */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Identitas Dosen Pengampu
+                                </h2>
+                                <Link
+                                    href="/settings/profile"
+                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                >
+                                    Pengaturan Profil
+                                </Link>
+                            </div>
+
+                            <div className="flex items-center gap-3.5 py-2">
+                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
                                     {initials || 'DS'}
                                 </div>
                                 <div className="min-w-0">
                                     <h3 className="text-sm font-bold text-slate-900 truncate">
-                                        {user?.name || 'Dosen'}
+                                        {user?.name}
                                     </h3>
-                                    <p className="text-xs text-slate-500 truncate">
-                                        {user?.major || 'Dosen Pengampu & Pembimbing'}
+                                    <p className="text-xs text-slate-500 truncate mt-0.5">
+                                        {user?.email}
                                     </p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-xs">
                                 <div>
-                                    <span className="text-[10px] text-slate-400 block">Institusi</span>
-                                    <span className="font-semibold text-slate-800 line-clamp-1">{user?.campus || '-'}</span>
+                                    <span className="text-[10px] text-slate-400 block font-medium">NIDN / NIP</span>
+                                    <span className="font-semibold text-slate-800">
+                                        {user?.nim || '-'}
+                                    </span>
                                 </div>
                                 <div>
-                                    <span className="text-[10px] text-slate-400 block">Peran</span>
-                                    <span className="font-semibold text-blue-600">Dosen Pengampu</span>
+                                    <span className="text-[10px] text-slate-400 block font-medium">Status</span>
+                                    <span className="font-semibold text-emerald-600">
+                                        Dosen Pengampu
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-600">
+                                <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-0.5">
+                                    <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                                    <span>{user?.campus || 'Politeknik Negeri Indramayu'}</span>
+                                </div>
+                                <span className="text-[11px] text-slate-400">{user?.major || 'Teknik Informatika'}</span>
+                            </div>
+                        </div>
+
+                        {/* CATATAN ARAHAN BIMBINGAN TERAKHIR */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3.5">
+                            <h2 className="text-sm font-bold text-slate-900 flex items-center justify-between">
+                                <span>Riwayat Catatan Bimbingan</span>
+                                <MessageSquare className="w-4 h-4 text-blue-600" />
+                            </h2>
+
+                            {recentGuidances && recentGuidances.length > 0 ? (
+                                <div className="space-y-2.5">
+                                    {recentGuidances.slice(0, 4).map((g: any) => (
+                                        <div
+                                            key={g.id}
+                                            className="p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs"
+                                        >
+                                            <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
+                                                <span className="truncate">{g.title}</span>
+                                                <span className="text-[10px] text-slate-400 font-normal shrink-0">{g.created_at}</span>
+                                            </div>
+                                            <p className="text-slate-600 text-[11px] line-clamp-2">
+                                                {g.content}
+                                            </p>
+                                            <div className="mt-1.5 text-[10px] text-blue-600 font-medium">
+                                                {g.project_title || g.class_name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 italic text-center py-4">
+                                    Belum ada catatan bimbingan yang dikirim. Gunakan tombol "Beri Arahan" pada proyek mahasiswa.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* PANDUAN CEPAT 5 TUGAS PENGAMPU */}
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs space-y-3.5">
+                            <h2 className="text-sm font-bold text-slate-900">
+                                5 Fokus Tugas Pengampu
+                            </h2>
+
+                            <div className="space-y-2.5 text-xs">
+                                <div className="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-2">
+                                    <Trophy className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold text-blue-900">1. Bimbingan & Lomba</p>
+                                        <p className="text-blue-700/80 text-[11px] mt-0.5">
+                                            Arahkan proyek kelas mahasiswa yang berpotensi ke ajang perlombaan.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-start gap-2">
+                                    <FileCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold text-emerald-900">2. Review Living Proposal</p>
+                                        <p className="text-emerald-700/80 text-[11px] mt-0.5">
+                                            Tinjau serta setujui rancangan proyek proposal ketua kelompok.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-2">
+                                    <Activity className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold text-amber-900">3. Pantau Progres & Arahan</p>
+                                        <p className="text-amber-700/80 text-[11px] mt-0.5">
+                                            Cek task selesai dan beri feedback langsung ke tim mahasiswa.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100 flex items-start gap-2">
+                                    <Award className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold text-purple-900">4. Evaluasi & Nilai</p>
+                                        <p className="text-purple-700/80 text-[11px] mt-0.5">
+                                            Penilaian berkala UTS/UAS dan rubrik capaian luaran.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100 flex items-start gap-2">
+                                    <Zap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-bold text-indigo-900">5. Simulasi Tim Otomatis</p>
+                                        <p className="text-indigo-700/80 text-[11px] mt-0.5">
+                                            Distribusikan sisa mahasiswa tanpa kelompok secara adil & seimbang.
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3">
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Aktivitas Tim Bimbingan
-                                </h2>
-                                <span className="text-[11px] text-slate-400">Terbaru</span>
-                            </div>
+                        {/* AKTIVITAS TIM TERBARU */}
+                        {recentActivities && recentActivities.length > 0 && (
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
+                                <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3">
+                                    <h2 className="text-sm font-bold text-slate-900">
+                                        Aktivitas Tim Bimbingan
+                                    </h2>
+                                    <span className="text-[11px] text-slate-400">Terbaru</span>
+                                </div>
 
-                            {recentActivities && recentActivities.length > 0 ? (
                                 <div className="divide-y divide-slate-100">
-                                    {recentActivities.map((act: any, idx: number) => (
+                                    {recentActivities.slice(0, 5).map((act: any, idx: number) => (
                                         <div key={act.id || idx} className="py-2.5 text-xs">
                                             <p className="font-semibold text-slate-800">
                                                 {act.actor?.name || 'Mahasiswa'}
@@ -1345,12 +1751,8 @@ export default function Dashboard({
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="py-4 text-center text-xs text-slate-400">
-                                    Belum ada log aktivitas tim terbaru
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -1361,7 +1763,7 @@ export default function Dashboard({
                             <div className="flex items-start justify-between gap-3 mb-3">
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
-                                        Tolak Pengajuan Tim
+                                        Tolak Pengajuan Formasi Tim
                                     </h3>
                                     <p className="text-xs text-slate-500 mt-0.5">
                                         {rejectModalProject.team_name} ({rejectModalProject.title})
@@ -1379,14 +1781,14 @@ export default function Dashboard({
                             <form onSubmit={handleRejectTeamSubmit} className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                        Alasan Penolakan *
+                                        Alasan Penolakan & Arahan Perbaikan <span className="text-rose-500">*</span>
                                     </label>
                                     <textarea
                                         rows={3}
                                         required
                                         value={rejectReason}
                                         onChange={(e) => setRejectReason(e.target.value)}
-                                        placeholder="Jelaskan alasan penolakan atau penyesuaian anggota yang dibutuhkan..."
+                                        placeholder="Jelaskan alasan penolakan, penyesuaian komposisi anggota yang dibutuhkan, atau saran topik..."
                                         className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
                                     />
                                 </div>
@@ -1410,16 +1812,121 @@ export default function Dashboard({
                         </div>
                     </div>
                 )}
+
+                {/* MODAL INPUT CATATAN ARAHAN BIMBINGAN (DOSEN) */}
+                {selectedProjectForGuidance && (
+                    <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900">
+                                        Catat Arahan & Bimbingan Proyek
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Proyek: <strong>{selectedProjectForGuidance.title}</strong>
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedProjectForGuidance(null)}
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleSendGuidance} className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                        Judul Arahan / Topik Bimbingan <span className="text-rose-500">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={guidanceTitle}
+                                        onChange={(e) => setGuidanceTitle(e.target.value)}
+                                        placeholder="Contoh: Evaluasi Arsitektur Database & Sprint 1"
+                                        required
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs sm:text-sm focus:outline-none focus:border-blue-600 font-medium"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                            Jenis Arahan
+                                        </label>
+                                        <select
+                                            value={guidanceType}
+                                            onChange={(e) => setGuidanceType(e.target.value)}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs"
+                                        >
+                                            <option value="feedback">Feedback Progres</option>
+                                            <option value="revision">Catatan Revisi Proposal</option>
+                                            <option value="competition">Instruksi Persiapan Lomba</option>
+                                            <option value="evaluation">Evaluasi Tengah Semester</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                            Target Kelompok
+                                        </label>
+                                        <input
+                                            type="text"
+                                            disabled
+                                            value={selectedProjectForGuidance.team_name || 'Tim Mahasiswa'}
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-500 text-xs font-medium"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                        Isi Arahan / Rekomendasi Perbaikan <span className="text-rose-500">*</span>
+                                    </label>
+                                    <textarea
+                                        rows={4}
+                                        value={guidanceContent}
+                                        onChange={(e) => setGuidanceContent(e.target.value)}
+                                        placeholder="Tuliskan catatan teknis, arahan implementasi, atau perbaikan proposal yang harus diselesaikan kelompok..."
+                                        required
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-900 text-xs sm:text-sm focus:outline-none focus:border-blue-600 leading-relaxed"
+                                    />
+                                </div>
+
+                                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedProjectForGuidance(null)}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={submittingGuidance}
+                                        className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                                    >
+                                        <Send className="w-3.5 h-3.5" />
+                                        <span>{submittingGuidance ? 'Menyimpan...' : 'Kirim Catatan Arahan'}</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
             </AppLayout>
         );
     }
 
+    // ==========================================
+    // TAMPILAN DASHBOARD REGULER MAHASISWA
+    // ==========================================
     return (
         <AppLayout activeTab="dashboard" title="Dashboard - RakitCampus">
             {/* 1. HEADER ROW */}
             <section className="flex items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
                 <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
-                    Dashboard
+                    Dashboard Mahasiswa
                 </h1>
 
                 <div className="flex items-center gap-2.5">
@@ -1442,8 +1949,9 @@ export default function Dashboard({
 
             {/* FLASH & ERROR BANNERS */}
             {flash?.success && (
-                <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800">
-                    {flash.success}
+                <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{flash.success}</span>
                 </div>
             )}
             {flash?.info && (
@@ -1452,12 +1960,13 @@ export default function Dashboard({
                 </div>
             )}
             {(flash?.error || pageErrors?.invitation || pageErrors?.capacity) && (
-                <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700">
-                    {flash?.error || pageErrors?.invitation || pageErrors?.capacity}
+                <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-medium text-rose-700 flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{flash?.error || pageErrors?.invitation || pageErrors?.capacity}</span>
                 </div>
             )}
 
-            {/* 2. REAL METRIC SUMMARY CARDS */}
+            {/* 2. REAL METRIC SUMMARY CARDS (4 CARDS) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 {/* Metric 1: Tasks */}
                 <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
@@ -1574,7 +2083,7 @@ export default function Dashboard({
 
             {/* 3. MAIN CONTENT (TWO COLUMNS: 8 COLS / 4 COLS) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* LEFT COLUMN: TASKS & ACTIVE PROJECTS */}
+                {/* LEFT COLUMN: TASKS, ACTIVE PROJECTS, INVITATIONS, RECRUITING */}
                 <div className="lg:col-span-8 space-y-6">
                     {/* Panel 1: Tugas Prioritas */}
                     <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
@@ -1586,9 +2095,10 @@ export default function Dashboard({
                             </div>
                             <Link
                                 href="/workspace"
-                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1"
                             >
-                                Buka Workspace Tim →
+                                <span>Buka Workspace Tim</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                         </div>
 
@@ -1646,12 +2156,14 @@ export default function Dashboard({
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Proyek Akademik Anda
                                 </h2>
+
                             </div>
                             <Link
                                 href="/projects"
-                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1"
                             >
-                                Semua Proyek →
+                                <span>Semua Proyek</span>
+                                <ArrowRight className="w-3.5 h-3.5" />
                             </Link>
                         </div>
 
@@ -1702,6 +2214,26 @@ export default function Dashboard({
                                                 )}
                                             </div>
 
+                                            {team.can_access_workspace && team.project && (
+                                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                                    <span className="text-slate-500 font-medium">Evaluasi Semester:</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Link
+                                                            href={`/projects/${team.project.slug || team.project.id}?tab=uts`}
+                                                            className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10px]"
+                                                        >
+                                                            Snapshot UTS
+                                                        </Link>
+                                                        <Link
+                                                            href={`/projects/${team.project.slug || team.project.id}?tab=uas`}
+                                                            className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-[10px]"
+                                                        >
+                                                            Snapshot UAS
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            )}
+
                                             <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                                                 <span className="text-slate-500">
                                                     {team.members_count || 1} Anggota • Progress {team.progress_percent ?? 0}%
@@ -1735,7 +2267,7 @@ export default function Dashboard({
                         )}
                     </div>
 
-                    {/* Panel 2b: Undangan Kolaborasi Antarmahasiswa (Terpisah dari Persetujuan Dosen) */}
+                    {/* Panel 2b: Undangan Kolaborasi Antarmahasiswa */}
                     {receivedInvitations && receivedInvitations.length > 0 && (
                         <div id="undangan-kolaborasi" className="bg-white rounded-xl border border-blue-200/90 p-5 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
@@ -1922,8 +2454,9 @@ export default function Dashboard({
                                             <span className="text-[11px] text-slate-500 truncate">
                                                 {proj.leader?.name || 'Ketua Tim'} • {proj.members_count ?? 1}/{proj.max_team_size ?? 4} Anggota
                                             </span>
-                                            <span className="font-semibold text-blue-600 flex items-center gap-0.5 shrink-0">
-                                                Detail ↗
+                                            <span className="font-semibold text-blue-600 flex items-center gap-1 shrink-0">
+                                                <span>Detail</span>
+                                                <ArrowUpRight className="w-3.5 h-3.5" />
                                             </span>
                                         </div>
                                     </Link>
@@ -1932,15 +2465,16 @@ export default function Dashboard({
                         ) : (
                             <div className="py-6 text-center text-xs text-slate-400">
                                 <p className="font-semibold text-slate-700">Belum ada proyek yang membuka rekrutmen saat ini</p>
-                                <Link href="/projects?status=recruiting" className="text-blue-600 font-semibold hover:underline mt-1 inline-block">
-                                    Lihat daftar proyek di Project Hub →
+                                <Link href="/projects?status=recruiting" className="text-blue-600 font-semibold hover:underline mt-1 inline-flex items-center gap-1">
+                                    <span>Lihat daftar proyek di Project Hub</span>
+                                    <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                             </div>
                         )}
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: PROFILE, ACTIVITY & TEAMMATES */}
+                {/* RIGHT COLUMN: PROFILE & ACTIVITIES */}
                 <div className="lg:col-span-4 space-y-6">
                     {/* User Card */}
                     <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
@@ -1950,7 +2484,7 @@ export default function Dashboard({
                             </h2>
                             <Link
                                 href="/settings/profile"
-                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                className="text-xs font-semibold text-blue-600 hover:underline"
                             >
                                 Edit Profil
                             </Link>
@@ -1972,112 +2506,14 @@ export default function Dashboard({
 
                         <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-xs">
                             <div>
-                                <span className="text-[10px] text-slate-400 block">NIM</span>
+                                <span className="text-[10px] text-slate-400 block font-medium">NIM</span>
                                 <span className="font-semibold text-slate-800">{user?.nim || '-'}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] text-slate-400 block">Status</span>
+                                <span className="text-[10px] text-slate-400 block font-medium">Status</span>
                                 <span className="font-semibold text-emerald-600">Aktif</span>
                             </div>
                         </div>
-                    </div>
-
-                    {/* Monthly Activity Feed */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
-                            <h2 className="text-sm font-bold text-slate-900">
-                                Laporan Aktivitas Tim
-                            </h2>
-                            <span className="text-[11px] text-slate-400">6 Bulan</span>
-                        </div>
-
-                        {/* 6 Monthly Pillars */}
-                        <div className="pt-2">
-                            <div className="grid grid-cols-6 gap-2 items-end h-28 relative px-1">
-                                {displayMonthlyActivity.map((item, idx) => {
-                                    const isActive = idx === activeMonthIdx;
-
-                                    return (
-                                        <div
-                                            key={idx}
-                                            className="flex flex-col items-center h-full justify-end relative group cursor-pointer"
-                                            onMouseEnter={() => setHoveredMonth(idx)}
-                                            onMouseLeave={() => setHoveredMonth(null)}
-                                        >
-                                            {isActive && (
-                                                <div className="absolute -top-10 z-20 bg-slate-900 text-white text-[10px] py-1 px-2 rounded-md shadow-md whitespace-nowrap pointer-events-none">
-                                                    <span>{item.done_tasks} tugas selesai</span>
-                                                </div>
-                                            )}
-
-                                            <div
-                                                className={`w-full max-w-[28px] rounded-t-md transition-all duration-200 ${
-                                                    isActive
-                                                        ? 'bg-blue-600 ring-2 ring-blue-300'
-                                                        : 'bg-slate-200 group-hover:bg-blue-400'
-                                                }`}
-                                                style={{ height: `${Math.max(12, item.percent)}%` }}
-                                            />
-                                            <span
-                                                className={`text-[10px] font-semibold mt-1.5 ${
-                                                    isActive ? 'text-slate-900 font-bold' : 'text-slate-400'
-                                                }`}
-                                            >
-                                                {item.month}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Teammates List */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
-                        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3">
-                            <h2 className="text-sm font-bold text-slate-900">
-                                Rekan Kolaborasi
-                            </h2>
-                            <Link
-                                href="/projects"
-                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
-                            >
-                                Cari Rekan
-                            </Link>
-                        </div>
-
-                        {displayTeammates.length > 0 ? (
-                            <div className="divide-y divide-slate-100">
-                                {displayTeammates.map((mate: any, idx: number) => {
-                                    const mateInitials = (mate.name || 'M')
-                                        .split(' ')
-                                        .filter(Boolean)
-                                        .slice(0, 2)
-                                        .map((w: string) => w[0].toUpperCase())
-                                        .join('');
-
-                                    return (
-                                        <div key={mate.id || idx} className="py-2.5 flex items-center gap-2.5">
-                                            <div className="w-8 h-8 rounded-full bg-slate-100 font-bold text-[11px] text-slate-700 flex items-center justify-center shrink-0">
-                                                {mateInitials}
-                                            </div>
-                                            <div className="min-w-0 flex-1">
-                                                <h3 className="text-xs font-semibold text-slate-900 truncate">
-                                                    {mate.name}
-                                                </h3>
-                                                <p className="text-[11px] text-slate-400 truncate">
-                                                    {mate.role || 'Mahasiswa'} {mate.team ? `• ${mate.team}` : ''}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="py-4 text-center text-xs text-slate-400">
-                                Belum ada rekan tim aktif
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>

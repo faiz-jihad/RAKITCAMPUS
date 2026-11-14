@@ -27,7 +27,18 @@ class AcademicClassPolicy
             return true;
         }
 
-        return $academicClass->hasStudent($user) && $user->isStudent($academicClass->campus_id);
+        // Allow any enrolled student in this class
+        if ($academicClass->hasStudent($user) && $user->isStudent($academicClass->campus_id)) {
+            return true;
+        }
+
+        // Allow any authenticated student at the same campus to view the class overview (read-only)
+        // so they can join via join_code without getting 403 first
+        if ($user->isStudent($academicClass->campus_id)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

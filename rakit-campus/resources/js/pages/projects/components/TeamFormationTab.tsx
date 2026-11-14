@@ -28,6 +28,8 @@ interface Props {
     isLeader: boolean;
     isLecturer: boolean;
     canAccessWorkspace: boolean;
+    academicClass?: any;
+    livingProposal?: any;
 }
 
 export default function TeamFormationTab({
@@ -35,14 +37,31 @@ export default function TeamFormationTab({
     isLeader,
     isLecturer,
     canAccessWorkspace,
+    academicClass,
+    livingProposal,
 }: Props) {
     const { errors: pageErrors } = usePage().props as any;
     const formationStatus = project.formation_status || 'draft';
     const formationApprover = project.formation_approver || project.formationApprover;
-    const activeMembers = project.team?.members || [];
+    const activeMembers = (project.team?.members || []).filter((m: any) => !m.status || m.status === 'active');
     const minRequired = project.min_team_size || 2;
-    const maxCapacity = project.max_team_size || 4;
-    const hasEnoughMembers = activeMembers.length >= minRequired;
+    const targetCapacity = academicClass?.target_team_size 
+        || project.academic_class?.target_team_size 
+        || project.academicClass?.target_team_size 
+        || project.max_team_size 
+        || 4;
+    
+    // Alur 3 Prerequisite Rules:
+    // 1. Anggota tim wajib sudah PENUH (sesuai target ukuran tim kelas/proyek)
+    const isTeamFull = activeMembers.length >= targetCapacity;
+    // 2. Draft Living Proposal wajib sudah tersedia (tidak kosong)
+    const hasProposal = Boolean(
+        livingProposal?.current_version_id 
+        || (livingProposal?.versions && livingProposal.versions.length > 0)
+        || project.description 
+        || project.problem_statement
+    );
+    const canSubmitToLecturer = isTeamFull && hasProposal;
 
     const [processing, setProcessing] = useState(false);
     const [reviewNotes, setReviewNotes] = useState('');
@@ -77,14 +96,19 @@ export default function TeamFormationTab({
         });
     };
 
-    // Leader Action 2: Submit Formation to Lecturer
+    // Leader Action 2: Submit Formation to Lecturer (Alur 3: Tahap 1)
     const handleSubmitFormation = () => {
-        if (!hasEnoughMembers) {
-            alert(`Jumlah anggota saat ini (${activeMembers.length}) belum memenuhi kuota minimum (${minRequired} orang).`);
+        if (!isTeamFull) {
+            alert(`Seluruh kuota anggota tim wajib PENUH sebelum dapat diajukan ke Dosen Pengampu (${activeMembers.length}/${targetCapacity} anggota). Silakan lengkapi anggota tim terlebih dahulu.`);
             return;
         }
 
-        if (!confirm('Ajukan susunan tim ini kepada Dosen Pengampu untuk dievaluasi dan disetujui?')) return;
+        if (!hasProposal) {
+            alert('Draft Living Proposal belum tersedia. Silakan lengkapi rancangan proposal terlebih dahulu sebelum diajukan ke Dosen Pengampu.');
+            return;
+        }
+
+        if (!confirm('Ajukan proposal dan formasi tim ini kepada Dosen Pengampu untuk dievaluasi dan disetujui?')) return;
         setProcessing(true);
         router.post(`/projects/${project.id}/formation/submit`, {}, {
             preserveScroll: true,
@@ -316,6 +340,23 @@ export default function TeamFormationTab({
                 </div>
             )}
 
+            {/* Member Information Panel (For regular team members) */}
+            {!isLeader && !isLecturer && (
+                <div className="glass-surface p-5 rounded-3xl border border-slate-200/80 bg-white shadow-2xs">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 rounded-2xl bg-blue-50 text-blue-600">
+                            <Users className="size-5" />
+                        </div>
+                        <div>
+                            <h4 className="text-sm font-bold text-slate-900">Peran Anda: Anggota Tim</h4>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Pengelolaan formasi kelompok, seleksi lamaran, dan pengajuan tim ke dosen pengampu dilakukan oleh <strong>Ketua Tim ({project.leader?.name})</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Leader Actions Panel */}
             {isLeader && (
                 <div className="glass-surface p-6 rounded-3xl">
@@ -363,27 +404,61 @@ export default function TeamFormationTab({
                             </div>
                         </div>
 
-                        {/* Action 2: Submit to Lecturer */}
+                        {/* Action 2: Submit to Lecturer (Strictly Alur 3) */}
                         <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                             <div>
-                                <h4 className="text-sm font-bold text-slate-900">2. Pengajuan Evaluasi Dosen</h4>
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-bold text-slate-900">2. Pengajuan ke Dosen</h4>
+                                    {canSubmitToLecturer ? (
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                            Syarat Terpenuhi
+                                        </span>
+                                    ) : (
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                            Menunggu Prasyarat
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                                    Setelah kuota minimum terpenuhi ({activeMembers.length}/{minRequired} anggota), ajukan ke dosen pengampu untuk persetujuan resmi.
+                                    Sesuai <strong>Proposal & Workspace</strong>, tim hanya dapat mengajukan setelah kuota anggota <strong>penuh</strong> dan <strong>draft proposal</strong> tersedia.
                                 </p>
+
+                                {/* Checklist Prasyarat Alur 3 */}
+                                <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-2 text-xs">
+                                    <div className="flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                                            {isTeamFull ? <CheckCircle2 className="size-4 text-emerald-600" /> : <Clock className="size-4 text-amber-500" />}
+                                            <span>Formasi Anggota Penuh: <strong>{activeMembers.length}/{targetCapacity} Orang</strong></span>
+                                        </span>
+                                        <span className={`text-[11px] font-bold ${isTeamFull ? 'text-emerald-700' : 'text-amber-700'}`}>
+                                            {isTeamFull ? 'Lengkap' : `Kurang ${targetCapacity - activeMembers.length}`}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between pt-1.5 border-t border-slate-200/60">
+                                        <span className="flex items-center gap-1.5 font-medium text-slate-700">
+                                            {hasProposal ? <CheckCircle2 className="size-4 text-emerald-600" /> : <AlertCircle className="size-4 text-rose-500" />}
+                                            <span>Draft Living Proposal</span>
+                                        </span>
+                                        <span className={`text-[11px] font-bold ${hasProposal ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                            {hasProposal ? 'Tersedia' : 'Belum Dibuat'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-[11px] font-semibold text-slate-500">
-                                    Kuota Minimum: <strong className={hasEnoughMembers ? 'text-emerald-600' : 'text-amber-600'}>
-                                        {hasEnoughMembers ? 'Terpenuhi' : 'Kurang'}
-                                    </strong>
-                                </span>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
                                 {['requirements_configured', 'matchmaking_open', 'formation_rejected', 'draft'].includes(formationStatus) && (
                                     <button
                                         onClick={handleSubmitFormation}
-                                        disabled={processing || !hasEnoughMembers}
-                                        className="px-3 py-1.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-xs font-bold transition cursor-pointer disabled:opacity-50"
+                                        disabled={processing || !canSubmitToLecturer}
+                                        className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                                            canSubmitToLecturer
+                                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xs cursor-pointer'
+                                                : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed opacity-60'
+                                        }`}
                                     >
-                                        {formationStatus === 'formation_rejected' ? 'Ajukan Ulang ke Dosen' : 'Ajukan ke Dosen'}
+                                        <Send className="size-3.5" />
+                                        <span>{formationStatus === 'formation_rejected' ? 'Ajukan Ulang ke Dosen' : 'Ajukan ke Dosen'}</span>
                                     </button>
                                 )}
                             </div>
@@ -464,7 +539,7 @@ export default function TeamFormationTab({
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
-                                Susunan Anggota Tim Saat Ini ({activeMembers.length} / {maxCapacity})
+                                Susunan Anggota Tim Saat Ini ({activeMembers.length} / {targetCapacity})
                             </h3>
                             <p className="text-xs text-slate-500">
                                 Anggota yang resmi tergabung dalam proyek ini.

@@ -33,11 +33,11 @@ class AcademicClassSeeder extends Seeder
             return;
         }
 
-        // 1. Create or Find Dosen Account
+        // 1. Create or Find Dosen Account (matches 1-Klik Dosen demo budi@polindra.ac.id)
         $lecturer = User::firstOrCreate(
-            ['email' => 'dosen.rpl@polindra.ac.id'],
+            ['email' => 'budi@polindra.ac.id'],
             [
-                'name' => 'Dr. Ir. Budi Santoso, M.T.',
+                'name' => 'Budi Santoso, M.Kom.',
                 'password' => Hash::make('password123'),
                 'email_verified_at' => now(),
             ]
@@ -52,7 +52,7 @@ class AcademicClassSeeder extends Seeder
                 'role' => CampusRole::Lecturer->value,
                 'status' => MembershipStatus::Active->value,
                 'verification_status' => VerificationStatus::Verified->value,
-                'student_number' => 'NIDN-0412088102',
+                'student_number' => 'NIDN-0412088101',
                 'verified_at' => now(),
             ]
         );
@@ -75,14 +75,6 @@ class AcademicClassSeeder extends Seeder
                 'status' => 'active',
             ]
         );
-
-        // Attach demo lecturer budi@polindra.ac.id as co-lecturer so 1-Klik Dosen sees active classes & teams
-        $demoBudi = User::where('email', 'budi@polindra.ac.id')->first();
-        if ($demoBudi && $demoBudi->id !== $lecturer->id) {
-            $academicClass->coLecturers()->syncWithoutDetaching([
-                $demoBudi->id => ['role' => 'co_lecturer'],
-            ]);
-        }
 
         // 3. Create Sample Students
         $studentsData = [

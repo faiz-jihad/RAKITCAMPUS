@@ -178,6 +178,7 @@ class DemoAccountSeeder extends Seeder
                     'visibility' => Visibility::Campus,
                     'portfolio_public' => true,
                     'open_to_invites' => true,
+                    'is_onboarded' => true,
                 ]
             );
 

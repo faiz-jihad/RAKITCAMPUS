@@ -50,7 +50,7 @@ interface Props {
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Kelas Kuliah', href: '/classes' },
+    { title: 'Ruang Kelas', href: '/classes' },
 ];
 
 export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [], isLecturer = false }: Props) {
@@ -96,14 +96,14 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs} title={isLecturer ? 'Manajemen Kelas' : 'Kelas Kuliah'}>
-            <Head title={isLecturer ? 'Manajemen Kelas — RakitCampus' : 'Kelas Kuliah — RakitCampus'} />
+        <AppLayout breadcrumbs={breadcrumbs} title={isLecturer ? 'Kelola Ruang Kelas' : 'Ruang Kelas'}>
+            <Head title={isLecturer ? 'Kelola Ruang Kelas — RakitCampus' : 'Ruang Kelas — RakitCampus'} />
 
             <div className="space-y-6">
                 {/* 1. Header (Title only, no above pill, no below paragraph) */}
                 <div className="flex items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
                     <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                        {isLecturer ? 'Manajemen Kelas' : 'Kelas Kuliah'}
+                        {isLecturer ? 'Kelola Ruang Kelas' : 'Ruang Kelas'}
                     </h1>
 
                     {isLecturer && (
@@ -192,9 +192,10 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(true)}
-                                    className="mt-4 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
+                                    className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
                                 >
-                                    + Buat Kelas Pertama
+                                    <Plus className="size-3.5" />
+                                    <span>Buat Kelas Pertama</span>
                                 </button>
                             </div>
                         ) : (
@@ -477,21 +478,21 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
                                         Semester
                                     </label>
                                     <select
                                         value={createData.semester}
                                         onChange={(e) => setCreateData('semester', e.target.value)}
-                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white text-slate-800"
+                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs bg-white dark:bg-[#0e172a] text-slate-800 dark:text-slate-200"
                                     >
                                         <option value="Ganjil">Ganjil</option>
                                         <option value="Genap">Genap</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                        Target Anggota
+                                    <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1" title="Kapasitas ideal anggota per kelompok untuk tugas proyek di kelas ini">
+                                        Ukuran Tim
                                     </label>
                                     <input
                                         type="number"
@@ -499,21 +500,23 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                         max={10}
                                         value={createData.target_team_size}
                                         onChange={(e) => setCreateData('target_team_size', parseInt(e.target.value, 10) || 4)}
-                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white"
+                                        placeholder="4"
+                                        className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs bg-white dark:bg-[#0e172a] text-slate-800 dark:text-slate-200"
                                     />
+                                    <span className="text-[10px] text-slate-400 block mt-0.5">Orang / tim</span>
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                                    Petunjuk Proyek Kelas (Opsional)
+                                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                                    Deskripsi / Silabus Perkuliahan (Opsional)
                                 </label>
                                 <textarea
                                     value={createData.description}
                                     onChange={(e) => setCreateData('description', e.target.value)}
                                     rows={3}
-                                    placeholder="Jelaskan silabus proyek, kriteria penilaian, atau luaran yang diharapkan..."
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
+                                    placeholder="Jelaskan silabus mata kuliah, luaran proyek yang diharapkan, atau kontrak perkuliahan..."
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0e172a] text-slate-900 dark:text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600"
                                 />
                             </div>
 

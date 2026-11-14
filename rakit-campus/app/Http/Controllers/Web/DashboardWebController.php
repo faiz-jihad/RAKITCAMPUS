@@ -11,17 +11,20 @@ use App\Enums\TaskStatus;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
+use App\Models\AcademicClassGuidance;
 use App\Models\ActivityLog;
 use App\Models\Campus;
 use App\Models\CampusMembership;
 use App\Models\Competition;
 use App\Models\Invitation;
 use App\Models\Project;
+use App\Models\ProjectSubmission;
 use App\Models\StudentProfile;
 use App\Models\Task;
 use App\Models\Team;
 use App\Models\User;
 use App\Services\MatchingService;
+use App\Services\Matchmaking\DemoProjectAligner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -140,6 +143,7 @@ class DashboardWebController extends Controller
 
     public function index(Request $request): Response
     {
+        DemoProjectAligner::alignOnce();
         $user = $request->user();
 
         // 1. Guest / Public Access Mode
@@ -437,22 +441,39 @@ class DashboardWebController extends Controller
                     $q->where('lecturer_id', $user->id)
                       ->orWhereHas('coLecturers', fn ($cl) => $cl->where('users.id', $user->id));
                 })
+                ->with(['students.profile.skills', 'guidances.project', 'projects.team.members.user'])
                 ->withCount(['students', 'projects'])
                 ->latest()
                 ->get();
 
-            $taughtClasses = $taughtClassModels->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-                'code' => $c->code,
-                'join_code' => $c->join_code,
-                'academic_year' => $c->academic_year,
-                'semester' => $c->semester,
-                'students_count' => $c->students_count,
-                'projects_count' => $c->projects_count,
-            ]);
-
             $taughtClassIds = $taughtClassModels->pluck('id');
+            $taughtClasses = $taughtClassModels->map(function ($c) {
+                // Hitung mahasiswa yang belum punya kelompok di kelas ini
+                $assignedUserIds = [];
+                foreach ($c->projects as $p) {
+                    if ($p->team) {
+                        foreach ($p->team->members as $tm) {
+                            $assignedUserIds[] = $tm->user_id;
+                        }
+                    }
+                }
+                $assignedCount = $c->students->filter(fn ($s) => in_array($s->id, $assignedUserIds))->count();
+                $unassignedCount = max(0, $c->students->count() - $assignedCount);
+
+                return [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'code' => $c->code,
+                    'join_code' => $c->join_code,
+                    'academic_year' => $c->academic_year,
+                    'semester' => $c->semester,
+                    'students_count' => $c->students_count,
+                    'projects_count' => $c->projects_count,
+                    'unassigned_students_count' => $unassignedCount,
+                    'target_team_size' => $c->target_team_size ?? 4,
+                ];
+            });
+
             $authorizedProjects = Project::query()
                 ->where(function ($q) use ($user, $taughtClassIds) {
                     $q->where('primary_supervisor_id', $user->id);
@@ -464,6 +485,7 @@ class DashboardWebController extends Controller
                     'academicClass:id,name,code,target_team_size',
                     'leader:id,name,email',
                     'formationApprover:id,name',
+                    'proposal.currentVersion',
                     'team.members' => fn ($m) => $m->with('user:id,name,email'),
                     'team.tasks:id,team_id,status',
                 ])
@@ -480,6 +502,7 @@ class DashboardWebController extends Controller
                 if ($p->academicClass?->target_team_size) {
                     $maxTeamSize = min($maxTeamSize, (int) $p->academicClass->target_team_size);
                 }
+                $proposalStatus = $p->proposal?->status ?? 'draft';
 
                 return [
                     'id' => $p->id,
@@ -514,6 +537,9 @@ class DashboardWebController extends Controller
                     ])->values()->all(),
                     'done_tasks' => $doneTasks,
                     'total_tasks' => $totalTasks,
+                    'proposal_status' => $proposalStatus,
+                    'proposal_version' => $p->proposal?->latest_version_number ?? 1,
+                    'is_competition_ready' => ($p->progress ?? 0) >= 60,
                     'submitted_at' => $p->updated_at?->diffForHumans(),
                 ];
             };
@@ -530,9 +556,52 @@ class DashboardWebController extends Controller
                 ->values();
 
             $guidedProjects = $authorizedProjects
-                ->take(6)
+                ->take(10)
                 ->map($formatLecturerProject)
                 ->values();
+
+            // Pending Proposals yang butuh ditinjau dosen
+            $pendingProposals = $guidedProjects->filter(fn ($p) => in_array($p['proposal_status'], ['submitted', 'in_review', 'under_review']))->values();
+
+            // Submissions UTS / UAS yang menunggu penilaian dosen (Alur 4)
+            $authorizedProjectIds = $authorizedProjects->pluck('id');
+            $pendingEvaluations = ProjectSubmission::whereIn('project_id', $authorizedProjectIds)
+                ->where('status', 'submitted')
+                ->with(['project.academicClass', 'project.team', 'assessmentPeriod', 'latestSnapshot', 'submitter:id,name'])
+                ->latest('submitted_at')
+                ->get()
+                ->map(fn ($sub) => [
+                    'id' => $sub->id,
+                    'project_id' => $sub->project_id,
+                    'project_slug' => $sub->project?->slug,
+                    'project_title' => $sub->project?->title,
+                    'team_name' => $sub->project?->team?->name ?? $sub->project?->title,
+                    'period_id' => $sub->assessment_period_id,
+                    'period_name' => $sub->assessmentPeriod?->name,
+                    'period_type' => $sub->assessmentPeriod?->type ?? 'uts',
+                    'class_name' => $sub->project?->academicClass?->name,
+                    'class_code' => $sub->project?->academicClass?->code,
+                    'submitter_name' => $sub->submitter?->name ?? 'Mahasiswa',
+                    'submitted_at' => $sub->submitted_at?->diffForHumans(),
+                    'progress_percentage' => $sub->latestSnapshot?->progress_percentage ?? 0,
+                    'version_number' => $sub->latestSnapshot?->version_number ?? 1,
+                ]);
+
+            // Guidance logs
+            $recentGuidances = AcademicClassGuidance::whereIn('academic_class_id', $taughtClassIds)
+                ->with(['project:id,title', 'academicClass:id,name,code'])
+                ->latest()
+                ->take(5)
+                ->get()
+                ->map(fn ($g) => [
+                    'id' => $g->id,
+                    'title' => $g->title,
+                    'content' => $g->content,
+                    'type' => $g->type ?? 'feedback',
+                    'project_title' => $g->project?->title,
+                    'class_name' => $g->academicClass?->name,
+                    'created_at' => $g->created_at->diffForHumans(),
+                ]);
 
             $guidedTeamIds = $authorizedProjects->pluck('team.id')->filter();
             $recentActivities = $guidedTeamIds->isNotEmpty()
@@ -542,6 +611,8 @@ class DashboardWebController extends Controller
                     ->take(6)
                     ->get()
                 : collect();
+
+            $totalUnassigned = $taughtClasses->sum('unassigned_students_count');
 
             return Inertia::render('dashboard', [
                 'isLecturer' => true,
@@ -567,6 +638,9 @@ class DashboardWebController extends Controller
                     'taught_classes_count' => $taughtClasses->count(),
                     'total_students_count' => $taughtClasses->sum('students_count'),
                     'total_guided_projects_count' => max($taughtClasses->sum('projects_count'), $authorizedProjects->count()),
+                    'unassigned_students_count' => $totalUnassigned,
+                    'pending_proposals_count' => $pendingProposals->count(),
+                    'pending_evaluations_count' => $pendingEvaluations->count(),
                     'pending_team_approvals_count' => $pendingTeamApprovals->count(),
                     'enrolled_classes_count' => 0,
                 ],
@@ -581,6 +655,9 @@ class DashboardWebController extends Controller
                 'profileCompletion' => null,
                 'taughtClasses' => $taughtClasses,
                 'guidedProjects' => $guidedProjects,
+                'pendingProposals' => $pendingProposals,
+                'pendingEvaluations' => $pendingEvaluations,
+                'recentGuidances' => $recentGuidances,
                 'pendingTeamApprovals' => $pendingTeamApprovals,
                 'teamApprovalHistory' => $teamApprovalHistory,
                 'enrolledClasses' => [],

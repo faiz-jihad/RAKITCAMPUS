@@ -30,6 +30,7 @@ import {
     LogOut,
     Mail,
     PlusCircle,
+    RefreshCw,
     Settings,
     ShieldCheck,
     Trophy,
@@ -65,7 +66,6 @@ export default function AppLayout({
         : isLecturer
         ? 'Dosen Pembimbing'
         : 'Mahasiswa';
-
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
     // Persistent & route-aware active hub state (defaults to 'competition' to protect user flow)
@@ -158,8 +158,8 @@ export default function AppLayout({
 
     // Check login or initial session trigger
     useEffect(() => {
-        if (showHubSelectorProp) {
-            setIsGatewayOpen(true);
+        if (isLecturer || isAdmin) {
+            setIsGatewayOpen(false);
             return;
         }
 
@@ -177,7 +177,10 @@ export default function AppLayout({
                 }
             }
         }
-    }, [showHubSelectorProp, user, url]);
+
+        // Jangan pernah memunculkan pop-up otomatis saat pindah tab atau klik Dashboard
+        setIsGatewayOpen(false);
+    }, [url, isLecturer, isAdmin]);
 
     const initials = useMemo(() => {
         const name = user?.name || 'Mahasiswa';
@@ -303,18 +306,21 @@ export default function AppLayout({
                                     <span>Keamanan Sandi</span>
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onSelect={() => setIsGatewayOpen(true)}
-                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                            >
-                                <Layers className="size-4 text-slate-400" />
-                                <div className="flex-1 flex items-center justify-between">
-                                    <span>Ganti Ruang Kerja</span>
-                                    <span className="text-[10px] text-blue-600 font-bold">
-                                        {isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'} ⇄
-                                    </span>
-                                </div>
-                            </DropdownMenuItem>
+                            {!isLecturer && !isAdmin && (
+                                <DropdownMenuItem
+                                    onSelect={() => setIsGatewayOpen(true)}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    <Layers className="size-4 text-slate-400" />
+                                    <div className="flex-1 flex items-center justify-between">
+                                        <span>Ganti Ruang Kerja</span>
+                                        <span className="text-[10px] text-blue-600 font-bold inline-flex items-center gap-1">
+                                            <span>{isCompetitionHub ? 'Competition' : 'Project'}</span>
+                                            <RefreshCw className="size-2.5" />
+                                        </span>
+                                    </div>
+                                </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem asChild>
                                 <Link
                                     href="/ai-workspace"
@@ -449,20 +455,22 @@ export default function AppLayout({
         <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             {title && <Head title={title} />}
 
-            {/* BIG HUB GATEWAY MODAL (Triggered upon login or clicking switcher) */}
-            <HubGatewayModal
-                isOpen={isGatewayOpen}
-                onClose={() => setIsGatewayOpen(false)}
-                activeHub={isCompetitionHub ? 'competition' : 'project'}
-            />
+            {/* BIG HUB GATEWAY MODAL (Only for students, never for lecturers) */}
+            {!isLecturer && (
+                <HubGatewayModal
+                    isOpen={isGatewayOpen}
+                    onClose={() => setIsGatewayOpen(false)}
+                    activeHub={isCompetitionHub ? 'competition' : 'project'}
+                />
+            )}
 
             {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
-            <header className="w-full bg-white/95 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-40 transition-all">
+            <header className="w-full bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-40 transition-all">
                 <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
                     {/* Brand Logo & Active Hub Pill */}
                     <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                         <Link
-                            href={isCompetitionHub ? '/competitions' : '/dashboard'}
+                            href={isAdmin ? '/admin' : isLecturer ? '/dashboard' : isCompetitionHub ? '/competitions' : '/dashboard'}
                             className="flex items-center gap-1.5 sm:gap-2 group shrink-0"
                         >
                             <img
@@ -471,7 +479,7 @@ export default function AppLayout({
                                 className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
                             />
                             <div className="flex items-center gap-1.5">
-                                <span className="text-base sm:text-xl font-black tracking-tight text-slate-900">
+                                <span className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
                                     RAKIT
                                 </span>
                                 <span className="hidden sm:inline-block text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
@@ -480,29 +488,37 @@ export default function AppLayout({
                             </div>
                         </Link>
 
-                        {/* Interactive Hub Pill Indicator (Mahasiswa & Dosen only) */}
-                        {!isAdmin && (
-                            <button
-                                type="button"
-                                onClick={() => setIsGatewayOpen(true)}
-                                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold bg-slate-50 hover:bg-slate-100 border border-slate-200/90 text-slate-700 hover:text-slate-900 transition-colors shadow-2xs cursor-pointer group shrink-0"
-                                title="Beralih Ruang Kerja (Hub)"
-                            >
-                                <span
-                                    className={`size-1.5 rounded-full shrink-0 ${
-                                        isCompetitionHub ? 'bg-amber-500' : 'bg-blue-600'
-                                    }`}
-                                />
-                                <span className="hidden sm:inline">{isCompetitionHub ? 'Lomba Hub' : 'Campus Hub'}</span>
-                                <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Campus'}</span>
-                                <ArrowLeftRight className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
-                            </button>
-                        )}
-                        {isAdmin && (
+                        {/* Interactive Hub Pill Indicator / Admin / Dosen */}
+                        {isAdmin ? (
                             <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 shrink-0">
                                 <ShieldCheck className="size-3 text-rose-600" />
                                 <span>Mode Administrator</span>
                             </div>
+                        ) : isLecturer ? (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700 shrink-0">
+                                <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-600 animate-pulse shrink-0" />
+                                <span>Portal Dosen Pengampu</span>
+                            </div>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => setIsGatewayOpen(true)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-colors shadow-2xs cursor-pointer group shrink-0 ${
+                                    isCompetitionHub
+                                        ? 'bg-amber-50 hover:bg-amber-100/90 border-amber-200/80 text-amber-900'
+                                        : 'bg-blue-50 hover:bg-blue-100/90 border-blue-200/80 text-blue-900'
+                                }`}
+                                title="Beralih Ruang Kerja (Hub)"
+                            >
+                                <span
+                                    className={`size-1.5 rounded-full shrink-0 ${
+                                        isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
+                                    }`}
+                                />
+                                <span className="hidden sm:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
+                                <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
+                                <RefreshCw className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
+                            </button>
                         )}
                     </div>
 
@@ -560,6 +576,39 @@ export default function AppLayout({
                                     }`}
                                 >
                                     Aturan Poin
+                                </Link>
+                            </nav>
+                        ) : isLecturer ? (
+                            <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] dark:bg-slate-900/80 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 overflow-x-auto max-w-full">
+                                <Link
+                                    href="/dashboard"
+                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
+                                        url.startsWith('/dashboard')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Dashboard Pengampu
+                                </Link>
+                                <Link
+                                    href="/classes"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/classes')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Kelola Ruang Kelas
+                                </Link>
+                                <Link
+                                    href="/projects"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/projects')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    Eksplorasi Proyek
                                 </Link>
                             </nav>
                         ) : isCompetitionHub ? (
@@ -663,18 +712,16 @@ export default function AppLayout({
                                 >
                                     Dashboard
                                 </Link>
-                                {isLecturer && (
-                                    <Link
-                                        href="/classes"
-                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                            url.startsWith('/classes')
-                                                ? 'bg-[#2563eb] text-white shadow-sm'
-                                                : 'text-slate-600 hover:text-slate-900'
-                                        }`}
-                                    >
-                                        Kelola Kelas
-                                    </Link>
-                                )}
+                                <Link
+                                    href="/classes"
+                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
+                                        url.startsWith('/classes')
+                                            ? 'bg-[#2563eb] text-white shadow-sm'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    Ruang Kelas
+                                </Link>
                                 <Link
                                     href="/projects"
                                     className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
@@ -683,7 +730,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    {isLecturer ? 'Proyek Bimbingan' : 'Proyek Kelas'}
+                                    Proyek Kelas
                                 </Link>
                                 <Link
                                     href="/workspace"
