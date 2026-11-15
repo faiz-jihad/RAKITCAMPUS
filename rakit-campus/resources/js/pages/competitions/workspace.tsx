@@ -2319,89 +2319,160 @@ export default function CompetitionWorkspace({
                                     </div>
                                 )}
 
-                                {/* 6 Interactive Folder Cards Grid */}
-                                <div className="space-y-2">
+                                {/* 6 Interactive Real Folder Cards Grid */}
+                                <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                                            <Folder className="size-3.5 text-blue-600" />
-                                            <span>Folder Kategori Berkas</span>
+                                            <FolderOpen className="size-4 text-amber-500 fill-amber-100" />
+                                            <span>Folder Berkas Seleksi Tim</span>
                                         </span>
-                                        <span className="text-[11px] text-slate-400">
-                                            Klik folder untuk memfilter tampilan berkas
+                                        <span className="text-[11px] text-slate-500">
+                                            Pilih folder untuk membuka dan mengelola berkas di dalamnya
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
                                         {DOC_FOLDERS.map((folder) => {
                                             const count = getFolderDocCount(folder.key);
                                             const isSelected = selectedDocFolder === folder.key;
-                                            const FolderIcon = folder.icon || Folder;
+                                            const folderFiles = allDocs.filter((d: any) => d.required_document_key === folder.key);
 
                                             return (
                                                 <div
                                                     key={folder.key}
                                                     onClick={() => setSelectedDocFolder(isSelected ? 'all' : folder.key)}
-                                                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 text-left ${
-                                                        isSelected
-                                                            ? 'bg-blue-50/60 border-blue-500 shadow-xs ring-1 ring-blue-500/20'
-                                                            : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-2xs'
-                                                    }`}
+                                                    className="relative pt-3.5 group cursor-pointer text-left focus:outline-none"
                                                 >
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' : folder.color}`}>
-                                                            {isSelected ? <FolderOpen className="size-5" /> : <FolderIcon className="size-5" />}
+                                                    {/* FOLDER TOP TAB (Tab Telinga Map) */}
+                                                    <div
+                                                        className={`absolute top-0 left-0 h-4.5 px-3 rounded-t-lg border-t border-x transition-all duration-200 flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider z-10 ${
+                                                            isSelected
+                                                                ? 'bg-blue-600 border-blue-600 text-white shadow-2xs w-36'
+                                                                : 'bg-amber-100 border-amber-300 text-amber-800 group-hover:bg-amber-200/90 w-32'
+                                                        }`}
+                                                    >
+                                                        <Folder className={`size-2.5 ${isSelected ? 'text-white fill-white' : 'text-amber-600 fill-amber-500'}`} />
+                                                        <span className="truncate">{folder.key.replace('_', ' ')}</span>
+                                                    </div>
+
+                                                    {/* MAIN FOLDER BODY */}
+                                                    <div
+                                                        className={`relative rounded-b-2xl rounded-tr-2xl rounded-tl-none border p-4 sm:p-5 transition-all duration-200 flex flex-col justify-between gap-3 min-h-[160px] ${
+                                                            isSelected
+                                                                ? 'bg-blue-50/50 border-blue-500 shadow-sm ring-2 ring-blue-500/20'
+                                                                : 'bg-amber-50/20 border-amber-200/90 hover:border-amber-400 hover:shadow-xs hover:bg-amber-50/30'
+                                                        }`}
+                                                    >
+                                                        {/* Folder Header: Icon + Badge */}
+                                                        <div className="flex items-start justify-between gap-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="relative shrink-0">
+                                                                    {isSelected ? (
+                                                                        <FolderOpen className="size-9 text-blue-600 fill-blue-200/80 transition-transform group-hover:scale-105" />
+                                                                    ) : (
+                                                                        <Folder className="size-9 text-amber-500 fill-amber-200 transition-transform group-hover:scale-105" />
+                                                                    )}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <h4 className={`text-xs font-bold leading-snug truncate transition ${isSelected ? 'text-blue-950 font-black' : 'text-slate-900'}`}>
+                                                                        {folder.label}
+                                                                    </h4>
+                                                                    <p className="text-[10px] text-slate-400 mt-0.5 line-clamp-1">
+                                                                        {folder.desc}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+
+                                                            <span
+                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 border ${
+                                                                    count > 0
+                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                        : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                                }`}
+                                                            >
+                                                                {count > 0 ? (
+                                                                    <>
+                                                                        <CheckCircle2 className="size-2.5 text-emerald-600" />
+                                                                        <span>{count} Berkas</span>
+                                                                    </>
+                                                                ) : (
+                                                                    <span>Kosong</span>
+                                                                )}
+                                                            </span>
                                                         </div>
-                                                        <div className="flex items-center gap-1">
+
+                                                        {/* Folder Content / Mini File Tag Preview */}
+                                                        <div className="flex-1">
                                                             {count > 0 ? (
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
-                                                                    <CheckCircle2 className="size-2.5" />
-                                                                    <span>{count} Berkas</span>
-                                                                </span>
+                                                                <div className="space-y-1.5 mt-1">
+                                                                    {folderFiles.slice(0, 2).map((f: any) => (
+                                                                        <div
+                                                                            key={f.id}
+                                                                            className="text-[10px] font-mono text-slate-700 bg-white border border-slate-200/80 rounded-md px-2 py-1 flex items-center justify-between gap-1.5 shadow-2xs truncate"
+                                                                        >
+                                                                            <div className="flex items-center gap-1.5 truncate">
+                                                                                <FileText className="size-3 text-blue-600 shrink-0" />
+                                                                                <span className="truncate">{f.name || 'Berkas Dokumen'}</span>
+                                                                            </div>
+                                                                            {f.size_kb && (
+                                                                                <span className="text-[9px] text-slate-400 shrink-0">
+                                                                                    {(f.size_kb / 1024).toFixed(1)} MB
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    ))}
+                                                                    {count > 2 && (
+                                                                        <p className="text-[10px] text-slate-400 italic pl-1">
+                                                                            + {count - 2} berkas lainnya di folder ini
+                                                                        </p>
+                                                                    )}
+                                                                </div>
                                                             ) : (
-                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                                                                    Kosong
-                                                                </span>
+                                                                <div className="mt-2 py-2 px-2.5 rounded-lg border border-dashed border-amber-200/80 bg-white/70 text-center">
+                                                                    <p className="text-[10px] text-amber-800/80 font-medium">
+                                                                        Belum ada berkas terunggah di folder ini
+                                                                    </p>
+                                                                </div>
                                                             )}
                                                         </div>
-                                                    </div>
 
-                                                    <div>
-                                                        <h4 className={`text-xs font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>
-                                                            {folder.label}
-                                                        </h4>
-                                                        <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
-                                                            {folder.desc}
-                                                        </p>
-                                                    </div>
+                                                        {/* Folder Footer Action */}
+                                                        <div className={`pt-2.5 border-t flex items-center justify-between text-[11px] ${
+                                                            isSelected ? 'border-blue-200 text-blue-700' : 'border-amber-100 text-slate-500'
+                                                        }`}>
+                                                            {isSelected ? (
+                                                                <span className="font-bold text-blue-600 flex items-center gap-1">
+                                                                    <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
+                                                                    <span>Folder Sedang Dibuka</span>
+                                                                    <ChevronDown className="size-3" />
+                                                                </span>
+                                                            ) : count > 0 ? (
+                                                                <span className="font-semibold text-slate-600 group-hover:text-blue-600 transition flex items-center gap-1">
+                                                                    <span>Buka Folder ({count})</span>
+                                                                    <span>&rarr;</span>
+                                                                </span>
+                                                            ) : canManageTasks ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation();
+                                                                        docForm.setData('required_document_key', folder.key);
+                                                                        docForm.setData('name', folder.label);
+                                                                        setDocModalOpen(true);
+                                                                    }}
+                                                                    className="font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 cursor-pointer"
+                                                                >
+                                                                    <Plus className="size-3" />
+                                                                    <span>+ Unggah ke Folder</span>
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-slate-400 italic text-[10px]">Folder Kosong</span>
+                                                            )}
 
-                                                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                                                        {isSelected ? (
-                                                            <span className="font-bold text-blue-600 flex items-center gap-1">
-                                                                <span>Folder Terbuka</span>
-                                                                <ChevronDown className="size-3" />
+                                                            <span className="text-[10px] text-slate-400 font-mono">
+                                                                DIR // {folder.key}
                                                             </span>
-                                                        ) : count > 0 ? (
-                                                            <span className="text-slate-500 font-medium hover:text-blue-600 flex items-center gap-1">
-                                                                <span>Lihat Berkas</span>
-                                                                <span>&rarr;</span>
-                                                            </span>
-                                                        ) : isMember ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    docForm.setData('required_document_key', folder.key);
-                                                                    docForm.setData('name', folder.label);
-                                                                    setDocModalOpen(true);
-                                                                }}
-                                                                className="font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
-                                                            >
-                                                                <Plus className="size-3" />
-                                                                <span>Unggah</span>
-                                                            </button>
-                                                        ) : (
-                                                            <span className="text-slate-400 italic">Belum ada</span>
-                                                        )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                             );
