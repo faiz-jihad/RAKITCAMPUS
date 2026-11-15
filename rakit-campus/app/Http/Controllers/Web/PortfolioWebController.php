@@ -51,26 +51,38 @@ class PortfolioWebController extends Controller
         ]);
     }
 
-    public function publicView(string $slug): Response
+    public function publicView(Request $request, string $slug): Response
     {
         $profile = StudentProfile::with(['user', 'skills', 'experiences', 'campus'])
             ->where('slug', $slug)
             ->firstOrFail();
 
-        if (!$profile->portfolio_public) {
+        $viewer = $request->user();
+        $isOwner = $viewer && $viewer->id === $profile->user_id;
+        $isTeamReviewer = false;
+
+        if ($viewer && !$profile->portfolio_public && !$isOwner) {
+            $isTeamReviewer = \App\Models\Application::where('user_id', $profile->user_id)
+                ->whereHas('recruitment.team', function ($q) use ($viewer) {
+                    $q->where('leader_id', $viewer->id)
+                        ->orWhereHas('members', fn ($mq) => $mq->where('user_id', $viewer->id));
+                })->exists();
+        }
+
+        if (!$profile->portfolio_public && !$isOwner && !$isTeamReviewer && !($viewer && method_exists($viewer, 'hasRole') && $viewer->hasRole('admin'))) {
             abort(403, 'Portfolio ini belum disetel publik oleh mahasiswa terkait.');
         }
 
         $userId = $profile->user_id;
 
         $achievements = Achievement::where('user_id', $userId)
-            ->where('is_public', true)
+            ->when(!$isOwner && !$isTeamReviewer, fn ($q) => $q->where('is_public', true))
             ->with(['project:id,title,slug', 'participation.competition:id,name,slug'])
             ->latest('achieved_on')
             ->get();
 
         $items = PortfolioItem::where('user_id', $userId)
-            ->where('is_public', true)
+            ->when(!$isOwner && !$isTeamReviewer, fn ($q) => $q->where('is_public', true))
             ->latest()
             ->get();
 

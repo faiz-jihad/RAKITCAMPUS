@@ -6,6 +6,7 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
+    Award,
     Briefcase,
     Check,
     CheckCircle2,
@@ -28,7 +29,9 @@ import {
     HardDrive,
     History,
     Image as ImageIcon,
+    Linkedin,
     Lock,
+    Mail,
     PenLine,
     Phone,
     Plus,
@@ -135,6 +138,7 @@ export default function CompetitionWorkspace({
     const [docSearchQuery, setDocSearchQuery] = useState<string>('');
     const [mentorModalOpen, setMentorModalOpen] = useState(false);
     const [resultModalOpen, setResultModalOpen] = useState(false);
+    const [selectedApplicantModal, setSelectedApplicantModal] = useState<any>(null);
     const [aiGenerating, setAiGenerating] = useState(false);
 
     // AI Task Orchestrator Modal State
@@ -1546,15 +1550,24 @@ export default function CompetitionWorkspace({
                                             >
                                                 {/* Applicant Header Info */}
                                                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="size-10 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                                                    <div className="flex items-start gap-3 min-w-0">
+                                                        <div
+                                                            onClick={() => setSelectedApplicantModal(app)}
+                                                            className="size-10 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs cursor-pointer transition"
+                                                            title="Klik untuk melihat profil lengkap"
+                                                        >
                                                             {applicant?.name ? applicant.name.charAt(0).toUpperCase() : 'U'}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="text-sm font-bold text-slate-900 truncate">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => setSelectedApplicantModal(app)}
+                                                                    className="text-sm font-bold text-slate-900 hover:text-blue-600 truncate transition text-left cursor-pointer"
+                                                                    title="Klik untuk melihat profil lengkap"
+                                                                >
                                                                     {applicant?.name || 'Mahasiswa'}
-                                                                </span>
+                                                                </button>
                                                                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
                                                                     Posisi: {app.role_name || 'Anggota Tim'}
                                                                 </span>
@@ -1570,7 +1583,24 @@ export default function CompetitionWorkspace({
                                                             </div>
                                                             <p className="text-xs text-slate-500 mt-0.5 truncate">
                                                                 {applicant?.study_program || 'Mahasiswa'} {applicant?.semester ? `• Semester ${applicant.semester}` : ''}
+                                                                {applicant?.campus_name ? ` • ${applicant.campus_name}` : ''}
                                                             </p>
+
+                                                            {/* Mini Skill Badges */}
+                                                            {applicant?.skills && applicant.skills.length > 0 && (
+                                                                <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                                                                    {applicant.skills.slice(0, 3).map((sk: any, i: number) => (
+                                                                        <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                                            {typeof sk === 'string' ? sk : sk.name}
+                                                                        </span>
+                                                                    ))}
+                                                                    {applicant.skills.length > 3 && (
+                                                                        <span className="text-[9px] font-bold text-slate-400">
+                                                                            +{applicant.skills.length - 3} lainnya
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
 
@@ -1591,7 +1621,16 @@ export default function CompetitionWorkspace({
 
                                                 {/* Actions & WhatsApp Contact */}
                                                 <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-                                                    <div>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setSelectedApplicantModal(app)}
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 text-xs font-bold transition cursor-pointer shadow-2xs"
+                                                        >
+                                                            <Eye className="size-3.5" />
+                                                            <span>Lihat Profil Pelamar</span>
+                                                        </button>
+
                                                         {waUrl ? (
                                                             <a
                                                                 href={waUrl}
@@ -1600,7 +1639,7 @@ export default function CompetitionWorkspace({
                                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shrink-0 shadow-2xs"
                                                             >
                                                                 <Phone className="size-3.5" />
-                                                                <span>Chat WhatsApp ({phone})</span>
+                                                                <span>Chat WhatsApp</span>
                                                             </a>
                                                         ) : (
                                                             <span className="text-[11px] text-slate-400 italic">No WhatsApp tidak tersedia</span>
@@ -3339,6 +3378,326 @@ export default function CompetitionWorkspace({
                     </div>
                 </div>
             )}
+
+            {/* MODAL: DETAIL PROFIL PELAMAR */}
+            {selectedApplicantModal && (() => {
+                const app = selectedApplicantModal;
+                const applicant = app.user;
+                const phone = app.contact_phone || applicant?.phone;
+                const greeting = `Halo ${applicant?.name || 'Rekan'}, saya ${participation.team?.leader?.name || 'Ketua'} dari tim ${participation.team?.name} untuk kompetisi ${participation.competition?.name}. Saya melihat lamaran Anda untuk peran ${app.role_name}. Bisakah kita ngobrol lebih lanjut mengenai persiapan tim?`;
+                const waUrl = phone ? formatWhatsAppUrl(phone, greeting) : null;
+                const publicPortfolioUrl = applicant?.slug ? route('portfolio.public', applicant.slug) : null;
+                const portfolioUrl = app.portfolio_url || applicant?.portfolio_url;
+                const githubUrl = applicant?.github_url;
+                const linkedinUrl = applicant?.linkedin_url;
+                const skills = applicant?.skills || [];
+                const experiences = applicant?.experiences || [];
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
+                        <div className="w-full max-w-2xl bg-white border border-slate-200 shadow-2xl rounded-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                            {/* Modal Header */}
+                            <div className="p-5 sm:p-6 border-b border-slate-100 flex items-start justify-between gap-4 bg-slate-50/60">
+                                <div className="flex items-start gap-3.5 min-w-0">
+                                    <div className="size-14 rounded-2xl bg-slate-900 text-white font-bold text-xl flex items-center justify-center shrink-0 shadow-sm">
+                                        {applicant?.name ? applicant.name.charAt(0).toUpperCase() : 'U'}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h3 className="text-lg font-bold text-slate-900 truncate">
+                                                {applicant?.name || 'Mahasiswa'}
+                                            </h3>
+                                            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                Posisi: {app.role_name || 'Anggota Tim'}
+                                            </span>
+                                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+                                                app.status === 'accepted'
+                                                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                    : app.status === 'rejected'
+                                                    ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                            }`}>
+                                                {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-2 flex-wrap">
+                                            <span className="flex items-center gap-1 font-medium text-slate-700">
+                                                <GraduationCap className="size-3.5 text-blue-600" />
+                                                <span>{applicant?.study_program || 'Mahasiswa'} {applicant?.semester ? `• Semester ${applicant.semester}` : ''}</span>
+                                            </span>
+                                            {applicant?.campus_name && (
+                                                <>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="text-slate-600">{applicant.campus_name}</span>
+                                                </>
+                                            )}
+                                            {applicant?.nim && (
+                                                <>
+                                                    <span className="text-slate-300">•</span>
+                                                    <span className="font-mono text-slate-400">NIM: {applicant.nim}</span>
+                                                </>
+                                            )}
+                                        </p>
+
+                                        {applicant?.headline && (
+                                            <p className="text-xs text-slate-600 mt-1.5 italic font-medium">
+                                                "{applicant.headline}"
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedApplicantModal(null)}
+                                    className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-200/60 transition cursor-pointer shrink-0"
+                                >
+                                    <X className="size-5" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-5 sm:p-6 space-y-5 overflow-y-auto">
+                                {/* Motivation / Cover Message */}
+                                {app.message && (
+                                    <div className="space-y-1.5">
+                                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <FileText className="size-3.5 text-blue-600" />
+                                            <span>Pesan Lamaran & Motivasi</span>
+                                        </span>
+                                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 leading-relaxed italic">
+                                            "{app.message}"
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Bio */}
+                                {applicant?.bio && (
+                                    <div className="space-y-1.5">
+                                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                                            Tentang Pelamar
+                                        </span>
+                                        <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                            {applicant.bio}
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* Technical Skills */}
+                                <div className="space-y-2">
+                                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Award className="size-3.5 text-blue-600" />
+                                        <span>Keahlian & Kemampuan Teknis</span>
+                                    </span>
+                                    {skills.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {skills.map((skill: any, idx: number) => {
+                                                const skillName = typeof skill === 'string' ? skill : skill.name;
+                                                const proficiency = typeof skill === 'object' ? skill.proficiency : null;
+                                                return (
+                                                    <span
+                                                        key={idx}
+                                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-800 border border-blue-200/70"
+                                                    >
+                                                        <span>{skillName}</span>
+                                                        {proficiency && (
+                                                            <span className="text-[10px] text-blue-600 font-mono font-bold capitalize">
+                                                                • {proficiency}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 italic">
+                                            Belum mencantumkan daftar keahlian spesifik di profil.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {/* Experience History */}
+                                {experiences.length > 0 && (
+                                    <div className="space-y-2.5">
+                                        <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Briefcase className="size-3.5 text-blue-600" />
+                                            <span>Pengalaman & Riwayat Proyek ({experiences.length})</span>
+                                        </span>
+                                        <div className="space-y-2">
+                                            {experiences.map((exp: any, idx: number) => (
+                                                <div key={idx} className="p-3 rounded-xl border border-slate-200/80 bg-slate-50/50 space-y-1">
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div>
+                                                            <h5 className="text-xs font-bold text-slate-900">{exp.title}</h5>
+                                                            {exp.organization && (
+                                                                <p className="text-[11px] text-slate-500 font-medium">{exp.organization}</p>
+                                                            )}
+                                                        </div>
+                                                        {(exp.started_on || exp.ended_on) && (
+                                                            <span className="text-[10px] font-mono text-slate-400 shrink-0">
+                                                                {exp.started_on} - {exp.ended_on}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    {exp.description && (
+                                                        <p className="text-[11px] text-slate-600 leading-relaxed pt-0.5">
+                                                            {exp.description}
+                                                        </p>
+                                                    )}
+                                                    {exp.url && (
+                                                        <a
+                                                            href={exp.url}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:underline pt-0.5"
+                                                        >
+                                                            <span>Lihat Karya / Bukti</span>
+                                                            <ExternalLink className="size-3" />
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* External Portfolios & Social Links */}
+                                <div className="space-y-2 pt-2 border-t border-slate-100">
+                                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                                        <Globe className="size-3.5 text-blue-600" />
+                                        <span>Tautan Portofolio & Kontak Pelamar</span>
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                        {publicPortfolioUrl && (
+                                            <a
+                                                href={publicPortfolioUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/60 text-blue-800 font-semibold text-xs flex items-center justify-between transition group"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <Award className="size-4 text-blue-600" />
+                                                    <span>Halaman Portofolio RAKIT</span>
+                                                </span>
+                                                <ExternalLink className="size-3.5 text-blue-500 group-hover:translate-x-0.5 transition" />
+                                            </a>
+                                        )}
+
+                                        {portfolioUrl && (
+                                            <a
+                                                href={portfolioUrl.startsWith('http') ? portfolioUrl : `https://${portfolioUrl}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-between transition group"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <Globe className="size-4 text-slate-500" />
+                                                    <span className="truncate max-w-[170px]">Web / Portofolio Eksternal</span>
+                                                </span>
+                                                <ExternalLink className="size-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+                                            </a>
+                                        )}
+
+                                        {githubUrl && (
+                                            <a
+                                                href={githubUrl.startsWith('http') ? githubUrl : `https://${githubUrl}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-between transition group"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <Github className="size-4 text-slate-700" />
+                                                    <span className="truncate max-w-[170px]">Profil GitHub</span>
+                                                </span>
+                                                <ExternalLink className="size-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+                                            </a>
+                                        )}
+
+                                        {linkedinUrl && (
+                                            <a
+                                                href={linkedinUrl.startsWith('http') ? linkedinUrl : `https://${linkedinUrl}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-between transition group"
+                                            >
+                                                <span className="flex items-center gap-2">
+                                                    <Linkedin className="size-4 text-blue-600" />
+                                                    <span className="truncate max-w-[170px]">Profil LinkedIn</span>
+                                                </span>
+                                                <ExternalLink className="size-3.5 text-slate-400 group-hover:translate-x-0.5 transition" />
+                                            </a>
+                                        )}
+
+                                        {applicant?.email && (
+                                            <a
+                                                href={`mailto:${applicant.email}`}
+                                                className="p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-xs flex items-center justify-between transition"
+                                            >
+                                                <span className="flex items-center gap-2 truncate">
+                                                    <Mail className="size-4 text-slate-500 shrink-0" />
+                                                    <span className="truncate">{applicant.email}</span>
+                                                </span>
+                                            </a>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-4 sm:p-5 border-t border-slate-100 bg-slate-50/70 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    {waUrl && (
+                                        <a
+                                            href={waUrl}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-2xs"
+                                        >
+                                            <Phone className="size-3.5" />
+                                            <span>Hubungi via WhatsApp</span>
+                                        </a>
+                                    )}
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    {isLeader && app.status === 'pending' && !participation.is_formation_locked && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleRespondApplication(app.id, 'reject');
+                                                    setSelectedApplicantModal(null);
+                                                }}
+                                                className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer"
+                                            >
+                                                Tolak Lamaran
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    handleRespondApplication(app.id, 'accept');
+                                                    setSelectedApplicantModal(null);
+                                                }}
+                                                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                                            >
+                                                Terima Masuk Tim
+                                            </button>
+                                        </>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedApplicantModal(null)}
+                                        className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 text-xs font-semibold transition cursor-pointer"
+                                    >
+                                        Tutup
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </AppLayout>
     );
 }
