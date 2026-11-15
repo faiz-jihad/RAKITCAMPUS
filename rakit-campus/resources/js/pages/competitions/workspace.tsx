@@ -44,7 +44,6 @@ import {
     ShieldCheck,
     Sparkles,
     Trash2,
-    Trophy,
     Upload,
     UserMinus,
     UserPlus,
@@ -109,7 +108,7 @@ export default function CompetitionWorkspace({
     canManageGitHub = false,
 }: Props) {
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
-    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'mentoring' | 'results' | 'history'>(() => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             if (params.get('tab') === 'github' || window.location.hash === '#github') {
@@ -141,8 +140,6 @@ export default function CompetitionWorkspace({
     const [docSearchQuery, setDocSearchQuery] = useState<string>('');
     const [docViewMode, setDocViewMode] = useState<'list' | 'grid'>('list');
     const [dragOverFolderKey, setDragOverFolderKey] = useState<string | null>(null);
-    const [mentorModalOpen, setMentorModalOpen] = useState(false);
-    const [resultModalOpen, setResultModalOpen] = useState(false);
     const [selectedApplicantModal, setSelectedApplicantModal] = useState<any>(null);
     const [aiGenerating, setAiGenerating] = useState(false);
 
@@ -227,20 +224,6 @@ export default function CompetitionWorkspace({
     const reviewForm = useForm({
         status: 'approved',
         feedback: '',
-    });
-
-    const mentorForm = useForm({
-        lecturer_id: availableLecturers[0]?.id || '',
-        notes: '',
-    });
-
-    const resultForm = useForm({
-        outcome: '1st_place',
-        achievement_title: `Juara Kompetisi: ${participation.competition?.name}`,
-        rank: 1,
-        notes: '',
-        evidence_url: '',
-        certificate: null as File | null,
     });
 
     const breadcrumbs: BreadcrumbItem[] = [
@@ -554,27 +537,6 @@ export default function CompetitionWorkspace({
         });
     };
 
-    const handleAssignMentor = (e: React.FormEvent) => {
-        e.preventDefault();
-        mentorForm.post(route('competitions.mentors.assign', participation.id), {
-            onSuccess: () => setMentorModalOpen(false),
-        });
-    };
-
-    const handleRecordResult = (e: React.FormEvent) => {
-        e.preventDefault();
-        resultForm.post(route('competitions.result.record', participation.id), {
-            forceFormData: true,
-            onSuccess: () => setResultModalOpen(false),
-        });
-    };
-
-    const handleVerifyResult = () => {
-        if (confirm('Verifikasi sertifikat dan terbitkan prestasi ini ke portofolio mahasiswa secara resmi?')) {
-            router.post(route('competitions.result.verify', participation.id));
-        }
-    };
-
     // Folder Categories for File Explorer UI
     const DOC_FOLDERS = [
         { key: 'proposal', label: 'Proposal & Makalah', desc: 'Latar belakang ide, analisis inovasi, & perancangan', formats: 'PDF, DOCX, ZIP', icon: FileText, color: 'text-blue-600 bg-blue-50 border-blue-200' },
@@ -762,14 +724,6 @@ export default function CompetitionWorkspace({
                                         <span>Update Tahapan Seleksi</span>
                                     </DropdownMenuItem>
 
-                                    <DropdownMenuItem
-                                        onClick={() => setResultModalOpen(true)}
-                                        className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100"
-                                    >
-                                        <Trophy className="size-3.5 text-amber-600" />
-                                        <span>Catat Prestasi & Juara</span>
-                                    </DropdownMenuItem>
-
                                     {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
                                         <>
                                             <DropdownMenuSeparator className="my-1 bg-slate-100" />
@@ -837,8 +791,6 @@ export default function CompetitionWorkspace({
                         { id: 'github', label: 'Monitoring GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
                         { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
                         { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
-                        { id: 'mentoring', label: 'Bimbingan', icon: GraduationCap },
-                        { id: 'results', label: 'Prestasi', icon: Trophy },
                         { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
                     ].map((tab) => {
                         const Icon = tab.icon;
@@ -1485,67 +1437,7 @@ export default function CompetitionWorkspace({
                                     )}
                                 </div>
 
-                                {/* SIDEBAR 3: LECTURER MENTOR */}
-                                <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 sm:p-5 space-y-3">
-                                    <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                                            <GraduationCap className="size-3.5 text-blue-600" />
-                                            <span>Dosen Pembimbing</span>
-                                        </span>
-                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                            {participation.mentor ? 'Terhubung' : 'Mandiri'}
-                                        </span>
-                                    </div>
-
-                                    {participation.mentor ? (
-                                        <div className="space-y-3">
-                                            <div className="flex items-center gap-3">
-                                                <div className="size-9 rounded-lg overflow-hidden bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-xs shrink-0">
-                                                    {participation.mentor.avatar ? (
-                                                        <img src={participation.mentor.avatar} alt={participation.mentor.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        participation.mentor.name?.charAt(0) || 'D'
-                                                    )}
-                                                </div>
-                                                <div className="min-w-0">
-                                                    <div className="text-xs font-bold text-slate-900 truncate">
-                                                        {participation.mentor.name}
-                                                    </div>
-                                                    <p className="text-[11px] text-slate-400 truncate">{participation.mentor.email}</p>
-                                                </div>
-                                            </div>
-                                            {participation.mentor_notes && (
-                                                <p className="text-[11px] text-slate-500 bg-slate-50 p-2 rounded-lg border border-slate-100 line-clamp-2">
-                                                    "{participation.mentor_notes}"
-                                                </p>
-                                            )}
-                                            <button
-                                                type="button"
-                                                onClick={() => setActiveTab('mentoring')}
-                                                className="w-full py-1.5 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 shadow-2xs"
-                                            >
-                                                <span>Ruang Bimbingan</span>
-                                                <span>&rarr;</span>
-                                            </button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2.5">
-                                            <p className="text-xs text-slate-500 leading-relaxed">
-                                                Tim ini belum memiliki dosen pembimbing resmi. Hubungkan dosen untuk review substansi dan strategi presentasi.
-                                            </p>
-                                            <button
-                                                type="button"
-                                                onClick={() => setActiveTab('mentoring')}
-                                                className="w-full py-1.5 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 shadow-2xs"
-                                            >
-                                                <span>Ajukan Bimbingan Dosen</span>
-                                                <span>&rarr;</span>
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* SIDEBAR 4: STORAGE QUOTA */}
+                                {/* SIDEBAR: STORAGE QUOTA */}
                                 {storageQuota && (
                                     <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-4 space-y-2">
                                         <div className="flex items-center justify-between text-xs">
@@ -2853,154 +2745,7 @@ export default function CompetitionWorkspace({
                     );
                 })()}
 
-                {/* 11. TAB CONTENT: MENTORING */}
-                {activeTab === 'mentoring' && (
-                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <GraduationCap className="size-4 text-blue-600 shrink-0" />
-                                    <span>Bimbingan Dosen</span>
-                                </h3>
-                            </div>
-
-                            {(isLeader || isAdmin) && (
-                                <button
-                                    type="button"
-                                    onClick={() => setMentorModalOpen(true)}
-                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shrink-0"
-                                >
-                                    {participation.mentor ? 'Ganti Dosen Pembimbing' : 'Tugaskan Dosen Pembimbing'}
-                                </button>
-                            )}
-                        </div>
-
-                        {participation.mentor ? (
-                            <div className="p-4 rounded-xl bg-purple-50/40 border border-purple-200 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="size-11 rounded-xl bg-purple-700 text-white font-bold flex items-center justify-center text-sm shrink-0">
-                                        {participation.mentor.name?.charAt(0) || 'D'}
-                                    </div>
-                                    <div>
-                                        <h4 className="text-sm font-bold text-purple-950">{participation.mentor.name}</h4>
-                                        <p className="text-xs text-purple-700">{participation.mentor.email}</p>
-                                    </div>
-                                </div>
-
-                                {participation.mentor_notes && (
-                                    <div className="p-3 bg-white rounded-lg border border-purple-100 text-xs text-slate-700">
-                                        <span className="font-bold text-slate-900 block mb-0.5">Arahan Bimbingan:</span>
-                                        <p className="leading-relaxed">{participation.mentor_notes}</p>
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                <GraduationCap className="size-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-xs font-bold text-slate-700">Belum Ada Dosen Pembimbing yang Ditugaskan</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Ketua tim atau koordinator prodi dapat menugaskan dosen pembimbing untuk tim ini.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 12. TAB CONTENT: RESULTS & ACHIEVEMENTS */}
-                {activeTab === 'results' && (
-                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <Trophy className="size-4 text-amber-500 shrink-0" />
-                                    <span>Hasil & Capaian</span>
-                                </h3>
-                            </div>
-
-                            {(isLeader || isMentor || isAdmin) && (
-                                <button
-                                    type="button"
-                                    onClick={() => setResultModalOpen(true)}
-                                    className="px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition cursor-pointer shrink-0"
-                                >
-                                    {participation.result ? 'Perbarui Hasil' : 'Catat Hasil Kompetisi'}
-                                </button>
-                            )}
-                        </div>
-
-                        {participation.result ? (
-                            <div className="p-5 rounded-2xl bg-amber-50/50 border border-amber-200 space-y-4">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Trophy className="size-5 text-amber-600 shrink-0" />
-                                            <h4 className="text-base font-extrabold text-slate-900">
-                                                {participation.result.achievement_title || 'Prestasi Kompetisi'}
-                                            </h4>
-                                        </div>
-                                        <p className="text-xs text-amber-900 mt-1">
-                                            Hasil Akhir: <strong>{participation.result.outcome?.replace('_', ' ')?.toUpperCase()}</strong>
-                                            {participation.result.rank ? ` • Peringkat ${participation.result.rank}` : ''}
-                                        </p>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${
-                                            participation.result.verification_status === 'verified'
-                                                ? 'bg-emerald-100 text-emerald-800'
-                                                : 'bg-amber-100 text-amber-800'
-                                        }`}>
-                                            {participation.result.verification_status === 'verified' ? 'Terverifikasi Kampus' : 'Laporan Mandiri'}
-                                        </span>
-
-                                        {(isMentor || isAdmin) && participation.result.verification_status !== 'verified' && (
-                                            <button
-                                                type="button"
-                                                onClick={handleVerifyResult}
-                                                className="px-3 py-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer"
-                                            >
-                                                Verifikasi Resmi
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {participation.result.notes && (
-                                    <p className="text-xs text-slate-700 bg-white p-3 rounded-xl border border-amber-200/80">
-                                        {participation.result.notes}
-                                    </p>
-                                )}
-
-                                <div className="pt-2 border-t border-amber-200/80 flex items-center justify-between text-xs">
-                                    <span className="text-slate-500">
-                                        Tercatat pada {new Date(participation.result.created_at).toLocaleDateString('id-ID')}
-                                    </span>
-                                    {participation.result.certificate_path && (
-                                        <a
-                                            href={participation.result.certificate_path}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="font-bold text-amber-900 hover:underline flex items-center gap-1"
-                                        >
-                                            <Download className="size-3.5 shrink-0" />
-                                            <span>Lihat Sertifikat</span>
-                                        </a>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                <Trophy className="size-8 text-slate-400 mx-auto mb-2" />
-                                <p className="text-xs font-bold text-slate-700">Belum Ada Hasil Kompetisi yang Dicatat</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Setelah pengumuman lomba selesai, ketua tim dapat mencatat capaian dan mengunggah sertifikat ke portofolio.
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* 13. TAB CONTENT: AUDIT HISTORY */}
+                {/* TAB CONTENT: AUDIT HISTORY */}
                 {activeTab === 'history' && (
                     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                         <div className="border-b border-slate-100 pb-3">
@@ -3539,169 +3284,6 @@ export default function CompetitionWorkspace({
                                     className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold"
                                 >
                                     Simpan Ulasan
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL 6: ASSIGN MENTOR */}
-            {mentorModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h3 className="text-base font-bold text-slate-900">Tugaskan Dosen Pembimbing</h3>
-                            <button type="button" onClick={() => setMentorModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="size-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleAssignMentor} className="mt-4 space-y-3.5">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Pilih Dosen Kampus</label>
-                                <select
-                                    value={mentorForm.data.lecturer_id}
-                                    onChange={(e) => mentorForm.setData('lecturer_id', e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                >
-                                    {availableLecturers.map((lec) => (
-                                        <option key={lec.id} value={lec.id}>{lec.name} ({lec.email})</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Catatan Arahan Bimbingan</label>
-                                <textarea
-                                    rows={3}
-                                    value={mentorForm.data.notes}
-                                    onChange={(e) => mentorForm.setData('notes', e.target.value)}
-                                    placeholder="Fokus arahan pembimbing untuk kompetisi ini..."
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                />
-                            </div>
-
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setMentorModalOpen(false)}
-                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
-                                >
-                                    Tugaskan Dosen
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* MODAL 7: RECORD RESULT */}
-            {resultModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
-                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h3 className="text-base font-bold text-slate-900">Catat Capaian & Prestasi</h3>
-                            <button type="button" onClick={() => setResultModalOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                <X className="size-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleRecordResult} className="mt-4 space-y-3.5">
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">Hasil Akhir</label>
-                                    <select
-                                        value={resultForm.data.outcome}
-                                        onChange={(e) => resultForm.setData('outcome', e.target.value)}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-900"
-                                    >
-                                        <option value="1st_place">Juara 1 (Medali Emas)</option>
-                                        <option value="2nd_place">Juara 2 (Medali Perak)</option>
-                                        <option value="3rd_place">Juara 3 (Medali Perunggu)</option>
-                                        <option value="finalist">Finalis Resmi</option>
-                                        <option value="special_award">Penghargaan Khusus / Harapan</option>
-                                        <option value="participant">Peserta Resmi</option>
-                                        <option value="not_selected">Partisipan (Belum Lolos Juara)</option>
-                                        <option value="withdrawn">Mengundurkan Diri</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">Peringkat (Jika Ada)</label>
-                                    <input
-                                        type="number"
-                                        min={1}
-                                        value={resultForm.data.rank}
-                                        onChange={(e) => resultForm.setData('rank', parseInt(e.target.value, 10) || 1)}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Judul Prestasi untuk Portofolio <span className="text-rose-500">*</span></label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={resultForm.data.achievement_title}
-                                    onChange={(e) => resultForm.setData('achievement_title', e.target.value)}
-                                    placeholder="Contoh: Juara 1 Gemastik Bidang Software Development"
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Berkas Sertifikat (PDF / Gambar)</label>
-                                <input
-                                    type="file"
-                                    accept="application/pdf,image/*"
-                                    onChange={(e) => resultForm.setData('certificate', e.target.files?.[0] || null)}
-                                    className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-amber-50 file:text-amber-800 cursor-pointer"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Tautan Bukti Pengumuman Resmi (Opsional)</label>
-                                <input
-                                    type="url"
-                                    value={resultForm.data.evidence_url}
-                                    onChange={(e) => resultForm.setData('evidence_url', e.target.value)}
-                                    placeholder="https://..."
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Catatan Tambahan</label>
-                                <textarea
-                                    rows={2}
-                                    value={resultForm.data.notes}
-                                    onChange={(e) => resultForm.setData('notes', e.target.value)}
-                                    placeholder="Keterangan tambahan..."
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
-                                />
-                            </div>
-
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => setResultModalOpen(false)}
-                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={resultForm.processing}
-                                    className="px-4 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold disabled:opacity-50"
-                                >
-                                    Simpan Hasil Prestasi
                                 </button>
                             </div>
                         </form>

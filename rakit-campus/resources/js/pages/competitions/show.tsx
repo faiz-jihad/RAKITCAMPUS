@@ -2,7 +2,6 @@ import ApplyCompetitionTeamModal, {
     type ApplyTeamData,
 } from '@/components/competitions/ApplyCompetitionTeamModal';
 import SeoHead from '@/components/seo/SeoHead';
-import RecordResultModal from '@/components/competitions/RecordResultModal';
 import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
 import AppLayout from '@/layouts/app-layout';
@@ -71,7 +70,6 @@ export default function CompetitionShow({
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [trackModalOpen, setTrackModalOpen] = useState(false);
     const [stageModalOpen, setStageModalOpen] = useState(false);
-    const [resultModalOpen, setResultModalOpen] = useState(false);
     const [isParticipateModalOpen, setParticipateModalOpen] = useState(false);
     const [isAllocateModalOpen, setAllocateModalOpen] = useState(false);
     const setIsAllocateModalOpen = setAllocateModalOpen;
@@ -554,13 +552,6 @@ export default function CompetitionShow({
                                                     className="px-3 py-2 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer"
                                                 >
                                                     Update Tahap
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setResultModalOpen(true)}
-                                                    className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                                                >
-                                                    Catat Prestasi
                                                 </button>
                                             </>
                                         ) : (
@@ -1275,13 +1266,6 @@ export default function CompetitionShow({
                 <UpdateStageModal
                     isOpen={stageModalOpen}
                     onClose={() => setStageModalOpen(false)}
-                    participation={myParticipation}
-                />
-
-                {/* Record Result Modal */}
-                <RecordResultModal
-                    isOpen={resultModalOpen}
-                    onClose={() => setResultModalOpen(false)}
                     participation={myParticipation}
                 />
         </AppLayout>
