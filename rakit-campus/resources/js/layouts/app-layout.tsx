@@ -99,7 +99,7 @@ export default function AppLayout({
                             title={user.name || 'Menu Profil'}
                             aria-label="Menu Profil"
                         >
-                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center ring-2 ring-slate-100 shadow-2xs overflow-hidden">
+                            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center ring-1 ring-slate-200 shadow-2xs overflow-hidden">
                                 {user.avatar ? (
                                     <img
                                         src={user.avatar}
@@ -117,7 +117,7 @@ export default function AppLayout({
                         {/* User Header in Dropdown */}
                         <div className="px-3 py-2.5 bg-slate-50 rounded-xl mb-1 border border-slate-100">
                             <div className="flex items-center gap-2.5">
-                                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                                <div className="w-9 h-9 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
                                     {user.avatar ? (
                                         <img
                                             src={user.avatar}
@@ -227,6 +227,35 @@ export default function AppLayout({
         </div>
     );
 
+    const navItems = useMemo(() => {
+        if (isLecturer) {
+            return [
+                { label: 'Dashboard Pengampu', href: '/dashboard', active: url.startsWith('/dashboard') },
+                { label: 'Kelola Ruang Kelas', href: '/classes', active: url.startsWith('/classes') },
+                { label: 'Eksplorasi Proyek', href: '/projects', active: url.startsWith('/projects') },
+            ];
+        }
+
+        if (isCompetitionHub) {
+            return [
+                { label: 'Eksplor Lomba', href: '/competitions?tab=explore', active: url === '/competitions' || url.includes('tab=explore') },
+                { label: 'Cari Tim (MinSatu)', href: '/competitions?tab=teams', active: url.includes('tab=teams') },
+                { label: 'Kategori', href: '/competitions?tab=categories', active: url.includes('tab=categories') },
+                { label: 'Lomba Saya', href: '/competitions?tab=my_competitions', active: url.includes('tab=my_competitions') },
+                { label: 'Workspace', href: '/competition-workspace', active: url.startsWith('/competition-workspace') },
+                { label: 'Leaderboard', href: '/leaderboard?hub=competition', active: url.startsWith('/leaderboard') },
+            ];
+        }
+
+        return [
+            { label: 'Dashboard', href: '/dashboard', active: url.startsWith('/dashboard') },
+            { label: 'Ruang Kelas', href: '/classes', active: url.startsWith('/classes') },
+            { label: 'Proyek Kelas', href: '/projects', active: url.startsWith('/projects') },
+            { label: 'Workspace', href: '/workspace', active: url.startsWith('/workspace') },
+            { label: 'Leaderboard', href: '/leaderboard?hub=project', active: url.startsWith('/leaderboard') },
+        ];
+    }, [isLecturer, isCompetitionHub, url]);
+
     return (
         <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             {title && <Head title={title} />}
@@ -242,228 +271,86 @@ export default function AppLayout({
 
             {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
             <header className="w-full bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-40 transition-all">
-                <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4">
-                    {/* Top Row on Mobile: Brand Logo + Hub Pill on Left, User Actions on Right */}
-                    <div className="w-full md:w-auto flex items-center justify-between gap-3">
-                        {/* Brand Logo & Active Hub Pill */}
-                        <div className="flex items-center gap-2 sm:gap-3.5">
-                            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
-                                <img
-                                    src="/images/rakit-mark.png"
-                                    alt="RAKIT"
-                                    className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
-                                />
-                                <div className="flex items-center gap-1.5">
-                                    <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
-                                        RAKIT
-                                    </span>
-                                    <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800 tracking-wider">
-                                        Campus
-                                    </span>
-                                </div>
-                            </Link>
+                <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
+                    {/* Brand Logo & Hub Switcher */}
+                    <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+                        <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+                            <img
+                                src="/images/rakit-mark.png"
+                                alt="RAKIT"
+                                className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                            />
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white">
+                                    RAKIT
+                                </span>
+                                <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800 tracking-wider">
+                                    Campus
+                                </span>
+                            </div>
+                        </Link>
 
-                            {/* Dosen Portal Pill OR Interactive Student Hub Switcher */}
-                            {isLecturer ? (
-                                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 text-blue-700 dark:text-blue-300 shadow-2xs">
-                                    <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-600 animate-pulse" />
-                                    <span>Portal Dosen Pengampu</span>
-                                </div>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsGatewayOpen(true)}
-                                    className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
-                                        isCompetitionHub
-                                            ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
-                                            : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
-                                    }`}
-                                    title="Klik untuk berpindah ruang kerja"
-                                >
-                                    <span
-                                        className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
-                                            isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
-                                        }`}
-                                    />
-                                    <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
-                                    <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
-                                    <span
-                                        className={`p-0.5 rounded-md transition ${
-                                            isCompetitionHub
-                                                ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
-                                                : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
-                                        }`}
-                                    >
-                                        <RefreshCw className="size-2.5" />
-                                    </span>
-                                </button>
-                            )}
-                        </div>
+                        <div className="hidden sm:block h-4 w-px bg-slate-200 dark:bg-slate-800" />
 
-                        {/* Mobile User Actions (visible on mobile only, beside brand) */}
-                        <div className="flex md:hidden items-center gap-1.5">
-                            {renderUserActions()}
-                        </div>
-                    </div>
-
-                    {/* Navigation Capsule / Pills */}
-                    <div className="w-full md:w-auto flex justify-center md:justify-start overflow-x-auto scrollbar-none -mx-1 px-1">
+                        {/* Hub Selector */}
                         {isLecturer ? (
-                            <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] dark:bg-slate-900/80 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 overflow-x-auto max-w-full">
-                                <Link
-                                    href="/dashboard"
-                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
-                                        url.startsWith('/dashboard')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    Dashboard Pengampu
-                                </Link>
-                                <Link
-                                    href="/classes"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/classes')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    Kelola Ruang Kelas
-                                </Link>
-                                <Link
-                                    href="/projects"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/projects')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                                    }`}
-                                >
-                                    Eksplorasi Proyek
-                                </Link>
-                            </nav>
-                        ) : isCompetitionHub ? (
-                            <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
-                                <Link
-                                    href="/competitions?tab=explore"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
-                                        url === '/competitions' || url.includes('tab=explore')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Eksplor Lomba
-                                </Link>
-                                <Link
-                                    href="/competitions?tab=teams"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.includes('tab=teams')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Cari Tim (MinSatu)
-                                </Link>
-                                <Link
-                                    href="/competitions?tab=categories"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.includes('tab=categories')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Kategori
-                                </Link>
-                                <Link
-                                    href="/competitions?tab=my_competitions"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.includes('tab=my_competitions')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Lomba Saya
-                                </Link>
-                                <Link
-                                    href="/competition-workspace"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/competition-workspace')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Workspace
-                                </Link>
-                                <Link
-                                    href="/leaderboard?hub=competition"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/leaderboard')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Leaderboard
-                                </Link>
-                            </nav>
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                <span className="size-1.5 rounded-full bg-blue-600" />
+                                <span>Portal Dosen</span>
+                            </div>
                         ) : (
-                            <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
-                                <Link
-                                    href="/dashboard"
-                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap ${
-                                        url.startsWith('/dashboard')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Dashboard
-                                </Link>
-                                <Link
-                                    href="/classes"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/classes')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Ruang Kelas
-                                </Link>
-                                <Link
-                                    href="/projects"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/projects')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Proyek Kelas
-                                </Link>
-                                <Link
-                                    href="/workspace"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/workspace')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Workspace
-                                </Link>
-                                <Link
-                                    href="/leaderboard?hub=project"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/leaderboard')
-                                            ? 'bg-[#2563eb] text-white shadow-sm'
-                                            : 'text-slate-600 hover:text-slate-900'
-                                    }`}
-                                >
-                                    Leaderboard
-                                </Link>
-                            </nav>
+                            <button
+                                type="button"
+                                onClick={() => setIsGatewayOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-50 hover:bg-slate-100/90 border border-slate-200/80 transition cursor-pointer group"
+                                title="Klik untuk berganti ruang kerja"
+                            >
+                                <Layers className="size-3.5 text-slate-500 group-hover:text-blue-600 transition" />
+                                <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
+                                <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
+                                <ChevronDown className="size-3 text-slate-400 group-hover:text-slate-600 transition" />
+                            </button>
                         )}
                     </div>
 
-                    {/* Desktop Right User Actions */}
-                    <div className="hidden md:flex items-center gap-2 sm:gap-2.5 shrink-0">
+                    {/* Desktop Navigation Links (Linear/GitHub style - clean text links) */}
+                    <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
+                        {navItems.map((item) => (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition whitespace-nowrap ${
+                                    item.active
+                                        ? 'bg-slate-100 text-slate-900 font-bold dark:bg-slate-800 dark:text-white'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800/50'
+                                }`}
+                            >
+                                {item.label}
+                            </Link>
+                        ))}
+                    </nav>
+
+                    {/* Right User Actions (Always aligned right) */}
+                    <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
                         {renderUserActions()}
                     </div>
+                </div>
+
+                {/* Mobile Subnav Strip: Smooth horizontal scroll, clean hairline border */}
+                <div className="md:hidden border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-[#06080F]/95 px-3 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                    {navItems.map((item) => (
+                        <Link
+                            key={item.href}
+                            href={item.href}
+                            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition ${
+                                item.active
+                                    ? 'bg-slate-100 text-slate-900 font-bold dark:bg-slate-800 dark:text-white'
+                                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                            }`}
+                        >
+                            {item.label}
+                        </Link>
+                    ))}
                 </div>
             </header>
 

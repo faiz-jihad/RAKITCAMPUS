@@ -691,12 +691,14 @@ export default function CompetitionWorkspace({
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap">
+                        {/* Reference / External Links */}
                         {participation.competition?.official_url && (
                             <a
                                 href={participation.competition.official_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs font-semibold transition"
+                                title="Website Resmi Kompetisi"
                             >
                                 <Globe className="size-3.5 text-slate-400 shrink-0" />
                                 <span className="hidden sm:inline">Website Resmi</span>
@@ -709,97 +711,19 @@ export default function CompetitionWorkspace({
                                 href={participation.competition.registration_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs"
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 text-xs font-semibold transition"
+                                title="Portal Pendaftaran Resmi"
                             >
                                 <span>Portal Pendaftaran</span>
-                                <ExternalLink className="size-3 shrink-0" />
+                                <ExternalLink className="size-3 text-slate-400 shrink-0" />
                             </a>
                         )}
 
-                        {isMember && (
-                            <button
-                                type="button"
-                                onClick={handleOpenAiModal}
-                                disabled={aiGenerating}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50 hover:border-blue-300 text-slate-800 hover:text-blue-700 text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50"
-                                title="Susun otomatis rencana tugas Kanban menggunakan AI"
-                            >
-                                <Sparkles className="size-3.5 text-blue-600" />
-                                <span>{aiGenerating ? 'AI Menyusun...' : 'Susun Tugas AI'}</span>
-                            </button>
-                        )}
-
-                        {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
-                            <button
-                                type="button"
-                                onClick={handleApproveFormation}
-                                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
-                            >
-                                <ShieldCheck className="size-3.5" />
-                                <span>Setujui Tim</span>
-                            </button>
-                        )}
-
-                        {isLeader && !participation.is_formation_locked && (
-                            <button
-                                type="button"
-                                onClick={handleLockFormation}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
-                            >
-                                <Lock className="size-3.5 text-slate-500" />
-                                <span>Kunci Tim</span>
-                            </button>
-                        )}
-
-                        {(isLeader || isMentor || isAdmin) && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <button
-                                        type="button"
-                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
-                                    >
-                                        <span>Kelola Tim</span>
-                                        <ChevronDown className="size-3 text-slate-400 shrink-0" />
-                                    </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-52">
-                                    <DropdownMenuItem
-                                        onClick={() => setStageModalOpen(true)}
-                                        className="cursor-pointer gap-2"
-                                    >
-                                        <Sparkles className="size-3.5 text-blue-600" />
-                                        <span>Update Tahapan</span>
-                                    </DropdownMenuItem>
-
-                                    <DropdownMenuItem
-                                        onClick={() => setResultModalOpen(true)}
-                                        className="cursor-pointer gap-2"
-                                    >
-                                        <Trophy className="size-3.5 text-slate-700" />
-                                        <span>Catat Prestasi</span>
-                                    </DropdownMenuItem>
-
-                                    {isLeader && !participation.is_formation_locked && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem
-                                                onClick={handleLockFormation}
-                                                className="cursor-pointer gap-2"
-                                            >
-                                                <Lock className="size-3.5 text-slate-500" />
-                                                <span>Kunci Tim</span>
-                                            </DropdownMenuItem>
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-
-                        {/* GitHub Integration Shortcut Pill */}
+                        {/* GitHub Integration Shortcut */}
                         <button
                             type="button"
                             onClick={() => setActiveTab('github')}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200/90 bg-white text-xs font-bold text-slate-700 hover:border-blue-300 hover:text-blue-600 transition cursor-pointer shadow-2xs"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:border-slate-300 hover:text-slate-900 transition cursor-pointer shadow-2xs"
                             title="Buka Monitoring GitHub Tim"
                         >
                             <Github className="size-3.5 text-slate-700" />
@@ -811,11 +735,83 @@ export default function CompetitionWorkspace({
                                     <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
                                 </>
                             ) : (
-                                <span className="text-[11px] font-semibold text-slate-500">
-                                    + Hubungkan GitHub
+                                <span className="text-[11px] text-slate-500">
+                                    + GitHub
                                 </span>
                             )}
                         </button>
+
+                        {/* Team Operations Dropdown */}
+                        {(isLeader || isMentor || isAdmin) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                                    >
+                                        <span>Kelola Tim</span>
+                                        <ChevronDown className="size-3 text-slate-400 shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1 rounded-xl shadow-lg border border-slate-200 bg-white z-50">
+                                    <DropdownMenuItem
+                                        onClick={() => setStageModalOpen(true)}
+                                        className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100"
+                                    >
+                                        <Sparkles className="size-3.5 text-blue-600" />
+                                        <span>Update Tahapan Seleksi</span>
+                                    </DropdownMenuItem>
+
+                                    <DropdownMenuItem
+                                        onClick={() => setResultModalOpen(true)}
+                                        className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100"
+                                    >
+                                        <Trophy className="size-3.5 text-amber-600" />
+                                        <span>Catat Prestasi & Juara</span>
+                                    </DropdownMenuItem>
+
+                                    {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
+                                        <>
+                                            <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                            <DropdownMenuItem
+                                                onClick={handleApproveFormation}
+                                                className="cursor-pointer gap-2 text-xs font-bold text-emerald-700 px-3 py-2 rounded-lg hover:bg-emerald-50"
+                                            >
+                                                <ShieldCheck className="size-3.5 text-emerald-600" />
+                                                <span>Setujui Formasi Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <>
+                                            <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                            <DropdownMenuItem
+                                                onClick={handleLockFormation}
+                                                className="cursor-pointer gap-2 text-xs font-semibold text-rose-700 px-3 py-2 rounded-lg hover:bg-rose-50"
+                                            >
+                                                <Lock className="size-3.5 text-rose-600" />
+                                                <span>Kunci Formasi Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+
+                        {/* AI Task Plan Action */}
+                        {isMember && (
+                            <button
+                                type="button"
+                                onClick={handleOpenAiModal}
+                                disabled={aiGenerating}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-blue-50/60 hover:border-blue-200 text-slate-800 hover:text-blue-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+                                title="Susun otomatis rencana tugas Kanban menggunakan AI"
+                            >
+                                <Sparkles className="size-3.5 text-blue-600" />
+                                <span>{aiGenerating ? 'AI Menyusun...' : 'Susun AI'}</span>
+                            </button>
+                        )}
 
                         {canManageTasks && (
                             <button
@@ -853,17 +849,17 @@ export default function CompetitionWorkspace({
                                 key={tab.id}
                                 type="button"
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 text-xs font-bold transition rounded-t-lg border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
+                                className={`shrink-0 flex items-center gap-2 px-3 py-2.5 text-xs font-semibold transition border-b-2 whitespace-nowrap cursor-pointer -mb-px ${
                                     isActive
-                                        ? 'border-blue-600 text-blue-600 bg-white shadow-2xs'
-                                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                                        ? 'border-blue-600 text-slate-900 font-bold'
+                                        : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
                                 }`}
                             >
-                                <Icon className="size-3.5 shrink-0" />
+                                <Icon className={`size-3.5 shrink-0 ${isActive ? 'text-blue-600' : 'text-slate-400'}`} />
                                 <span>{tab.label}</span>
                                 {typeof tab.count === 'number' && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded-md min-w-[18px] text-center shrink-0 ${
-                                        isActive ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600'
+                                        isActive ? 'bg-blue-50 text-blue-700 border border-blue-200/80' : 'bg-slate-100 text-slate-600'
                                     }`}>
                                         {tab.count}
                                     </span>
@@ -880,7 +876,7 @@ export default function CompetitionWorkspace({
                     {participation.team_id && (
                         <Link
                             href={`/ai-workspace?team_id=${participation.team_id}&assistant=competition`}
-                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-bold text-slate-700 hover:text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-lg transition"
+                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-semibold text-slate-700 hover:text-blue-700 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-lg transition"
                         >
                             <Sparkles className="size-3.5 text-blue-600" />
                             <span>AI Workspace</span>
@@ -1807,10 +1803,18 @@ export default function CompetitionWorkspace({
                                                     <div className="flex items-start gap-3 min-w-0">
                                                         <div
                                                             onClick={() => setSelectedApplicantModal(app)}
-                                                            className="size-10 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs cursor-pointer transition"
+                                                            className="size-10 rounded-xl bg-slate-900 hover:bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs cursor-pointer transition overflow-hidden ring-1 ring-slate-200"
                                                             title="Klik untuk melihat profil lengkap"
                                                         >
-                                                            {applicant?.name ? applicant.name.charAt(0).toUpperCase() : 'U'}
+                                                            {applicant?.avatar ? (
+                                                                <img
+                                                                    src={applicant.avatar}
+                                                                    alt={applicant?.name}
+                                                                    className="w-full h-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                applicant?.name ? applicant.name.charAt(0).toUpperCase() : 'U'
+                                                            )}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
@@ -1879,10 +1883,10 @@ export default function CompetitionWorkspace({
                                                         <button
                                                             type="button"
                                                             onClick={() => setSelectedApplicantModal(app)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 text-xs font-bold transition cursor-pointer shadow-2xs"
+                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50/80 hover:bg-blue-100 text-blue-700 text-xs font-bold transition cursor-pointer shadow-2xs"
                                                         >
                                                             <Eye className="size-3.5" />
-                                                            <span>Lihat Profil Pelamar</span>
+                                                            <span>Lihat Profil & Portofolio</span>
                                                         </button>
 
                                                         {waUrl ? (
