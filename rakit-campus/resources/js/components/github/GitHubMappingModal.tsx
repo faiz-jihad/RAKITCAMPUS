@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Link2, Loader2, User, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface Props {
     isOpen: boolean;
@@ -39,12 +40,10 @@ export default function GitHubMappingModal({
         setSubmitting(true);
 
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/mappings/${mappingId}`, {
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/mappings/${mappingId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
                 },
                 body: JSON.stringify({
                     user_id: selectedUserId ? Number(selectedUserId) : null,

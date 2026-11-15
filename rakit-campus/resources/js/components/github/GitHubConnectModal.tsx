@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Github, Loader2, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { apiFetch } from '@/lib/api';
 
 interface Props {
     isOpen: boolean;
@@ -21,12 +22,10 @@ export default function GitHubConnectModal({ isOpen, onClose, teamId, onConnecte
         setLoading(true);
 
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/repository`, {
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/repository`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
                 },
                 body: JSON.stringify({
                     repository_url: repoUrl.trim(),

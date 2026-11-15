@@ -18,6 +18,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->trustProxies(at: '*');
         $middleware->statefulApi();
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/v1/*',
+            'api/v1/integrations/github/webhook',
+        ]);
         $middleware->redirectTo(
             guests: '/login',
             users: '/dashboard'
@@ -31,6 +36,15 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
+            if ($request->header('X-Inertia')) {
+                return back()->with('error', 'Sesi Anda telah diperbarui. Silakan coba kembali.');
+            }
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'CSRF token mismatch. Silakan muat ulang halaman.'], 419);
+            }
+            return redirect()->back()->with('error', 'Sesi Anda telah kedaluwarsa. Silakan coba kembali.');
+        });
         $exceptions->render(function (AuthenticationException $e, Request $request) {
             if ($request->expectsJson() && ! $request->header('X-Inertia')) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);

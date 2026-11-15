@@ -27,6 +27,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { apiFetch } from '@/lib/api';
 import GitHubConnectModal from './GitHubConnectModal';
 import GitHubHeatmap from './GitHubHeatmap';
 import GitHubMappingModal from './GitHubMappingModal';
@@ -74,7 +75,7 @@ export default function GitHubContributionMonitor({
         if (!isConnected) return;
         try {
             setLoading(true);
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/overview`);
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/overview`);
             if (res.ok) {
                 const json = await res.json();
                 setOverview(json.data);
@@ -92,7 +93,7 @@ export default function GitHubContributionMonitor({
     // Fetch members analytics
     const fetchMembers = async () => {
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/contributors`);
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/contributors`);
             if (res.ok) {
                 const json = await res.json();
                 setMembersData(json.data);
@@ -105,7 +106,7 @@ export default function GitHubContributionMonitor({
     // Fetch branches analytics
     const fetchBranches = async () => {
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/branches`);
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/branches`);
             if (res.ok) {
                 const json = await res.json();
                 setBranchesData(json.data || []);
@@ -118,7 +119,7 @@ export default function GitHubContributionMonitor({
     // Fetch activity timeline
     const fetchTimeline = async () => {
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/activity?per_page=40`);
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/activity?per_page=40`);
             if (res.ok) {
                 const json = await res.json();
                 setTimelineData(json.data || []);
@@ -131,7 +132,7 @@ export default function GitHubContributionMonitor({
     // Fetch mappings
     const fetchMappings = async () => {
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/mappings`);
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/mappings`);
             if (res.ok) {
                 const json = await res.json();
                 setMappingsData(json.data || []);
@@ -146,12 +147,8 @@ export default function GitHubContributionMonitor({
         if (!canManage || syncing) return;
         setSyncing(true);
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/repository/sync`, {
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/repository/sync`, {
                 method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
             });
             if (res.ok) {
                 // Refresh data after short interval
@@ -179,12 +176,8 @@ export default function GitHubContributionMonitor({
         }
 
         try {
-            const res = await fetch(`/api/v1/workspaces/${teamId}/github/repository`, {
+            const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/repository`, {
                 method: 'DELETE',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
             });
             if (res.ok) {
                 setRepo(null);
