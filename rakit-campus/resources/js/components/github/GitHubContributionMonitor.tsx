@@ -198,6 +198,7 @@ export default function GitHubContributionMonitor({
             if (res.ok) {
                 setRepo(null);
                 setOverview(null);
+                router.reload();
             }
         } catch (e) {
             console.error('Disconnect failed', e);

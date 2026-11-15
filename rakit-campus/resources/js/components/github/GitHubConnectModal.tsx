@@ -6,7 +6,7 @@ interface Props {
     isOpen: boolean;
     onClose: () => void;
     teamId: number;
-    onConnected: () => void;
+    onConnected: (newRepo?: any) => void;
 }
 
 export default function GitHubConnectModal({ isOpen, onClose, teamId, onConnected }: Props) {
@@ -42,7 +42,7 @@ export default function GitHubConnectModal({ isOpen, onClose, teamId, onConnecte
             }
 
             setLoading(false);
-            onConnected();
+            onConnected(data.data?.repository);
             onClose();
         } catch (err: any) {
             setErrorMsg(err.message || 'Terjadi kesalahan jaringan.');

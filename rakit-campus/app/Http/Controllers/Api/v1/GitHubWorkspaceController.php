@@ -138,31 +138,50 @@ class GitHubWorkspaceController extends Controller
             ], 422);
         }
 
-        // Create or update repository record
-        $repo = GitHubRepository::updateOrCreate(
-            ['team_id' => $team->id],
-            [
-                'project_id' => $team->project_id,
-                'installation_id' => $installationId,
-                'github_id' => $metadata['id'] ?? null,
-                'owner' => $parsed['owner'],
-                'name' => $parsed['repo'],
-                'full_name' => $parsed['full_name'],
-                'html_url' => $parsed['html_url'],
-                'clone_url' => $metadata['clone_url'] ?? "https://github.com/{$parsed['full_name']}.git",
-                'default_branch' => $metadata['default_branch'] ?? 'main',
-                'description' => $metadata['description'] ?? null,
-                'is_private' => (bool) ($metadata['private'] ?? false),
-                'is_fork' => (bool) ($metadata['fork'] ?? false),
-                'stars_count' => (int) ($metadata['stargazers_count'] ?? 0),
-                'forks_count' => (int) ($metadata['forks_count'] ?? 0),
-                'open_issues_count' => (int) ($metadata['open_issues_count'] ?? 0),
-                'status' => 'active',
-                'sync_status' => 'pending',
-                'sync_error' => null,
-                'webhook_secret' => Str::random(32),
-            ]
-        );
+        // Create or update repository record (handles soft-deleted records from previous disconnects)
+        $repo = GitHubRepository::withTrashed()->where('team_id', $team->id)->first();
+
+        $repoData = [
+            'project_id' => $team->project_id,
+            'installation_id' => $installationId,
+            'github_id' => $metadata['id'] ?? null,
+            'owner' => $parsed['owner'],
+            'name' => $parsed['repo'],
+            'full_name' => $parsed['full_name'],
+            'html_url' => $parsed['html_url'],
+            'clone_url' => $metadata['clone_url'] ?? "https://github.com/{$parsed['full_name']}.git",
+            'default_branch' => $metadata['default_branch'] ?? 'main',
+            'description' => $metadata['description'] ?? null,
+            'is_private' => (bool) ($metadata['private'] ?? false),
+            'is_fork' => (bool) ($metadata['fork'] ?? false),
+            'stars_count' => (int) ($metadata['stargazers_count'] ?? 0),
+            'forks_count' => (int) ($metadata['forks_count'] ?? 0),
+            'open_issues_count' => (int) ($metadata['open_issues_count'] ?? 0),
+            'status' => 'active',
+            'sync_status' => 'pending',
+            'sync_error' => null,
+            'webhook_secret' => Str::random(32),
+        ];
+
+        if ($repo) {
+            if ($repo->trashed()) {
+                $repo->restore();
+            }
+
+            // If switching to a different repository, clear previous data
+            if ($repo->full_name !== $parsed['full_name']) {
+                $repo->branches()->delete();
+                $repo->commits()->delete();
+                $repo->pullRequests()->delete();
+                $repo->contributors()->delete();
+                $repo->memberMappings()->delete();
+                $repo->syncLogs()->delete();
+            }
+
+            $repo->update($repoData);
+        } else {
+            $repo = GitHubRepository::create(array_merge(['team_id' => $team->id], $repoData));
+        }
 
         // Update project repository_url if not set
         if ($team->project && ! $team->project->repository_url) {
@@ -203,7 +222,7 @@ class GitHubWorkspaceController extends Controller
 
         $fullName = $repo->full_name;
         $repo->update(['status' => 'disconnected']);
-        $repo->delete();
+        $repo->forceDelete();
 
         return response()->json([
             'message' => "Integrasi repositori '{$fullName}' berhasil diputuskan dari Workspace.",
