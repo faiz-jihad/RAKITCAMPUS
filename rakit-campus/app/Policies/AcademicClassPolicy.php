@@ -46,11 +46,16 @@ class AcademicClassPolicy
      */
     public function manage(User $user, AcademicClass $academicClass): bool
     {
-        if ($user->isPlatformAdmin()) {
+        if ($user->isPlatformAdmin() || $user->isCampusAdminOf($academicClass->campus_id)) {
             return true;
         }
 
         return $this->teaches($user, $academicClass);
+    }
+
+    public function update(User $user, AcademicClass $academicClass): bool
+    {
+        return $this->manage($user, $academicClass);
     }
 
     public function teaches(User $user, AcademicClass $academicClass): bool

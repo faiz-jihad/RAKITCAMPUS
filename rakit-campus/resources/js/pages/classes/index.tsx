@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import EditClassModal, { type EditableAcademicClass } from '@/components/classes/EditClassModal';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import {
@@ -8,6 +9,7 @@ import {
     Check,
     Copy,
     GraduationCap,
+    Pencil,
     Plus,
     Users,
     X,
@@ -56,6 +58,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [], isLecturer = false }: Props) {
     const { flash } = usePage().props as any;
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [selectedClassToEdit, setSelectedClassToEdit] = useState<EditableAcademicClass | null>(null);
     const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
     // Form to create new class (Dosen)
@@ -110,7 +113,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                         <button
                             type="button"
                             onClick={() => setShowCreateModal(true)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 cursor-pointer"
                         >
                             <Plus className="size-3.5" />
                             <span>Buat Kelas</span>
@@ -119,12 +122,13 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                 </div>
 
                 {flash?.success && (
-                    <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800">
-                        {flash.success}
+                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-900 flex items-center gap-2">
+                        <Check className="size-4 text-blue-600 shrink-0" />
+                        <span>{flash.success}</span>
                     </div>
                 )}
                 {flash?.info && (
-                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-800">
+                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-medium text-slate-800">
                         {flash.info}
                     </div>
                 )}
@@ -159,7 +163,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                             <button
                                 type="submit"
                                 disabled={joinProcessing}
-                                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 cursor-pointer"
                             >
                                 {joinProcessing ? 'Mengecek...' : 'Gabung'}
                             </button>
@@ -192,7 +196,7 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(true)}
-                                    className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
+                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 cursor-pointer"
                                 >
                                     <Plus className="size-3.5" />
                                     <span>Buat Kelas Pertama</span>
@@ -210,9 +214,23 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                                     {cls.code}
                                                 </span>
-                                                <span className="text-[11px] font-semibold text-slate-400">
-                                                    {cls.semester} {cls.academic_year}
-                                                </span>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-[11px] font-semibold text-slate-400">
+                                                        {cls.semester} {cls.academic_year}
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            e.stopPropagation();
+                                                            setSelectedClassToEdit(cls);
+                                                        }}
+                                                        className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                                                        title="Edit Informasi Kelas"
+                                                    >
+                                                        <Pencil className="size-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
 
                                             <Link href={`/classes/${cls.code || cls.id}`} className="block group-hover:text-blue-600 transition">
@@ -237,13 +255,13 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                 <button
                                                     type="button"
                                                     onClick={() => copyJoinCode(cls.join_code)}
-                                                    className="px-2 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-700 hover:text-blue-600 flex items-center gap-1 font-semibold transition cursor-pointer"
+                                                    className="px-2.5 py-1 rounded-md bg-white border border-slate-200 text-[11px] text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-300 active:scale-95 flex items-center gap-1 font-semibold transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs"
                                                     title="Salin Kode"
                                                 >
                                                     {copiedCode === cls.join_code ? (
                                                         <>
-                                                            <Check className="size-3 text-emerald-600" />
-                                                            <span className="text-emerald-600">Disalin</span>
+                                                            <Check className="size-3 text-blue-600" />
+                                                            <span className="text-blue-600">Disalin</span>
                                                         </>
                                                     ) : (
                                                         <>
@@ -275,13 +293,24 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                             </div>
                                         </div>
 
-                                        <Link
-                                            href={`/classes/${cls.code || cls.id}`}
-                                            className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition"
-                                        >
-                                            <span>Buka Ruang Kelas</span>
-                                            <ArrowRight className="size-3" />
-                                        </Link>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedClassToEdit(cls)}
+                                                className="px-3 py-2.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 hover:border-blue-300 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer shrink-0"
+                                                title="Edit Informasi Kelas"
+                                            >
+                                                <Pencil className="size-3.5" />
+                                                <span className="hidden sm:inline">Edit</span>
+                                            </button>
+                                            <Link
+                                                href={`/classes/${cls.code || cls.id}`}
+                                                className="flex-1 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 group/btn cursor-pointer"
+                                            >
+                                                <span>Buka Ruang Kelas</span>
+                                                <ArrowRight className="size-3.5 group-hover/btn:translate-x-1 transition-transform duration-150" />
+                                            </Link>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -329,10 +358,12 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                         </span>
                                                     </div>
 
-                                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                                                        cls.team?.status_color || (hasTeam ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200')
+                                                    <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border ${
+                                                        hasTeam
+                                                            ? 'bg-blue-50 text-blue-700 border-blue-200/80'
+                                                            : 'bg-slate-100 text-slate-700 border-slate-200'
                                                     }`}>
-                                                        {cls.team?.status_label || (hasTeam ? 'Sudah Ada Tim' : 'Belum Ada Tim')}
+                                                        {hasTeam ? 'Sudah Ada Tim' : 'Belum Ada Tim'}
                                                     </span>
                                                 </div>
 
@@ -370,12 +401,12 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                                         )}
                                                     </div>
                                                 ) : (
-                                                    <div className="p-3 rounded-lg bg-amber-50/70 border border-amber-200/70 text-xs space-y-1">
-                                                        <span className="font-semibold text-amber-800 flex items-center gap-1">
-                                                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                                    <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/80 text-xs space-y-1">
+                                                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                                                            <AlertCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                                                             <span>Belum Terdaftar di Tim</span>
                                                         </span>
-                                                        <p className="text-[11px] text-amber-700 leading-snug">
+                                                        <p className="text-[11px] text-slate-600 leading-relaxed">
                                                             Bergabung dengan kelompok proyek atau inisiasi proyek baru untuk kelas ini.
                                                         </p>
                                                     </div>
@@ -386,10 +417,10 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                             <div className="pt-2">
                                                 <Link
                                                     href={`/classes/${cls.code || cls.id}`}
-                                                    className="w-full py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition"
+                                                    className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 group/btn cursor-pointer"
                                                 >
                                                     <span>Buka Kelas</span>
-                                                    <ArrowRight className="size-3" />
+                                                    <ArrowRight className="size-3.5 group-hover/btn:translate-x-1 transition-transform duration-150" />
                                                 </Link>
                                             </div>
                                         </div>
@@ -524,14 +555,14 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                                 <button
                                     type="button"
                                     onClick={() => setShowCreateModal(false)}
-                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-3.5 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={createProcessing}
-                                    className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition disabled:opacity-50 cursor-pointer"
+                                    className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 cursor-pointer"
                                 >
                                     {createProcessing ? 'Menyimpan...' : 'Terbitkan Kelas'}
                                 </button>
@@ -540,6 +571,13 @@ export default function ClassesIndex({ taughtClasses = [], enrolledClasses = [],
                     </div> 
                 </div>
             )}
+
+            {/* EDIT CLASS MODAL (DOSEN) */}
+            <EditClassModal
+                isOpen={selectedClassToEdit !== null}
+                onClose={() => setSelectedClassToEdit(null)}
+                academicClass={selectedClassToEdit}
+            />
         </AppLayout>
     );
 }

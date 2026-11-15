@@ -13,6 +13,7 @@ import {
     Check,
     CheckCircle2,
     Clock,
+    Compass,
     Download,
     ExternalLink,
     FileText,
@@ -21,6 +22,7 @@ import {
     GraduationCap,
     HelpCircle,
     Inbox,
+    Info,
     Layers,
     Lock,
     MessageSquare,
@@ -29,7 +31,9 @@ import {
     Send,
     ShieldCheck,
     Sparkles,
+    Target,
     Trash2,
+    Upload,
     UserCheck,
     Users,
     X,
@@ -37,6 +41,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import SemesterTimeline from './components/SemesterTimeline';
+import ProjectRoadmapTimeline from './components/ProjectRoadmapTimeline';
 import LivingProposalTab from './components/LivingProposalTab';
 import ProposalVersionsTab from './components/ProposalVersionsTab';
 import TasksKanbanTab from './components/TasksKanbanTab';
@@ -46,6 +51,7 @@ import MatchmakingTab from './components/MatchmakingTab';
 import TeamBalanceTab from './components/TeamBalanceTab';
 import InvitationsTab from './components/InvitationsTab';
 import TeamFormationTab from './components/TeamFormationTab';
+import ProjectJigsawBoard from '@/components/project-jigsaw-board';
 
 interface Props {
     project: any;
@@ -124,16 +130,27 @@ export default function ProjectShow({
     );
     const flash = page.props?.flash;
     const academicClass = project.academic_class || project.academicClass;
+    const isAcademic = Boolean(project.academic_class_id || academicClass?.id || project.category === 'academic');
+    const academicOnlyTabs = ['proposal', 'versions', 'uts', 'uas', 'lecturer_review'];
     const initialTabParam = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
-    const [activeTab, setActiveTab] = useState<string>(initialTabParam || 'overview');
+    const safeInitialTab = (!isAcademic && academicOnlyTabs.includes(initialTabParam || ''))
+        ? 'overview'
+        : (initialTabParam || 'overview');
+    const [activeTab, setActiveTab] = useState<string>(safeInitialTab);
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [applications, setApplications] = useState(initialApplications);
 
     useEffect(() => {
         setApplications(initialApplications);
     }, [initialApplications]);
+
+    useEffect(() => {
+        if (!isAcademic && academicOnlyTabs.includes(activeTab)) {
+            setActiveTab('overview');
+        }
+    }, [isAcademic, activeTab]);
     const [applyingRole, setApplyingRole] = useState<any>(null);
     const [applyMessage, setApplyMessage] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -191,6 +208,31 @@ export default function ProjectShow({
         return meta?.content || '';
     };
 
+    const [toast, setToast] = useState<{ type: 'success' | 'error' | 'info'; message: string; submessage?: string } | null>(null);
+    const [acceptedModalData, setAcceptedModalData] = useState<{
+        name: string;
+        email: string;
+        role: string;
+    } | null>(null);
+    const [showActivateTeamModal, setShowActivateTeamModal] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success) {
+            showToast(flash.success, 'success');
+        } else if (flash?.error) {
+            showToast(flash.error, 'error');
+        } else if (flash?.info) {
+            showToast(flash.info, 'info');
+        }
+    }, [flash]);
+
+    const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success', submessage?: string) => {
+        setToast({ type, message, submessage });
+        setTimeout(() => {
+            setToast((current) => (current?.message === message ? null : current));
+        }, 4500);
+    };
+
     const toggleBookmark = async () => {
         try {
             const res = await fetch(`/api/v1/projects/${project.id}/bookmark`, {
@@ -205,8 +247,9 @@ export default function ProjectShow({
             });
             const json = await res.json();
             setBookmarked(json.bookmarked);
+            showToast(json.bookmarked ? 'Proyek ditambahkan ke bookmark.' : 'Proyek dihapus dari bookmark.', 'info');
         } catch {
-            alert('Gagal memperbarui bookmark.');
+            showToast('Gagal memperbarui bookmark.', 'error');
         }
     };
 
@@ -229,16 +272,17 @@ export default function ProjectShow({
                 }),
             });
 
+            const json = await res.json().catch(() => ({}));
             if (res.ok) {
                 setApplyingRole(null);
                 setApplyMessage('');
+                showToast('Lamaran berhasil dikirim!', 'success', 'Ketua tim akan meninjau pengajuan Anda.');
                 router.reload({ only: ['project', 'myApplication', 'isMember', 'applications'] });
             } else {
-                const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal mengirimkan lamaran.');
+                showToast(json.message || 'Gagal mengirimkan lamaran.', 'error');
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Terjadi kesalahan jaringan saat mengirim lamaran.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -259,6 +303,12 @@ export default function ProjectShow({
                 body: JSON.stringify({ action }),
             });
 
+            const json = await res.json().catch(() => ({}));
+            const targetApp = applications.find((a: any) => a.id === appId);
+            const applicantName = targetApp?.user?.name || 'Mahasiswa';
+            const applicantEmail = targetApp?.user?.email || '';
+            const roleName = targetApp?.role?.name || targetApp?.recruitment_role?.name || 'Anggota Tim';
+
             if (res.ok) {
                 // Update applications state immediately so UI updates instantly
                 setApplications((prev: any[]) =>
@@ -266,21 +316,49 @@ export default function ProjectShow({
                         a.id === appId ? { ...a, status: action === 'accept' ? 'accepted' : 'rejected' } : a
                     )
                 );
+
+                if (action === 'accept') {
+                    setAcceptedModalData({
+                        name: applicantName,
+                        email: applicantEmail,
+                        role: roleName,
+                    });
+                    showToast(
+                        `Mahasiswa ${applicantName} resmi bergabung dengan tim!`,
+                        'success',
+                        'Susunan tim dan kuota anggota telah diperbarui secara otomatis.'
+                    );
+                } else {
+                    showToast(`Lamaran dari ${applicantName} telah ditolak.`, 'info');
+                }
+
                 // Reload fresh project data from server including updated team.members
                 router.reload();
             } else {
-                const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal memproses lamaran.');
+                if (json.message?.toLowerCase().includes('sudah diproses')) {
+                    setApplications((prev: any[]) =>
+                        prev.map((a: any) =>
+                            a.id === appId ? { ...a, status: 'accepted' } : a
+                        )
+                    );
+                    showToast('Lamaran ini sudah diproses sebelumnya.', 'info', 'Status anggota telah diperbarui.');
+                    router.reload();
+                } else {
+                    showToast(json.message || 'Gagal memproses lamaran.', 'error');
+                }
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Terjadi kesalahan jaringan saat memproses lamaran.', 'error');
         } finally {
             setDecidingId(null);
         }
     };
 
-    const handleActivateTeam = async () => {
-        if (!confirm('Konfirmasi dan aktifkan formasi kelompok ini? Setelah diaktifkan, status proyek menjadi "Sedang Berjalan" dan Project Workspace resmi dibuka untuk seluruh anggota.')) return;
+    const handleActivateTeam = () => {
+        setShowActivateTeamModal(true);
+    };
+
+    const confirmActivateTeam = async () => {
         setLifecycleProcessing(true);
         try {
             const res = await fetch(`/projects/${project.id}/activate-team`, {
@@ -293,14 +371,16 @@ export default function ProjectShow({
                     'X-XSRF-TOKEN': getXsrfToken(),
                 },
             });
+            const json = await res.json().catch(() => ({}));
             if (res.ok) {
+                setShowActivateTeamModal(false);
+                showToast('Ruang kerja (Project Workspace) resmi aktif!', 'success');
                 router.reload();
             } else {
-                const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal mengaktifkan kelompok.');
+                showToast(json.message || 'Gagal mengaktifkan kelompok.', 'error');
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Terjadi kesalahan jaringan.', 'error');
         } finally {
             setLifecycleProcessing(false);
         }
@@ -322,12 +402,13 @@ export default function ProjectShow({
             });
             const json = await res.json().catch(() => ({}));
             if (res.ok) {
+                showToast(targetStatus === 'closed' || (!targetStatus && hasOpenRecruitment) ? 'Pendaftaran rekrutmen ditutup.' : 'Pendaftaran rekrutmen tim dibuka.', 'info');
                 router.reload({ only: ['project', 'applications'] });
             } else {
-                alert(json.message || 'Gagal mengubah status rekrutmen.');
+                showToast(json.message || 'Gagal mengubah status rekrutmen.', 'error');
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Terjadi kesalahan jaringan.', 'error');
         } finally {
             setTogglingRecruitment(false);
         }
@@ -352,16 +433,16 @@ export default function ProjectShow({
                         setShowGuidanceModal(false);
                         setGuidanceTitle('');
                         setGuidanceContent('');
-                        alert('Arahan bimbingan dosen berhasil diterbitkan untuk tim proyek ini!');
+                        showToast('Arahan bimbingan dosen berhasil diterbitkan untuk tim proyek ini!', 'success');
                     },
                     onError: () => {
-                        alert('Gagal mengirimkan arahan bimbingan. Pastikan Anda memiliki akses pengampu pada kelas ini.');
+                        showToast('Gagal mengirimkan arahan bimbingan. Pastikan Anda memiliki akses pengampu pada kelas ini.', 'error');
                     },
                     onFinish: () => setSubmittingGuidance(false),
                 }
             );
         } else {
-            alert('Catatan bimbingan berhasil disimpan.');
+            showToast('Catatan bimbingan berhasil disimpan.', 'success');
             setShowGuidanceModal(false);
             setSubmittingGuidance(false);
         }
@@ -379,7 +460,8 @@ export default function ProjectShow({
     const maxQuota = academicClass?.target_team_size
         ? Math.min(project.max_team_size || academicClass.target_team_size, academicClass.target_team_size)
         : (project.max_team_size || project.team?.capacity || 4);
-    const hasOpenRecruitment = Boolean(
+    const isQuotaFull = activeMembersCount >= maxQuota;
+    const hasOpenRecruitment = !isQuotaFull && Boolean(
         project.has_open_recruitment ?? (
             project.status === 'recruiting'
             && project.team?.recruitment?.status === 'open'
@@ -416,7 +498,8 @@ export default function ProjectShow({
         { id: 'archive', label: 'Arsip & Portofolio', icon: Archive },
     ];
 
-    const studentTabs = [
+    const studentTabs = isAcademic ? [
+        // Tab Proyek Akademik (Terhubung Kelas: Proposal, Snapshot UTS, Snapshot UAS, Arahan Dosen)
         { id: 'overview', label: 'Overview Proyek', icon: Layers },
         { id: 'requirements', label: 'Spesifikasi Tim', icon: Briefcase },
         { id: 'matchmaking', label: 'Smart Matchmaking', icon: Sparkles },
@@ -450,6 +533,36 @@ export default function ProjectShow({
         { id: 'discussion', label: `Diskusi (${discussions.length})`, icon: MessageSquare },
         { id: 'lecturer_review', label: `Arahan Dosen (${guidances.length})`, icon: GraduationCap },
         { id: 'archive', label: 'Portofolio', icon: Archive },
+    ] : [
+        // Tab Proyek Mandiri (Non-Akademik: Bersih dari Proposal Dosen, UTS, UAS, dan Arahan Bimbingan)
+        { id: 'overview', label: 'Overview Proyek', icon: Layers },
+        { id: 'requirements', label: 'Spesifikasi Tim', icon: Briefcase },
+        { id: 'matchmaking', label: 'Smart Matchmaking', icon: Sparkles },
+        {
+            id: 'team_balance',
+            label: 'Keseimbangan Tim',
+            icon: PieChart,
+            badge: teamBalance?.overall_score ? `${teamBalance.overall_score}%` : null,
+        },
+        {
+            id: 'invitations',
+            label: `Undangan (${sentInvitations.length + receivedInvitations.length})`,
+            icon: Inbox,
+            badge: receivedInvitations.length > 0 ? `${receivedInvitations.length} Baru` : null,
+        },
+        {
+            id: 'formation',
+            label: 'Alur Formasi',
+            icon: UserCheck,
+            badge: project.formation_status === 'workspace_activated' ? 'Aktif' : (project.formation_status ? project.formation_status.replace('_', ' ') : 'Draft'),
+        },
+        { id: 'tasks', label: `Tasks & Kanban (${(kanban.todo?.length || 0) + (kanban.in_progress?.length || 0) + (kanban.in_review?.length || 0) + (kanban.completed?.length || 0)})`, icon: FolderKanban },
+        { id: 'milestones', label: `Milestones & Target (${milestones.length})`, icon: Clock },
+        { id: 'progress', label: `Progress (${implementationProgress}%)`, icon: Sparkles },
+        { id: 'documents', label: `Dokumen & Berkas (${allDocuments.length})`, icon: Download },
+        { id: 'members', label: `Anggota Tim (${teamMembers.length})`, icon: Users },
+        { id: 'discussion', label: `Diskusi (${discussions.length})`, icon: MessageSquare },
+        { id: 'archive', label: 'Portofolio & Showcase', icon: Archive },
     ];
 
     const canonicalUrl = `https://rakitcampus.my.id/projects/${project.slug || project.id}`;
@@ -458,7 +571,7 @@ export default function ProjectShow({
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 180) || `Eksplor proyek mahasiswa ${project.title} kategori ${project.category || 'Teknologi'} di RAKIT Campus.`;
-    const tabs = isLecturerUser ? lecturerTabs : studentTabs;
+    const tabs = (isLecturerUser && isAcademic) ? lecturerTabs : studentTabs;
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -477,9 +590,9 @@ export default function ProjectShow({
                     <div className="flex items-center justify-between">
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs"
+                            className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95"
                         >
-                            <ArrowLeft className="size-3.5" />
+                            <ArrowLeft className="size-3.5 text-slate-500 group-hover:text-blue-600 transition-all duration-200 group-hover:-translate-x-1" />
                             <span>Kembali ke Proyek</span>
                         </Link>
 
@@ -487,22 +600,29 @@ export default function ProjectShow({
                             {project.team && (isMember || isLeader || isLecturer) && canAccessWorkspace && (
                                 <Link
                                     href={`/workspace/${project.team.id}`}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
+                                    className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95"
                                 >
-                                    <FolderKanban className="size-3.5" />
+                                    <FolderKanban className="size-3.5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
                                     <span>Workspace Tim</span>
                                 </Link>
                             )}
 
                             <button
                                 onClick={toggleBookmark}
-                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition cursor-pointer ${
+                                className={`group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
                                     bookmarked
-                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                        : 'bg-white text-slate-700 border-slate-200/80 hover:bg-slate-50'
+                                        ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+                                        : 'bg-white text-slate-700 border-slate-200/80 hover:bg-blue-50/50 hover:text-blue-600 hover:border-blue-200'
                                 }`}
+                                title={bookmarked ? 'Hapus dari simpanan' : 'Simpan proyek ini'}
                             >
-                                <Bookmark className="size-3.5" />
+                                <Bookmark
+                                    className={`size-3.5 transition-all duration-200 group-hover:scale-110 ${
+                                        bookmarked
+                                            ? 'fill-blue-600 text-blue-600'
+                                            : 'text-slate-400 group-hover:text-blue-600 group-hover:-rotate-6'
+                                    }`}
+                                />
                                 <span>{bookmarked ? 'Tersimpan' : 'Simpan Proyek'}</span>
                             </button>
                         </div>
@@ -524,83 +644,132 @@ export default function ProjectShow({
                         </div>
                     )}
 
-                    {/* HERO HEADER: 3 Distinct Status Indicators & Quick Actions */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                            <div className="max-w-3xl">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
-                                        {project.category?.replace('_', ' ')}
-                                    </span>
-                                    {academicClass && (
-                                        <Link
-                                            href={`/classes/${academicClass.code || academicClass.id}`}
-                                            className="text-xs font-bold px-2.5 py-1 rounded-md bg-slate-900 text-white hover:bg-blue-600 transition"
-                                        >
-                                            Kelas: {academicClass.name} ({academicClass.code})
-                                        </Link>
-                                    )}
-                                    <span className="text-xs font-semibold text-slate-500">
-                                        Kesulitan: {project.difficulty || 'Intermediate'}
-                                    </span>
-                                    {project.status === 'recruiting' && (
-                                        <span className={`text-xs font-bold px-2.5 py-1 rounded-md border ${
-                                            hasOpenRecruitment
-                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                : 'bg-slate-100 text-slate-600 border-slate-200'
-                                        }`}>
-                                            {hasOpenRecruitment ? 'Rekrutmen: Terbuka' : 'Rekrutmen: Ditutup'}
-                                        </span>
-                                    )}
-                                    {!canAccessWorkspace && (
-                                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-amber-50 text-amber-800 border border-amber-200">
-                                            Workspace: Menunggu Persetujuan Dosen
-                                        </span>
-                                    )}
-                                </div>
+                    {/* HERO HEADER: Status Indicators & Quick Actions */}
+                    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-7 shadow-xs flex flex-col gap-5">
+                        {/* Row 1: Badges & Recruitment Status / Toggle */}
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            {/* Badges Metadata */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                {/* Kategori Proyek */}
+                                <span className="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                                    {project.category?.replace('_', ' ')}
+                                </span>
 
-                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                {/* Kelas Perkuliahan vs Proyek Mandiri */}
+                                {academicClass ? (
+                                    <Link
+                                        href={`/classes/${academicClass.code || academicClass.id}`}
+                                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200 transition"
+                                    >
+                                        <GraduationCap className="size-3.5 text-blue-600" />
+                                        <span>Kelas: {academicClass.name} ({academicClass.code})</span>
+                                    </Link>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 border border-slate-200/80">
+                                        <UserCheck className="size-3.5 text-slate-500" />
+                                        <span>Proyek Mandiri</span>
+                                    </span>
+                                )}
+
+                                {/* Tingkat Kesulitan */}
+                                <span className="inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200/60">
+                                    Kesulitan: {project.difficulty || 'Intermediate'}
+                                </span>
+
+                                {/* Status Workspace */}
+                                {(canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') ? (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                                        <FolderKanban className="size-3.5" />
+                                        <span>Workspace Aktif</span>
+                                    </span>
+                                ) : academicClass ? (
+                                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200/80">
+                                        <Clock className="size-3.5" />
+                                        <span>Workspace: Menunggu Persetujuan Dosen</span>
+                                    </span>
+                                ) : null}
+                            </div>
+
+                            {/* Recruitment Status / Switch */}
+                            {project.status === 'recruiting' && (
+                                isLeader ? (
+                                    <button
+                                        type="button"
+                                        onClick={() => !isQuotaFull && handleToggleRecruitment(hasOpenRecruitment ? 'closed' : 'open')}
+                                        disabled={togglingRecruitment || isQuotaFull}
+                                        className={`group inline-flex items-center gap-2.5 px-3 py-1.5 rounded-full border transition-all duration-200 shadow-2xs ${
+                                            isQuotaFull
+                                                ? 'bg-slate-100/80 border-slate-200/90 cursor-not-allowed opacity-75'
+                                                : 'bg-slate-50 hover:bg-slate-100/90 border-slate-200/80 cursor-pointer hover:shadow-xs active:scale-95'
+                                        }`}
+                                        title={
+                                            isQuotaFull
+                                                ? 'Kuota anggota tim sudah penuh (rekrutmen otomatis dinonaktifkan)'
+                                                : hasOpenRecruitment
+                                                ? 'Klik untuk menutup pendaftaran rekrutmen'
+                                                : 'Klik untuk membuka pendaftaran rekrutmen'
+                                        }
+                                    >
+                                        <span className="text-xs font-bold text-slate-700 transition-colors">
+                                            {togglingRecruitment
+                                                ? 'Memproses...'
+                                                : isQuotaFull
+                                                ? 'Rekrutmen Ditutup (Kuota Penuh)'
+                                                : 'Rekrutmen Anggota'}
+                                        </span>
+                                        <div
+                                            className={`relative w-7 h-4 rounded-full transition-colors duration-200 ease-in-out shrink-0 ${
+                                                !isQuotaFull && hasOpenRecruitment ? 'bg-blue-600' : 'bg-slate-300'
+                                            }`}
+                                        >
+                                            <span
+                                                className={`absolute top-0.5 left-0.5 size-3 rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                                                    !isQuotaFull && hasOpenRecruitment ? 'translate-x-3' : 'translate-x-0'
+                                                }`}
+                                            />
+                                        </div>
+                                    </button>
+                                ) : (
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold">
+                                        <span className={`size-2 rounded-full ${!isQuotaFull && hasOpenRecruitment ? 'bg-blue-600 animate-pulse' : 'bg-slate-400'}`} />
+                                        <span>
+                                            {isQuotaFull
+                                                ? 'Rekrutmen Ditutup (Kuota Penuh)'
+                                                : hasOpenRecruitment
+                                                ? 'Rekrutmen Terbuka'
+                                                : 'Rekrutmen Ditutup'}
+                                        </span>
+                                    </div>
+                                )
+                            )}
+                        </div>
+
+                        {/* Row 2: Title, Description, Leader Meta & Action Button */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                            <div className="flex-1 max-w-3xl">
+                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
                                     {project.title}
                                 </h1>
 
-                                <p className="text-xs sm:text-sm text-slate-600 mt-2 line-clamp-2 leading-relaxed">
-                                    {project.short_description}
+                                <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
+                                    {project.short_description || project.description || 'Tidak ada deskripsi singkat proyek.'}
                                 </p>
 
-                                {/* 3 DISTINCT STATUS INDICATORS (MANDATORY REQUIREMENT) */}
-                                <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-slate-200/60">
-                                    {/* 1. Proposal Status */}
-                                    <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200 shadow-2xs flex items-center gap-2">
-                                        <FileText className="size-4 text-blue-600" />
-                                        <div className="text-[11px]">
-                                            <span className="text-slate-400 block font-semibold text-[10px] uppercase">Status Proposal</span>
-                                            <strong className="text-slate-900 font-bold">
-                                                Versi {proposalVersion} ({proposalStatus})
-                                            </strong>
-                                        </div>
+                                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-slate-600">
+                                    <div className="inline-flex items-center gap-1.5">
+                                        <span className="size-5 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center">
+                                            {project.leader?.name ? project.leader.name.charAt(0).toUpperCase() : 'U'}
+                                        </span>
+                                        <span>Ketua: <strong className="text-slate-900 font-semibold">{project.leader?.name || 'Mahasiswa'}</strong></span>
                                     </div>
 
-                                    {/* 2. Implementation Progress */}
-                                    <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200 shadow-2xs flex items-center gap-2">
-                                        <FolderKanban className="size-4 text-emerald-600" />
-                                        <div className="text-[11px]">
-                                            <span className="text-slate-400 block font-semibold text-[10px] uppercase">Progres Pengerjaan</span>
-                                            <strong className="text-emerald-700 font-bold">
-                                                {implementationProgress}% Implementasi
-                                            </strong>
+                                    {academicClass?.lecturer && (
+                                        <div className="inline-flex items-center gap-1.5">
+                                            <span className="text-slate-300">·</span>
+                                            <GraduationCap className="size-3.5 text-blue-600" />
+                                            <span>Dosen: <strong className="text-slate-900 font-semibold">{academicClass.lecturer.name}</strong></span>
                                         </div>
-                                    </div>
-
-                                    {/* 3. Overall Project Status */}
-                                    <div className="p-2.5 rounded-xl bg-white/80 border border-slate-200 shadow-2xs flex items-center gap-2">
-                                        <ShieldCheck className="size-4 text-slate-700" />
-                                        <div className="text-[11px]">
-                                            <span className="text-slate-400 block font-semibold text-[10px] uppercase">Status Keseluruhan</span>
-                                            <strong className="text-slate-900 font-bold">
-                                                {overallStatusLabel}
-                                            </strong>
-                                        </div>
-                                    </div>
+                                    )}
                                 </div>
                             </div>
 
@@ -660,20 +829,21 @@ export default function ProjectShow({
                                     </>
                                 ) : (
                                     <>
-                                        <div className="text-right text-xs text-slate-500">
-                                            <span>Ketua: <strong className="text-slate-900">{project.leader?.name}</strong></span>
-                                            {academicClass?.lecturer && (
-                                                <span className="block mt-0.5">Dosen: <strong className="text-slate-900">{academicClass.lecturer.name}</strong></span>
-                                            )}
-                                        </div>
-
                                         {/* Team formation & workspace activation aligned with Lecturer Approval step */}
-                                        {isLeader && project.formation_status !== 'workspace_activated' && (
-                                            (project.formation_status === 'lecturer_approved' || project.formation_status === 'team_locked') ? (
+                                        {isLeader && (
+                                            (canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') && project.team?.id ? (
+                                                <Link
+                                                    href={`/workspace/${project.team.id}`}
+                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                >
+                                                    <FolderKanban className="size-4" />
+                                                    <span>Buka Workspace Tim</span>
+                                                </Link>
+                                            ) : (project.formation_status === 'lecturer_approved' || project.formation_status === 'team_locked') ? (
                                                 <button
                                                     onClick={handleActivateTeam}
                                                     disabled={lifecycleProcessing}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
                                                 >
                                                     <UserCheck className="size-4" />
                                                     <span>Konfirmasi Formasi & Buka Workspace</span>
@@ -696,41 +866,64 @@ export default function ProjectShow({
                                                     <AlertCircle className="size-4" />
                                                     <span>Pengajuan Tim Ditolak • Tinjau</span>
                                                 </button>
-                                            ) : (activeMembersCount < maxQuota) ? (
+                                            ) : academicClass ? (
+                                                activeMembersCount < maxQuota ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveTab('formation')}
+                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
+                                                    >
+                                                        <Users className="size-4 text-blue-600" />
+                                                        <span>Kuota Tim ({activeMembersCount}/{maxQuota}) • Lengkapi</span>
+                                                    </button>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveTab('formation')}
+                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                    >
+                                                        <Send className="size-4" />
+                                                        <span>Ajukan ke Dosen (Kuota Penuh)</span>
+                                                    </button>
+                                                )
+                                            ) : (
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('formation')}
                                                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
                                                 >
                                                     <Users className="size-4 text-blue-600" />
-                                                    <span>Kuota Tim ({activeMembersCount}/{maxQuota}) • Lengkapi</span>
-                                                </button>
-                                            ) : (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('formation')}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                                                >
-                                                    <Send className="size-4" />
-                                                    <span>Ajukan ke Dosen (Kuota Penuh)</span>
+                                                    <span>Kuota Tim ({activeMembersCount}/{maxQuota}) • Kelola</span>
                                                 </button>
                                             )
                                         )}
 
                                         {/* Anggota biasa (bukan ketua): Informasi status peran */}
                                         {!isLeader && isMember && (
-                                            <div className="flex flex-col sm:items-end gap-1">
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
-                                                    <Users className="size-3.5" />
-                                                    <span>Anggota Tim</span>
-                                                </span>
-                                                <span className="text-[11px] text-slate-500">
-                                                    {canAccessWorkspace
-                                                        ? 'Workspace Tim Aktif'
-                                                        : project.formation_status === 'formation_review'
-                                                        ? 'Menunggu Persetujuan Dosen'
-                                                        : 'Menunggu Ketua Mengajukan Formasi ke Dosen'}
-                                                </span>
+                                            <div className="flex flex-col sm:items-end gap-1.5">
+                                                {(canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') && project.team?.id ? (
+                                                    <Link
+                                                        href={`/workspace/${project.team.id}`}
+                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                    >
+                                                        <FolderKanban className="size-4" />
+                                                        <span>Buka Workspace Tim</span>
+                                                    </Link>
+                                                ) : (
+                                                    <>
+                                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold">
+                                                            <Users className="size-3.5" />
+                                                            <span>Anggota Tim</span>
+                                                        </span>
+                                                        <span className="text-[11px] text-slate-500">
+                                                            {academicClass
+                                                                ? (project.formation_status === 'formation_review'
+                                                                    ? 'Menunggu Persetujuan Dosen'
+                                                                    : 'Menunggu Pengajuan ke Dosen')
+                                                                : 'Menunggu Kuota Tim Lengkap'}
+                                                        </span>
+                                                    </>
+                                                )}
                                             </div>
                                         )}
 
@@ -745,6 +938,10 @@ export default function ProjectShow({
                                                     <Clock className="size-3.5" />
                                                     <span>Lamaran {myApplication?.status === 'pending' || myApplication?.status === 'under_review' || myApplication?.status === 'submitted' ? 'Sedang Ditinjau' : myApplication?.status}</span>
                                                 </button>
+                                            ) : isQuotaFull ? (
+                                                <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
+                                                    <span>Kuota Tim Penuh</span>
+                                                </span>
                                             ) : !hasOpenRecruitment ? (
                                                 <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-xs font-bold">
                                                     <span>Rekrutmen Ditutup</span>
@@ -756,9 +953,9 @@ export default function ProjectShow({
                                                         const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
                                                         setApplyingRole(firstRole);
                                                     }}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                                 >
-                                                    <Send className="size-4" />
+                                                    <Send className="size-3.5" />
                                                     <span>Lamar / Ajukan Bergabung</span>
                                                 </button>
                                             ) : eligibility?.reason?.includes('belum terdaftar') || eligibility?.reason?.includes('kelas') ? (
@@ -796,75 +993,141 @@ export default function ProjectShow({
                                 )}
                             </div>
                         </div>
-                    </div>
 
-                    {/* SEMESTER CAPSTONE TIMELINE VISUALIZER */}
-                    <SemesterTimeline
-                        proposalVersion={proposalVersion}
-                        proposalStatus={proposalStatus}
-                        implementationProgress={implementationProgress}
-                        utsSubmission={utsSubmission}
-                        uasSubmission={uasSubmission}
-                        projectStatus={project.status}
-                    />
-
-                    {/* SEGMENTED 14 TABS NAVIGATION */}
-                    <div className="glass-surface p-2 rounded-2xl overflow-x-auto scrollbar-none">
-                        <div className="flex items-center gap-1 min-w-max">
-                            {tabs.map((tab) => {
-                                const Icon = tab.icon;
-                                const isActive = activeTab === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                                            isActive
-                                                ? 'bg-blue-600 text-white shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                                        }`}
-                                    >
-                                        <Icon className="size-3.5" />
-                                        <span>{tab.label}</span>
-                                        {tab.badge && (
-                                            <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase ${
-                                                isActive ? 'bg-white text-blue-600' : 'bg-slate-200 text-slate-700'
-                                            }`}>
-                                                {tab.badge}
-                                            </span>
+                        {/* Row 3: Cohesive Status & Progress Strip (Blue, Slate, White Brand Palette) */}
+                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 bg-slate-50/70 -mx-5 sm:-mx-7 -mb-5 sm:-mb-7 px-5 sm:px-7 py-4 rounded-b-2xl">
+                            {/* 1. Proposal Status vs Project Phase */}
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                                    {isAcademic ? <FileText className="size-4" /> : <Compass className="size-4" />}
+                                </div>
+                                <div className="min-w-0">
+                                    <span className="text-slate-500 block font-medium text-[11px]">
+                                        {isAcademic ? 'Status Proposal' : 'Fase Proyek'}
+                                    </span>
+                                    <span className="text-slate-900 font-bold text-xs sm:text-sm truncate block mt-0.5">
+                                        {isAcademic ? (
+                                            <>
+                                                Versi {proposalVersion}{' '}
+                                                <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60 uppercase">
+                                                    {proposalStatus}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            implementationProgress >= 100 || project.status === 'completed'
+                                                ? 'Rilis & Portofolio'
+                                                : implementationProgress >= 70
+                                                ? 'Pengujian & Beta'
+                                                : implementationProgress >= 30
+                                                ? 'Pengembangan MVP'
+                                                : 'Ideasi & Perencanaan'
                                         )}
-                                    </button>
-                                );
-                            })}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {/* 2. Implementation Progress */}
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <FolderKanban className="size-4" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-slate-500 font-medium text-[11px]">Progres Pengerjaan</span>
+                                        <span className="text-slate-900 font-bold text-xs">{implementationProgress}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200/80 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                        <div
+                                            className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                                            style={{ width: `${Math.min(implementationProgress, 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3. Overall Project Status */}
+                            <div className="flex items-center gap-3">
+                                <div className="size-8 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <ShieldCheck className="size-4" />
+                                </div>
+                                <div className="min-w-0">
+                                    <span className="text-slate-500 block font-medium text-[11px]">
+                                        {isAcademic ? 'Status Akademik' : 'Status Keseluruhan'}
+                                    </span>
+                                    <span className="text-slate-900 font-bold text-xs sm:text-sm truncate block mt-0.5">
+                                        {isAcademic ? overallStatusLabel : (
+                                            project.status === 'completed'
+                                                ? 'Proyek Selesai'
+                                                : project.status === 'in_progress'
+                                                ? 'Sedang Dikerjakan'
+                                                : project.status === 'recruiting'
+                                                ? 'Membuka Anggota'
+                                                : 'Inisiasi Tim'
+                                        )}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    {/* TIMELINE VISUALIZER: Semester Capstone untuk Proyek Akademik vs Project Roadmap untuk Proyek Mandiri */}
+                    {isAcademic ? (
+                        <SemesterTimeline
+                            proposalVersion={proposalVersion}
+                            proposalStatus={proposalStatus}
+                            implementationProgress={implementationProgress}
+                            utsSubmission={utsSubmission}
+                            uasSubmission={uasSubmission}
+                            projectStatus={project.status}
+                        />
+                    ) : (
+                        <ProjectRoadmapTimeline
+                            implementationProgress={implementationProgress}
+                            projectStatus={project.status}
+                        />
+                    )}
+
+                    {/* 18-PIECE JIGSAW PUZZLE BOARD (6x3 ASSEMBLED GRID) */}
+                    <ProjectJigsawBoard
+                        activeTab={activeTab}
+                        onSelectTab={(id) => setActiveTab(id)}
+                        teamBalanceScore={teamBalance?.overall_score}
+                        invitationsCount={sentInvitations.length + receivedInvitations.length}
+                        formationBadge={project.formation_status === 'workspace_activated' ? 'Aktif' : (project.formation_status ? project.formation_status.replace('_', ' ') : 'Draft')}
+                        membersBadge={`${activeMembersCount}/${maxQuota} Tim`}
+                        proposalBadge={proposalStatus || 'Draft'}
+                        versionsCount={livingProposal?.versions?.length || 1}
+                        documentsCount={allDocuments.length}
+                        discussionsCount={discussions.length}
+                        guidancesCount={guidances.length}
+                        tasksCount={(kanban.todo?.length || 0) + (kanban.in_progress?.length || 0) + (kanban.in_review?.length || 0) + (kanban.completed?.length || 0)}
+                        milestonesCount={milestones.length}
+                        progressPercentage={implementationProgress}
+                        utsStatus={utsSubmission ? utsSubmission.status : 'Menunggu'}
+                        uasStatus={uasSubmission ? uasSubmission.status : 'Menunggu'}
+                        isAcademic={isAcademic}
+                    />
+
                     {/* TAB CONTENT SWITCHER */}
                     {activeTab === 'overview' && (
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+                            {/* LEFT COLUMN (2 COLS) - Core Workspace & Living Proposal Command Center */}
                             <div className="lg:col-span-2 flex flex-col gap-6">
-                                {/* IF DOSEN: Tampilkan 5 Pilar Supervisi Akademik & Bimbingan Dosen */}
+                                {/* IF DOSEN: Tampilkan Supervisi Akademik & Bimbingan Dosen */}
                                 {isLecturerUser && (
-                                    <div className="p-6 rounded-3xl bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-950 text-white shadow-xl border border-indigo-800/40 relative overflow-hidden">
-                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/10">
+                                    <div className="rounded-2xl p-6 shadow-xs border border-blue-200/80 bg-white">
+                                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                                             <div>
-                                                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-[11px] font-bold text-blue-300">
-                                                    <GraduationCap className="size-3.5" />
-                                                    <span>Pusat Supervisi Akademik & Dosen Pembimbing</span>
-                                                </div>
-                                                <h2 className="text-xl font-black mt-2 text-white tracking-tight">
+                                                <h2 className="text-base font-black text-slate-900 tracking-tight">
                                                     Pusat Kendali Dosen: Pembimbingan, Proposal & Evaluasi
                                                 </h2>
-                                                <p className="text-xs text-blue-100/70 mt-1 max-w-xl">
-                                                    Sesuai peran pengampu: Membimbing proyek & lomba, meninjau living proposal, memantau kanban, mengevaluasi capaian UTS/UAS, dan validasi formasi tim.
-                                                </p>
                                             </div>
 
                                             <div className="flex flex-wrap items-center gap-2 shrink-0">
                                                 <button
                                                     type="button"
                                                     onClick={() => setShowGuidanceModal(true)}
-                                                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-md flex items-center gap-2 cursor-pointer"
+                                                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
                                                 >
                                                     <MessageSquare className="size-3.5" />
                                                     <span>Beri Arahan Bimbingan</span>
@@ -873,7 +1136,7 @@ export default function ProjectShow({
                                                     <button
                                                         type="button"
                                                         onClick={() => setActiveTab('formation')}
-                                                        className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black transition shadow-md flex items-center gap-2 cursor-pointer"
+                                                        className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
                                                     >
                                                         <UserCheck className="size-3.5" />
                                                         <span>Setujui Formasi Tim</span>
@@ -885,18 +1148,18 @@ export default function ProjectShow({
                                         {/* 5 PILARS GRID (DOSEN ROLE) */}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-4">
                                             {/* 1. Membimbing Proyek & Persiapan Lomba */}
-                                            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 flex flex-col justify-between gap-2 hover:bg-white/15 transition">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-2">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block">1. Bimbingan & Lomba</span>
-                                                    <strong className="text-xs font-bold text-white block mt-1">Arahan & MinSatu</strong>
-                                                    <p className="text-[11px] text-blue-100/70 mt-1 line-clamp-2">
-                                                        {guidances.length > 0 ? `${guidances.length} catatan bimbingan aktif.` : 'Belum ada catatan bimbingan.'}
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">1. Bimbingan</span>
+                                                    <strong className="text-xs font-bold text-slate-900 block mt-1">Arahan Dosen</strong>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                                                        {guidances.length > 0 ? `${guidances.length} catatan aktif.` : 'Belum ada catatan.'}
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('lecturer_review')}
-                                                    className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1.5 mt-2 text-left cursor-pointer"
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 mt-2 text-left cursor-pointer"
                                                 >
                                                     <span>Buka Bimbingan</span>
                                                     <ArrowRight className="size-3" />
@@ -904,18 +1167,18 @@ export default function ProjectShow({
                                             </div>
 
                                             {/* 2. Meninjau serta Menyetujui Proposal */}
-                                            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 flex flex-col justify-between gap-2 hover:bg-white/15 transition">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-2">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block">2. Tinjau Proposal</span>
-                                                    <strong className="text-xs font-bold text-white block mt-1">Living Proposal</strong>
-                                                    <p className="text-[11px] text-blue-100/70 mt-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">2. Proposal</span>
+                                                    <strong className="text-xs font-bold text-slate-900 block mt-1">Living Proposal</strong>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                                         Versi {proposalVersion} ({proposalStatus})
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('proposal')}
-                                                    className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1.5 mt-2 text-left cursor-pointer"
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 mt-2 text-left cursor-pointer"
                                                 >
                                                     <span>Review Proposal</span>
                                                     <ArrowRight className="size-3" />
@@ -923,18 +1186,18 @@ export default function ProjectShow({
                                             </div>
 
                                             {/* 3. Memantau Progres & Memberi Arahan */}
-                                            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 flex flex-col justify-between gap-2 hover:bg-white/15 transition">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-2">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block">3. Pantau Progres</span>
-                                                    <strong className="text-xs font-bold text-white block mt-1">Kanban & Sprint</strong>
-                                                    <p className="text-[11px] text-blue-100/70 mt-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">3. Progres</span>
+                                                    <strong className="text-xs font-bold text-slate-900 block mt-1">Kanban & Sprint</strong>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                                         {implementationProgress}% • {kanban.completed?.length || 0} tugas selesai
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('tasks')}
-                                                    className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1.5 mt-2 text-left cursor-pointer"
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 mt-2 text-left cursor-pointer"
                                                 >
                                                     <span>Pantau Kanban</span>
                                                     <ArrowRight className="size-3" />
@@ -942,18 +1205,18 @@ export default function ProjectShow({
                                             </div>
 
                                             {/* 4. Mengevaluasi Proyek & Prestasi */}
-                                            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 flex flex-col justify-between gap-2 hover:bg-white/15 transition">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-2">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block">4. Evaluasi & Nilai</span>
-                                                    <strong className="text-xs font-bold text-white block mt-1">UTS & UAS Rubrik</strong>
-                                                    <p className="text-[11px] text-blue-100/70 mt-1">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">4. Evaluasi</span>
+                                                    <strong className="text-xs font-bold text-slate-900 block mt-1">UTS & UAS</strong>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                                         UTS: {utsSubmission?.total_score || 'Menunggu'} | UAS: {uasSubmission?.total_score || 'Menunggu'}
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab(utsSubmission ? 'uas' : 'uts')}
-                                                    className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1.5 mt-2 text-left cursor-pointer"
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 mt-2 text-left cursor-pointer"
                                                 >
                                                     <span>Input Penilaian</span>
                                                     <ArrowRight className="size-3" />
@@ -961,18 +1224,18 @@ export default function ProjectShow({
                                             </div>
 
                                             {/* 5. Menjalankan Simulasi Pembagian Tim */}
-                                            <div className="p-3.5 rounded-2xl bg-white/10 border border-white/10 flex flex-col justify-between gap-2 hover:bg-white/15 transition">
+                                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-2">
                                                 <div>
-                                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-300 block">5. Formasi & Simulasi</span>
-                                                    <strong className="text-xs font-bold text-white block mt-1">Alur Tim & Balance</strong>
-                                                    <p className="text-[11px] text-blue-100/70 mt-1">
-                                                        {activeMembersCount}/{maxQuota} Mhs • Balance {teamBalance?.overall_score || 0}%
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">5. Formasi Tim</span>
+                                                    <strong className="text-xs font-bold text-slate-900 block mt-1">Alur & Balance</strong>
+                                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                                        {activeMembersCount}/{maxQuota} Mhs • {teamBalance?.overall_score || 0}%
                                                     </p>
                                                 </div>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('formation')}
-                                                    className="text-[11px] font-bold text-blue-300 hover:text-white flex items-center gap-1.5 mt-2 text-left cursor-pointer"
+                                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1.5 mt-2 text-left cursor-pointer"
                                                 >
                                                     <span>Validasi Tim</span>
                                                     <ArrowRight className="size-3" />
@@ -982,224 +1245,292 @@ export default function ProjectShow({
                                     </div>
                                 )}
 
-                                {/* Permasalahan */}
-                                {project.problem_statement && (
-                                    <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                        <h3 className="text-sm font-bold text-slate-900 mb-2">
-                                            Permasalahan yang Diselesaikan
-                                        </h3>
-                                        <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
-                                            {project.problem_statement}
-                                        </p>
-                                    </div>
-                                )}
+                                {/* 1. HERO LIVING PROPOSAL & PROJECT SCOPE CARD */}
+                                <div className="rounded-2xl p-6 sm:p-7 bg-white border border-slate-200/80 shadow-xs relative">
+                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-slate-100">
+                                        <div className="space-y-2 max-w-xl">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold">
+                                                    Versi {proposalVersion} • {proposalStatus || 'DRAFT'}
+                                                </span>
+                                                {isAcademic && academicClass?.name && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200/60 text-[11px] font-medium">
+                                                        Kelas {academicClass.name}
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                {/* Solusi & Tujuan */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="glass-card rounded-2xl p-5 shadow-xs">
-                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
-                                            Tujuan Proyek
-                                        </h4>
-                                        <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
-                                            {project.objectives || 'Belum diisi.'}
-                                        </p>
-                                    </div>
-
-                                    <div className="glass-card rounded-2xl p-5 shadow-xs">
-                                        <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
-                                            Solusi yang Ditawarkan
-                                        </h4>
-                                        <p className="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
-                                            {project.proposed_solution || 'Belum diisi.'}
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Living Proposal Callout */}
-                                <div className="glass-card rounded-2xl p-6 bg-blue-50/50 border-blue-200/80 flex items-center justify-between gap-4">
-                                    <div>
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
-                                            Living Proposal Aktif (Versi {proposalVersion})
-                                        </h4>
-                                        <p className="text-xs text-slate-600 mt-0.5">
-                                            {livingProposal?.current_version?.abstract || 'Proposal proyek sedang dalam tahap pengerjaan berkelanjutan.'}
-                                        </p>
-                                    </div>
-                                    <button
-                                        onClick={() => setActiveTab('proposal')}
-                                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-2xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
-                                    >
-                                        <span>Buka Proposal</span>
-                                        <ArrowRight className="size-3.5" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Right sidebar */}
-                            <div className="flex flex-col gap-6">
-                                {isLecturerUser ? (
-                                    /* Dosen Sidebar: Supervisi Formasi & Persetujuan Workspace */
-                                    <div className="glass-card rounded-2xl p-6 shadow-xs border-blue-200/60 bg-blue-50/20">
-                                        <div className="flex items-center justify-between gap-2 mb-3">
-                                            <h3 className="text-xs font-black uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
-                                                <ShieldCheck className="size-4 text-blue-600" />
-                                                <span>Supervisi Formasi Tim</span>
+                                            <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight pt-1">
+                                                {project.title}
                                             </h3>
-                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                canAccessWorkspace
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                    : 'bg-amber-50 text-amber-800 border-amber-200'
-                                            }`}>
-                                                {canAccessWorkspace ? 'Workspace Aktif' : 'Perlu Persetujuan Dosen'}
-                                            </span>
+
+                                            <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed font-normal">
+                                                {livingProposal?.current_version?.abstract ||
+                                                    project.description ||
+                                                    project.problem_statement ||
+                                                    'Living proposal proyek aktif dalam pengembangan berkelanjutan. Metodologi teknis, sprint backlog, dan dokumen perancangan terintegrasi secara modular.'}
+                                            </p>
                                         </div>
 
-                                        <div className="space-y-2.5 text-xs">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-500">Status Formasi</span>
-                                                <span className="font-bold text-slate-900 uppercase text-[11px]">
-                                                    {project.formation_status?.replace('_', ' ') || 'Draft'}
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-500">Kuota Terisi</span>
-                                                <span className="font-bold text-slate-900">
-                                                    {activeMembersCount} / {maxQuota} Mahasiswa (min. {minQuota})
-                                                </span>
-                                            </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-500">Skor Keseimbangan</span>
-                                                <span className="font-bold text-blue-700">
-                                                    {teamBalance?.overall_score ? `${teamBalance.overall_score}% Optimal` : 'Belum Dihitung'}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div className="mt-4 pt-4 border-t border-slate-200/80 flex flex-col gap-2">
-                                            {project.formation_status === 'formation_review' ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('formation')}
-                                                    className="w-full py-2.5 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition shadow-xs cursor-pointer text-center inline-flex items-center justify-center gap-1.5"
-                                                >
-                                                    <span>Tinjau & Setujui Formasi Tim</span>
-                                                    <ArrowRight className="size-3.5" />
-                                                </button>
-                                            ) : !canAccessWorkspace ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('formation')}
-                                                    className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer text-center inline-flex items-center justify-center gap-1.5"
-                                                >
-                                                    <span>Buka Alur Persetujuan Tim</span>
-                                                    <ArrowRight className="size-3.5" />
-                                                </button>
-                                            ) : null}
-
+                                        <div className="flex flex-col sm:flex-row gap-2 shrink-0 self-start sm:self-auto">
                                             <button
                                                 type="button"
-                                                onClick={() => setActiveTab('matchmaking')}
-                                                className="w-full py-2 px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-bold transition cursor-pointer text-center inline-flex items-center justify-center gap-1.5"
+                                                onClick={() => setActiveTab('proposal')}
+                                                className="group px-4.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md hover:shadow-blue-600/20 flex items-center justify-between gap-3.5 cursor-pointer"
                                             >
-                                                <span>Jalankan Simulasi Matchmaking Se-Kelas</span>
-                                                <ArrowRight className="size-3.5" />
+                                                <div className="flex items-center gap-2">
+                                                    <FileText className="size-3.5" />
+                                                    <span>Buka Proposal</span>
+                                                </div>
+                                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                                             </button>
                                         </div>
                                     </div>
-                                ) : (
-                                    /* Student Sidebar: Recruitment & Quota Card */
-                                    <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                        <div className="flex items-center justify-between gap-2 mb-3">
-                                            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
-                                                Rekrutmen & Kuota Tim
-                                            </h3>
-                                            {project.status === 'recruiting' && (
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                    hasOpenRecruitment
-                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                        : 'bg-slate-100 text-slate-600 border-slate-200'
-                                                }`}>
-                                                    {hasOpenRecruitment ? 'Terbuka' : 'Ditutup'}
+
+                                    {/* Dosen Pembimbing Strip */}
+                                    <div className="mt-4 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                                                <GraduationCap className="size-4" />
+                                            </div>
+                                            <div>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosen Pembimbing Akademik</span>
+                                                <span className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+                                                    {academicClass?.lecturer?.name || project.lecturer?.name || 'Budi Santoso, M.Kom.'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-3">
+                                            {guidances.length > 0 ? (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setActiveTab('lecturer_review')}
+                                                    className="group px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 hover:border-blue-300 active:scale-[0.98] text-blue-700 border border-blue-200 text-xs font-bold transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
+                                                >
+                                                    <span>{guidances.length} Catatan Bimbingan</span>
+                                                    <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                                </button>
+                                            ) : (
+                                                <span className="text-xs font-medium text-slate-500">
+                                                    Status Bimbingan: <strong className="text-slate-900 font-bold">Siap Konsultasi</strong>
                                                 </span>
                                             )}
                                         </div>
+                                    </div>
+                                </div>
 
-                                        <div className="space-y-2.5 text-xs">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-500">Kuota Anggota</span>
-                                                <span className="font-bold text-slate-900">
-                                                    {activeMembersCount} / {maxQuota} anggota (min. {minQuota})
-                                                </span>
+                                {/* 2. BENTO DUAL: TUJUAN PROYEK & SOLUSI INOVATIF */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                    <div className="rounded-2xl p-5 bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2.5 mb-2">
+                                                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                                                    <Target className="size-4" />
+                                                </div>
+                                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Tujuan Proyek
+                                                </h4>
                                             </div>
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-slate-500">Workspace Tim</span>
-                                                <span className={`font-bold ${canAccessWorkspace ? 'text-emerald-700' : 'text-amber-700'}`}>
-                                                    {canAccessWorkspace ? 'Aktif' : 'Menunggu Persetujuan Dosen'}
-                                                </span>
+                                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                                                {project.objectives || 'Menyelesaikan tantangan inti dengan implementasi solusi terstruktur, kolaboratif, dan terukur.'}
+                                            </p>
+                                        </div>
+                                        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                                            <span>Fokus Capaian</span>
+                                            <strong className="text-blue-600 font-bold">Terverifikasi</strong>
+                                        </div>
+                                    </div>
+
+                                    <div className="rounded-2xl p-5 bg-white border border-slate-200/80 shadow-xs flex flex-col justify-between gap-3">
+                                        <div>
+                                            <div className="flex items-center gap-2.5 mb-2">
+                                                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                                                    <Compass className="size-4" />
+                                                </div>
+                                                <h4 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                                    Solusi yang Ditawarkan
+                                                </h4>
                                             </div>
+                                            <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                                                {project.proposed_solution || 'Platform modern terintegrasi dengan otomatisasi alur kerja, analisis cerdas, dan arsitektur modular.'}
+                                            </p>
+                                        </div>
+                                        <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                                            <span>Arsitektur</span>
+                                            <strong className="text-slate-900 font-bold">Modern Web Stack</strong>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. EXECUTION HUB: STATUS SPRINT & KANBAN MANAGEMENT */}
+                                <div className="rounded-2xl p-6 bg-white border border-slate-200/80 shadow-xs">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                                                    <FolderKanban className="size-4" />
+                                                </div>
+                                                <h3 className="text-sm font-black text-slate-900 tracking-tight">
+                                                    Status Sprint & Eksekusi Kanban
+                                                </h3>
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-1">
+                                                Tracking pengerjaan sprint, pembagian tugas backlog, dan deliverable milestone.
+                                            </p>
                                         </div>
 
-                                        {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 && (
-                                            <div className="mt-3 pt-3 border-t border-slate-100">
-                                                <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">
-                                                    Posisi Dibutuhkan
-                                                </span>
-                                                <div className="flex flex-wrap gap-1.5">
-                                                    {project.team.recruitment.roles.map((r: any) => (
-                                                        <span
-                                                            key={r.id}
-                                                            className="text-[11px] font-semibold px-2.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                                        >
-                                                            {r.name} ({r.slots || 1})
-                                                        </span>
-                                                    ))}
-                                                </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="text-right">
+                                                <span className="text-sm font-black text-slate-900 block">{implementationProgress}%</span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Selesai</span>
                                             </div>
-                                        )}
-
-                                        {project.status === 'recruiting' && (
-                                            <div className="mt-4 flex flex-col gap-2">
-                                                {!isMember && !hasActiveApplication && hasOpenRecruitment && project.has_capacity && eligibility?.eligible !== false && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
-                                                            setApplyingRole(firstRole);
-                                                        }}
-                                                        className="w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
-                                                    >
-                                                        <Send className="size-3.5" />
-                                                        <span>Lamar / Ajukan Bergabung</span>
-                                                    </button>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('members')}
-                                                    className="w-full py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer inline-flex items-center justify-center gap-1.5"
-                                                >
-                                                    <span>Lihat Detail Posisi & Anggota</span>
-                                                    <ArrowRight className="size-3.5" />
-                                                </button>
+                                            <div className="w-24 sm:w-32 bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                                                <div
+                                                    className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                                                    style={{ width: `${implementationProgress}%` }}
+                                                />
                                             </div>
-                                        )}
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('tasks')}
+                                                className="group px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md hover:shadow-blue-600/20 flex items-center gap-3 cursor-pointer shrink-0"
+                                            >
+                                                <span>Buka Kanban</span>
+                                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                                            </button>
+                                        </div>
                                     </div>
-                                )}
 
-                                {/* Team Card */}
-                                <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
-                                        Anggota Tim ({teamMembers.length} Orang)
-                                    </h3>
-                                    <div className="flex flex-col gap-2.5">
+                                    {/* 4 Metric Tiles: Balanced Blue, Slate, White Hierarchy */}
+                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 text-center">
+                                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                                            <span className="text-xl font-black text-slate-900 block">{kanban.todo?.length || 0}</span>
+                                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider mt-1 block">To Do</span>
+                                        </div>
+                                        <div className="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/60">
+                                            <span className="text-xl font-black text-blue-600 block">{kanban.in_progress?.length || 0}</span>
+                                            <span className="text-[10px] font-black text-blue-700 uppercase tracking-wider mt-1 block">In Progress</span>
+                                        </div>
+                                        <div className="p-3.5 rounded-xl bg-blue-50/80 border border-blue-200/80">
+                                            <span className="text-xl font-black text-blue-700 block">{kanban.in_review?.length || 0}</span>
+                                            <span className="text-[10px] font-black text-blue-800 uppercase tracking-wider mt-1 block">In Review</span>
+                                        </div>
+                                        <div className="p-3.5 rounded-xl bg-blue-100/60 border border-blue-200">
+                                            <span className="text-xl font-black text-blue-900 block">{kanban.completed?.length || 0}</span>
+                                            <span className="text-[10px] font-black text-blue-900 uppercase tracking-wider mt-1 block">Done Selesai</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* RIGHT COLUMN (1 COL) - Sidebar: Recruitment, Team, Tech Stack, Workspace Hub */}
+                            <div className="flex flex-col gap-6">
+                                {/* CARD 1: REKRUTMEN & KUOTA TIM (Palet Biru, Hitam, Putih) */}
+                                <div className="rounded-2xl p-6 bg-white border border-slate-200/80 shadow-xs">
+                                    <div className="flex items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
+                                            <Users className="size-4 text-blue-600" />
+                                            <span>Rekrutmen & Kuota Tim</span>
+                                        </h3>
+                                        <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase bg-blue-600 text-white">
+                                            {hasOpenRecruitment ? 'Terbuka' : 'Lengkap'}
+                                        </span>
+                                    </div>
+
+                                    <div className="space-y-3 text-xs">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-500 font-medium">Kuota Anggota</span>
+                                            <span className="font-extrabold text-slate-900">
+                                                {activeMembersCount} / {maxQuota} Orang <span className="text-slate-400 font-normal">(min. {minQuota})</span>
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-slate-500 font-medium">Status Workspace</span>
+                                            <span className={`font-black px-2 py-0.5 rounded-md text-[11px] ${
+                                                canAccessWorkspace
+                                                    ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                                    : 'bg-slate-100 text-slate-800 border border-slate-200'
+                                            }`}>
+                                                {canAccessWorkspace ? 'Workspace Aktif' : 'Menunggu Dosen'}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 && (
+                                        <div className="mt-4 pt-3 border-t border-slate-100">
+                                            <span className="block text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2">
+                                                Posisi Dibutuhkan
+                                            </span>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {project.team.recruitment.roles.map((r: any) => (
+                                                    <span
+                                                        key={r.id}
+                                                        className="text-[11px] font-bold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-800 border border-blue-200/80"
+                                                    >
+                                                        {r.name} ({r.slots || 1})
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="mt-5 flex flex-col gap-2">
+                                        {!isMember && !hasActiveApplication && hasOpenRecruitment && project.has_capacity && eligibility?.eligible !== false && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const firstRole = project.team?.recruitment?.roles?.[0] || { id: null, name: 'Anggota Tim Pengembang' };
+                                                    setApplyingRole(firstRole);
+                                                }}
+                                                className="group w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md hover:shadow-blue-600/20 inline-flex items-center justify-center gap-3 cursor-pointer"
+                                            >
+                                                <Send className="size-3.5 transition-transform duration-200 group-hover:scale-110" />
+                                                <span>Lamar / Ajukan Bergabung</span>
+                                            </button>
+                                        )}
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('members')}
+                                            className="group w-full py-2.5 px-4 rounded-xl bg-slate-50 hover:bg-slate-100 hover:border-slate-300 hover:text-slate-900 active:scale-[0.98] text-slate-800 border border-slate-200/80 text-xs font-bold transition-all duration-200 cursor-pointer inline-flex items-center justify-center gap-3 shadow-2xs hover:shadow-xs"
+                                        >
+                                            <span>Lihat Detail Posisi & Anggota</span>
+                                            <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* CARD 2: ANGGOTA TIM */}
+                                <div className="rounded-2xl p-6 bg-white border border-slate-200/80 shadow-xs">
+                                    <div className="flex items-center justify-between mb-3.5">
+                                        <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">
+                                            Anggota Tim ({teamMembers.length} Orang)
+                                        </h3>
+                                        <span className="text-[10px] font-bold text-blue-600 cursor-pointer hover:underline" onClick={() => setActiveTab('members')}>
+                                            Kelola →
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-2">
                                         {teamMembers.map((m: any) => (
-                                            <div key={m.id} className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-slate-50 border border-slate-200/60">
-                                                <div>
-                                                    <span className="font-bold text-slate-900 block">{m.user?.name}</span>
-                                                    <span className="text-[10px] text-slate-500">{m.role_name || (m.permission === 'leader' ? 'Leader' : 'Anggota')}</span>
+                                            <div key={m.id} className="flex items-center justify-between text-xs p-3 rounded-xl bg-slate-50 border border-slate-200/60">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="size-7 rounded-full bg-slate-900 text-white font-black text-[11px] flex items-center justify-center uppercase">
+                                                        {m.user?.name?.slice(0, 2) || 'US'}
+                                                    </div>
+                                                    <div>
+                                                        <span className="font-extrabold text-slate-900 block">{m.user?.name}</span>
+                                                        <span className="text-[10px] text-slate-500 font-medium">
+                                                            {m.role_name || (m.permission === 'leader' ? 'Project Leader' : 'Anggota Tim')}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                {m.permission === 'leader' && (
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800">
+                                                {m.permission === 'leader' ? (
+                                                    <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full bg-slate-900 text-white">
                                                         Ketua
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                        Anggota
                                                     </span>
                                                 )}
                                             </div>
@@ -1207,20 +1538,24 @@ export default function ProjectShow({
                                     </div>
                                 </div>
 
-                                {/* Tech Stack Card */}
-                                <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
-                                        Tech Stack
+                                {/* CARD 3: TECH STACK */}
+                                <div className="rounded-2xl p-6 bg-white border border-slate-200/80 shadow-xs">
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-900 mb-3">
+                                        Tech Stack Proyek
                                     </h3>
                                     <div className="flex flex-wrap gap-1.5">
                                         {Array.isArray(project.tech_stack) && project.tech_stack.length > 0 ? (
                                             project.tech_stack.map((t: string, idx: number) => (
-                                                <span key={idx} className="text-xs font-bold px-3 py-1 bg-white border border-slate-200 rounded-xl text-slate-700">
+                                                <span key={idx} className="text-xs font-extrabold px-3 py-1 bg-white border border-slate-200 rounded-xl text-slate-800 shadow-2xs">
                                                     {t}
                                                 </span>
                                             ))
                                         ) : (
-                                            <span className="text-xs text-slate-400">Laravel, React, PostgreSQL</span>
+                                            <>
+                                                <span className="text-xs font-extrabold px-3 py-1 bg-white border border-slate-200 rounded-xl text-slate-800 shadow-2xs">Laravel</span>
+                                                <span className="text-xs font-extrabold px-3 py-1 bg-white border border-slate-200 rounded-xl text-slate-800 shadow-2xs">React</span>
+                                                <span className="text-xs font-extrabold px-3 py-1 bg-white border border-slate-200 rounded-xl text-slate-800 shadow-2xs">Tailwind CSS</span>
+                                            </>
                                         )}
                                     </div>
                                 </div>
@@ -1278,7 +1613,7 @@ export default function ProjectShow({
                         />
                     )}
 
-                    {activeTab === 'proposal' && (
+                    {activeTab === 'proposal' && isAcademic && (
                         <LivingProposalTab
                             project={project}
                             livingProposal={livingProposal}
@@ -1288,7 +1623,7 @@ export default function ProjectShow({
                         />
                     )}
 
-                    {activeTab === 'versions' && (
+                    {activeTab === 'versions' && isAcademic && (
                         <ProposalVersionsTab
                             project={project}
                             livingProposal={livingProposal}
@@ -1312,9 +1647,6 @@ export default function ProjectShow({
                                         <Clock className="size-5 text-blue-600" />
                                         <span>Roadmap Milestones Proyek Capstone</span>
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Tahapan pencapaian proyek dari awal semester, UTS, hingga penyerahan UAS.
-                                    </p>
                                 </div>
                                 <span className="text-xs font-bold text-slate-600">
                                     Total: <strong className="text-blue-600">{milestones.length} Milestones</strong>
@@ -1328,8 +1660,8 @@ export default function ProjectShow({
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
                                                     m.status === 'completed'
-                                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                        : 'bg-slate-100 text-slate-600 border border-slate-200'
                                                 }`}>
                                                     {m.status}
                                                 </span>
@@ -1358,13 +1690,10 @@ export default function ProjectShow({
                         <div className="flex flex-col gap-6">
                             {/* Transparent Calculation Breakdown */}
                             <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                <h3 className="text-base font-bold text-slate-900 mb-2 flex items-center gap-2">
+                                <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
                                     <Sparkles className="size-5 text-blue-600" />
                                     <span>Kalkulasi Progres Implementasi & Capstone Transparan</span>
                                 </h3>
-                                <p className="text-xs text-slate-500 mb-4 leading-relaxed">
-                                    Sistem menghitung persentase kemajuan proyek secara objektif menggunakan bobot terstandar: <strong>50% Penyelesaian Tugas (Kanban)</strong> + <strong>50% Pencapaian Milestones</strong>.
-                                </p>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
@@ -1378,7 +1707,7 @@ export default function ProjectShow({
                                     <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
                                         <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Komponen 2</span>
                                         <h4 className="text-xs font-bold text-slate-800">Milestones Tercapai (50%)</h4>
-                                        <span className="text-2xl font-black text-emerald-600 mt-2 block">
+                                        <span className="text-2xl font-black text-blue-600 mt-2 block">
                                             {milestones.filter((m: any) => m.status === 'completed').length} / {milestones.length || 1} Milestones
                                         </span>
                                     </div>
@@ -1416,7 +1745,7 @@ export default function ProjectShow({
                         </div>
                     )}
 
-                    {activeTab === 'uts' && (
+                    {activeTab === 'uts' && isAcademic && (
                         <AssessmentTab
                             project={project}
                             period={utsPeriod}
@@ -1428,7 +1757,7 @@ export default function ProjectShow({
                         />
                     )}
 
-                    {activeTab === 'uas' && (
+                    {activeTab === 'uas' && isAcademic && (
                         <AssessmentTab
                             project={project}
                             period={uasPeriod}
@@ -1441,15 +1770,66 @@ export default function ProjectShow({
                     )}
 
                     {activeTab === 'documents' && (
-                        <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col gap-4">
-                            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <Download className="size-5 text-blue-600" />
-                                <span>Repositori Dokumen Proyek & Berkas Evaluasi</span>
-                            </h3>
+                        <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col gap-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                        <Download className="size-5 text-blue-600" />
+                                        <span>Repositori Dokumen Proyek & Berkas Evaluasi</span>
+                                    </h3>
+                                </div>
+
+                                {isAcademic && (isMember || isLeader) && (
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('uts')}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 active:bg-slate-200 border border-slate-300 hover:border-slate-400 text-slate-800 hover:text-slate-900 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs cursor-pointer"
+                                        >
+                                            <Upload className="size-3.5 text-blue-600" />
+                                            <span>Unggah di Snapshot UTS</span>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setActiveTab('uas')}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
+                                        >
+                                            <Upload className="size-3.5" />
+                                            <span>Unggah di Snapshot UAS</span>
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
 
                             {allDocuments.length === 0 ? (
-                                <div className="p-8 text-center text-xs text-slate-400">
-                                    Belum ada berkas laporan atau presentasi yang diunggah. Berkas akan otomatis terkumpul saat pengumpulan UTS dan UAS.
+                                <div className="p-8 text-center bg-slate-50/50 rounded-2xl border border-slate-200/80 flex flex-col items-center justify-center">
+                                    <div className="size-12 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center mb-3">
+                                        <FileText className="size-6" />
+                                    </div>
+                                    <h4 className="text-sm font-bold text-slate-900">Belum Ada Berkas yang Diunggah</h4>
+                                    <p className="text-xs text-slate-500 mt-1 max-w-md">
+                                        Berkas laporan (PDF), slide presentasi (PPTX), dan dokumen pendukung proyek diunggah melalui sesi evaluasi semester.
+                                    </p>
+                                    {isAcademic && (isMember || isLeader) && (
+                                        <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('uts')}
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 active:bg-slate-200 border border-slate-300 hover:border-slate-400 text-slate-800 hover:text-slate-900 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs cursor-pointer"
+                                            >
+                                                <GraduationCap className="size-4 text-blue-600" />
+                                                <span>Buka Snapshot UTS</span>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('uas')}
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
+                                            >
+                                                <Award className="size-4" />
+                                                <span>Buka Snapshot UAS</span>
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -1459,16 +1839,18 @@ export default function ProjectShow({
                                             href={`/storage/${doc.file_path}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-300 flex items-center justify-between text-xs transition"
+                                            className="p-4 rounded-xl bg-white border border-slate-200 hover:border-blue-300 flex items-center justify-between text-xs transition-all duration-200 shadow-2xs hover:shadow-xs"
                                         >
-                                            <div className="flex items-center gap-2 truncate">
-                                                <FileText className="size-5 text-blue-600 shrink-0" />
+                                            <div className="flex items-center gap-2.5 truncate">
+                                                <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                                                    <FileText className="size-4.5 shrink-0" />
+                                                </div>
                                                 <div className="truncate">
                                                     <span className="font-bold text-slate-800 block truncate">{doc.title}</span>
                                                     <span className="text-[10px] text-slate-400">{Math.round(doc.file_size / 1024)} KB</span>
                                                 </div>
                                             </div>
-                                            <Download className="size-4 text-slate-400" />
+                                            <Download className="size-4 text-slate-400 hover:text-blue-600 transition" />
                                         </a>
                                     ))}
                                 </div>
@@ -1513,23 +1895,23 @@ export default function ProjectShow({
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
                                         <div>
                                             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                                <Briefcase className="size-5 text-emerald-600" />
+                                                <Briefcase className="size-5 text-blue-600" />
                                                 <span>{hasOpenRecruitment ? 'Rekrutmen Terbuka & Posisi Tim' : 'Rekrutmen Tim (Saat Ini Ditutup)'}</span>
                                             </h3>
-                                            <p className="text-xs text-slate-500 mt-0.5">
-                                                Kuota tim: {activeMembersCount}/{maxQuota} anggota (minimal {minQuota} anggota).
-                                                {!canAccessWorkspace && ' Project Workspace masih menunggu persetujuan dosen, namun rekrutmen anggota tetap berjalan.'}
-                                            </p>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 self-start">
-                                            <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                                                !hasOpenRecruitment
+                                            <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${
+                                                isQuotaFull
+                                                    ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                                    : !hasOpenRecruitment
                                                     ? 'bg-slate-100 text-slate-600 border-slate-200'
                                                     : project.has_capacity
-                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
                                                     : 'bg-slate-100 text-slate-600 border-slate-200'
                                             }`}>
-                                                {!hasOpenRecruitment
+                                                {isQuotaFull
+                                                    ? 'Rekrutmen Ditutup (Kuota Penuh)'
+                                                    : !hasOpenRecruitment
                                                     ? 'Rekrutmen Ditutup'
                                                     : project.has_capacity
                                                     ? 'Rekrutmen Terbuka • Slot Tersedia'
@@ -1538,16 +1920,21 @@ export default function ProjectShow({
                                             {isLeader && !['team_locked', 'workspace_activated'].includes(project.formation_status || '') && (
                                                 <button
                                                     type="button"
-                                                    onClick={() => handleToggleRecruitment(hasOpenRecruitment ? 'closed' : 'open')}
-                                                    disabled={togglingRecruitment}
-                                                    className={`px-3 py-1 rounded-xl text-[11px] font-bold border transition cursor-pointer disabled:opacity-50 ${
-                                                        hasOpenRecruitment
-                                                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800 border-amber-200'
-                                                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                                                    onClick={() => !isQuotaFull && handleToggleRecruitment(hasOpenRecruitment ? 'closed' : 'open')}
+                                                    disabled={togglingRecruitment || isQuotaFull}
+                                                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 shadow-2xs ${
+                                                        isQuotaFull
+                                                            ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
+                                                            : hasOpenRecruitment
+                                                            ? 'bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-300 hover:border-slate-400 cursor-pointer'
+                                                            : 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600 cursor-pointer'
                                                     }`}
+                                                    title={isQuotaFull ? 'Kuota tim sudah penuh (rekrutmen dinonaktifkan)' : undefined}
                                                 >
                                                     {togglingRecruitment
                                                         ? 'Memproses...'
+                                                        : isQuotaFull
+                                                        ? 'Kuota Penuh'
                                                         : hasOpenRecruitment
                                                         ? 'Tutup Rekrutmen'
                                                         : 'Buka Rekrutmen'}
@@ -1558,14 +1945,14 @@ export default function ProjectShow({
 
                                     {!hasOpenRecruitment && !isLeader && (
                                         <div className="mb-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-700">
-                                            Rekrutmen anggota saat ini ditutup oleh ketua tim.
+                                            {isQuotaFull ? 'Kuota anggota tim ini telah terpenuhi.' : 'Rekrutmen anggota saat ini ditutup oleh ketua tim.'}
                                         </div>
                                     )}
 
                                     {myApplication && (
                                         <div className={`mb-4 p-4 rounded-xl border text-xs flex items-center justify-between gap-3 ${
                                             hasActiveApplication
-                                                ? 'bg-amber-50 border-amber-200 text-amber-900'
+                                                ? 'bg-blue-50 border-blue-200 text-blue-900'
                                                 : 'bg-slate-50 border-slate-200 text-slate-700'
                                         }`}>
                                             <div>
@@ -1609,7 +1996,7 @@ export default function ProjectShow({
                                                         <button
                                                             type="button"
                                                             onClick={() => setApplyingRole(role)}
-                                                            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs self-start sm:self-auto shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs self-start sm:self-auto shrink-0 cursor-pointer inline-flex items-center gap-1.5"
                                                         >
                                                             <Send className="size-3" />
                                                             <span>Lamar Posisi Ini</span>
@@ -1629,7 +2016,7 @@ export default function ProjectShow({
                                                 <button
                                                     type="button"
                                                     onClick={() => setApplyingRole({ id: null, name: 'Anggota Tim Pengembang' })}
-                                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
+                                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs shrink-0 cursor-pointer inline-flex items-center gap-1.5"
                                                 >
                                                     <Send className="size-3" />
                                                     <span>Lamar / Ajukan Bergabung</span>
@@ -1655,38 +2042,60 @@ export default function ProjectShow({
                                     ) : (
                                         <div className="flex flex-col gap-3">
                                             {applications.map((app: any) => (
-                                                <div key={app.id} className="p-4 rounded-xl bg-white border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                                <div
+                                                    key={app.id}
+                                                    className={`p-4 rounded-xl border transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                                        app.status === 'accepted'
+                                                            ? 'bg-blue-50/40 border-blue-200'
+                                                            : app.status === 'rejected'
+                                                            ? 'bg-slate-50 border-slate-200 opacity-75'
+                                                            : 'bg-white border-slate-200'
+                                                    }`}
+                                                >
                                                     <div>
                                                         <div className="flex flex-wrap items-center gap-2">
                                                             <span className="text-xs font-bold text-slate-900">{app.user?.name}</span>
                                                             <span className="text-xs text-slate-500">({app.user?.email})</span>
-                                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                                                app.status === 'accepted'
-                                                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                    : app.status === 'rejected'
-                                                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
-                                                                    : 'bg-amber-50 text-amber-800 border-amber-200'
-                                                            }`}>
-                                                                {app.status === 'accepted'
-                                                                    ? 'Diterima'
-                                                                    : app.status === 'rejected'
-                                                                    ? 'Ditolak'
-                                                                    : app.status === 'withdrawn'
-                                                                    ? 'Ditarik'
-                                                                    : 'Menunggu Persetujuan'}
+                                                            <span
+                                                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border inline-flex items-center gap-1 ${
+                                                                    app.status === 'accepted'
+                                                                        ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                                        : app.status === 'rejected'
+                                                                        ? 'bg-slate-100 text-slate-600 border-slate-200'
+                                                                        : app.status === 'withdrawn'
+                                                                        ? 'bg-slate-100 text-slate-500 border-slate-200'
+                                                                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                                                                }`}
+                                                            >
+                                                                {app.status === 'accepted' ? (
+                                                                    <>
+                                                                        <Check className="size-3 text-blue-600" />
+                                                                        <span>Resmi Diterima</span>
+                                                                    </>
+                                                                ) : app.status === 'rejected' ? (
+                                                                    'Ditolak'
+                                                                ) : app.status === 'withdrawn' ? (
+                                                                    'Ditarik'
+                                                                ) : (
+                                                                    'Menunggu Persetujuan'
+                                                                )}
                                                             </span>
                                                         </div>
-                                                        <span className="text-xs text-blue-600 block mt-0.5">Posisi: {app.role?.name || 'Anggota'}</span>
-                                                        {app.message && <p className="text-xs text-slate-600 italic mt-1">"{app.message}"</p>}
+                                                        <span className="text-xs text-blue-600 block mt-0.5 font-medium">Posisi: {app.role?.name || 'Anggota'}</span>
+                                                        {app.message && (
+                                                            <p className="text-xs text-slate-600 italic mt-1.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                                                                "{app.message}"
+                                                            </p>
+                                                        )}
                                                     </div>
 
-                                                    {(app.status === 'pending' || app.status === 'under_review' || app.status === 'submitted') && (
+                                                    {(app.status === 'pending' || app.status === 'under_review' || app.status === 'submitted') ? (
                                                         <div className="flex items-center gap-2 shrink-0">
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleDecideApplication(app.id, 'reject')}
                                                                 disabled={decidingId === app.id}
-                                                                className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-xl cursor-pointer disabled:opacity-50"
+                                                                className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition cursor-pointer disabled:opacity-50"
                                                             >
                                                                 Tolak
                                                             </button>
@@ -1694,12 +2103,24 @@ export default function ProjectShow({
                                                                 type="button"
                                                                 onClick={() => handleDecideApplication(app.id, 'accept')}
                                                                 disabled={decidingId === app.id}
-                                                                className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl cursor-pointer shadow-xs disabled:opacity-50"
+                                                                className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-xs disabled:opacity-50"
                                                             >
-                                                                Terima Jadi Anggota
+                                                                {decidingId === app.id ? (
+                                                                    <span>Memproses...</span>
+                                                                ) : (
+                                                                    <>
+                                                                        <Check className="size-3.5" />
+                                                                        <span>Terima Jadi Anggota</span>
+                                                                    </>
+                                                                )}
                                                             </button>
                                                         </div>
-                                                    )}
+                                                    ) : app.status === 'accepted' ? (
+                                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 text-xs font-bold shrink-0">
+                                                            <CheckCircle2 className="size-3.5 text-blue-600" />
+                                                            <span>Anggota Tim Aktif</span>
+                                                        </div>
+                                                    ) : null}
                                                 </div>
                                             ))}
                                         </div>
@@ -1736,7 +2157,7 @@ export default function ProjectShow({
                         </div>
                     )}
 
-                    {activeTab === 'lecturer_review' && (
+                    {activeTab === 'lecturer_review' && isAcademic && (
                         <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col gap-4">
                             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                 <GraduationCap className="size-5 text-blue-600" />
@@ -1773,7 +2194,7 @@ export default function ProjectShow({
                         </div>
                     )}
 
-                    {activeTab === 'evaluation' && (
+                    {activeTab === 'evaluation' && isAcademic && (
                         <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col gap-4">
                             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
                                 <ShieldCheck className="size-5 text-blue-600" />
@@ -1796,7 +2217,7 @@ export default function ProjectShow({
                                 <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
                                     <div>
                                         <span className="text-[10px] font-black uppercase text-slate-400 block mb-1">Evaluasi Akhir Semester (UAS - 60%)</span>
-                                        <span className="text-2xl font-black text-emerald-600">
+                                        <span className="text-2xl font-black text-blue-600">
                                             {uasSubmission?.total_score ? `${uasSubmission.total_score} (${uasSubmission.final_grade})` : 'Belum Dinilai'}
                                         </span>
                                     </div>
@@ -1816,10 +2237,10 @@ export default function ProjectShow({
                             </h3>
 
                             {project.status === 'completed' ? (
-                                <div className="p-6 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex flex-col gap-3">
+                                <div className="p-6 rounded-2xl bg-blue-50/50 border border-blue-200 flex flex-col gap-3">
                                     <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="size-5 text-emerald-600" />
-                                        <h4 className="text-sm font-bold text-emerald-900">
+                                        <CheckCircle2 className="size-5 text-blue-600" />
+                                        <h4 className="text-sm font-bold text-slate-900">
                                             Proyek Capstone Resmi Dinyatakan Selesai (Completed)!
                                         </h4>
                                     </div>
@@ -1829,17 +2250,17 @@ export default function ProjectShow({
 
                                     {achievements.length > 0 && (
                                         <div className="pt-2">
-                                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-2">
+                                            <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 block mb-2">
                                                 Sertifikat Portofolio Terverifikasi:
                                             </span>
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                                                 {achievements.map((ach: any) => (
-                                                    <div key={ach.id} className="p-3 bg-white rounded-xl border border-emerald-200 text-xs flex items-center justify-between">
+                                                    <div key={ach.id} className="p-3 bg-white rounded-xl border border-slate-200 text-xs flex items-center justify-between">
                                                         <div>
                                                             <span className="font-bold text-slate-900 block">{ach.user?.name}</span>
-                                                            <span className="text-[10px] text-emerald-600 font-semibold">Portofolio Terverifikasi Dosen</span>
+                                                            <span className="text-[10px] text-blue-600 font-semibold">Portofolio Terverifikasi Dosen</span>
                                                         </div>
-                                                        <Award className="size-4 text-amber-500" />
+                                                        <Award className="size-4 text-blue-600" />
                                                     </div>
                                                 ))}
                                             </div>
@@ -1858,33 +2279,30 @@ export default function ProjectShow({
 
             {/* APPLY ROLE MODAL */}
             {applyingRole && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
-                        <div className="flex items-start justify-between">
+                <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+                        <div className="flex items-start justify-between p-5 sm:p-6 border-b border-slate-100">
                             <div>
-                                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                                    Lamaran Posisi Tim
-                                </span>
-                                <h3 className="text-lg font-bold text-slate-900">
-                                    Lamar sebagai {applyingRole.name}
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Ajukan Lamaran Tim
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Kirim pesan perkenalan singkat kepada ketua tim proyek {project.title}.
+                                    Mengajukan diri untuk bergabung ke proyek <strong className="text-slate-800 font-semibold">{project.title}</strong>
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setApplyingRole(null)}
-                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                                className="size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleApply} className="flex flex-col gap-4">
+                        <form onSubmit={handleApply} className="p-5 sm:p-6 flex flex-col gap-4">
                             {project.team?.recruitment?.roles && project.team.recruitment.roles.length > 0 && (
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Pilih Posisi / Peran
                                     </label>
                                     <select
@@ -1895,7 +2313,7 @@ export default function ProjectShow({
                                             );
                                             if (selected) setApplyingRole(selected);
                                         }}
-                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition shadow-2xs"
                                     >
                                         {project.team.recruitment.roles.map((r: any) => (
                                             <option key={r.id} value={r.id}>
@@ -1907,33 +2325,34 @@ export default function ProjectShow({
                             )}
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Pesan Singkat & Portofolio Relevan *
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Pesan Singkat & Portofolio Relevan <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
                                     value={applyMessage}
                                     onChange={(e) => setApplyMessage(e.target.value)}
-                                    placeholder="Jelaskan keahlian, pengalaman relevan, atau kontribusi yang ingin Anda berikan..."
+                                    placeholder="Jelaskan keahlian teknis, pengalaman proyek sebelumnya, atau kontribusi yang ingin Anda berikan..."
                                     required
                                     rows={4}
-                                    className="w-full p-3 border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none"
+                                    className="w-full p-3 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition shadow-2xs resize-none leading-relaxed"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100 -mx-5 sm:-mx-6 -mb-5 sm:-mb-6 px-5 sm:px-6 py-4 bg-slate-50/80">
                                 <button
                                     type="button"
                                     onClick={() => setApplyingRole(null)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer shadow-2xs"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={submitting}
-                                    className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold transition disabled:opacity-50 shadow-xs cursor-pointer"
                                 >
-                                    {submitting ? 'Mengirim...' : 'Kirim Lamaran'}
+                                    <Send className="size-3.5" />
+                                    <span>{submitting ? 'Mengirim...' : 'Kirim Lamaran'}</span>
                                 </button>
                             </div>
                         </form>
@@ -2029,6 +2448,174 @@ export default function ProjectShow({
                             </div>
                         </form>
                     </div>
+                </div>
+            )}
+
+            {/* Modal Sukses Penerimaan Anggota Baru */}
+            {acceptedModalData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl border border-slate-100 text-center relative overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Background Decorative Glow */}
+                        <div className="absolute -top-16 -left-16 w-36 h-36 bg-blue-100/60 rounded-full blur-2xl pointer-events-none" />
+                        <div className="absolute -bottom-16 -right-16 w-36 h-36 bg-blue-100/40 rounded-full blur-2xl pointer-events-none" />
+
+                        {/* Top Close Button */}
+                        <button
+                            type="button"
+                            onClick={() => setAcceptedModalData(null)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        {/* Icon Header */}
+                        <div className="mx-auto size-16 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/25 mb-4">
+                            <Sparkles className="size-8" />
+                        </div>
+
+                        <h3 className="text-lg font-black text-slate-900 tracking-tight mb-2">
+                            Anggota Baru Resmi Bergabung!
+                        </h3>
+
+                        {/* Applicant Profile Card */}
+                        <div className="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200/80 text-left flex items-center gap-3.5">
+                            <div className="size-12 rounded-xl bg-gradient-to-tr from-blue-700 to-blue-500 text-white font-black text-base flex items-center justify-center shadow-xs shrink-0">
+                                {acceptedModalData.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-bold text-slate-900 truncate">
+                                    {acceptedModalData.name}
+                                </p>
+                                <p className="text-xs text-slate-500 truncate">
+                                    {acceptedModalData.email}
+                                </p>
+                                <div className="mt-1 flex items-center gap-1.5">
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100/80 text-blue-700">
+                                        {acceptedModalData.role}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400 font-medium">
+                                        • Anggota Tim Aktif
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Status Checklist */}
+                        <div className="mt-4 p-3 rounded-xl bg-blue-50/50 border border-blue-100/80 text-left text-[11px] text-slate-600 space-y-1.5">
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="size-3.5 text-blue-600 shrink-0" />
+                                <span>Akses Project Workspace & Papan Tugas telah diaktifkan</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <CheckCircle2 className="size-3.5 text-blue-600 shrink-0" />
+                                <span>Dapat berkolaborasi langsung dalam ruang Diskusi Tim</span>
+                            </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="mt-6 flex flex-col sm:flex-row items-center gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setAcceptedModalData(null);
+                                    setActiveTab('discussions');
+                                    window.setTimeout(() => {
+                                        document.getElementById('discussions-tab')?.scrollIntoView({ behavior: 'smooth' });
+                                    }, 100);
+                                }}
+                                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                            >
+                                <MessageSquare className="size-3.5" />
+                                <span>Buka Diskusi Tim</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setAcceptedModalData(null)}
+                                className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
+                            >
+                                Selesai
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Konfirmasi Buka Workspace Proyek */}
+            {showActivateTeamModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowActivateTeamModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-4">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <UserCheck className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Konfirmasi & Buka Workspace
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowActivateTeamModal(false)}
+                                disabled={lifecycleProcessing}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmActivateTeam}
+                                disabled={lifecycleProcessing}
+                                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <span>{lifecycleProcessing ? 'Mengaktifkan...' : 'Aktifkan Sekarang'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* In-App Toast Notification */}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 max-w-md animate-in fade-in slide-in-from-bottom-5 duration-300">
+                    <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${
+                        toast.type === 'success'
+                            ? 'bg-blue-600 text-white'
+                            : toast.type === 'error'
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-slate-800 text-blue-400'
+                    }`}>
+                        {toast.type === 'success' ? (
+                            <CheckCircle2 className="size-4.5" />
+                        ) : toast.type === 'error' ? (
+                            <AlertCircle className="size-4.5" />
+                        ) : (
+                            <Info className="size-4.5" />
+                        )}
+                    </div>
+                    <div className="flex-1 min-w-0 pr-1">
+                        <p className="text-xs font-bold text-white leading-snug">{toast.message}</p>
+                        {toast.submessage && (
+                            <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{toast.submessage}</p>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setToast(null)}
+                        className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition -mr-1 -mt-1 cursor-pointer"
+                    >
+                        <X className="size-3.5" />
+                    </button>
                 </div>
             )}
         </AppLayout>

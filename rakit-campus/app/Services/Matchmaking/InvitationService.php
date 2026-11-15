@@ -57,10 +57,10 @@ class InvitationService
             ]);
         }
 
-        // 3. Rule 1: Candidate must not currently have an active project in this class
-        if ($this->eligibilityService->hasActiveProjectMembership($invitee, $project->academic_class_id)) {
+        // 3. Rule 1: Candidate must not currently have an active project in this class (Hanya aktif untuk proyek yang memasukkan kelas)
+        if ($project->academic_class_id !== null && $this->eligibilityService->hasActiveProjectMembership($invitee, $project->academic_class_id)) {
             throw ValidationException::withMessages([
-                'invitee' => ["{$invitee->name} sudah tergabung dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek)."],
+                'invitee' => ["{$invitee->name} sudah tergabung dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek)."],
             ]);
         }
 
@@ -173,32 +173,31 @@ class InvitationService
                 ]);
             }
 
-            // 2. Strict Rule 1 Active Membership Check with lock
+            // 2. Strict Rule 1 Active Membership Check with lock (Hanya aktif untuk proyek yang memasukkan kelas)
             $classId = $project->academic_class_id;
-            $hasActive = TeamMember::where('user_id', $student->id)
-                ->where('status', 'active')
-                ->whereHas('team.project', function ($q) use ($classId) {
-                    $q->whereNotIn('status', [
-                        ProjectStatus::Archived->value,
-                        ProjectStatus::Completed->value,
+            if ($classId !== null) {
+                $hasActive = TeamMember::where('user_id', $student->id)
+                    ->where('status', 'active')
+                    ->whereHas('team.project', function ($q) use ($classId) {
+                        $q->whereNotIn('status', [
+                            ProjectStatus::Archived->value,
+                            ProjectStatus::Completed->value,
+                        ])->where('academic_class_id', $classId);
+                    })
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($hasActive) {
+                    $inv->update([
+                        'status' => InvitationStatus::Declined,
+                        'declined_reason' => 'Otomatis dibatalkan: Mahasiswa telah bergabung ke proyek aktif lain di kelas ini.',
+                        'responded_at' => now(),
                     ]);
-                    if ($classId !== null) {
-                        $q->where('academic_class_id', $classId);
-                    }
-                })
-                ->lockForUpdate()
-                ->exists();
 
-            if ($hasActive) {
-                $inv->update([
-                    'status' => InvitationStatus::Declined,
-                    'declined_reason' => 'Otomatis dibatalkan: Mahasiswa telah bergabung ke proyek aktif lain.',
-                    'responded_at' => now(),
-                ]);
-
-                throw ValidationException::withMessages([
-                    'invitation' => ['Anda sudah terdaftar dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek Aktif).'],
-                ]);
+                    throw ValidationException::withMessages([
+                        'invitation' => ['Anda sudah terdaftar dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek Aktif).'],
+                    ]);
+                }
             }
 
             // 3. Strict Capacity Check with lock

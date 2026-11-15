@@ -163,6 +163,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     // Academic Classes (Kelas Kuliah & Bimbingan Dosen)
     Route::get('/classes', [AcademicClassWebController::class, 'index'])->name('classes.index');
     Route::post('/classes', [AcademicClassWebController::class, 'store'])->name('classes.store');
+    Route::put('/classes/{id}', [AcademicClassWebController::class, 'update'])->name('classes.update');
     Route::get('/classes/{code}', [AcademicClassWebController::class, 'show'])->name('classes.show');
     Route::post('/classes/join', [AcademicClassWebController::class, 'join'])->name('classes.join');
     Route::post('/classes/{id}/students', [AcademicClassWebController::class, 'addStudent'])->name('classes.students.add');

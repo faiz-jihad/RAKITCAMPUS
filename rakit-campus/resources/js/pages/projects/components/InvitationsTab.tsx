@@ -47,9 +47,11 @@ export default function InvitationsTab({
         });
     };
 
+    const isAcademic = Boolean(project.academic_class_id || project.academicClass?.id || project.category === 'academic');
+
     const handleAcceptInvitation = (invitationId: number) => {
-        if (userHasActiveProject) {
-            alert('Perhatian: Anda sudah memiliki keanggotaan proyek aktif lain. Sesuai aturan RAKIT Campus (Unified Membership), satu mahasiswa hanya dapat menjadi anggota 1 proyek aktif sekaligus.');
+        if (isAcademic && userHasActiveProject) {
+            alert('Perhatian: Anda sudah memiliki keanggotaan proyek aktif lain di kelas akademik ini.');
             return;
         }
 
@@ -82,21 +84,21 @@ export default function InvitationsTab({
         switch (status) {
             case 'pending':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                         <Clock className="size-3" />
                         Menunggu Respons
                     </span>
                 );
             case 'accepted':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
                         <CheckCircle2 className="size-3" />
                         Diterima
                     </span>
                 );
             case 'declined':
                 return (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
                         <XCircle className="size-3" />
                         Ditolak
                     </span>
@@ -136,9 +138,6 @@ export default function InvitationsTab({
                                 <h3 className="text-base font-bold text-slate-900">
                                     Undangan Diterima Untuk Anda ({receivedInvitations.length})
                                 </h3>
-                                <p className="text-xs text-slate-500">
-                                    Anda telah diundang untuk bergabung ke proyek tim berikut.
-                                </p>
                             </div>
                         </div>
                     </div>
@@ -204,9 +203,6 @@ export default function InvitationsTab({
                             <h3 className="text-base font-bold text-slate-900">
                                 Daftar Undangan Terkirim ({sentInvitations.length})
                             </h3>
-                            <p className="text-xs text-slate-500">
-                                Histori dan status seluruh undangan rekrutmen yang dikirimkan oleh tim ini.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -269,7 +265,7 @@ export default function InvitationsTab({
                                                     <button
                                                         onClick={() => handleCancelInvitation(inv.id)}
                                                         disabled={submittingId === inv.id}
-                                                        className="px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-semibold transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
+                                                        className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 text-xs font-semibold transition cursor-pointer disabled:opacity-50 inline-flex items-center gap-1"
                                                     >
                                                         <Trash2 className="size-3" />
                                                         <span>Batalkan</span>

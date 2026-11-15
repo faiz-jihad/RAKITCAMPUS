@@ -3,23 +3,20 @@ import React from 'react';
 
 export default function AppFooter() {
     return (
-        <footer className="w-full bg-white border-t border-slate-200/80 text-slate-500 text-xs mt-16">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <footer className="w-full bg-white border-t border-slate-200/80 text-slate-500 text-xs mt-12 sm:mt-16 pb-20 md:pb-0">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
                     {/* Brand & Copyright */}
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-2.5">
                         <Link href="/" className="flex items-center gap-2 group">
                             <img
                                 src="/images/rakit-mark.png"
                                 alt="RAKIT"
                                 className="h-6 w-auto object-contain transition-transform group-hover:scale-105"
                             />
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center">
                                 <span className="font-black text-sm text-slate-900 tracking-tight">
-                                    RAKIT
-                                </span>
-                                <span className="text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
-                                    Campus
+                                    RAKIT CAMPUS
                                 </span>
                             </div>
                         </Link>

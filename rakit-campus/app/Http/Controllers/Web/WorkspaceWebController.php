@@ -102,6 +102,21 @@ class WorkspaceWebController extends Controller
 
         // Project Workspace must only become available after successful team activation
         if ($team->project) {
+            $isAcademic = !empty($team->project->academic_class_id) || $team->project->category === 'academic';
+
+            // Untuk proyek mandiri: jika kuota anggota penuh, workspace otomatis aktif
+            if (! $isAcademic && $team->isFull()) {
+                if ($team->project->formation_status !== 'workspace_activated' || $team->project->status !== \App\Enums\ProjectStatus::InProgress) {
+                    $team->project->update([
+                        'status' => \App\Enums\ProjectStatus::InProgress->value,
+                        'formation_status' => 'workspace_activated',
+                    ]);
+                    $team->update(['status' => 'active']);
+                    $team->members()->update(['status' => 'active']);
+                    \App\Services\Matchmaking\TeamFormationService::ensureStarterMilestones($team->project, $user);
+                }
+            }
+
             $allowedStatuses = [
                 \App\Enums\ProjectStatus::InProgress->value,
                 \App\Enums\ProjectStatus::Completed->value,

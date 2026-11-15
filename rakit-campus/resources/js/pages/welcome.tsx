@@ -1740,9 +1740,8 @@ export default function Welcome() {
             {/* Initial White Screen Curtain */}
             <div
                 onClick={handleSkipIntro}
-                className={`fixed inset-0 bg-white z-10 transition-opacity duration-1000 select-none ${
-                    introStage >= 2 ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-pointer'
-                }`}
+                className={`fixed inset-0 bg-white z-10 transition-opacity duration-1000 select-none ${introStage >= 2 ? 'opacity-0 pointer-events-none' : 'opacity-100 cursor-pointer'
+                    }`}
             />
 
             {/* Floating Text "RAKIT CAMPUS" during Intro: Splitting evenly and surging outward to opposite edges */}
@@ -1756,17 +1755,17 @@ export default function Welcome() {
                                 introStage === 0
                                     ? 'translate(-6px, -50%)'
                                     : introStage === 1
-                                    ? isMobile
-                                        ? 'translate(-97px, -50%)'
-                                        : 'translate(-196px, -50%)'
-                                    : 'translate(-120vw, -50%)',
+                                        ? isMobile
+                                            ? 'translate(-97px, -50%)'
+                                            : 'translate(-196px, -50%)'
+                                        : 'translate(-120vw, -50%)',
                             opacity: introStage >= 2 ? 0 : 1,
                             transition:
                                 introStage === 1
                                     ? 'transform 800ms cubic-bezier(0.16, 1, 0.3, 1)'
                                     : introStage >= 2
-                                    ? 'transform 750ms cubic-bezier(0.12, 1, 0.2, 1), opacity 400ms ease-out'
-                                    : 'all 500ms ease-out',
+                                        ? 'transform 750ms cubic-bezier(0.12, 1, 0.2, 1), opacity 400ms ease-out'
+                                        : 'all 500ms ease-out',
                         }}
                     >
                         <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
@@ -1782,17 +1781,17 @@ export default function Welcome() {
                                 introStage === 0
                                     ? 'translate(6px, -50%)'
                                     : introStage === 1
-                                    ? isMobile
-                                        ? 'translate(97px, -50%)'
-                                        : 'translate(196px, -50%)'
-                                    : 'translate(120vw, -50%)',
+                                        ? isMobile
+                                            ? 'translate(97px, -50%)'
+                                            : 'translate(196px, -50%)'
+                                        : 'translate(120vw, -50%)',
                             opacity: introStage >= 2 ? 0 : 1,
                             transition:
                                 introStage === 1
                                     ? 'transform 800ms cubic-bezier(0.16, 1, 0.3, 1)'
                                     : introStage >= 2
-                                    ? 'transform 750ms cubic-bezier(0.12, 1, 0.2, 1), opacity 400ms ease-out'
-                                    : 'all 500ms ease-out',
+                                        ? 'transform 750ms cubic-bezier(0.12, 1, 0.2, 1), opacity 400ms ease-out'
+                                        : 'all 500ms ease-out',
                         }}
                     >
                         <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
@@ -1803,350 +1802,342 @@ export default function Welcome() {
             )}
 
             {/* 1. Header / Navigation */}
-                <header
-                className={`fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${
-                    introStage < 2
-                        ? 'opacity-0 pointer-events-none'
-                        : isNavVisible
+            <header
+                className={`fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${introStage < 2
+                    ? 'opacity-0 pointer-events-none'
+                    : isNavVisible
                         ? 'translate-y-0 opacity-100'
                         : '-translate-y-full opacity-0 pointer-events-none'
-                } ${
-                    isScrolledPastTop
+                    } ${isScrolledPastTop
                         ? 'py-2.5 sm:py-3.5 bg-[#121212] border-b border-white/10 shadow-2xl'
                         : 'pt-4 sm:pt-8 pb-3 bg-transparent border-b border-transparent'
-                }`}
+                    }`}
             >
-                    {/* Logo (Serif All-Caps) */}
-                    <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2">
-                        <span className="font-serif text-lg xs:text-xl sm:text-2xl md:text-3xl font-normal tracking-[0.15em] sm:tracking-[0.22em] text-white uppercase drop-shadow-md truncate">
-                            RAKIT CAMPUS
-                        </span>
-                    </Link>
+                {/* Logo (Serif All-Caps) */}
+                <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2">
+                    <span className="font-serif text-lg xs:text-xl sm:text-2xl md:text-3xl font-normal tracking-[0.15em] sm:tracking-[0.22em] text-white uppercase drop-shadow-md truncate">
+                        RAKIT CAMPUS
+                    </span>
+                </Link>
 
-                    {/* Unified Solid Black Nav Toolbar (100% Match to Reference Layout) */}
-                    <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[44px] sm:h-[52px] flex items-stretch pl-2.5 sm:pl-8 pr-1.5 sm:pr-4 relative z-40 transition-colors duration-200 shrink-0`}>
-                        {/* Desktop Menu Links */}
-                        <nav className="hidden lg:flex items-stretch gap-7 xl:gap-8 text-[11px] font-bold tracking-[0.22em] text-white uppercase mr-6 xl:mr-8 select-none">
-                            <a
-                                href="#about"
-                                onClick={handleNavAboutClick}
-                                className="hover-blur-text flex items-center cursor-pointer"
-                            >
-                                TENTANG
-                            </a>
-
-                            {/* Interactive Pulldown: FITUR */}
-                            <div
-                                ref={dropdownRef}
-                                className="relative flex items-center h-full z-40"
-                                onMouseEnter={handleMouseEnter}
-                                onMouseLeave={handleMouseLeave}
-                            >
-                                <button
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        if (timeoutRef.current) {
-                                            clearTimeout(timeoutRef.current);
-                                            timeoutRef.current = null;
-                                        }
-                                        setFeaturesDropdownOpen((prev) => {
-                                            const next = !prev;
-                                            setIsPinned(next);
-                                            return next;
-                                        });
-                                    }}
-                                    aria-expanded={featuresDropdownOpen}
-                                    aria-haspopup="true"
-                                    className="hover-blur-text flex items-center gap-1.5 cursor-pointer h-full text-white uppercase tracking-[0.22em] text-[11px] font-bold focus:outline-hidden"
-                                >
-                                    <span>FITUR</span>
-                                    <ChevronDown
-                                        className={`size-3 text-blue-500 transition-transform duration-300 stroke-[2.5] ${
-                                            featuresDropdownOpen ? 'rotate-180' : 'rotate-0'
-                                        }`}
-                                    />
-                                </button>
-
-                                {/* Dropdown Menu Panel (Clean editorial list without bullets, stationary positioning) */}
-                                <div
-                                    onMouseEnter={handleMouseEnter}
-                                    onMouseLeave={handleMouseLeave}
-                                    className={`absolute top-full left-0 w-80 bg-[#121212] border border-white/10 p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 transition-opacity duration-150 ${
-                                        featuresDropdownOpen
-                                            ? 'opacity-100 pointer-events-auto visible'
-                                            : 'opacity-0 pointer-events-none invisible'
-                                    }`}
-                                >
-                                    {/* Invisible hit bridge covering any gap between toolbar and dropdown */}
-                                    <div className="absolute -top-3.5 left-0 right-0 h-3.5" />
-
-                                    <ul className="flex flex-col gap-1">
-                                        {featuresList.map((item, idx) => (
-                                            <li key={idx}>
-                                                <a
-                                                    href={item.href}
-                                                    onClick={(e) => handleFeatureItemClick(e, item.href)}
-                                                    className="group block p-3 rounded-xs hover:bg-white/[0.04] transition-all duration-200 cursor-pointer select-none"
-                                                >
-                                                    <span className="text-xs font-bold tracking-[0.14em] text-white uppercase group-hover-blur-text block cursor-pointer">
-                                                        {item.title}
-                                                    </span>
-                                                    <span className="text-[10px] text-neutral-400 font-sans tracking-[0.06em] uppercase block mt-1 group-hover-blur-subtext leading-relaxed cursor-pointer">
-                                                        {item.desc}
-                                                    </span>
-                                                </a>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-                            </div>
-
-                            <Link
-                                href="/projects"
-                                className="hover-blur-text flex items-center cursor-pointer"
-                            >
-                                PROJECT HUB
-                            </Link>
-                            <Link
-                                href="/competitions"
-                                className="hover-blur-text flex items-center cursor-pointer"
-                            >
-                                KOMPETISI
-                            </Link>
-                            <a
-                                href="#workflow"
-                                className="hover-blur-text flex items-center cursor-pointer"
-                            >
-                                CARA KERJA
-                            </a>
-                        </nav>
-
-                        {/* White Rectangular Action Buttons (Adjacent with 4px gap) */}
-                        <div className="flex items-center gap-1 self-center">
-                            {auth?.user ? (
-                                <>
-                                    <Link
-                                        href="/dashboard"
-                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
-                                    >
-                                        DASHBOARD
-                                    </Link>
-                                    <Link
-                                        method="post"
-                                        href="/logout"
-                                        as="button"
-                                        className="hover-blur-text border border-white/40 text-white/90 hover:text-white hover:border-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase transition-colors"
-                                    >
-                                        KELUAR
-                                    </Link>
-                                </>
-                            ) : (
-                                <>
-                                    <Link
-                                        href="/login"
-                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
-                                    >
-                                        MASUK
-                                    </Link>
-                                    <Link
-                                        href="/register"
-                                        className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
-                                    >
-                                        MULAI
-                                    </Link>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Borderless Hamburger Menu Button inside the unified bar */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            aria-label="Toggle Navigation"
-                            className="h-[32px] sm:h-[38px] px-2.5 sm:px-3.5 ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
-                        >
-                            <span className="w-5 h-[1.5px] bg-white"></span>
-                            <span className="w-5 h-[1.5px] bg-white"></span>
-                        </button>
-                    </div>
-                </header>
-
-                {/* Right Slide-over Sidebar Drawer (Drop-down entrance from the top) */}
-                {/* Translucent Backdrop (Click to close) */}
-                <div
-                    onClick={() => setMobileMenuOpen(false)}
-                    className={`fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs transition-opacity duration-500 ${
-                        mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-                    }`}
-                />
-
-                {/* Right Sidebar Drawer: Slides down smoothly from the top */}
-                <div
-                    className={`fixed inset-y-0 right-0 z-[70] w-full sm:w-[380px] md:w-[420px] bg-[#121212] text-white flex flex-col justify-between p-6 sm:p-8 shadow-[-10px_0_35px_rgba(0,0,0,0.9)] overflow-y-auto no-scrollbar transition-all duration-500 ease-out will-change-transform ${
-                        mobileMenuOpen
-                            ? 'translate-y-0 opacity-100 pointer-events-auto'
-                            : '-translate-y-full opacity-0 pointer-events-none'
-                    }`}
-                    style={{
-                        transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                    }}
-                >
-                    {/* Top Bar of Sidebar with Close Button (Border line removed as requested) */}
-                    <div className="flex items-center justify-end">
-                        <button
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="h-[38px] w-[46px] bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition-colors shadow-sm cursor-pointer"
-                            aria-label="Tutup Menu"
-                        >
-                            <X className="w-5 h-5 stroke-[2]" />
-                        </button>
-                    </div>
-
-                    {/* Menu Items with Subtitles (Editorial Layout) */}
-                    <div className="flex-1 flex flex-col justify-center gap-5 sm:gap-6 py-4 my-auto">
-                        <Link
-                            href="/"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="group flex flex-col text-left cursor-pointer"
-                        >
-                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
-                                BERANDA
-                            </span>
-                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                HALAMAN UTAMA
-                            </span>
-                        </Link>
-
+                {/* Unified Solid Black Nav Toolbar (100% Match to Reference Layout) */}
+                <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[44px] sm:h-[52px] flex items-stretch pl-2.5 sm:pl-8 pr-1.5 sm:pr-4 relative z-40 transition-colors duration-200 shrink-0`}>
+                    {/* Desktop Menu Links */}
+                    <nav className="hidden lg:flex items-stretch gap-7 xl:gap-8 text-[11px] font-bold tracking-[0.22em] text-white uppercase mr-6 xl:mr-8 select-none">
                         <a
                             href="#about"
                             onClick={handleNavAboutClick}
-                            className="group flex flex-col text-left cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer"
                         >
-                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
-                                TENTANG
-                            </span>
-                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                PROFIL &amp; MISI PLATFORM
-                            </span>
+                            TENTANG
                         </a>
 
-                        <Link
-                            href="/projects"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="group flex flex-col text-left cursor-pointer"
+                        {/* Interactive Pulldown: FITUR */}
+                        <div
+                            ref={dropdownRef}
+                            className="relative flex items-center h-full z-40"
+                            onMouseEnter={handleMouseEnter}
+                            onMouseLeave={handleMouseLeave}
                         >
-                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
-                                KARYA
-                            </span>
-                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                SHOWCASE &amp; PROJECT HUB
-                            </span>
-                        </Link>
-
-                        {/* Fitur with Sub-items (Accordion) */}
-                        <div className="flex flex-col text-left">
                             <button
                                 type="button"
-                                onClick={() => setMobileFeaturesOpen(!mobileFeaturesOpen)}
-                                className="group flex flex-col text-left cursor-pointer focus:outline-hidden"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    if (timeoutRef.current) {
+                                        clearTimeout(timeoutRef.current);
+                                        timeoutRef.current = null;
+                                    }
+                                    setFeaturesDropdownOpen((prev) => {
+                                        const next = !prev;
+                                        setIsPinned(next);
+                                        return next;
+                                    });
+                                }}
+                                aria-expanded={featuresDropdownOpen}
+                                aria-haspopup="true"
+                                className="hover-blur-text flex items-center gap-1.5 cursor-pointer h-full text-white uppercase tracking-[0.22em] text-[11px] font-bold focus:outline-hidden"
                             >
-                                <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight flex items-center justify-between w-full">
-                                    <span>FITUR</span>
-                                    <ChevronDown
-                                        className={`size-4 text-blue-500 transition-transform duration-300 stroke-[2.5] ${
-                                            mobileFeaturesOpen ? 'rotate-180' : 'rotate-0'
+                                <span>FITUR</span>
+                                <ChevronDown
+                                    className={`size-3 text-blue-500 transition-transform duration-300 stroke-[2.5] ${featuresDropdownOpen ? 'rotate-180' : 'rotate-0'
                                         }`}
-                                    />
-                                </span>
-                                <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                    LIVING PROPOSAL &amp; MATCHMAKING
-                                </span>
+                                />
                             </button>
+
+                            {/* Dropdown Menu Panel (Clean editorial list without bullets, stationary positioning) */}
                             <div
-                                className={`overflow-hidden transition-all duration-300 ease-out pl-4 flex flex-col gap-2.5 text-xs text-neutral-400 font-sans ${
-                                    mobileFeaturesOpen ? 'max-h-60 opacity-100 mt-2.5' : 'max-h-0 opacity-0 mt-0 pointer-events-none'
-                                }`}
+                                onMouseEnter={handleMouseEnter}
+                                onMouseLeave={handleMouseLeave}
+                                className={`absolute top-full left-0 w-80 bg-[#121212] border border-white/10 p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.85)] z-50 transition-opacity duration-150 ${featuresDropdownOpen
+                                    ? 'opacity-100 pointer-events-auto visible'
+                                    : 'opacity-0 pointer-events-none invisible'
+                                    }`}
                             >
-                                {featuresList.map((item, idx) => (
-                                    <a
-                                        key={idx}
-                                        href={item.href}
-                                        onClick={(e) => handleFeatureItemClick(e, item.href)}
-                                        className="hover-blur-text text-neutral-300 hover:text-white py-1 flex items-center cursor-pointer text-xs font-semibold tracking-[0.1em]"
-                                    >
-                                        <span>{item.title}</span>
-                                    </a>
-                                ))}
+                                {/* Invisible hit bridge covering any gap between toolbar and dropdown */}
+                                <div className="absolute -top-3.5 left-0 right-0 h-3.5" />
+
+                                <ul className="flex flex-col gap-1">
+                                    {featuresList.map((item, idx) => (
+                                        <li key={idx}>
+                                            <a
+                                                href={item.href}
+                                                onClick={(e) => handleFeatureItemClick(e, item.href)}
+                                                className="group block p-3 rounded-xs hover:bg-white/[0.04] transition-all duration-200 cursor-pointer select-none"
+                                            >
+                                                <span className="text-xs font-bold tracking-[0.14em] text-white uppercase group-hover-blur-text block cursor-pointer">
+                                                    {item.title}
+                                                </span>
+                                                <span className="text-[10px] text-neutral-400 font-sans tracking-[0.06em] uppercase block mt-1 group-hover-blur-subtext leading-relaxed cursor-pointer">
+                                                    {item.desc}
+                                                </span>
+                                            </a>
+                                        </li>
+                                    ))}
+                                </ul>
                             </div>
                         </div>
 
                         <Link
-                            href="/competitions"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="group flex flex-col text-left cursor-pointer"
+                            href="/projects"
+                            className="hover-blur-text flex items-center cursor-pointer"
                         >
-                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
-                                KOMPETISI
-                            </span>
-                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                HACKATHON &amp; LOMBA MAHASISWA
-                            </span>
+                            PROJECT HUB
                         </Link>
-
+                        <Link
+                            href="/competitions"
+                            className="hover-blur-text flex items-center cursor-pointer"
+                        >
+                            KOMPETISI
+                        </Link>
                         <a
                             href="#workflow"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="group flex flex-col text-left cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer"
                         >
-                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
-                                CARA KERJA
-                            </span>
-                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
-                                ALUR KOLABORASI MAHASISWA
-                            </span>
+                            CARA KERJA
                         </a>
-                    </div>
+                    </nav>
 
-                    {/* Bottom Actions */}
-                    <div className="pt-4 flex flex-col gap-2.5">
+                    {/* White Rectangular Action Buttons (Adjacent with 4px gap) */}
+                    <div className="flex items-center gap-1 self-center">
                         {auth?.user ? (
-                            <div className="flex flex-col gap-2">
+                            <>
                                 <Link
                                     href="/dashboard"
-                                    className="hover-blur-text w-full bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
+                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                 >
-                                    BUKA DASHBOARD
+                                    DASHBOARD
                                 </Link>
                                 <Link
                                     method="post"
                                     href="/logout"
                                     as="button"
-                                    className="hover-blur-text w-full border border-red-500/50 text-red-400 py-3 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-red-500/10 transition-colors"
+                                    className="hover-blur-text border border-white/40 text-white/90 hover:text-white hover:border-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase transition-colors"
                                 >
-                                    KELUAR DARI AKUN
+                                    KELUAR
                                 </Link>
-                            </div>
+                            </>
                         ) : (
-                            <div className="flex items-center gap-2">
+                            <>
                                 <Link
                                     href="/login"
-                                    className="hover-blur-text flex-1 bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
+                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                 >
                                     MASUK
                                 </Link>
                                 <Link
                                     href="/register"
-                                    className="hover-blur-text flex-1 border border-white/60 text-white py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:border-white hover:bg-white hover:text-black transition-colors"
+                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
                                 >
                                     MULAI
                                 </Link>
-                            </div>
+                            </>
                         )}
                     </div>
+
+                    {/* Borderless Hamburger Menu Button inside the unified bar */}
+                    <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        aria-label="Toggle Navigation"
+                        className="h-[32px] sm:h-[38px] px-2.5 sm:px-3.5 ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
+                    >
+                        <span className="w-5 h-[1.5px] bg-white"></span>
+                        <span className="w-5 h-[1.5px] bg-white"></span>
+                    </button>
+                </div>
+            </header>
+
+            {/* Right Slide-over Sidebar Drawer (Drop-down entrance from the top) */}
+            {/* Translucent Backdrop (Click to close) */}
+            <div
+                onClick={() => setMobileMenuOpen(false)}
+                className={`fixed inset-0 z-[60] bg-black/60 backdrop-blur-xs transition-opacity duration-500 ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+                    }`}
+            />
+
+            {/* Right Sidebar Drawer: Slides down smoothly from the top */}
+            <div
+                className={`fixed inset-y-0 right-0 z-[70] w-full sm:w-[380px] md:w-[420px] bg-[#121212] text-white flex flex-col justify-between p-6 sm:p-8 shadow-[-10px_0_35px_rgba(0,0,0,0.9)] overflow-y-auto no-scrollbar transition-all duration-500 ease-out will-change-transform ${mobileMenuOpen
+                    ? 'translate-y-0 opacity-100 pointer-events-auto'
+                    : '-translate-y-full opacity-0 pointer-events-none'
+                    }`}
+                style={{
+                    transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                }}
+            >
+                {/* Top Bar of Sidebar with Close Button (Border line removed as requested) */}
+                <div className="flex items-center justify-end">
+                    <button
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="h-[38px] w-[46px] bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition-colors shadow-sm cursor-pointer"
+                        aria-label="Tutup Menu"
+                    >
+                        <X className="w-5 h-5 stroke-[2]" />
+                    </button>
                 </div>
 
-                
+                {/* Menu Items with Subtitles (Editorial Layout) */}
+                <div className="flex-1 flex flex-col justify-center gap-5 sm:gap-6 py-4 my-auto">
+                    <Link
+                        href="/"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
+                            BERANDA
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            HALAMAN UTAMA
+                        </span>
+                    </Link>
+
+                    <a
+                        href="#about"
+                        onClick={handleNavAboutClick}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
+                            TENTANG
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            PROFIL &amp; MISI PLATFORM
+                        </span>
+                    </a>
+
+                    <Link
+                        href="/projects"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
+                            KARYA
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            SHOWCASE &amp; PROJECT HUB
+                        </span>
+                    </Link>
+
+                    {/* Fitur with Sub-items (Accordion) */}
+                    <div className="flex flex-col text-left">
+                        <button
+                            type="button"
+                            onClick={() => setMobileFeaturesOpen(!mobileFeaturesOpen)}
+                            className="group flex flex-col text-left cursor-pointer focus:outline-hidden"
+                        >
+                            <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight flex items-center justify-between w-full">
+                                <span>FITUR</span>
+                                <ChevronDown
+                                    className={`size-4 text-blue-500 transition-transform duration-300 stroke-[2.5] ${mobileFeaturesOpen ? 'rotate-180' : 'rotate-0'
+                                        }`}
+                                />
+                            </span>
+                            <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                                LIVING PROPOSAL &amp; MATCHMAKING
+                            </span>
+                        </button>
+                        <div
+                            className={`overflow-hidden transition-all duration-300 ease-out pl-4 flex flex-col gap-2.5 text-xs text-neutral-400 font-sans ${mobileFeaturesOpen ? 'max-h-60 opacity-100 mt-2.5' : 'max-h-0 opacity-0 mt-0 pointer-events-none'
+                                }`}
+                        >
+                            {featuresList.map((item, idx) => (
+                                <a
+                                    key={idx}
+                                    href={item.href}
+                                    onClick={(e) => handleFeatureItemClick(e, item.href)}
+                                    className="hover-blur-text text-neutral-300 hover:text-white py-1 flex items-center cursor-pointer text-xs font-semibold tracking-[0.1em]"
+                                >
+                                    <span>{item.title}</span>
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Link
+                        href="/competitions"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
+                            KOMPETISI
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            HACKATHON &amp; LOMBA MAHASISWA
+                        </span>
+                    </Link>
+
+                    <a
+                        href="#workflow"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight">
+                            CARA KERJA
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            ALUR KOLABORASI MAHASISWA
+                        </span>
+                    </a>
+                </div>
+
+                {/* Bottom Actions */}
+                <div className="pt-4 flex flex-col gap-2.5">
+                    {auth?.user ? (
+                        <div className="flex flex-col gap-2">
+                            <Link
+                                href="/dashboard"
+                                className="hover-blur-text w-full bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
+                            >
+                                BUKA DASHBOARD
+                            </Link>
+                            <Link
+                                method="post"
+                                href="/logout"
+                                as="button"
+                                className="hover-blur-text w-full border border-red-500/50 text-red-400 py-3 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-red-500/10 transition-colors"
+                            >
+                                KELUAR DARI AKUN
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/login"
+                                className="hover-blur-text flex-1 bg-white text-black py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-sm"
+                            >
+                                MASUK
+                            </Link>
+                            <Link
+                                href="/register"
+                                className="hover-blur-text flex-1 border border-white/60 text-white py-3.5 text-center text-xs font-bold tracking-[0.2em] uppercase hover:border-white hover:bg-white hover:text-black transition-colors"
+                            >
+                                MULAI
+                            </Link>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+
             {/* Section 1: Hero Section (Editorial Dark Aesthetic) */}
             <div
                 ref={pinContainerRef}
@@ -2154,20 +2145,19 @@ export default function Welcome() {
             >
                 {/* Hero Video Banner: Sharp edges (no border, no border-radius), expands to fullscreen of Section 1 via GPU-accelerated clip-path */}
                 <div
-                    className={`overflow-hidden rounded-none border-0 ${
-                        introStage < 3
-                            ? 'fixed inset-0 z-20 pointer-events-none'
-                            : 'absolute inset-0 z-0'
-                    }`}
+                    className={`overflow-hidden rounded-none border-0 ${introStage < 3
+                        ? 'fixed inset-0 z-20 pointer-events-none'
+                        : 'absolute inset-0 z-0'
+                        }`}
                     style={{
                         clipPath:
                             introStage === 0
                                 ? 'inset(50% 50% 50% 50%)'
                                 : introStage === 1
-                                ? isMobile
-                                    ? 'inset(calc(50% - 48px) calc(50% - 85px) calc(50% - 48px) calc(50% - 85px))'
-                                    : 'inset(calc(50% - 100px) calc(50% - 180px) calc(50% - 100px) calc(50% - 180px))'
-                                : 'inset(0% 0% 0% 0%)',
+                                    ? isMobile
+                                        ? 'inset(calc(50% - 48px) calc(50% - 85px) calc(50% - 48px) calc(50% - 85px))'
+                                        : 'inset(calc(50% - 100px) calc(50% - 180px) calc(50% - 100px) calc(50% - 180px))'
+                                    : 'inset(0% 0% 0% 0%)',
                         opacity: introStage === 0 ? 0 : 1,
                         transition:
                             introStage === 1
@@ -2187,9 +2177,8 @@ export default function Welcome() {
                     />
                     {/* Subtle Top & Bottom Gradient Overlay for Contrast (keeps video bright & colorful) */}
                     <div
-                        className={`absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/35 transition-opacity duration-1000 ${
-                            introStage >= 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                        }`}
+                        className={`absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/35 transition-opacity duration-1000 ${introStage >= 2 ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            }`}
                     />
                     {/* Progressive Video Blur Overlay: GSAP triggers subtle blur during scroll into Tentang */}
                     <div
@@ -2261,9 +2250,8 @@ export default function Welcome() {
 
                     {/* 3. Bottom Strip: News Ticker & Scroll Indicator */}
                     <div
-                        className={`w-full px-3.5 sm:px-6 lg:px-8 pt-1 pb-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 transition-opacity duration-700 delay-400 ${
-                            introStage >= 2 ? 'opacity-100' : 'opacity-0'
-                        }`}
+                        className={`w-full px-3.5 sm:px-6 lg:px-8 pt-1 pb-1 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 transition-opacity duration-700 delay-400 ${introStage >= 2 ? 'opacity-100' : 'opacity-0'
+                            }`}
                     >
                         {/* Left: News Ticker / Announcement Box */}
                         <div className="bg-black/85 backdrop-blur-md border border-white/20 px-3 sm:px-[18px] py-2 sm:py-[10.5px] text-[10px] sm:text-xs text-neutral-200 flex items-center gap-2 sm:gap-2.5 w-full sm:max-w-3xl font-mono shadow-sm">
@@ -2342,23 +2330,23 @@ export default function Welcome() {
                             </p>
 
                             {/* CTA Button towards Student Dashboard with interactive effects */}
-                            <div className="mt-5 sm:mt-7">
+                            <div className="mt-5 sm:mt-7 flex items-center justify-start">
                                 <Link
                                     href="/dashboard"
-                                    className="group relative inline-flex items-center justify-center gap-3.5 bg-white hover:bg-neutral-50 text-neutral-900 text-xs sm:text-sm font-sans font-semibold px-5 py-3 sm:px-7 sm:py-4 shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_10px_35px_rgba(255,255,255,0.25)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] overflow-hidden cursor-pointer w-full sm:w-auto"
+                                    className="group relative inline-flex items-center justify-center gap-3 bg-white hover:bg-neutral-50 text-neutral-900 text-xs sm:text-sm font-sans font-semibold px-6 sm:px-8 py-2.5 sm:py-3 rounded-none border border-neutral-200/60 shadow-[0_4px_20px_rgba(0,0,0,0.25)] hover:shadow-[0_8px_28px_rgba(255,255,255,0.3)] transition-all duration-300 ease-out hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] overflow-hidden cursor-pointer w-fit"
                                 >
                                     {/* Shimmer light sweep highlight effect */}
-                                    <span 
+                                    <span
                                         aria-hidden="true"
-                                        className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-blue-500/15 to-transparent transition-transform duration-700 ease-in-out pointer-events-none" 
+                                        className="absolute inset-0 -translate-x-full group-hover:translate-x-full bg-gradient-to-r from-transparent via-blue-500/15 to-transparent transition-transform duration-700 ease-in-out pointer-events-none"
                                     />
 
                                     <span className="relative z-10 tracking-wide">Lihat Platform</span>
-                                    
+
                                     {/* Interactive animated blue diamond */}
-                                    <span 
+                                    <span
                                         aria-hidden="true"
-                                        className="relative z-10 text-blue-600 text-xs sm:text-sm font-bold transition-all duration-300 ease-out group-hover:translate-x-1 group-hover:scale-125 group-hover:rotate-45 inline-block"
+                                        className="relative z-10 text-blue-600 text-[11px] sm:text-xs font-bold transition-all duration-300 ease-out group-hover:translate-x-0.5 group-hover:scale-125 inline-block"
                                     >
                                         ◆
                                     </span>
@@ -2510,10 +2498,10 @@ export default function Welcome() {
                         className="relative mx-auto w-full will-change-transform"
                         style={{ perspective: '2200px' }}
                     >
-                        
+
                         {/* 1. Realistic 3D Laptop (Chassis, Chrome Desktop Browser & Dashboard) */}
                         <div ref={laptopShowcaseRef} className="w-full relative mx-auto transform-gpu will-change-transform [backface-visibility:hidden]">
-                            <div 
+                            <div
                                 ref={laptopCardRef}
                                 className="relative mx-auto w-full max-w-5xl lg:max-w-[1000px] xl:max-w-[1040px] will-change-transform transform-gpu select-none"
                                 style={{
@@ -2521,10 +2509,10 @@ export default function Welcome() {
                                     transformStyle: 'preserve-3d',
                                 }}
                             >
-                                
+
                                 {/* LAPTOP SCREEN LID (Display Housing with Anodized Space Gray Aluminum Shell) */}
                                 <div className="relative bg-gradient-to-b from-[#282a34] via-[#1a1b22] to-[#111218] rounded-t-[16px] xs:rounded-t-[20px] sm:rounded-t-[26px] md:rounded-t-[30px] p-[5px] sm:p-[8px] md:p-[9px] pb-0 shadow-[0_20px_60px_-10px_rgba(0,0,0,0.45),0_8px_20px_rgba(0,0,0,0.25)] ring-1 ring-white/15 border border-[#373946]">
-                                    
+
                                     {/* Inner Black Glass Display Bezel */}
                                     <div className="relative bg-[#090a0d] rounded-t-[12px] sm:rounded-t-[18px] md:rounded-t-[21px] overflow-hidden border border-black/90">
 
@@ -2539,573 +2527,571 @@ export default function Welcome() {
                                         <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.06] z-20" />
 
                                         {/* Cinematic 3D Light Sheen Sweep Overlay */}
-                                        <div 
+                                        <div
                                             ref={laptopSheenRef}
                                             className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent z-25 will-change-transform opacity-0"
                                         />
 
-                                {/* GOOGLE CHROME DESKTOP BROWSER UI (Matching Image 2 Reference) */}
-                                <div className="w-full flex flex-col bg-[#eef1f5] border-b border-neutral-300/80 select-none text-left relative z-10 font-sans">
-                                    <div className="flex items-center gap-1.5 sm:gap-4 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#dfe3e8]/90 border-b border-neutral-300">
-                                        {/* macOS Window Controls (Monochrome for strict 3-color palette) */}
-                                        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-400/80 hover:bg-neutral-600 transition border border-neutral-500/30" />
-                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
-                                            <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
-                                        </div>
+                                        {/* GOOGLE CHROME DESKTOP BROWSER UI (Matching Image 2 Reference) */}
+                                        <div className="w-full flex flex-col bg-[#eef1f5] border-b border-neutral-300/80 select-none text-left relative z-10 font-sans">
+                                            <div className="flex items-center gap-1.5 sm:gap-4 px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#dfe3e8]/90 border-b border-neutral-300">
+                                                {/* macOS Window Controls (Monochrome for strict 3-color palette) */}
+                                                <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                                                    <div className="size-2 sm:size-3 rounded-full bg-neutral-400/80 hover:bg-neutral-600 transition border border-neutral-500/30" />
+                                                    <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
+                                                    <div className="size-2 sm:size-3 rounded-full bg-neutral-300 hover:bg-neutral-500 transition border border-neutral-400/30" />
+                                                </div>
 
-                                        {/* Back / Forward / Reload navigation */}
-                                        <div className="hidden sm:flex items-center gap-1 text-neutral-400">
-                                            <button type="button" className="p-1 rounded-full text-neutral-400 cursor-not-allowed">
-                                                <ArrowLeft className="size-3 sm:size-3.5" />
-                                            </button>
-                                            <button type="button" className="p-1 rounded-full text-neutral-400 cursor-not-allowed">
-                                                <ArrowRight className="size-3 sm:size-3.5" />
-                                            </button>
-                                            <button type="button" className="p-1 rounded-full text-neutral-600 hover:bg-neutral-200/60 transition">
-                                                <RotateCw className="size-3 sm:size-3.5" />
-                                            </button>
-                                        </div>
+                                                {/* Back / Forward / Reload navigation */}
+                                                <div className="hidden sm:flex items-center gap-1 text-neutral-400">
+                                                    <button type="button" className="p-1 rounded-full text-neutral-400 cursor-not-allowed">
+                                                        <ArrowLeft className="size-3 sm:size-3.5" />
+                                                    </button>
+                                                    <button type="button" className="p-1 rounded-full text-neutral-400 cursor-not-allowed">
+                                                        <ArrowRight className="size-3 sm:size-3.5" />
+                                                    </button>
+                                                    <button type="button" className="p-1 rounded-full text-neutral-600 hover:bg-neutral-200/60 transition">
+                                                        <RotateCw className="size-3 sm:size-3.5" />
+                                                    </button>
+                                                </div>
 
-                                        {/* Chrome Omnibox URL Bar */}
-                                        <div className="flex-1 flex items-center justify-between bg-white border border-neutral-200/90 rounded-full px-2.5 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[11.5px] font-sans shadow-2xs min-w-0">
-                                            <div className="flex items-center gap-1 sm:gap-2 truncate">
-                                                <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
-                                                <span className="text-neutral-400 hidden sm:inline font-mono">https://</span>
-                                                <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
-                                                <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/workspace</span>
+                                                {/* Chrome Omnibox URL Bar */}
+                                                <div className="flex-1 flex items-center justify-between bg-white border border-neutral-200/90 rounded-full px-2.5 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[11.5px] font-sans shadow-2xs min-w-0">
+                                                    <div className="flex items-center gap-1 sm:gap-2 truncate">
+                                                        <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                                                        <span className="text-neutral-400 hidden sm:inline font-mono">https://</span>
+                                                        <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
+                                                        <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/workspace</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 shrink-0 ml-1.5 sm:ml-2">
+                                                        <span className="text-[8px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200/70">
+                                                            RAKIT Hub
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Chrome User Profile */}
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold flex items-center justify-center shadow-2xs">
+                                                        BS
+                                                    </div>
+                                                    <MoreVertical className="size-3.5 text-neutral-600 hidden sm:inline cursor-pointer" />
+                                                </div>
                                             </div>
-                                            <div className="flex items-center gap-1.5 shrink-0 ml-1.5 sm:ml-2">
-                                                <span className="text-[8px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200/70">
+                                        </div>
+
+                                        {/* LAPTOP WEB DASHBOARD VIEWPORT (Inside Chrome) */}
+                                        <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[380px] xs:min-h-[420px] sm:min-h-[490px] md:min-h-[510px]">
+                                            {/* Desktop Sidebar */}
+                                            <aside className="w-48 sm:w-52 shrink-0 bg-white border-r border-neutral-200/80 p-3 sm:p-4 hidden sm:flex flex-col justify-between">
+                                                <div>
+                                                    {/* App Logo */}
+                                                    <div className="flex items-center gap-2.5 pb-4 border-b border-neutral-100">
+                                                        <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-2xs">
+                                                            <Rocket className="size-4" />
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-black tracking-tight text-neutral-900 leading-tight">RAKIT CAMPUS</div>
+                                                            <div className="text-[9px] text-neutral-400 font-medium">RAKIT Workspace</div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Navigation Links */}
+                                                    <nav className="mt-4 space-y-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setActiveTab('board')}
+                                                            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 transition"
+                                                        >
+                                                            <Kanban className="size-3.5 text-blue-600" />
+                                                            <span>Sprint Kanban</span>
+                                                        </button>
+                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
+                                                            <Sparkles className="size-3.5 text-neutral-400" />
+                                                            <span>AI Matchmaking</span>
+                                                        </div>
+                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
+                                                            <FolderKanban className="size-3.5 text-neutral-400" />
+                                                            <span>Living Proposal</span>
+                                                        </div>
+                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
+                                                            <Trophy className="size-3.5 text-neutral-400" />
+                                                            <span>Gemastik 2026</span>
+                                                        </div>
+                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
+                                                            <Users className="size-3.5 text-neutral-400" />
+                                                            <span>Anggota Tim (4)</span>
+                                                        </div>
+                                                    </nav>
+                                                </div>
+
+                                                {/* User Card in Sidebar */}
+                                                <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-200/80 flex items-center gap-2.5">
+                                                    <div className="relative">
+                                                        <div className="size-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                                                            BS
+                                                        </div>
+                                                        <span className="absolute bottom-0 right-0 size-2 bg-blue-600 rounded-full border border-white" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-[11px] font-bold text-neutral-900 truncate">Budi Santoso</div>
+                                                        <div className="text-[9px] text-neutral-500">Ketua Tim Hackathon</div>
+                                                    </div>
+                                                </div>
+                                            </aside>
+
+                                            {/* Main Dashboard Canvas Area */}
+                                            <main className="flex-1 p-2.5 sm:p-5 flex flex-col justify-between overflow-hidden bg-white">
+                                                <div>
+                                                    {/* Subheader */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-neutral-100 gap-2">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Proyek 2026</h3>
+                                                                <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200/60">
+                                                                    Active Sprint
+                                                                </span>
+                                                            </div>
+                                                            <p className="text-[9px] sm:text-[11px] text-neutral-400 mt-0.5 truncate max-w-[240px] sm:max-w-none">
+                                                                Target Validasi Living Proposal & Prototype IoT Gemastik
+                                                            </p>
+                                                        </div>
+
+                                                        <div className="flex items-center gap-1.5 sm:gap-2">
+                                                            <div className="flex items-center -space-x-1.5 mr-0.5 sm:mr-1">
+                                                                <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">B</div>
+                                                                <div className="size-4.5 sm:size-6 rounded-full bg-neutral-900 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">S</div>
+                                                                <div className="size-4.5 sm:size-6 rounded-full bg-blue-500 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">A</div>
+                                                                <div className="size-4.5 sm:size-6 rounded-full bg-neutral-100 text-neutral-800 text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">+3</div>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setActiveTab('board')}
+                                                                className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-semibold transition ${activeTab === 'board'
+                                                                    ? 'bg-neutral-900 text-white'
+                                                                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                                                                    }`}
+                                                            >
+                                                                Board
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setActiveTab('list')}
+                                                                className={`hidden sm:inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${activeTab === 'list'
+                                                                    ? 'bg-neutral-900 text-white'
+                                                                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
+                                                                    }`}
+                                                            >
+                                                                List
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="hidden md:inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-md shadow-2xs hover:bg-blue-700 transition"
+                                                            >
+                                                                <Plus className="size-3" />
+                                                                <span>Tambah Tugas</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* KPI Metrics Row */}
+                                                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 mt-2.5 sm:mt-3 mb-2.5 sm:mb-3">
+                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                            <div className="min-w-0">
+                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Sprint</div>
+                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">78% Selesai</div>
+                                                            </div>
+                                                            <div className="w-8 sm:w-16 bg-neutral-200 h-1.5 rounded-full overflow-hidden shrink-0 ml-1">
+                                                                <div className="bg-blue-600 h-full rounded-full w-[78%]" />
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                            <div className="min-w-0">
+                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Proposal</div>
+                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-700 truncate">v2.4 Valid</div>
+                                                            </div>
+                                                            <CheckCircle2 className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
+                                                        </div>
+
+                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                            <div className="min-w-0">
+                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Gemastik</div>
+                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">14 Hari Sisa</div>
+                                                            </div>
+                                                            <Trophy className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
+                                                        </div>
+                                                    </div>
+
+                                                    {/* 4-Column Live Kanban Board */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+                                                        {/* Column 1: To Do */}
+                                                        <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
+                                                                    To Do <span className="text-neutral-500 ml-1">3</span>
+                                                                </span>
+                                                                <MoreHorizontal className="size-3 text-neutral-400" />
+                                                            </div>
+                                                            {/* Card 1 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                                    High Priority
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Competitive Analysis & Hackathon Pitch
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span>2 Hari Lagi</span>
+                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Card 2 */}
+                                                            <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                                                                    Riset
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Sensor IoT LoRaWAN Spec
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span>4 Hari</span>
+                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">A</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Column 2: In Process */}
+                                                        <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                                    In Process <span className="text-blue-500 ml-1">2</span>
+                                                                </span>
+                                                                <MoreHorizontal className="size-3 text-neutral-400" />
+                                                            </div>
+                                                            {/* Card 1 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                                    In Progress
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Dashboard UI Refinement & 3D Web View
+                                                                </h4>
+                                                                <div className="w-full bg-neutral-100 h-1 rounded-full mt-2 overflow-hidden">
+                                                                    <div className="bg-blue-600 h-full rounded-full w-3/4" />
+                                                                </div>
+                                                                <div className="flex items-center justify-between mt-1.5 text-[9px] text-neutral-400">
+                                                                    <span className="text-blue-600 font-semibold">75% Done</span>
+                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">S</div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Card 2 */}
+                                                            <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                                                                    Backend
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Algoritma Gemini Matching
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span>Aktif</span>
+                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Column 3: In Review */}
+                                                        <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
+                                                                    In Review <span className="text-neutral-500 ml-1">1</span>
+                                                                </span>
+                                                                <MoreHorizontal className="size-3 text-neutral-400" />
+                                                            </div>
+                                                            {/* Card 1 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                                    Review Ready
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Living Proposal Bab 1-3 Review Dosen
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span className="text-blue-600 font-semibold">Siap Diuji</span>
+                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">A</div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Card 2 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
+                                                                    Testing
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Task Automation Webhook
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span>Verifikasi</span>
+                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Column 4: Completed */}
+                                                        <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
+                                                            <div className="flex items-center justify-between">
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                                    Completed <span className="text-blue-500 ml-1">4</span>
+                                                                </span>
+                                                                <MoreHorizontal className="size-3 text-neutral-400" />
+                                                            </div>
+                                                            {/* Card 1 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-200/60">
+                                                                    Completed
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    Design System & Strict 3-Color Tokens
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span className="flex items-center gap-1 text-blue-600 font-semibold">
+                                                                        <CheckCircle2 className="size-2.5 text-blue-600" /> Terverifikasi
+                                                                    </span>
+                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
+                                                                </div>
+                                                            </div>
+                                                            {/* Card 2 */}
+                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
+                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800">
+                                                                    Repository
+                                                                </span>
+                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
+                                                                    GitHub CI/CD & Deploy Rules
+                                                                </h4>
+                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
+                                                                    <span className="text-blue-600 font-semibold">Tersinkron</span>
+                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Bottom Status Ticker */}
+                                                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[9px] sm:text-[10px] text-neutral-400">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
+                                                        <span>Living Proposal Sync: Real-time via WebSocket</span>
+                                                    </div>
+                                                    <span className="hidden sm:inline text-neutral-500 font-mono">v2.4.0-prod</span>
+                                                </div>
+                                            </main>
+                                        </div>
+                                        {/* LAPTOP CHIN & UNIBODY ALUMINUM BASE (Matching Image 2 Reference) */}
+                                        {/* Display Bottom Chin Bezel */}
+                                        <div className="relative w-full h-2.5 sm:h-3 bg-[#0a0a0e] border-t border-black/40 flex items-center justify-center z-20">
+                                            <div className="w-16 sm:w-20 h-0.5 bg-neutral-700/30 rounded-full" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* RECESSED CENTER HINGE ASSEMBLY */}
+                                <div className="relative w-full h-2 sm:h-2.5 bg-[#0d0e13] flex items-center justify-center z-10 border-t border-black/80">
+                                    <div className="w-44 sm:w-56 md:w-64 h-1.5 bg-[#050507] rounded-full shadow-inner border-x border-white/5" />
+                                </div>
+
+                                {/* 3D UNIBODY ALUMINUM BASE CHASSIS (Extends wider than screen, with horizon deck & CNC thumb scoop) */}
+                                <div className="relative w-[104%] sm:w-[105%] md:w-[105.5%] -ml-[2%] sm:-ml-[2.5%] md:-ml-[2.75%] z-20">
+                                    {/* Base Deck Horizon Surface (Aluminum top plane catching light) */}
+                                    <div className="w-full h-2 sm:h-2.5 bg-gradient-to-b from-[#2e303c] via-[#20212a] to-[#15161d] border-t border-white/25 flex items-center justify-between px-6 sm:px-10">
+                                        <div className="w-12 sm:w-16 h-[1px] bg-black/40 rounded-full" />
+                                        <div className="w-32 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-blue-400/20 to-transparent" />
+                                        <div className="w-12 sm:w-16 h-[1px] bg-black/40 rounded-full" />
+                                    </div>
+
+                                    {/* Front Chamfer Highlight Line */}
+                                    <div className="w-full h-[1px] bg-gradient-to-r from-white/10 via-white/45 to-white/10" />
+
+                                    {/* Front Lip / Chin (Sleek anodized aluminum front profile) */}
+                                    <div className="w-full h-3.5 sm:h-4.5 md:h-5 bg-gradient-to-b from-[#282a35] via-[#1a1b23] to-[#0c0d12] rounded-b-xl sm:rounded-b-2xl border-b border-black/80 shadow-[0_12px_28px_-4px_rgba(0,0,0,0.45)] relative flex items-start justify-center">
+                                        {/* CNC-Machined Thumb Opening Notch */}
+                                        <div className="w-24 sm:w-32 md:w-36 h-1 sm:h-1.5 bg-[#050507] rounded-b-lg shadow-inner border-t border-white/20" />
+
+                                        {/* Left & Right Base Feet Peeking Underneath */}
+                                        <div className="absolute -bottom-1 left-[8%] sm:left-[10%] w-12 sm:w-16 h-1 bg-[#060608] rounded-b-sm shadow-xs" />
+                                        <div className="absolute -bottom-1 right-[8%] sm:right-[10%] w-12 sm:w-16 h-1 bg-[#060608] rounded-b-sm shadow-xs" />
+                                    </div>
+                                </div>
+
+                                {/* Realistic 3D Ground & Ambient Occlusion Shadows */}
+                                <div className="relative w-full select-none pointer-events-none">
+                                    {/* Tight Contact Shadow right under the aluminum base */}
+                                    <div className="w-[98%] sm:w-[99%] h-2.5 sm:h-3.5 bg-black/45 blur-xs rounded-full mx-auto -mt-1" />
+                                    {/* Mid-range Ambient Shadow */}
+                                    <div className="w-[92%] sm:w-[94%] h-6 sm:h-8 bg-black/30 blur-md rounded-full mx-auto -mt-2" />
+                                    {/* Soft Floor Diffuse Shadow */}
+                                    <div className="w-[82%] sm:w-[85%] h-12 sm:h-16 bg-black/15 blur-2xl rounded-full mx-auto -mt-5" />
+                                    {/* Subtle Blue Display Floor Glow */}
+                                    <div className="w-[60%] h-8 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.18)_0%,transparent_70%)] rounded-full mx-auto -mt-8" />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 2. Realistic 3D Smartphone (iPhone 16 Pro Flagship) with Google Chrome Mobile */}
+                        <div
+                            ref={phoneShowcaseRef}
+                            className="absolute bottom-2 xs:bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-1 xs:right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
+                        >
+                            <div
+                                ref={phoneCardRef}
+                                className="w-[145px] xs:w-[175px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[300px] xs:h-[360px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
+                                style={{
+                                    transform: 'perspective(1800px) rotateX(1.5deg) rotateY(0deg) translateZ(20px)',
+                                    boxShadow: '-18px 25px 60px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3)',
+                                    transformStyle: 'preserve-3d',
+                                }}
+                            >
+                                {/* Phone Body Frame */}
+                                <div className="relative bg-[#fafafa] border-[4px] xs:border-[6px] sm:border-[7px] md:border-[8px] border-[#181920] rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] ring-1 ring-white/15 overflow-hidden w-full h-full flex flex-col justify-between">
+
+                                    {/* Glass Specular Reflection Highlight */}
+                                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.07] z-20" />
+
+                                    {/* Phone Screen Light Sheen Sweep */}
+                                    <div
+                                        ref={phoneSheenRef}
+                                        className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent z-25 will-change-transform opacity-0"
+                                    />
+
+                                    {/* Dynamic Island & Phone Status Bar */}
+                                    <div className="relative pt-1 sm:pt-2 pb-1 bg-white flex items-center justify-between px-2.5 sm:px-4 z-10 border-b border-neutral-100 shrink-0">
+                                        <span className="text-[7.5px] sm:text-[9.5px] font-bold text-neutral-900 font-mono">09:41</span>
+                                        {/* Dynamic Island Pill */}
+                                        <div className="w-10 xs:w-12 sm:w-16 h-2.5 sm:h-3.5 bg-black rounded-full flex items-center justify-between px-1.5 sm:px-2 shadow-inner">
+                                            <div className="size-1 rounded-full bg-[#181822]" />
+                                            <div className="size-0.5 rounded-full bg-blue-500/80" />
+                                        </div>
+                                        <div className="flex items-center gap-1 text-neutral-900">
+                                            <Wifi className="size-2 sm:size-2.5" />
+                                            <Battery className="size-2.5 sm:size-3" />
+                                        </div>
+                                    </div>
+
+                                    {/* GOOGLE CHROME MOBILE TOP BAR */}
+                                    <div className="bg-[#f8f9fa] border-b border-neutral-200/90 px-2 sm:px-2.5 py-1.5 flex items-center gap-1.5 z-10 relative select-none shrink-0">
+                                        {/* Chrome Mobile Omnibox Pill */}
+                                        <div className="flex-1 bg-white border border-neutral-200 rounded-full px-2 py-0.5 flex items-center justify-between text-[7.5px] sm:text-[8px] shadow-2xs">
+                                            <div className="flex items-center gap-1 truncate">
+                                                <span className="size-1 rounded-full bg-blue-600 shrink-0" />
+                                                <span className="text-neutral-400 font-mono">m.</span>
+                                                <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
+                                            </div>
+                                            <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/60">
+                                                SSL
+                                            </span>
+                                        </div>
+
+                                        {/* Chrome Open Tabs Badge [3] */}
+                                        <div className="size-3.5 sm:size-4 rounded-[3px] border border-neutral-800 flex items-center justify-center text-[7px] sm:text-[7.5px] font-bold text-neutral-900 font-mono shrink-0">
+                                            3
+                                        </div>
+
+                                        {/* Chrome 3 Dots Menu */}
+                                        <MoreVertical className="size-3 text-neutral-800 shrink-0 cursor-pointer" />
+                                    </div>
+
+                                    {/* PHONE SCREEN CONTENT: RAKIT CAMPUS RESPONSIVE MOBILE WEB */}
+                                    <div className="bg-[#fafafa] p-2 sm:p-2.5 text-left font-sans flex-1 min-h-0 flex flex-col justify-between relative z-10">
+                                        <div className="space-y-1.5">
+                                            {/* Mobile Web Header */}
+                                            <div className="flex items-center justify-between pb-1 border-b border-neutral-200/60">
+                                                <div className="flex items-center gap-1.5">
+                                                    <div className="size-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-2xs">
+                                                        <Rocket className="size-2.5" />
+                                                    </div>
+                                                    <span className="text-[10px] font-black text-neutral-900 tracking-tight">RAKIT</span>
+                                                </div>
+                                                <span className="text-[7.5px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/70">
                                                     RAKIT Hub
                                                 </span>
                                             </div>
-                                        </div>
 
-                                        {/* Chrome User Profile */}
-                                        <div className="flex items-center gap-1.5 shrink-0">
-                                            <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[8px] sm:text-[10px] font-bold flex items-center justify-center shadow-2xs">
-                                                BS
-                                            </div>
-                                            <MoreVertical className="size-3.5 text-neutral-600 hidden sm:inline cursor-pointer" />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* LAPTOP WEB DASHBOARD VIEWPORT (Inside Chrome) */}
-                                <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[380px] xs:min-h-[420px] sm:min-h-[490px] md:min-h-[510px]">
-                                    {/* Desktop Sidebar */}
-                                    <aside className="w-48 sm:w-52 shrink-0 bg-white border-r border-neutral-200/80 p-3 sm:p-4 hidden sm:flex flex-col justify-between">
-                                        <div>
-                                            {/* App Logo */}
-                                            <div className="flex items-center gap-2.5 pb-4 border-b border-neutral-100">
-                                                <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-2xs">
-                                                    <Rocket className="size-4" />
+                                            {/* Mobile Card 1: Active Sprint Progress */}
+                                            <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
+                                                <div className="flex items-center justify-between text-[8px] font-bold text-neutral-900">
+                                                    <span>Sprint Proyek 2026</span>
+                                                    <span className="text-blue-600">78%</span>
                                                 </div>
-                                                <div>
-                                                    <div className="text-xs font-black tracking-tight text-neutral-900 leading-tight">RAKIT CAMPUS</div>
-                                                    <div className="text-[9px] text-neutral-400 font-medium">RAKIT Workspace</div>
+                                                <div className="w-full bg-neutral-100 h-1 rounded-full mt-1 overflow-hidden">
+                                                    <div className="bg-blue-600 h-full rounded-full w-[78%]" />
+                                                </div>
+                                                <div className="flex items-center justify-between mt-1 text-[7px] text-neutral-500">
+                                                    <span>14 Hari Tersisa</span>
+                                                    <span className="text-neutral-900 font-semibold">18/22 Tasks</span>
                                                 </div>
                                             </div>
 
-                                            {/* Navigation Links */}
-                                            <nav className="mt-4 space-y-1">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('board')}
-                                                    className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 transition"
-                                                >
-                                                    <Kanban className="size-3.5 text-blue-600" />
-                                                    <span>Sprint Kanban</span>
-                                                </button>
-                                                <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                    <Sparkles className="size-3.5 text-neutral-400" />
-                                                    <span>AI Matchmaking</span>
+                                            {/* Mobile Card 2: AI Matchmaking Candidate */}
+                                            <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[7px] font-bold uppercase text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/70">
+                                                        + 98% MATCH
+                                                    </span>
+                                                    <span className="text-[7px] text-neutral-400">Mobile Dev</span>
                                                 </div>
-                                                <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                    <FolderKanban className="size-3.5 text-neutral-400" />
-                                                    <span>Living Proposal</span>
-                                                </div>
-                                                <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                    <Trophy className="size-3.5 text-neutral-400" />
-                                                    <span>Gemastik 2026</span>
-                                                </div>
-                                                <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                    <Users className="size-3.5 text-neutral-400" />
-                                                    <span>Anggota Tim (4)</span>
-                                                </div>
-                                            </nav>
-                                        </div>
-
-                                        {/* User Card in Sidebar */}
-                                        <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-200/80 flex items-center gap-2.5">
-                                            <div className="relative">
-                                                <div className="size-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
-                                                    BS
-                                                </div>
-                                                <span className="absolute bottom-0 right-0 size-2 bg-blue-600 rounded-full border border-white" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <div className="text-[11px] font-bold text-neutral-900 truncate">Budi Santoso</div>
-                                                <div className="text-[9px] text-neutral-500">Ketua Tim Hackathon</div>
-                                            </div>
-                                        </div>
-                                    </aside>
-
-                                    {/* Main Dashboard Canvas Area */}
-                                    <main className="flex-1 p-2.5 sm:p-5 flex flex-col justify-between overflow-hidden bg-white">
-                                        <div>
-                                            {/* Subheader */}
-                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-neutral-100 gap-2">
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Proyek 2026</h3>
-                                                        <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200/60">
-                                                            Active Sprint
-                                                        </span>
-                                                    </div>
-                                                    <p className="text-[9px] sm:text-[11px] text-neutral-400 mt-0.5 truncate max-w-[240px] sm:max-w-none">
-                                                        Target Validasi Living Proposal & Prototype IoT Gemastik
-                                                    </p>
-                                                </div>
-
-                                                <div className="flex items-center gap-1.5 sm:gap-2">
-                                                    <div className="flex items-center -space-x-1.5 mr-0.5 sm:mr-1">
-                                                        <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">B</div>
-                                                        <div className="size-4.5 sm:size-6 rounded-full bg-neutral-900 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">S</div>
-                                                        <div className="size-4.5 sm:size-6 rounded-full bg-blue-500 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">A</div>
-                                                        <div className="size-4.5 sm:size-6 rounded-full bg-neutral-100 text-neutral-800 text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">+3</div>
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setActiveTab('board')}
-                                                        className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-semibold transition ${
-                                                            activeTab === 'board'
-                                                                ? 'bg-neutral-900 text-white'
-                                                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                                                        }`}
-                                                    >
-                                                        Board
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setActiveTab('list')}
-                                                        className={`hidden sm:inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${
-                                                            activeTab === 'list'
-                                                                ? 'bg-neutral-900 text-white'
-                                                                : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                                                        }`}
-                                                    >
-                                                        List
-                                                    </button>
-                                                    <button
-                                                        type="button"
-                                                        className="hidden md:inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-md shadow-2xs hover:bg-blue-700 transition"
-                                                    >
-                                                        <Plus className="size-3" />
-                                                        <span>Tambah Tugas</span>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            {/* KPI Metrics Row */}
-                                            <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 mt-2.5 sm:mt-3 mb-2.5 sm:mb-3">
-                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
+                                                <div className="flex items-center gap-1.5 mt-1">
+                                                    <div className="size-5 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center shrink-0">BS</div>
                                                     <div className="min-w-0">
-                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Sprint</div>
-                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">78% Selesai</div>
-                                                    </div>
-                                                    <div className="w-8 sm:w-16 bg-neutral-200 h-1.5 rounded-full overflow-hidden shrink-0 ml-1">
-                                                        <div className="bg-blue-600 h-full rounded-full w-[78%]" />
+                                                        <h5 className="text-[9px] font-bold text-neutral-900 leading-tight truncate">Budi Santoso</h5>
+                                                        <p className="text-[7px] text-neutral-500 truncate">Flutter & IoT Specialist</p>
                                                     </div>
                                                 </div>
-
-                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
-                                                    <div className="min-w-0">
-                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Proposal</div>
-                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-700 truncate">v2.4 Valid</div>
+                                                <div className="mt-1 pt-1 border-t border-neutral-100 flex items-center justify-between">
+                                                    <div className="flex gap-1 text-[6.5px] text-neutral-600">
+                                                        <span className="px-1 py-0.2 bg-neutral-100 rounded">Flutter</span>
+                                                        <span className="px-1 py-0.2 bg-neutral-100 rounded">MQTT</span>
                                                     </div>
-                                                    <CheckCircle2 className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
-                                                </div>
-
-                                                <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
-                                                    <div className="min-w-0">
-                                                        <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Gemastik</div>
-                                                        <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">14 Hari Sisa</div>
-                                                    </div>
-                                                    <Trophy className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
+                                                    <span className="text-[7.5px] font-bold text-blue-600 hover:underline cursor-pointer">Undang</span>
                                                 </div>
                                             </div>
 
-                                            {/* 4-Column Live Kanban Board */}
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
-                                                {/* Column 1: To Do */}
-                                                <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
-                                                            To Do <span className="text-neutral-500 ml-1">3</span>
-                                                        </span>
-                                                        <MoreHorizontal className="size-3 text-neutral-400" />
-                                                    </div>
-                                                    {/* Card 1 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                            High Priority
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Competitive Analysis & Hackathon Pitch
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span>2 Hari Lagi</span>
-                                                            <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Card 2 */}
-                                                    <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                            Riset
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Sensor IoT LoRaWAN Spec
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span>4 Hari</span>
-                                                            <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">A</div>
-                                                        </div>
+                                            {/* Mobile Card 3: Gemastik Milestone */}
+                                            <div className="p-1.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center justify-between">
+                                                <div className="flex items-center gap-1.5">
+                                                    <Trophy className="size-3 text-blue-600 shrink-0" />
+                                                    <div>
+                                                        <div className="text-[8px] font-bold text-neutral-900">Gemastik 2026</div>
+                                                        <div className="text-[6.5px] text-neutral-400">Babak Finalis IoT</div>
                                                     </div>
                                                 </div>
-
-                                                {/* Column 2: In Process */}
-                                                <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                            In Process <span className="text-blue-500 ml-1">2</span>
-                                                        </span>
-                                                        <MoreHorizontal className="size-3 text-neutral-400" />
-                                                    </div>
-                                                    {/* Card 1 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                            In Progress
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Dashboard UI Refinement & 3D Web View
-                                                        </h4>
-                                                        <div className="w-full bg-neutral-100 h-1 rounded-full mt-2 overflow-hidden">
-                                                            <div className="bg-blue-600 h-full rounded-full w-3/4" />
-                                                        </div>
-                                                        <div className="flex items-center justify-between mt-1.5 text-[9px] text-neutral-400">
-                                                            <span className="text-blue-600 font-semibold">75% Done</span>
-                                                            <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">S</div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Card 2 */}
-                                                    <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                            Backend
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Algoritma Gemini Matching
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span>Aktif</span>
-                                                            <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Column 3: In Review */}
-                                                <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
-                                                            In Review <span className="text-neutral-500 ml-1">1</span>
-                                                        </span>
-                                                        <MoreHorizontal className="size-3 text-neutral-400" />
-                                                    </div>
-                                                    {/* Card 1 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                            Review Ready
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Living Proposal Bab 1-3 Review Dosen
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span className="text-blue-600 font-semibold">Siap Diuji</span>
-                                                            <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">A</div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Card 2 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                            Testing
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Task Automation Webhook
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span>Verifikasi</span>
-                                                            <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Column 4: Completed */}
-                                                <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                            Completed <span className="text-blue-500 ml-1">4</span>
-                                                        </span>
-                                                        <MoreHorizontal className="size-3 text-neutral-400" />
-                                                    </div>
-                                                    {/* Card 1 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-200/60">
-                                                            Completed
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            Design System & Strict 3-Color Tokens
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span className="flex items-center gap-1 text-blue-600 font-semibold">
-                                                                <CheckCircle2 className="size-2.5 text-blue-600" /> Terverifikasi
-                                                            </span>
-                                                            <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
-                                                        </div>
-                                                    </div>
-                                                    {/* Card 2 */}
-                                                    <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                        <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800">
-                                                            Repository
-                                                        </span>
-                                                        <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                            GitHub CI/CD & Deploy Rules
-                                                        </h4>
-                                                        <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                            <span className="text-blue-600 font-semibold">Tersinkron</span>
-                                                            <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Bottom Status Ticker */}
-                                        <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[9px] sm:text-[10px] text-neutral-400">
-                                            <div className="flex items-center gap-2">
-                                                <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
-                                                <span>Living Proposal Sync: Real-time via WebSocket</span>
-                                            </div>
-                                            <span className="hidden sm:inline text-neutral-500 font-mono">v2.4.0-prod</span>
-                                        </div>
-                                    </main>
-                                </div>
-{/* LAPTOP CHIN & UNIBODY ALUMINUM BASE (Matching Image 2 Reference) */}
-                                    {/* Display Bottom Chin Bezel */}
-                                    <div className="relative w-full h-2.5 sm:h-3 bg-[#0a0a0e] border-t border-black/40 flex items-center justify-center z-20">
-                                        <div className="w-16 sm:w-20 h-0.5 bg-neutral-700/30 rounded-full" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* RECESSED CENTER HINGE ASSEMBLY */}
-                            <div className="relative w-full h-2 sm:h-2.5 bg-[#0d0e13] flex items-center justify-center z-10 border-t border-black/80">
-                                <div className="w-44 sm:w-56 md:w-64 h-1.5 bg-[#050507] rounded-full shadow-inner border-x border-white/5" />
-                            </div>
-
-                            {/* 3D UNIBODY ALUMINUM BASE CHASSIS (Extends wider than screen, with horizon deck & CNC thumb scoop) */}
-                            <div className="relative w-[104%] sm:w-[105%] md:w-[105.5%] -ml-[2%] sm:-ml-[2.5%] md:-ml-[2.75%] z-20">
-                                {/* Base Deck Horizon Surface (Aluminum top plane catching light) */}
-                                <div className="w-full h-2 sm:h-2.5 bg-gradient-to-b from-[#2e303c] via-[#20212a] to-[#15161d] border-t border-white/25 flex items-center justify-between px-6 sm:px-10">
-                                    <div className="w-12 sm:w-16 h-[1px] bg-black/40 rounded-full" />
-                                    <div className="w-32 sm:w-48 h-[1px] bg-gradient-to-r from-transparent via-blue-400/20 to-transparent" />
-                                    <div className="w-12 sm:w-16 h-[1px] bg-black/40 rounded-full" />
-                                </div>
-
-                                {/* Front Chamfer Highlight Line */}
-                                <div className="w-full h-[1px] bg-gradient-to-r from-white/10 via-white/45 to-white/10" />
-
-                                {/* Front Lip / Chin (Sleek anodized aluminum front profile) */}
-                                <div className="w-full h-3.5 sm:h-4.5 md:h-5 bg-gradient-to-b from-[#282a35] via-[#1a1b23] to-[#0c0d12] rounded-b-xl sm:rounded-b-2xl border-b border-black/80 shadow-[0_12px_28px_-4px_rgba(0,0,0,0.45)] relative flex items-start justify-center">
-                                    {/* CNC-Machined Thumb Opening Notch */}
-                                    <div className="w-24 sm:w-32 md:w-36 h-1 sm:h-1.5 bg-[#050507] rounded-b-lg shadow-inner border-t border-white/20" />
-
-                                    {/* Left & Right Base Feet Peeking Underneath */}
-                                    <div className="absolute -bottom-1 left-[8%] sm:left-[10%] w-12 sm:w-16 h-1 bg-[#060608] rounded-b-sm shadow-xs" />
-                                    <div className="absolute -bottom-1 right-[8%] sm:right-[10%] w-12 sm:w-16 h-1 bg-[#060608] rounded-b-sm shadow-xs" />
-                                </div>
-                            </div>
-
-                            {/* Realistic 3D Ground & Ambient Occlusion Shadows */}
-                            <div className="relative w-full select-none pointer-events-none">
-                                {/* Tight Contact Shadow right under the aluminum base */}
-                                <div className="w-[98%] sm:w-[99%] h-2.5 sm:h-3.5 bg-black/45 blur-xs rounded-full mx-auto -mt-1" />
-                                {/* Mid-range Ambient Shadow */}
-                                <div className="w-[92%] sm:w-[94%] h-6 sm:h-8 bg-black/30 blur-md rounded-full mx-auto -mt-2" />
-                                {/* Soft Floor Diffuse Shadow */}
-                                <div className="w-[82%] sm:w-[85%] h-12 sm:h-16 bg-black/15 blur-2xl rounded-full mx-auto -mt-5" />
-                                {/* Subtle Blue Display Floor Glow */}
-                                <div className="w-[60%] h-8 bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.18)_0%,transparent_70%)] rounded-full mx-auto -mt-8" />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. Realistic 3D Smartphone (iPhone 16 Pro Flagship) with Google Chrome Mobile */}
-                    <div 
-                        ref={phoneShowcaseRef}
-                        className="absolute bottom-2 xs:bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-1 xs:right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
-                    >
-                        <div 
-                            ref={phoneCardRef}
-                            className="w-[145px] xs:w-[175px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[300px] xs:h-[360px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
-                            style={{
-                                transform: 'perspective(1800px) rotateX(1.5deg) rotateY(0deg) translateZ(20px)',
-                                boxShadow: '-18px 25px 60px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3)',
-                                transformStyle: 'preserve-3d',
-                            }}
-                        >
-                            {/* Phone Body Frame */}
-                            <div className="relative bg-[#fafafa] border-[4px] xs:border-[6px] sm:border-[7px] md:border-[8px] border-[#181920] rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] ring-1 ring-white/15 overflow-hidden w-full h-full flex flex-col justify-between">
-                                
-                                {/* Glass Specular Reflection Highlight */}
-                                <div className="pointer-events-none absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.02] to-white/[0.07] z-20" />
-
-                                {/* Phone Screen Light Sheen Sweep */}
-                                <div 
-                                    ref={phoneSheenRef}
-                                    className="pointer-events-none absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/25 to-transparent z-25 will-change-transform opacity-0"
-                                />
-
-                                {/* Dynamic Island & Phone Status Bar */}
-                                <div className="relative pt-1 sm:pt-2 pb-1 bg-white flex items-center justify-between px-2.5 sm:px-4 z-10 border-b border-neutral-100 shrink-0">
-                                    <span className="text-[7.5px] sm:text-[9.5px] font-bold text-neutral-900 font-mono">09:41</span>
-                                    {/* Dynamic Island Pill */}
-                                    <div className="w-10 xs:w-12 sm:w-16 h-2.5 sm:h-3.5 bg-black rounded-full flex items-center justify-between px-1.5 sm:px-2 shadow-inner">
-                                        <div className="size-1 rounded-full bg-[#181822]" />
-                                        <div className="size-0.5 rounded-full bg-blue-500/80" />
-                                    </div>
-                                    <div className="flex items-center gap-1 text-neutral-900">
-                                        <Wifi className="size-2 sm:size-2.5" />
-                                        <Battery className="size-2.5 sm:size-3" />
-                                    </div>
-                                </div>
-
-                                {/* GOOGLE CHROME MOBILE TOP BAR */}
-                                <div className="bg-[#f8f9fa] border-b border-neutral-200/90 px-2 sm:px-2.5 py-1.5 flex items-center gap-1.5 z-10 relative select-none shrink-0">
-                                    {/* Chrome Mobile Omnibox Pill */}
-                                    <div className="flex-1 bg-white border border-neutral-200 rounded-full px-2 py-0.5 flex items-center justify-between text-[7.5px] sm:text-[8px] shadow-2xs">
-                                        <div className="flex items-center gap-1 truncate">
-                                            <span className="size-1 rounded-full bg-blue-600 shrink-0" />
-                                            <span className="text-neutral-400 font-mono">m.</span>
-                                            <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
-                                        </div>
-                                        <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/60">
-                                            SSL
-                                        </span>
-                                    </div>
-
-                                    {/* Chrome Open Tabs Badge [3] */}
-                                    <div className="size-3.5 sm:size-4 rounded-[3px] border border-neutral-800 flex items-center justify-center text-[7px] sm:text-[7.5px] font-bold text-neutral-900 font-mono shrink-0">
-                                        3
-                                    </div>
-
-                                    {/* Chrome 3 Dots Menu */}
-                                    <MoreVertical className="size-3 text-neutral-800 shrink-0 cursor-pointer" />
-                                </div>
-
-                                {/* PHONE SCREEN CONTENT: RAKIT CAMPUS RESPONSIVE MOBILE WEB */}
-                                <div className="bg-[#fafafa] p-2 sm:p-2.5 text-left font-sans flex-1 min-h-0 flex flex-col justify-between relative z-10">
-                                    <div className="space-y-1.5">
-                                        {/* Mobile Web Header */}
-                                        <div className="flex items-center justify-between pb-1 border-b border-neutral-200/60">
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="size-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-2xs">
-                                                    <Rocket className="size-2.5" />
-                                                </div>
-                                                <span className="text-[10px] font-black text-neutral-900 tracking-tight">RAKIT</span>
-                                            </div>
-                                            <span className="text-[7.5px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/70">
-                                                RAKIT Hub
-                                            </span>
-                                        </div>
-
-                                        {/* Mobile Card 1: Active Sprint Progress */}
-                                        <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
-                                            <div className="flex items-center justify-between text-[8px] font-bold text-neutral-900">
-                                                <span>Sprint Proyek 2026</span>
-                                                <span className="text-blue-600">78%</span>
-                                            </div>
-                                            <div className="w-full bg-neutral-100 h-1 rounded-full mt-1 overflow-hidden">
-                                                <div className="bg-blue-600 h-full rounded-full w-[78%]" />
-                                            </div>
-                                            <div className="flex items-center justify-between mt-1 text-[7px] text-neutral-500">
-                                                <span>14 Hari Tersisa</span>
-                                                <span className="text-neutral-900 font-semibold">18/22 Tasks</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Mobile Card 2: AI Matchmaking Candidate */}
-                                        <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-[7px] font-bold uppercase text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/70">
-                                                    + 98% MATCH
+                                                <span className="text-[7px] font-bold text-blue-700 bg-white px-1.5 py-0.2 rounded border border-neutral-200">
+                                                    H-14
                                                 </span>
-                                                <span className="text-[7px] text-neutral-400">Mobile Dev</span>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 mt-1">
-                                                <div className="size-5 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center shrink-0">BS</div>
-                                                <div className="min-w-0">
-                                                    <h5 className="text-[9px] font-bold text-neutral-900 leading-tight truncate">Budi Santoso</h5>
-                                                    <p className="text-[7px] text-neutral-500 truncate">Flutter & IoT Specialist</p>
-                                                </div>
-                                            </div>
-                                            <div className="mt-1 pt-1 border-t border-neutral-100 flex items-center justify-between">
-                                                <div className="flex gap-1 text-[6.5px] text-neutral-600">
-                                                    <span className="px-1 py-0.2 bg-neutral-100 rounded">Flutter</span>
-                                                    <span className="px-1 py-0.2 bg-neutral-100 rounded">MQTT</span>
-                                                </div>
-                                                <span className="text-[7.5px] font-bold text-blue-600 hover:underline cursor-pointer">Undang</span>
                                             </div>
                                         </div>
 
-                                        {/* Mobile Card 3: Gemastik Milestone */}
-                                        <div className="p-1.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center justify-between">
-                                            <div className="flex items-center gap-1.5">
-                                                <Trophy className="size-3 text-blue-600 shrink-0" />
-                                                <div>
-                                                    <div className="text-[8px] font-bold text-neutral-900">Gemastik 2026</div>
-                                                    <div className="text-[6.5px] text-neutral-400">Babak Finalis IoT</div>
+                                        {/* GOOGLE CHROME MOBILE BOTTOM TOOLBAR (Always fully visible inside phone) */}
+                                        <div className="pt-1.5 border-t border-neutral-200/80 bg-white -mx-2 -mb-2 sm:-mx-2.5 sm:-mb-2.5 px-2.5 pb-1.5 mt-1 shrink-0">
+                                            <div className="flex items-center justify-around text-neutral-600 text-[9px]">
+                                                <ArrowLeft className="size-3 text-neutral-400" />
+                                                <ArrowRight className="size-3 text-neutral-400" />
+                                                <div className="size-4.5 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
+                                                    <Plus className="size-2.5" />
                                                 </div>
+                                                <div className="size-3 rounded-[2px] border border-neutral-700 flex items-center justify-center text-[6.5px] font-bold font-mono">
+                                                    3
+                                                </div>
+                                                <MoreVertical className="size-2.5 text-neutral-700" />
                                             </div>
-                                            <span className="text-[7px] font-bold text-blue-700 bg-white px-1.5 py-0.2 rounded border border-neutral-200">
-                                                H-14
-                                            </span>
+                                            {/* Home Indicator */}
+                                            <div className="w-16 sm:w-20 h-0.5 bg-neutral-900/80 rounded-full mx-auto mt-1.5 mb-0.5" />
                                         </div>
-                                    </div>
-
-                                    {/* GOOGLE CHROME MOBILE BOTTOM TOOLBAR (Always fully visible inside phone) */}
-                                    <div className="pt-1.5 border-t border-neutral-200/80 bg-white -mx-2 -mb-2 sm:-mx-2.5 sm:-mb-2.5 px-2.5 pb-1.5 mt-1 shrink-0">
-                                        <div className="flex items-center justify-around text-neutral-600 text-[9px]">
-                                            <ArrowLeft className="size-3 text-neutral-400" />
-                                            <ArrowRight className="size-3 text-neutral-400" />
-                                            <div className="size-4.5 rounded-full bg-blue-50 border border-blue-200 flex items-center justify-center text-blue-600">
-                                                <Plus className="size-2.5" />
-                                            </div>
-                                            <div className="size-3 rounded-[2px] border border-neutral-700 flex items-center justify-center text-[6.5px] font-bold font-mono">
-                                                3
-                                            </div>
-                                            <MoreVertical className="size-2.5 text-neutral-700" />
-                                        </div>
-                                        {/* Home Indicator */}
-                                        <div className="w-16 sm:w-20 h-0.5 bg-neutral-900/80 rounded-full mx-auto mt-1.5 mb-0.5" />
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
             {/* 3. Dual-Row Animated Photo Marquee (Top moves Left, Bottom moves Right) */}
             <section className="py-6 sm:py-8 bg-white border-b border-neutral-100 overflow-hidden relative select-none">
@@ -3568,7 +3554,7 @@ export default function Welcome() {
             {/* 7. Cara Kerja / Alur Kolaborasi (Editorial Style matching ADDICT Japan) */}
             <section id="workflow" ref={workflowSectionRef} className="relative w-full bg-[#fbfbfb] text-neutral-900 border-t border-neutral-200/80 select-none">
                 <div ref={workflowPinRef} className="w-full h-screen relative overflow-hidden bg-[#fbfbfb]">
-                    
+
                     {/* Top Header: "CARA KERJA" + "Layanan & Alur RAKIT" */}
                     <div ref={workflowHeaderRef} className="absolute top-0 left-0 right-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 lg:pt-8 pb-2 will-change-transform z-20 pointer-events-none">
                         <h2 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 tracking-tight uppercase">
@@ -3581,17 +3567,17 @@ export default function Welcome() {
 
                     {/* Main Content Stage: Left Text & Right Photo Reel */}
                     <div ref={workflowStageRef} className="w-full h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-10 lg:gap-14 items-center relative z-10 will-change-transform pt-14 sm:pt-20 md:pt-0">
-                        
+
                         {/* Left Column: Synchronized Step Texts */}
                         <div className="md:col-span-5 relative flex flex-col justify-center pr-0 md:pr-2 lg:pr-6 md:h-full min-h-0 shrink-0">
-                            
+
                             {/* STEP 01 TEXT */}
                             <div ref={workflowStepText0Ref} className="w-full flex flex-col justify-center will-change-transform">
                                 <div className="flex items-start gap-3 sm:gap-5">
                                     {/* Big Serif Number 01 / 03 */}
                                     <div className="flex items-baseline gap-1.5 font-serif shrink-0">
                                         <span className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-normal text-neutral-900 leading-none tracking-tight">
-                                             01
+                                            01
                                         </span>
                                         <span className="text-[10px] sm:text-sm text-neutral-400 font-sans tracking-widest">
                                             / 03
@@ -3678,18 +3664,18 @@ export default function Welcome() {
 
                         {/* Right Column: Full-Height Photo Reel Viewport (Mentok Atas Bawah!) */}
                         <div className="md:col-span-7 h-[220px] xs:h-[260px] sm:h-[340px] md:h-screen flex items-center justify-center relative min-h-0 w-full">
-                            <div 
-                                ref={workflowPhotoViewportRef} 
+                            <div
+                                ref={workflowPhotoViewportRef}
                                 className="w-full h-full overflow-hidden relative"
                             >
                                 {/* Sliding Track containing all 3 photos */}
-                                <div 
-                                    ref={workflowPhotoTrackRef} 
+                                <div
+                                    ref={workflowPhotoTrackRef}
                                     className="w-full flex flex-col gap-6 sm:gap-8 lg:gap-10 will-change-transform"
                                 >
                                     {/* PHOTO 01 */}
-                                    <div 
-                                        ref={workflowPhoto0Ref} 
+                                    <div
+                                        ref={workflowPhoto0Ref}
                                         className="w-full aspect-[16/10] overflow-hidden bg-neutral-100 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] relative will-change-[filter,transform] rounded-md transition-shadow duration-500"
                                     >
                                         <img
@@ -3702,8 +3688,8 @@ export default function Welcome() {
                                     </div>
 
                                     {/* PHOTO 02 */}
-                                    <div 
-                                        ref={workflowPhoto1Ref} 
+                                    <div
+                                        ref={workflowPhoto1Ref}
                                         style={{ filter: 'blur(14px)', opacity: 0.5 }}
                                         className="w-full aspect-[16/10] overflow-hidden bg-neutral-100 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] relative will-change-[filter,transform] rounded-md transition-shadow duration-500"
                                     >
@@ -3717,8 +3703,8 @@ export default function Welcome() {
                                     </div>
 
                                     {/* PHOTO 03 */}
-                                    <div 
-                                        ref={workflowPhoto2Ref} 
+                                    <div
+                                        ref={workflowPhoto2Ref}
                                         style={{ filter: 'blur(14px)', opacity: 0.5 }}
                                         className="w-full aspect-[16/10] overflow-hidden bg-neutral-100 shadow-[0_16px_40px_-12px_rgba(0,0,0,0.12)] relative will-change-[filter,transform] rounded-md transition-shadow duration-500"
                                     >
@@ -3750,7 +3736,7 @@ export default function Welcome() {
                 <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-indigo-400/8 rounded-full blur-3xl pointer-events-none" />
 
                 <div className="max-w-6xl xl:max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
-                    
+
                     {/* Header */}
                     <div ref={testimonialsHeaderRef} className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 will-change-transform">
                         <h2 className="text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-neutral-900 leading-tight">
@@ -3764,14 +3750,14 @@ export default function Welcome() {
 
                     {/* 3 Interactive Floating Cards */}
                     <div ref={testimonialsCardsRef} className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-stretch will-change-transform">
-                        
+
                         {/* Testimonial Card 1 */}
                         <div ref={testimonialCard1Ref} className="w-full flex will-change-transform">
                             <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
-                                
+
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-amber-400/15 via-blue-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                                
+
                                 {/* Decorative Watermark Quote Icon */}
                                 <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
@@ -3810,10 +3796,10 @@ export default function Welcome() {
                         {/* Testimonial Card 2 */}
                         <div ref={testimonialCard2Ref} className="w-full flex will-change-transform">
                             <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
-                                
+
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-blue-400/15 via-cyan-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                                
+
                                 {/* Decorative Watermark Quote Icon */}
                                 <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
@@ -3852,10 +3838,10 @@ export default function Welcome() {
                         {/* Testimonial Card 3 */}
                         <div ref={testimonialCard3Ref} className="w-full flex will-change-transform">
                             <div className="group relative w-full bg-white/90 backdrop-blur-xs border border-neutral-200/90 hover:border-blue-400/80 rounded-2xl sm:rounded-3xl p-5 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_22px_45px_-12px_rgba(37,99,235,0.18)] transition-all duration-500 ease-out hover:-translate-y-2 flex flex-col justify-between overflow-hidden cursor-default">
-                                
+
                                 {/* Ambient Corner Sheen Glow on Hover */}
                                 <div className="pointer-events-none absolute -top-20 -right-20 size-40 bg-gradient-to-br from-emerald-400/15 via-teal-400/10 to-transparent rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
-                                
+
                                 {/* Decorative Watermark Quote Icon */}
                                 <Quote className="size-10 sm:size-12 text-neutral-100 group-hover:text-blue-100/70 absolute right-4 sm:right-5 top-4 sm:top-5 -rotate-12 transition-all duration-500 pointer-events-none" />
 
@@ -3896,14 +3882,14 @@ export default function Welcome() {
             </section>
 
             {/* 9. Saran & Masukan Sistem */}
-            <section 
-                ref={ctaSectionRef} 
+            <section
+                ref={ctaSectionRef}
                 id="feedback"
                 className="py-12 sm:py-20 lg:py-24 relative bg-slate-50 border-t border-slate-200/80"
             >
                 <div className="max-w-3xl mx-auto px-3.5 sm:px-6 relative z-10">
-                    <div 
-                        ref={ctaCardRef} 
+                    <div
+                        ref={ctaCardRef}
                         className="bg-white rounded-2xl p-4 sm:p-8 md:p-10 border border-slate-200/80 shadow-xs"
                     >
                         <div ref={ctaContentRef}>
@@ -3960,11 +3946,10 @@ export default function Welcome() {
                                                     key={cat.id}
                                                     type="button"
                                                     onClick={() => setFeedbackCategory(cat.id)}
-                                                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition cursor-pointer ${
-                                                        feedbackCategory === cat.id
-                                                            ? 'bg-blue-50 border border-blue-600 text-blue-700 font-semibold shadow-2xs'
-                                                            : 'bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
-                                                    }`}
+                                                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition cursor-pointer ${feedbackCategory === cat.id
+                                                        ? 'bg-blue-50 border border-blue-600 text-blue-700 font-semibold shadow-2xs'
+                                                        : 'bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+                                                        }`}
                                                 >
                                                     {cat.label}
                                                 </button>
@@ -4015,11 +4000,10 @@ export default function Welcome() {
                                                     title={`${star} dari 5 bintang`}
                                                 >
                                                     <Star
-                                                        className={`size-4 transition ${
-                                                            (feedbackRating ?? 0) >= star
-                                                                ? 'fill-amber-400 text-amber-400'
-                                                                : 'text-slate-300'
-                                                        }`}
+                                                        className={`size-4 transition ${(feedbackRating ?? 0) >= star
+                                                            ? 'fill-amber-400 text-amber-400'
+                                                            : 'text-slate-300'
+                                                            }`}
                                                     />
                                                 </button>
                                             ))}

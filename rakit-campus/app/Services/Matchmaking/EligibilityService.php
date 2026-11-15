@@ -97,14 +97,12 @@ class EligibilityService
             ];
         }
 
-        // 6. Rule 1: One Student, One Active Project per Class (or globally if non-class project)
+        // 6. Rule 1: One Student, One Active Project per Class (Hanya aktif untuk proyek yang memasukkan kelas pada jalur proyek)
         $targetClassId = $project?->academic_class_id ?? $class?->id;
-        if ($this->hasActiveProjectMembership($student, $targetClassId)) {
+        if ($targetClassId !== null && $this->hasActiveProjectMembership($student, $targetClassId)) {
             return [
                 'eligible' => false,
-                'reason' => $targetClassId
-                    ? 'Mahasiswa sudah tergabung dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek Aktif).'
-                    : 'Mahasiswa sudah tergabung dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek Aktif).',
+                'reason' => 'Mahasiswa sudah tergabung dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek Aktif).',
             ];
         }
 

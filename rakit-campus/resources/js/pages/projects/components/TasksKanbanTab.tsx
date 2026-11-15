@@ -81,16 +81,16 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
 
     // Columns definition in standard Trello flow
     const columns: { key: ColumnKey; title: string; colorDot: string; headerBadge: string }[] = [
-        { key: 'todo', title: 'Belum Dikerjakan (To-Do)', colorDot: 'bg-slate-400', headerBadge: 'bg-slate-200 text-slate-700' },
-        { key: 'in_progress', title: 'Sedang Dikerjakan (In Progress)', colorDot: 'bg-blue-500', headerBadge: 'bg-blue-100 text-blue-700' },
-        { key: 'in_review', title: 'Ulasan & QA (In Review)', colorDot: 'bg-amber-500', headerBadge: 'bg-amber-100 text-amber-800' },
-        { key: 'completed', title: 'Selesai (Done)', colorDot: 'bg-emerald-500', headerBadge: 'bg-emerald-100 text-emerald-800' },
+        { key: 'todo', title: 'Belum Dikerjakan (To-Do)', colorDot: 'bg-slate-400', headerBadge: 'bg-slate-100 text-slate-700 border border-slate-200' },
+        { key: 'in_progress', title: 'Sedang Dikerjakan (In Progress)', colorDot: 'bg-blue-600', headerBadge: 'bg-blue-50 text-blue-700 border border-blue-200' },
+        { key: 'in_review', title: 'Ulasan & QA (In Review)', colorDot: 'bg-blue-400', headerBadge: 'bg-blue-50/70 text-blue-800 border border-blue-200/60' },
+        { key: 'completed', title: 'Selesai (Done)', colorDot: 'bg-slate-900', headerBadge: 'bg-blue-600 text-white' },
     ];
 
-    // Priority color mapping (Trello Label Style)
+    // Priority color mapping (Minimal Blue & Slate Style)
     const priorityConfig: Record<string, { label: string; badgeCls: string; dotCls: string }> = {
-        urgent: { label: 'Urgent', badgeCls: 'bg-rose-50 text-rose-700 border-rose-200', dotCls: 'bg-rose-500' },
-        high: { label: 'Tinggi', badgeCls: 'bg-amber-50 text-amber-800 border-amber-200', dotCls: 'bg-amber-500' },
+        urgent: { label: 'Urgent', badgeCls: 'bg-slate-900 text-white border-slate-900', dotCls: 'bg-white' },
+        high: { label: 'Tinggi', badgeCls: 'bg-blue-100 text-blue-800 border-blue-300', dotCls: 'bg-blue-600' },
         medium: { label: 'Menengah', badgeCls: 'bg-blue-50 text-blue-700 border-blue-200', dotCls: 'bg-blue-500' },
         low: { label: 'Rendah', badgeCls: 'bg-slate-100 text-slate-600 border-slate-200', dotCls: 'bg-slate-400' },
     };

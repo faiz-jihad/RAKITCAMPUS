@@ -155,6 +155,64 @@ class AcademicClassWebController extends Controller
             ->with('success', 'Kelas perkuliahan berhasil dibuat dengan kode gabung: ' . $academicClass->join_code);
     }
 
+    public function update(Request $request, string|int $id)
+    {
+        $academicClass = $this->resolveAcademicClass($id);
+        $this->authorize('update', $academicClass);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'code' => ['required', 'string', 'max:50'],
+            'study_program' => ['nullable', 'string', 'max:100'],
+            'academic_year' => ['required', 'string', 'max:30'],
+            'semester' => ['required', 'string', 'max:20'],
+            'target_team_size' => ['required', 'integer', 'min:2', 'max:10'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'status' => ['nullable', 'string', 'in:active,archived'],
+        ]);
+
+        $newCode = strtoupper(trim($validated['code']));
+        // Check uniqueness of code if changed, within the same campus
+        $exists = AcademicClass::where('campus_id', $academicClass->campus_id)
+            ->where('code', $newCode)
+            ->where('id', '!=', $academicClass->id)
+            ->exists();
+
+        if ($exists) {
+            throw ValidationException::withMessages([
+                'code' => 'Kode kelas ini sudah digunakan untuk kelas lain di kampus ini.',
+            ]);
+        }
+
+        $codeChanged = $academicClass->code !== $newCode;
+
+        $academicClass->update([
+            'name' => $validated['name'],
+            'code' => $newCode,
+            'study_program' => $validated['study_program'] ?? $academicClass->study_program ?? 'Teknik Informatika',
+            'academic_year' => $validated['academic_year'],
+            'semester' => $validated['semester'],
+            'target_team_size' => $validated['target_team_size'],
+            'description' => $validated['description'] ?? null,
+            'status' => $validated['status'] ?? $academicClass->status,
+        ]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Data kelas perkuliahan berhasil diperbarui.',
+                'data' => $academicClass,
+            ]);
+        }
+
+        if ($codeChanged) {
+            return redirect()->route('classes.show', $academicClass->code)
+                ->with('success', 'Data kelas ' . $academicClass->name . ' berhasil diperbarui.');
+        }
+
+        return redirect()->back()
+            ->with('success', 'Data kelas ' . $academicClass->name . ' berhasil diperbarui.');
+    }
+
     private function resolveAcademicClass(string|int $idOrCode, array $relations = []): AcademicClass
     {
         $query = AcademicClass::query();

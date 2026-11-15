@@ -37,4 +37,9 @@ class TeamMember extends Model
     {
         return $this->belongsTo(RecruitmentRole::class);
     }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(RecruitmentRole::class, 'recruitment_role_id');
+    }
 }

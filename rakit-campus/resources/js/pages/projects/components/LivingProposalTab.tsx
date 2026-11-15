@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     AlertCircle,
     Check,
@@ -11,6 +12,7 @@ import {
     RotateCcw,
     Send,
     Sparkles,
+    X,
 } from 'lucide-react';
 
 interface Props {
@@ -32,6 +34,7 @@ export default function LivingProposalTab({
     const [isEditing, setIsEditing] = useState(false);
     const [showReviseModal, setShowReviseModal] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [submitting, setSubmitting] = useState(false);
 
     // Form inputs for editing
@@ -106,8 +109,11 @@ export default function LivingProposalTab({
         }
     };
 
-    const handleSubmitForReview = async () => {
-        if (!confirm('Ajukan versi proposal ini kepada Dosen Pembimbing untuk ditinjau?')) return;
+    const handleSubmitForReview = () => {
+        setShowSubmitModal(true);
+    };
+
+    const confirmSubmitForReview = async () => {
         setSubmitting(true);
         try {
             const res = await fetch(`/projects/${project.id}/proposal/submit`, {
@@ -121,8 +127,8 @@ export default function LivingProposalTab({
                 },
             });
             if (res.ok) {
-                alert('Proposal berhasil diajukan untuk ditinjau oleh Dosen Pembimbing!');
-                window.location.reload();
+                setShowSubmitModal(false);
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
                 alert(json.message || 'Gagal mengajukan proposal.');
@@ -205,25 +211,25 @@ export default function LivingProposalTab({
             {/* Header Card */}
             <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-md bg-blue-600 text-white">
+                    <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-bold uppercase px-3 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs">
                             Versi {currentVersion?.version_number || 1}
                         </span>
                         <span
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full border uppercase ${
+                            className={`text-xs font-bold px-3 py-0.5 rounded-full border uppercase ${
                                 currentVersion?.status === 'approved'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
                                     : currentVersion?.status === 'submitted'
                                     ? 'bg-blue-50 text-blue-700 border-blue-200'
                                     : currentVersion?.status === 'revision_requested'
-                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                    : 'bg-slate-100 text-slate-700 border-slate-200'
+                                    ? 'bg-slate-100 text-slate-700 border-slate-200'
+                                    : 'bg-slate-100 text-slate-600 border-slate-200'
                             }`}
                         >
                             {currentVersion?.status || 'Draft'}
                         </span>
                         {currentVersion?.is_locked && (
-                            <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                            <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
                                 Terkunci (Immutable)
                             </span>
                         )}
@@ -231,16 +237,13 @@ export default function LivingProposalTab({
                     <h2 className="text-lg font-black text-slate-900 tracking-tight">
                         {currentVersion?.title || project.title}
                     </h2>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                        Living Proposal — Dokumen perencanaan aktif yang terus disempurnakan seiring perkembangan proyek.
-                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
                     {canEditProposal && !isEditing && (
                         <button
                             onClick={() => setIsEditing(true)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 text-xs font-bold transition shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white hover:bg-slate-100 active:bg-slate-200 border border-slate-300 hover:border-slate-400 text-slate-800 hover:text-slate-900 text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs cursor-pointer"
                         >
                             <Edit3 className="size-3.5 text-blue-600" />
                             <span>Edit Proposal</span>
@@ -251,7 +254,7 @@ export default function LivingProposalTab({
                         <button
                             onClick={handleSubmitForReview}
                             disabled={submitting}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer disabled:opacity-50"
                         >
                             <Send className="size-3.5" />
                             <span>Ajukan ke Dosen</span>
@@ -261,7 +264,7 @@ export default function LivingProposalTab({
                     {(isLeader || isMember) && (currentVersion?.status === 'approved' || currentVersion?.status === 'revision_requested') && (
                         <button
                             onClick={() => setShowReviseModal(true)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer"
                         >
                             <Plus className="size-3.5" />
                             <span>Buat Revisi Baru (v{(currentVersion?.version_number || 1) + 1})</span>
@@ -271,9 +274,9 @@ export default function LivingProposalTab({
                     {isLecturer && currentVersion?.status === 'submitted' && (
                         <button
                             onClick={() => setShowReviewModal(true)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-md cursor-pointer"
                         >
-                            <GraduationCap className="size-3.5 text-amber-400" />
+                            <GraduationCap className="size-3.5 text-blue-400" />
                             <span>Tinjau & Beri Keputusan</span>
                         </button>
                     )}
@@ -691,6 +694,51 @@ export default function LivingProposalTab({
                             </button>
                         </div>
                     </form>
+                </div>
+            )}
+            {/* Modal Konfirmasi Ajukan Proposal ke Dosen */}
+            {showSubmitModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowSubmitModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-4">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <Send className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Ajukan Living Proposal
+                                </h3>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowSubmitModal(false)}
+                                disabled={submitting}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmSubmitForReview}
+                                disabled={submitting}
+                                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <Send className="size-3.5" />
+                                <span>{submitting ? 'Mengajukan...' : 'Ya, Ajukan Sekarang'}</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -680,14 +680,10 @@ export default function OnboardingIndex({
                                                     : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100/70'
                                             } focus:outline-none text-base sm:text-sm text-slate-900 font-medium transition shadow-2xs`}
                                         />
-                                        {nimError ? (
+                                        {nimError && (
                                             <p className="text-xs text-rose-600 font-medium flex items-center gap-1 mt-1">
                                                 <span>⚠️</span>
                                                 <span>{nimError}</span>
-                                            </p>
-                                        ) : (
-                                            <p className="text-[11px] text-slate-400 mt-1">
-                                                NIM resmi mahasiswa Polindra (minimal 7 digit angka).
                                             </p>
                                         )}
                                     </div>
@@ -729,7 +725,7 @@ export default function OnboardingIndex({
                                                 ) : (
                                                     <option value={campus.id || 1}>{campus.name}</option>
                                                 )}
-                                                <option value="other">🏛️ Kampus Lainnya (Tulis Manual)</option>
+                                                <option value="other">Kampus Lainnya (Tulis Manual)</option>
                                             </select>
                                             <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
                                                 <GraduationCap className="size-4" />

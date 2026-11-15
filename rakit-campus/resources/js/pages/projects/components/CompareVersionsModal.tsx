@@ -45,9 +45,6 @@ export default function CompareVersionsModal({ projectId, versions, onClose }: P
                             <GitCompare className="size-5 text-blue-600" />
                             <span>Bandingkan Riwayat Versi Proposal (*Version Comparison*)</span>
                         </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Lihat perubahan komparatif antar versi proposal yang telah diajukan secara transparan.
-                        </p>
                     </div>
                     <button
                         onClick={onClose}
@@ -109,7 +106,7 @@ export default function CompareVersionsModal({ projectId, versions, onClose }: P
                                     key={key}
                                     className={`p-4 rounded-2xl border transition ${
                                         item.is_changed
-                                            ? 'bg-amber-50/40 border-amber-200'
+                                            ? 'bg-blue-50/30 border-blue-200'
                                             : 'bg-white/60 border-slate-200/80'
                                     }`}
                                 >
@@ -118,7 +115,7 @@ export default function CompareVersionsModal({ projectId, versions, onClose }: P
                                             {item.label}
                                         </h4>
                                         {item.is_changed ? (
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                                                 Ada Perubahan
                                             </span>
                                         ) : (

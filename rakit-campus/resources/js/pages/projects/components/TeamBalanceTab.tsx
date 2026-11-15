@@ -127,13 +127,6 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
 
     const dataPolygonString = dataPoints.map((p) => `${p.x},${p.y}`).join(' ');
 
-    const getScoreBadgeColor = (score: number) => {
-        if (score >= 75) return 'text-emerald-700 bg-emerald-50 border-emerald-200';
-        if (score >= 50) return 'text-blue-700 bg-blue-50 border-blue-200';
-        if (score >= 35) return 'text-amber-700 bg-amber-50 border-amber-200';
-        return 'text-rose-700 bg-rose-50 border-rose-200';
-    };
-
     return (
         <div className="space-y-8 animate-fadeIn">
             {/* Top Stat Summary Grid */}
@@ -148,15 +141,8 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             <span className="text-3xl font-extrabold text-slate-900">{overallScore}</span>
                             <span className="text-xs font-semibold text-slate-400">/ 100</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                            {overallScore >= 75
-                                ? 'Komposisi sangat seimbang'
-                                : overallScore >= 50
-                                ? 'Komposisi cukup seimbang'
-                                : 'Perlu melengkapi spesialisasi'}
-                        </p>
                     </div>
-                    <div className={`size-14 rounded-2xl border flex flex-col items-center justify-center font-black text-lg ${getScoreBadgeColor(overallScore)}`}>
+                    <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex flex-col items-center justify-center font-black text-lg">
                         <TrendingUp className="size-5 mb-0.5" />
                         <span className="text-xs font-extrabold">{overallScore}%</span>
                     </div>
@@ -172,9 +158,6 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             <span className="text-3xl font-extrabold text-slate-900">{teamSize.current}</span>
                             <span className="text-xs font-semibold text-slate-400">/ {teamSize.target} Mahasiswa</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                            {teamSize.vacancies > 0 ? `${teamSize.vacancies} slot masih kosong` : 'Tim telah penuh'}
-                        </p>
                     </div>
                     <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
                         <Users className="size-6" />
@@ -188,14 +171,11 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             Kekurangan Peran/Skill
                         </span>
                         <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl font-extrabold text-amber-600">{missing.length}</span>
+                            <span className="text-3xl font-extrabold text-slate-900">{missing.length}</span>
                             <span className="text-xs font-semibold text-slate-400">item belum terpenuhi</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                            {missing.length === 0 ? 'Semua kebutuhan terpenuhi' : 'Prioritas rekrutmen'}
-                        </p>
                     </div>
-                    <div className="size-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center">
+                    <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
                         <AlertCircle className="size-6" />
                     </div>
                 </div>
@@ -207,16 +187,13 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             Keahlian Terpenuhi
                         </span>
                         <div className="flex items-baseline gap-2 mt-1">
-                            <span className="text-3xl font-extrabold text-emerald-600">
+                            <span className="text-3xl font-extrabold text-slate-900">
                                 {competencies.filter((c) => c.status === 'complete').length}
                             </span>
                             <span className="text-xs font-semibold text-slate-400">/ {competencies.length || 1} kompetensi</span>
                         </div>
-                        <p className="text-[11px] text-slate-500 mt-1 font-medium">
-                            Cakupan spesifikasi proyek
-                        </p>
                     </div>
-                    <div className="size-14 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
+                    <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
                         <ShieldCheck className="size-6" />
                     </div>
                 </div>
@@ -227,22 +204,14 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                 {/* Left: Dynamic SVG Radar Chart */}
                 <div className="lg:col-span-6 glass-surface p-6 rounded-3xl flex flex-col justify-between">
                     <div>
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
-                                    <PieChart className="size-5" />
-                                </div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    Radar Distribusi Kompetensi Tim
-                                </h3>
+                        <div className="flex items-center gap-2 mb-2">
+                            <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
+                                <PieChart className="size-5" />
                             </div>
-                            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-semibold border border-slate-200">
-                                6 Sumbu Analisis
-                            </span>
+                            <h3 className="text-base font-bold text-slate-900">
+                                Radar Distribusi Kompetensi Tim
+                            </h3>
                         </div>
-                        <p className="text-xs text-slate-500 leading-relaxed">
-                            Diagram dihitung secara real-time dari gabungan profil keahlian anggota aktif tim saat ini.
-                        </p>
                     </div>
 
                     {/* SVG Graphic */}
@@ -353,7 +322,7 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                     <div className="glass-surface p-6 rounded-3xl flex-1 flex flex-col justify-between">
                         <div>
                             <div className="flex items-center gap-2 mb-3">
-                                <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600">
+                                <div className="p-2 rounded-xl bg-blue-50 text-blue-600">
                                     <Sparkles className="size-5" />
                                 </div>
                                 <h3 className="text-base font-bold text-slate-900">
@@ -368,20 +337,20 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                         {/* Critical Alerts */}
                         <div className="space-y-3 mt-4">
                             {missing.length > 0 && (
-                                <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-200/90 flex items-start gap-3">
-                                    <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
+                                    <AlertCircle className="size-5 text-blue-600 shrink-0 mt-0.5" />
                                     <div>
-                                        <h4 className="text-xs font-bold text-amber-900">
+                                        <h4 className="text-xs font-bold text-slate-900">
                                             Kebutuhan Belum Terpenuhi ({missing.length})
                                         </h4>
-                                        <p className="text-[11px] text-amber-800 mt-0.5">
+                                        <p className="text-[11px] text-slate-600 mt-0.5">
                                             Tim belum memiliki anggota yang menguasai atau mengisi posisi:
                                         </p>
                                         <div className="flex flex-wrap gap-1.5 mt-2">
                                             {missing.map((item, idx) => (
                                                 <span
                                                     key={idx}
-                                                    className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 text-[11px] font-bold border border-amber-200"
+                                                    className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-bold border border-blue-200/80"
                                                 >
                                                     {item}
                                                 </span>
@@ -392,20 +361,20 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             )}
 
                             {overrepresented.length > 0 && (
-                                <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex items-start gap-3">
+                                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
                                     <Info className="size-5 text-blue-600 shrink-0 mt-0.5" />
                                     <div>
-                                        <h4 className="text-xs font-bold text-blue-900">
+                                        <h4 className="text-xs font-bold text-slate-900">
                                             Potensi Redundansi ({overrepresented.length})
                                         </h4>
-                                        <p className="text-[11px] text-blue-800 mt-0.5">
+                                        <p className="text-[11px] text-slate-600 mt-0.5">
                                             Keahlian berikut dimiliki oleh 3 atau lebih anggota, pastikan pembagian peran spesifik:
                                         </p>
                                         <div className="flex flex-wrap gap-1.5 mt-2">
                                             {overrepresented.map((item, idx) => (
                                                 <span
                                                     key={idx}
-                                                    className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[11px] font-semibold border border-blue-200"
+                                                    className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-semibold border border-blue-200/80"
                                                 >
                                                     {item}
                                                 </span>
@@ -452,9 +421,6 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                             <h3 className="text-base font-bold text-slate-900">
                                 Profil Kontribusi Anggota Aktif ({members.length})
                             </h3>
-                            <p className="text-xs text-slate-500">
-                                Peran terdaftar, arketipe keahlian, dan penguasaan teknologi masing-masing mahasiswa.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -508,9 +474,6 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                         <h3 className="text-base font-bold text-slate-900">
                             Matriks Pemenuhan Kebutuhan Proyek
                         </h3>
-                        <p className="text-xs text-slate-500">
-                            Evaluasi per item kebutuhan keahlian teknis dan peran rekrutmen terhadap anggota aktif.
-                        </p>
                     </div>
 
                     {/* Filter buttons */}
@@ -569,25 +532,25 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                                         </td>
                                         <td className="py-3.5 px-4">
                                             {row.status === 'complete' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200/80">
                                                     <CheckCircle2 className="size-3" />
                                                     Lengkap
                                                 </span>
                                             )}
                                             {row.status === 'partial' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-700 border border-slate-200">
                                                     <AlertCircle className="size-3" />
                                                     Sebagian
                                                 </span>
                                             )}
                                             {row.status === 'missing' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700 border border-rose-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
                                                     <AlertCircle className="size-3" />
                                                     Kosong
                                                 </span>
                                             )}
                                             {row.status === 'overrepresented' && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200/80">
                                                     <Info className="size-3" />
                                                     Berlebih
                                                 </span>

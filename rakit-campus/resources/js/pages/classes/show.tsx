@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import EditClassModal from '@/components/classes/EditClassModal';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
@@ -19,6 +20,7 @@ import {
     Layers,
     Lock,
     MessageSquare,
+    Pencil,
     Phone,
     Plus,
     RefreshCw,
@@ -216,6 +218,7 @@ export default function ClassShow({
     const [searchStudent, setSearchStudent] = useState('');
     const [copiedCode, setCopiedCode] = useState(false);
     const [showAddStudentModal, setShowAddStudentModal] = useState(false);
+    const [showEditClassModal, setShowEditClassModal] = useState(false);
     const [showGuidanceModal, setShowGuidanceModal] = useState(false);
     const [selectedProjectForGuidance, setSelectedProjectForGuidance] = useState<number | null>(null);
     const [invitingId, setInvitingId] = useState<number | null>(null);
@@ -528,141 +531,155 @@ export default function ClassShow({
             <div className="space-y-6">
                 <div className="flex flex-col gap-6">
                     {flash?.success && (
-                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-medium text-emerald-800">
-                            {flash.success}
+                        <div className="p-3.5 bg-blue-50 border border-blue-200/80 rounded-xl text-xs font-semibold text-blue-800 flex items-center gap-2 shadow-2xs">
+                            <CheckCircle2 className="size-4 text-blue-600 shrink-0" />
+                            <span>{flash.success}</span>
                         </div>
                     )}
                     {flash?.info && (
-                        <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-lg text-xs font-medium text-blue-800">
-                            {flash.info}
+                        <div className="p-3.5 bg-blue-50 border border-blue-200/80 rounded-xl text-xs font-semibold text-blue-800 flex items-center gap-2 shadow-2xs">
+                            <AlertCircle className="size-4 text-blue-600 shrink-0" />
+                            <span>{flash.info}</span>
                         </div>
                     )}
                     {flash?.error && (
-                        <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-lg text-xs font-medium text-rose-700">
-                            {flash.error}
+                        <div className="p-3.5 bg-slate-100 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 flex items-center gap-2 shadow-2xs">
+                            <AlertCircle className="size-4 text-slate-700 shrink-0" />
+                            <span>{flash.error}</span>
                         </div>
                     )}
 
                     {/* HERO HEADER */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
+                    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                         {/* Top Bar: Back Link + Live Status Badge */}
                         <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-slate-100">
                             <Link
                                 href="/classes"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-bold text-slate-700 hover:text-blue-600 transition-all active:scale-95 shadow-2xs cursor-pointer"
                             >
                                 <ArrowLeft className="size-3.5" />
                                 <span>Kembali ke Daftar Kelas</span>
                             </Link>
 
                             <div className="flex items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold">
-                                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                {isLecturer && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditClassModal(true)}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-300 text-xs font-bold text-slate-700 hover:text-blue-600 transition-all active:scale-95 shadow-2xs cursor-pointer"
+                                    >
+                                        <Pencil className="size-3.5 text-blue-600" />
+                                        <span>Edit Kelas</span>
+                                    </button>
+                                )}
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-[11px] font-bold">
+                                    <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
                                     <span>Kelas Aktif</span>
                                 </span>
                             </div>
                         </div>
 
                         {/* Main Header Information & Join Code Grid */}
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                            <div className="max-w-3xl">
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <span className="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-600 text-white shadow-2xs">
+                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                            <div className="max-w-3xl flex-1">
+                                <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                                    <span className="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-blue-600 text-white shadow-2xs">
                                         {academicClass.code}
                                     </span>
-                                    <span className="text-xs font-semibold text-slate-700">
+                                    <span className="text-xs font-bold text-slate-800">
                                         {academicClass.study_program}
                                     </span>
                                     <span className="text-slate-300">•</span>
-                                    <span className="text-xs text-slate-400">
+                                    <span className="text-xs text-slate-500 font-medium">
                                         Semester {academicClass.semester} ({academicClass.academic_year})
                                     </span>
                                 </div>
 
-                                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+                                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight leading-snug">
                                     {academicClass.name}
                                 </h1>
 
                                 {academicClass.description && (
-                                    <p className="text-xs sm:text-sm text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">
+                                    <p className="text-xs sm:text-sm text-slate-600 mt-2 line-clamp-2 leading-relaxed">
                                         {academicClass.description}
                                     </p>
                                 )}
 
                                 <div className="flex flex-wrap items-center gap-2 mt-4 text-xs">
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/5 border border-slate-900/10 text-slate-700 font-medium backdrop-blur-xs">
-                                        <GraduationCap className="size-3.5 text-slate-500" />
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 border border-slate-200 text-slate-700 font-medium">
+                                        <GraduationCap className="size-3.5 text-slate-600" />
                                         <span>Dosen Utama: <strong className="text-slate-900 font-bold">{academicClass.lecturer?.name || 'Dosen Pengampu'}</strong></span>
                                     </span>
                                     {academicClass.co_lecturers && academicClass.co_lecturers.length > 0 && (
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-800 font-medium backdrop-blur-xs">
+                                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-800 font-medium">
                                             <Users className="size-3.5 text-blue-600" />
                                             <span>Dosen Mitra ({academicClass.co_lecturers.length}): <strong className="text-blue-900 font-bold">{academicClass.co_lecturers.map(cl => cl.name).join(', ')}</strong></span>
                                         </span>
                                     )}
-                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900/5 border border-slate-900/10 text-slate-700 font-medium backdrop-blur-xs">
-                                        <Users className="size-3.5 text-slate-500" />
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 border border-slate-200 text-slate-700 font-medium">
+                                        <Target className="size-3.5 text-slate-600" />
                                         <span>Target: <strong className="text-slate-900 font-bold">{academicClass.target_team_size} Mahasiswa / Kelompok</strong></span>
                                     </span>
-
-                                    {!isLecturer && isEnrolled && academicClass.lecturer && (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                if (!academicClass.lecturer) return;
-                                                setSelectedStudentForDrawer({
-                                                    id: academicClass.lecturer.id,
-                                                    name: academicClass.lecturer.name,
-                                                    email: academicClass.lecturer.email,
-                                                    student_number: 'Dosen Pengampu',
-                                                    study_program: academicClass.name,
-                                                    semester: 0,
-                                                    has_team: true,
-                                                    skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
-                                                });
-                                                setDrawerTab('chat');
-                                            }}
-                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer ml-auto"
-                                        >
-                                            <MessageSquare className="size-3.5" />
-                                            <span>Chat Dosen Pengampu</span>
-                                        </button>
-                                    )}
                                 </div>
                             </div>
 
-                            {/* Frosted Glass Join Code Widget */}
-                            <div className="glass-card rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center text-center shrink-0 min-w-[210px] bg-white/85">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-0.5">
-                                    KODE GABUNG KELAS
-                                </span>
-                                <div className="font-mono text-2xl font-black text-blue-600 tracking-widest my-1 select-all">
-                                    {academicClass.join_code}
+                            {/* Right Action Column: Join Code Card + Chat Dosen Button */}
+                            <div className="flex flex-col items-stretch gap-2.5 shrink-0 min-w-[220px] w-full lg:w-auto">
+                                <div className="bg-slate-50/90 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-center text-center border border-slate-200/80 shadow-2xs">
+                                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 block mb-0.5">
+                                        KODE GABUNG KELAS
+                                    </span>
+                                    <div className="font-mono text-2xl font-black text-blue-600 tracking-widest my-1 select-all">
+                                        {academicClass.join_code}
+                                    </div>
+                                    <button
+                                        onClick={copyJoinCode}
+                                        className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-700 border border-slate-200 hover:border-blue-200 text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                                    >
+                                        {copiedCode ? (
+                                            <>
+                                                <Check className="size-3.5 text-blue-600" />
+                                                <span className="text-blue-700">Kode Disalin!</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Copy className="size-3.5 text-slate-500" />
+                                                <span>Salin Kode Kelas</span>
+                                            </>
+                                        )}
+                                    </button>
                                 </div>
-                                <button
-                                    onClick={copyJoinCode}
-                                    className="mt-1.5 w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/80 text-xs font-bold transition cursor-pointer"
-                                >
-                                    {copiedCode ? (
-                                        <>
-                                            <Check className="size-3.5 text-emerald-600" />
-                                            <span className="text-emerald-700">Kode Disalin!</span>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Copy className="size-3.5" />
-                                            <span>Salin Kode Kelas</span>
-                                        </>
-                                    )}
-                                </button>
+
+                                {!isLecturer && isEnrolled && academicClass.lecturer && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (!academicClass.lecturer) return;
+                                            setSelectedStudentForDrawer({
+                                                id: academicClass.lecturer.id,
+                                                name: academicClass.lecturer.name,
+                                                email: academicClass.lecturer.email,
+                                                student_number: 'Dosen Pengampu',
+                                                study_program: academicClass.name,
+                                                semester: 0,
+                                                has_team: true,
+                                                skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
+                                            });
+                                            setDrawerTab('chat');
+                                        }}
+                                        className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow active:scale-95 cursor-pointer"
+                                    >
+                                        <MessageSquare className="size-3.5" />
+                                        <span>Chat Dosen Pengampu</span>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
 
-                    {/* KPI STATS GRID: 4-Column Modern Glass Cards (Zero Overlap) */}
-                    {/* Not-enrolled banner for students who can view but haven't joined */}
+                    {/* KPI STATS GRID: 4-Column Modern Clean Cards */}
                     {!isLecturer && !isEnrolled && (
-                        <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                             <div>
                                 <p className="text-sm font-bold text-blue-900">Anda belum terdaftar di kelas ini</p>
                                 <p className="text-xs text-blue-700 mt-0.5">
@@ -671,7 +688,7 @@ export default function ClassShow({
                             </div>
                             <Link
                                 href="/classes"
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs shrink-0 cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95"
                             >
                                 <GraduationCap className="size-3.5" />
                                 <span>Daftar ke Kelas</span>
@@ -681,10 +698,10 @@ export default function ClassShow({
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                         {/* 1. Total Mahasiswa */}
-                        <div className="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
                             <div className="flex items-center justify-between gap-2 mb-3">
                                 <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total Mahasiswa</span>
-                                <div className="size-9 rounded-xl bg-blue-500/10 text-blue-600 border border-blue-500/20 flex items-center justify-center shrink-0">
+                                <div className="size-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
                                     <Users className="size-4.5" />
                                 </div>
                             </div>
@@ -699,48 +716,46 @@ export default function ClassShow({
                         </div>
 
                         {/* 2. Sudah Memiliki Tim */}
-                        <div className="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
                             <div className="flex items-center justify-between gap-2 mb-3">
-                                <span className="text-xs font-bold text-emerald-700 uppercase tracking-wide">Sudah Ada Tim</span>
-                                <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Sudah Ada Tim</span>
+                                <div className="size-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
                                     <UserCheck className="size-4.5" />
                                 </div>
                             </div>
                             <div>
-                                <div className="text-3xl font-black text-emerald-700 tracking-tight">
+                                <div className="text-3xl font-black text-slate-900 tracking-tight">
                                     {stats.students_with_team}
                                 </div>
-                                <p className="text-[11px] text-emerald-600/80 mt-1 truncate">
+                                <p className="text-[11px] text-slate-400 mt-1 truncate">
                                     Aktif kolaborasi kelompok
                                 </p>
                             </div>
                         </div>
 
                         {/* 3. Belum Memiliki Kelompok */}
-                        <div className={`glass-card rounded-2xl p-5 flex flex-col justify-between ${
-                            stats.students_without_team > 0 ? 'bg-amber-50/40 border-amber-200/80' : ''
-                        }`}>
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
                             <div className="flex items-center justify-between gap-2 mb-3">
-                                <span className="text-xs font-bold text-amber-700 uppercase tracking-wide">Belum Ada Tim</span>
-                                <div className="size-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Belum Ada Tim</span>
+                                <div className="size-9 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                                     <AlertCircle className="size-4.5" />
                                 </div>
                             </div>
                             <div>
-                                <div className="text-3xl font-black text-amber-800 tracking-tight">
+                                <div className="text-3xl font-black text-slate-900 tracking-tight">
                                     {stats.students_without_team}
                                 </div>
-                                <p className="text-[11px] text-amber-700/80 mt-1 truncate">
+                                <p className="text-[11px] text-slate-400 mt-1 truncate">
                                     {stats.students_without_team > 0 ? 'Perlu pemerataan tim' : 'Semua telah memiliki tim'}
                                 </p>
                             </div>
                         </div>
 
                         {/* 4. Kelompok Proyek Kelas */}
-                        <div className="glass-card rounded-2xl p-5 flex flex-col justify-between">
+                        <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs hover:border-slate-300 transition-all">
                             <div className="flex items-center justify-between gap-2 mb-3">
-                                <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Kelompok Proyek</span>
-                                <div className="size-9 rounded-xl bg-slate-900/5 text-slate-700 border border-slate-900/10 flex items-center justify-center shrink-0">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Kelompok Proyek</span>
+                                <div className="size-9 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                                     <FolderKanban className="size-4.5" />
                                 </div>
                             </div>
@@ -755,15 +770,15 @@ export default function ClassShow({
                         </div>
                     </div>
 
-                    {/* SEGMENTED GLASS NAVIGATION TABS & ACTION BUTTONS */}
-                    <div className="glass-surface p-2 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex flex-wrap items-center gap-1">
+                    {/* SEGMENTED NAVIGATION TABS & ACTION BUTTONS */}
+                    <div className="bg-white p-2 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs overflow-hidden">
+                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0 sm:flex-wrap">
                             <button
                                 onClick={() => setTab('students')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
                                     tab === 'students'
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
                                 <Users className="size-3.5" />
@@ -772,10 +787,10 @@ export default function ClassShow({
 
                             <button
                                 onClick={() => setTab('projects')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
                                     tab === 'projects'
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
                                 <FolderKanban className="size-3.5" />
@@ -784,25 +799,25 @@ export default function ClassShow({
 
                             <button
                                 onClick={() => setTab('smart_group')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
                                     tab === 'smart_group'
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
-                                <Sparkles className="size-3.5 text-amber-400" />
+                                <Sparkles className={`size-3.5 ${tab === 'smart_group' ? 'text-white' : 'text-blue-600'}`} />
                                 <span>{isLecturer ? 'Smart Balancing' : `Matchmaking (${peerMatches.length})`}</span>
                                 {stats.students_without_team > 0 && (
-                                    <span className="size-1.5 rounded-full bg-amber-400 animate-pulse" />
+                                    <span className={`size-1.5 rounded-full ${tab === 'smart_group' ? 'bg-white' : 'bg-blue-600'} animate-pulse`} />
                                 )}
                             </button>
 
                             <button
                                 onClick={() => setTab('guidances')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
                                     tab === 'guidances'
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
                                 <MessageSquare className="size-3.5" />
@@ -811,13 +826,13 @@ export default function ClassShow({
 
                             <button
                                 onClick={() => setTab('fairness')}
-                                className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                                className={`px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
                                     tab === 'fairness'
                                         ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                 }`}
                             >
-                                <ShieldCheck className="size-3.5 text-blue-500" />
+                                <ShieldCheck className="size-3.5" />
                                 <span>Fairness & Alokasi</span>
                             </button>
                         </div>
@@ -827,7 +842,7 @@ export default function ClassShow({
                             {tab === 'students' && isLecturer && (
                                 <button
                                     onClick={() => setShowAddStudentModal(true)}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer shrink-0"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
                                 >
                                     <UserPlus className="size-3.5" />
                                     <span>Tambah Mahasiswa</span>
@@ -839,7 +854,7 @@ export default function ClassShow({
                                         setSelectedProjectForGuidance(null);
                                         setShowGuidanceModal(true);
                                     }}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer shrink-0"
+                                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer shrink-0"
                                 >
                                     <Plus className="size-3.5" />
                                     <span>Buat Catatan</span>
@@ -867,16 +882,16 @@ export default function ClassShow({
                                     <div className="flex flex-wrap items-center justify-center gap-3 mt-6">
                                         <button
                                             onClick={copyJoinCode}
-                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs active:scale-95 cursor-pointer"
                                         >
-                                            {copiedCode ? <Check className="size-4 text-emerald-300" /> : <Copy className="size-4" />}
+                                            {copiedCode ? <Check className="size-4 text-blue-200" /> : <Copy className="size-4" />}
                                             <span>Salin Kode Kelas ({academicClass.join_code})</span>
                                         </button>
 
                                         {isLecturer && (
                                             <button
                                                 onClick={() => setShowAddStudentModal(true)}
-                                                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
                                             >
                                                 <UserPlus className="size-4 text-slate-500" />
                                                 <span>Tambah Mahasiswa Manual</span>
@@ -887,34 +902,34 @@ export default function ClassShow({
                             ) : (
                                 <>
                                     {/* Filter and Search Bar */}
-                                    <div className="glass-card p-3.5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="bg-white p-3.5 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                                         <div className="flex flex-wrap items-center gap-1.5">
                                             <button
                                                 onClick={() => setStudentFilter('all')}
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
                                                     studentFilter === 'all'
-                                                        ? 'bg-blue-50 text-blue-700 border border-blue-200/80'
-                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                                                        ? 'bg-blue-600 text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                                 }`}
                                             >
                                                 Semua ({students.length})
                                             </button>
                                             <button
                                                 onClick={() => setStudentFilter('with_team')}
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
                                                     studentFilter === 'with_team'
-                                                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
-                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                                                        ? 'bg-blue-600 text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                                 }`}
                                             >
                                                 Sudah Ada Tim ({stats.students_with_team})
                                             </button>
                                             <button
                                                 onClick={() => setStudentFilter('without_team')}
-                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                                                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer ${
                                                     studentFilter === 'without_team'
-                                                        ? 'bg-amber-50 text-amber-800 border border-amber-200/80'
-                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                                                        ? 'bg-slate-900 text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                                                 }`}
                                             >
                                                 Belum Ada Kelompok ({stats.students_without_team})
@@ -928,14 +943,14 @@ export default function ClassShow({
                                                 value={searchStudent}
                                                 onChange={(e) => setSearchStudent(e.target.value)}
                                                 placeholder="Cari nama, NIM, keahlian..."
-                                                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-white/80 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition"
+                                                className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition"
                                             />
                                         </div>
                                     </div>
 
                                     {/* Students Grid */}
                                     {filteredStudents.length === 0 ? (
-                                        <div className="glass-card rounded-2xl p-8 text-center text-xs text-slate-500">
+                                        <div className="bg-white rounded-2xl border border-slate-200/80 p-8 text-center text-xs text-slate-500 shadow-2xs">
                                             Tidak ada mahasiswa yang sesuai dengan filter pencarian.
                                         </div>
                                     ) : (
@@ -947,7 +962,7 @@ export default function ClassShow({
                                                         setSelectedStudentForDrawer(st);
                                                         setDrawerTab('chat');
                                                     }}
-                                                    className="glass-card rounded-2xl p-5 flex flex-col justify-between gap-4 cursor-pointer hover:border-blue-500/80 hover:shadow-md transition-all group relative border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-[#0c1222]"
+                                                    className="bg-white rounded-2xl p-5 flex flex-col justify-between gap-4 cursor-pointer hover:border-blue-500/80 hover:shadow-md transition-all duration-200 group relative border border-slate-200/80 min-h-[220px]"
                                                 >
                                                     <div>
                                                         <div className="flex items-start justify-between gap-3">
@@ -960,7 +975,7 @@ export default function ClassShow({
                                                                     )}
                                                                 </div>
                                                                 <div>
-                                                                    <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition leading-tight">
+                                                                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition leading-tight">
                                                                         {st.name}
                                                                     </h4>
                                                                     <p className="text-xs text-slate-400 mt-0.5 font-mono">
@@ -977,15 +992,15 @@ export default function ClassShow({
                                                                         setSelectedStudentForDrawer(st);
                                                                         setDrawerTab('chat');
                                                                     }}
-                                                                    className="size-8 rounded-full bg-blue-50 dark:bg-blue-950/80 hover:bg-blue-600 text-blue-600 dark:text-blue-400 hover:text-white transition flex items-center justify-center shrink-0 shadow-xs cursor-pointer"
+                                                                    className="size-8 rounded-full bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white transition-all flex items-center justify-center shrink-0 shadow-2xs hover:shadow-xs active:scale-90 cursor-pointer"
                                                                     title="Buka Chat Messenger"
                                                                 >
                                                                     <MessageSquare className="size-4" />
                                                                 </button>
                                                                 <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
                                                                     st.has_team
-                                                                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                        : 'bg-amber-50 text-amber-700 border-amber-200'
+                                                                        ? 'bg-blue-50 text-blue-700 border-blue-200/80'
+                                                                        : 'bg-slate-100 text-slate-600 border-slate-200'
                                                                     }`}>
                                                                     {st.has_team ? 'Ada Tim' : 'Belum Ada Tim'}
                                                                 </span>
@@ -994,7 +1009,7 @@ export default function ClassShow({
 
                                                         {/* Project info if enrolled in a team */}
                                                         {st.project ? (
-                                                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50/80 dark:bg-[#0e172a] border border-slate-200/80 dark:border-slate-800 text-xs">
+                                                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
                                                                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                                                                     Proyek Tim Kelas:
                                                                 </span>
@@ -1005,13 +1020,13 @@ export default function ClassShow({
                                                                 >
                                                                     {st.project.title}
                                                                 </Link>
-                                                                <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                                <span className="text-[11px] text-slate-500">
                                                                     Peran: {st.project.role_name}
                                                                 </span>
                                                             </div>
                                                         ) : (
-                                                            <div className="mt-3 p-2 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/40 text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                                                                <HelpCircle className="size-3.5 shrink-0" />
+                                                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-200/70 text-[11px] text-slate-600 flex items-center gap-2">
+                                                                <AlertCircle className="size-3.5 text-blue-600 shrink-0" />
                                                                 <span>Belum tergabung dalam kelompok kelas.</span>
                                                             </div>
                                                         )}
@@ -1022,7 +1037,7 @@ export default function ClassShow({
                                                                 {st.skills.map((skill, sIdx) => (
                                                                     <span
                                                                         key={sIdx}
-                                                                        className="text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200/60 dark:border-slate-700"
+                                                                        className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200/60"
                                                                     >
                                                                         {skill}
                                                                     </span>
@@ -1032,12 +1047,12 @@ export default function ClassShow({
                                                     </div>
 
                                                     {/* Action footer */}
-                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
                                                         <span className="text-[11px] text-slate-400">
                                                             Masuk: {st.enrolled_at}
                                                         </span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                                                            <span className="text-[11px] font-bold text-blue-600 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
                                                                 <span>Detail & Chat</span>
                                                                 <ArrowRight className="size-3" />
                                                             </span>
@@ -1047,7 +1062,7 @@ export default function ClassShow({
                                                                         e.stopPropagation();
                                                                         handleRemoveStudent(st.id, st.name);
                                                                     }}
-                                                                    className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
+                                                                    className="text-slate-400 hover:text-slate-900 transition p-1 cursor-pointer"
                                                                     title="Keluarkan mahasiswa dari kelas"
                                                                 >
                                                                     <Trash2 className="size-4" />
@@ -1081,9 +1096,9 @@ export default function ClassShow({
                                     {isLecturer && (
                                         <button
                                             onClick={() => setTab('smart_group')}
-                                            className="mt-6 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
+                                            className="mt-6 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer active:scale-95"
                                         >
-                                            <Sparkles className="size-4 text-amber-300" />
+                                            <Sparkles className="size-4 text-white" />
                                             <span>Buka Smart Team Balancing</span>
                                         </button>
                                     )}
@@ -1093,14 +1108,14 @@ export default function ClassShow({
                                     {projects.map((proj) => (
                                         <div
                                             key={proj.id}
-                                            className="glass-card rounded-2xl p-6 flex flex-col justify-between gap-5"
+                                            className="bg-white rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between gap-5 shadow-2xs hover:border-blue-400/80 transition-all"
                                         >
                                             <div>
                                                 <div className="flex items-start justify-between gap-2 mb-2">
                                                     <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
                                                         {proj.category}
                                                     </span>
-                                                    <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                                                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/80">
                                                         Progress: {proj.progress}%
                                                     </span>
                                                 </div>
@@ -1167,7 +1182,7 @@ export default function ClassShow({
                                                             setGuidanceData('title', `Review Bimbingan: ${proj.title}`);
                                                             setShowGuidanceModal(true);
                                                         }}
-                                                        className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                        className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs active:scale-95 cursor-pointer"
                                                     >
                                                         + Beri Catatan Bimbingan
                                                     </button>
@@ -1184,7 +1199,7 @@ export default function ClassShow({
                     {tab === 'smart_group' && (
                         <div className="flex flex-col gap-5">
                             {/* ATURAN KELAS & STANDAR ANTI-KETIMPANGAN (Modern Glassmorphic Chips) */}
-                            <div className="glass-surface rounded-2xl p-4 sm:p-5">
+                            <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/70">
                                     <div className="flex items-center gap-2">
                                         <ShieldCheck className="size-4 text-blue-600 shrink-0" />
@@ -1200,19 +1215,19 @@ export default function ClassShow({
 
                                 {/* 4 Clean Rule Chips */}
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 pt-3">
-                                    <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200/80 text-xs">
+                                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                                         <span className="font-bold text-slate-800 block">1. Kuota {academicClass.target_team_size} Orang</span>
                                         <span className="text-[11px] text-slate-500">Terkunci saat kuota tim penuh</span>
                                     </div>
-                                    <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200/80 text-xs">
+                                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                                         <span className="font-bold text-slate-800 block">2. Wajib Komplementer</span>
                                         <span className="text-[11px] text-slate-500">Maks. 2 spesialis sejenis</span>
                                     </div>
-                                    <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200/80 text-xs">
+                                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                                         <span className="font-bold text-slate-800 block">3. Anti-Teman Satu Geng</span>
                                         <span className="text-[11px] text-slate-500">Prioritas skill pelengkap tim</span>
                                     </div>
-                                    <div className="p-2.5 rounded-xl bg-white/70 border border-slate-200/80 text-xs">
+                                    <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
                                         <span className="font-bold text-slate-800 block">4. Hak Dosen</span>
                                         <span className="text-[11px] text-slate-500">Auto-balance jika tim timpang</span>
                                     </div>
@@ -1222,12 +1237,12 @@ export default function ClassShow({
                             {isLecturer ? (
                                 /* DOSEN VIEW: SMART TEAM BALANCING */
                                 <div className="flex flex-col gap-5">
-                                    {/* Professional Balanced Control Card (Deep Slate / Navy Glass) */}
+                                    {/* Professional Control Card (Deep Slate) */}
                                     <div className="rounded-2xl bg-slate-900 p-5 sm:p-6 text-white shadow-sm border border-slate-800">
                                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                             <div>
                                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/10 text-[11px] font-semibold mb-1.5">
-                                                    <Sparkles className="size-3 text-amber-300" />
+                                                    <Sparkles className="size-3 text-blue-300" />
                                                     <span>Pemerataan Tim Berkeadilan</span>
                                                 </div>
                                                 <h3 className="text-base sm:text-lg font-bold">
@@ -1242,15 +1257,15 @@ export default function ClassShow({
                                                 <button
                                                     onClick={() => handleAutoFormTeams(false)}
                                                     disabled={stats.students_without_team === 0}
-                                                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition disabled:opacity-40 flex items-center gap-1.5 cursor-pointer"
+                                                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition disabled:opacity-40 flex items-center gap-1.5 cursor-pointer active:scale-95"
                                                 >
-                                                    <Zap className="size-3.5 text-amber-300" />
+                                                    <Zap className="size-3.5 text-white" />
                                                     <span>Ratakan ({stats.students_without_team} Mahasiswa)</span>
                                                 </button>
 
                                                 <button
                                                     onClick={() => handleAutoFormTeams(true)}
-                                                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                                                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer active:scale-95"
                                                 >
                                                     <RefreshCw className="size-3.5 text-slate-400" />
                                                     <span>Rombak Seluruh Kelas</span>
@@ -1260,28 +1275,28 @@ export default function ClassShow({
                                     </div>
 
                                     {/* Unassigned Students List */}
-                                    <div className="glass-card rounded-2xl p-5">
+                                    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-2xs">
                                         <div className="flex items-center justify-between mb-3">
                                             <h4 className="text-xs font-bold text-slate-800">
                                                 Mahasiswa Tanpa Kelompok ({stats.students_without_team})
                                             </h4>
                                             {stats.students_without_team === 0 && (
-                                                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                                                    <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                <span className="text-[11px] text-blue-700 font-semibold flex items-center gap-1">
+                                                    <CheckCircle2 className="size-3.5 text-blue-600" />
                                                     Semua mahasiswa telah memiliki tim
                                                 </span>
                                             )}
                                         </div>
 
                                         {stats.students_without_team === 0 ? (
-                                            <div className="p-6 rounded-xl bg-emerald-50/70 border border-emerald-200 text-center text-xs text-emerald-800 font-semibold flex items-center justify-center gap-2">
-                                                <CheckCircle2 className="size-4 text-emerald-600" />
+                                            <div className="p-6 rounded-2xl bg-blue-50 border border-blue-200/80 text-center text-xs text-blue-900 font-semibold flex items-center justify-center gap-2">
+                                                <CheckCircle2 className="size-4 text-blue-600" />
                                                 <span>Seluruh {stats.total_students} mahasiswa di kelas ini telah terdistribusi ke dalam kelompok proyek berimbang.</span>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
                                                 {students.filter((s) => !s.has_team).map((st) => (
-                                                    <div key={st.id} className="p-3 rounded-xl border border-slate-200 bg-white/70 flex flex-col gap-2.5">
+                                                    <div key={st.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50/60 flex flex-col gap-2.5">
                                                         <div className="flex items-center gap-2.5">
                                                             <div className="size-8 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
                                                                 {st.name.charAt(0)}
@@ -1291,7 +1306,7 @@ export default function ClassShow({
                                                                 <p className="text-[10px] text-slate-400 font-mono">{st.student_number}</p>
                                                                 <div className="flex flex-wrap gap-1 mt-1">
                                                                     {st.skills.slice(0, 2).map((sk, idx) => (
-                                                                        <span key={idx} className="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 font-medium">
+                                                                        <span key={idx} className="text-[9px] bg-white px-1.5 py-0.5 rounded border border-slate-200 text-slate-700 font-medium">
                                                                             {sk}
                                                                         </span>
                                                                     ))}
@@ -1317,7 +1332,7 @@ export default function ClassShow({
                                                                 <button
                                                                     onClick={() => handleManualAssignStudent(st.id)}
                                                                     disabled={!assignTargetProjectId[st.id] || submittingAssign === st.id}
-                                                                    className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition disabled:opacity-40 cursor-pointer"
+                                                                    className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition disabled:opacity-40 cursor-pointer active:scale-95"
                                                                     title="Tambahkan ke kelompok"
                                                                 >
                                                                     {submittingAssign === st.id ? '...' : <UserPlus className="size-3.5" />}
@@ -1335,7 +1350,7 @@ export default function ClassShow({
                             ) : (
                                 /* MAHASISWA VIEW: CLASSROOM PEER MATCHMAKING */
                                 <div className="flex flex-col gap-4">
-                                    <div className="glass-surface p-4 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                                         <div>
                                             <h3 className="text-sm font-bold text-slate-900">Rekomendasi Rekan Sekelas</h3>
                                             <p className="text-xs text-slate-500 mt-0.5">Pilih rekan dengan keahlian yang melengkapi slot tim Anda.</p>
@@ -1343,12 +1358,12 @@ export default function ClassShow({
 
                                         <div className="text-xs shrink-0">
                                             {myClassProject ? (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-2xs">
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 shadow-2xs">
                                                     Tim: <strong className="text-blue-700 truncate max-w-[140px]">{myClassProject.title}</strong>
                                                     <span>({myClassProject.members_count}/{academicClass.target_team_size})</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-amber-700 font-semibold bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+                                                <span className="text-slate-700 font-semibold bg-slate-100 px-2.5 py-1 rounded-xl border border-slate-200">
                                                     Belum Punya Kelompok
                                                 </span>
                                             )}
@@ -1357,7 +1372,7 @@ export default function ClassShow({
 
                                     {/* Peer Match Cards Grid */}
                                     {peerMatches.length === 0 ? (
-                                        <div className="glass-card rounded-2xl p-10 text-center text-xs text-slate-500">
+                                        <div className="bg-white rounded-2xl border border-slate-200/80 p-10 text-center text-xs text-slate-500 shadow-2xs">
                                             Belum ada data rekan sekelas untuk dilakukan matchmaking. Ajak rekan sekelas bergabung dengan kode: <strong>{academicClass.join_code}</strong>
                                         </div>
                                     ) : (
@@ -1369,7 +1384,7 @@ export default function ClassShow({
                                                 return (
                                                     <div
                                                         key={peer.id || idx}
-                                                        className="glass-card rounded-2xl p-5 flex flex-col justify-between gap-4"
+                                                        className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between gap-4 shadow-2xs hover:border-blue-400/80 transition-all"
                                                     >
                                                         <div>
                                                             {/* Top row: Avatar + Name + Score Badge */}
@@ -1389,8 +1404,8 @@ export default function ClassShow({
                                                                 </div>
 
                                                                 <div className="text-right shrink-0">
-                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                                        <Zap className="size-3 text-emerald-600" />
+                                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-50 text-blue-700 border border-blue-200/80">
+                                                                        <Zap className="size-3 text-blue-600" />
                                                                         <span>{item.match_score}%</span>
                                                                     </span>
                                                                     <span className="block text-[10px] text-slate-500 font-semibold mt-0.5">
@@ -1404,7 +1419,7 @@ export default function ClassShow({
                                                                 <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] font-semibold border ${
                                                                     peer.has_team
                                                                         ? 'bg-slate-100 text-slate-600 border-slate-200'
-                                                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                                                        : 'bg-blue-50 text-blue-700 border border-blue-200/80'
                                                                 }`}>
                                                                     {peer.has_team ? 'Sudah Ada Tim' : 'Belum Ada Kelompok (Siap Gabung)'}
                                                                 </span>
@@ -1412,16 +1427,16 @@ export default function ClassShow({
 
                                                             {/* Anti-Ketimpangan Need Banner */}
                                                             {item.fills_team_need && (
-                                                                <div className="mb-2.5 p-2 rounded-xl bg-emerald-50 border border-emerald-200/80 text-emerald-900 text-[10px] font-bold flex items-center gap-1.5">
-                                                                    <ShieldCheck className="size-3.5 text-emerald-600 shrink-0" />
+                                                                <div className="mb-2.5 p-2 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-900 text-[10px] font-bold flex items-center gap-1.5">
+                                                                    <ShieldCheck className="size-3.5 text-blue-600 shrink-0" />
                                                                     <span className="truncate">{item.fills_team_need}</span>
                                                                 </div>
                                                             )}
 
                                                             {/* Block Reason Warning if Cannot Invite */}
                                                             {!canInvitePeer && item.invite_block_reason && (
-                                                                <div className="mb-2.5 p-2 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[10px] font-medium flex items-start gap-1.5">
-                                                                    <Lock className="size-3 text-amber-600 mt-0.5 shrink-0" />
+                                                                <div className="mb-2.5 p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-700 text-[10px] font-medium flex items-start gap-1.5">
+                                                                    <Lock className="size-3 text-slate-500 mt-0.5 shrink-0" />
                                                                     <span>{item.invite_block_reason}</span>
                                                                 </div>
                                                             )}
@@ -1600,10 +1615,10 @@ export default function ClassShow({
                                     </div>
                                 </div>
 
-                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs">
                                     <div className="flex items-center justify-between gap-2 mb-3">
                                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Keterisian Posisi</span>
-                                        <div className="size-9 rounded-xl bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                        <div className="size-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
                                             <Target className="size-4.5" />
                                         </div>
                                     </div>
@@ -1617,10 +1632,10 @@ export default function ClassShow({
                                     </div>
                                 </div>
 
-                                <div className="glass-card rounded-2xl p-5 flex flex-col justify-between bg-white/85">
+                                <div className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between shadow-2xs">
                                     <div className="flex items-center justify-between gap-2 mb-3">
                                         <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Afirmasi Perdana</span>
-                                        <div className="size-9 rounded-xl bg-amber-500/10 text-amber-600 border border-amber-500/20 flex items-center justify-center shrink-0">
+                                        <div className="size-9 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 flex items-center justify-center shrink-0">
                                             <Sparkles className="size-4.5" />
                                         </div>
                                     </div>
@@ -1689,7 +1704,7 @@ export default function ClassShow({
                                             <div>
                                                 <span className="font-bold text-slate-900 block">{latestSimulation.title}</span>
                                                 <span className="text-slate-500 text-[11px]">
-                                                    Status: <strong className={latestSimulation.status === 'approved' ? 'text-emerald-700' : 'text-blue-700'}>
+                                                    Status: <strong className={latestSimulation.status === 'approved' ? 'text-blue-700' : 'text-slate-700'}>
                                                         {latestSimulation.status === 'approved' ? 'Disetujui & Aktif' : 'Draft Simulasi (Menunggu Persetujuan Dosen)'}
                                                     </strong>
                                                 </span>
@@ -1699,7 +1714,7 @@ export default function ClassShow({
                                                 <button
                                                     onClick={() => handleApproveAllocation(latestSimulation.id)}
                                                     disabled={approving}
-                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs disabled:opacity-50 cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs disabled:opacity-50 active:scale-95 cursor-pointer"
                                                 >
                                                     <CheckCircle2 className="size-3.5" />
                                                     <span>{approving ? 'Mengaktifkan...' : 'Setujui & Aktifkan Kelompok'}</span>
@@ -1707,8 +1722,8 @@ export default function ClassShow({
                                             )}
 
                                             {latestSimulation.status === 'approved' && (
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold">
-                                                    <Check className="size-3.5 text-emerald-600" />
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold">
+                                                    <Check className="size-3.5 text-blue-600" />
                                                     <span>Alokasi Resmi Aktif</span>
                                                 </span>
                                             )}
@@ -1755,8 +1770,8 @@ export default function ClassShow({
                                                                 <td className="px-4 py-3 text-right">
                                                                     <span className={`inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${
                                                                         alloc.status === 'activated'
-                                                                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                                                                            : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                                            ? 'bg-blue-50 text-blue-800 border border-blue-200'
+                                                                            : 'bg-slate-100 text-slate-800 border border-slate-200'
                                                                     }`}>
                                                                         {alloc.status === 'activated' ? 'Aktif' : 'Diusulkan'}
                                                                     </span>
@@ -1804,7 +1819,7 @@ export default function ClassShow({
                                 <div className="glass-card rounded-2xl p-6 bg-white/85">
                                     <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
                                         <span>Mahasiswa Menunggu Kelompok ({fairnessMetrics.unassigned_students.length})</span>
-                                        <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                                        <span className="text-[11px] text-blue-700 font-semibold bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200">
                                             Prioritas Afirmasi
                                         </span>
                                     </h4>
@@ -2099,7 +2114,7 @@ export default function ClassShow({
                                             selectedStudentForDrawer.name.charAt(0).toUpperCase()
                                         )}
                                     </div>
-                                    <span className="absolute -bottom-0.5 -right-0.5 size-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-[#0c1222]" title="Aktif di Kelas" />
+                                    <span className="absolute -bottom-0.5 -right-0.5 size-3.5 bg-blue-600 rounded-full border-2 border-white dark:border-[#0c1222]" title="Aktif di Kelas" />
                                 </div>
 
                                 <div className="min-w-0">
@@ -2235,7 +2250,7 @@ export default function ClassShow({
                                             href={`https://wa.me/${selectedStudentForDrawer.phone.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(selectedStudentForDrawer.name)},%20ini%20dosen%20pengampu%20kelas%20${encodeURIComponent(academicClass.name)}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                                            className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold transition flex items-center gap-1 cursor-pointer"
                                         >
                                             <Phone className="size-3" />
                                             <span>WhatsApp</span>
@@ -2297,8 +2312,8 @@ export default function ClassShow({
                                             <span className="text-[10px] text-slate-400 block font-medium">Status Kelompok</span>
                                             <span className={`font-bold flex items-center gap-1 ${
                                                 selectedStudentForDrawer.has_team
-                                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                                    : 'text-amber-600 dark:text-amber-400'
+                                                    ? 'text-blue-600 dark:text-blue-400'
+                                                    : 'text-slate-600 dark:text-slate-400'
                                             }`}>
                                                 {selectedStudentForDrawer.has_team ? (
                                                     <>
@@ -2337,7 +2352,7 @@ export default function ClassShow({
                                             </Link>
                                         </div>
                                     ) : (
-                                        <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 text-xs text-amber-800 dark:text-amber-300">
+                                        <div className="p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0e172a] text-xs text-slate-600 dark:text-slate-300">
                                             Mahasiswa ini belum memiliki kelompok proyek. Anda dapat memasukkannya ke kelompok melalui fitur <strong>Simulasi Tim Otomatis</strong>.
                                         </div>
                                     )}
@@ -2405,6 +2420,15 @@ export default function ClassShow({
                         )}
                     </div>
                 </>
+            )}
+
+            {/* EDIT CLASS MODAL (DOSEN) */}
+            {isLecturer && (
+                <EditClassModal
+                    isOpen={showEditClassModal}
+                    onClose={() => setShowEditClassModal(false)}
+                    academicClass={academicClass}
+                />
             )}
         </AppLayout>
     );

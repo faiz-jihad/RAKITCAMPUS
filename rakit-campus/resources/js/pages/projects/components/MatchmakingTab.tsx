@@ -40,7 +40,7 @@ export default function MatchmakingTab({
     isLecturer,
     userHasActiveProject,
 }: Props) {
-    const [subTab, setSubTab] = useState<'recommendations' | 'manual' | 'optimal'>('recommendations');
+    const [subTab, setSubTab] = useState<'manual' | 'recommendations' | 'optimal'>('manual');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSkillFilter, setSelectedSkillFilter] = useState('');
     const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
@@ -127,20 +127,8 @@ export default function MatchmakingTab({
                 </div>
             </div>
 
-            {/* Sub-mode Navigation Selector */}
+            {/* Sub-mode Navigation Selector (A - B - C) */}
             <div className="glass-surface p-1.5 rounded-2xl flex flex-wrap items-center gap-1">
-                <button
-                    onClick={() => setSubTab('recommendations')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                        subTab === 'recommendations'
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                    }`}
-                >
-                    <Sparkles className="size-3.5" />
-                    <span>Mode B: Rekomendasi Cerdas ({sameClassCandidates.length})</span>
-                </button>
-
                 <button
                     onClick={() => setSubTab('manual')}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
@@ -153,6 +141,18 @@ export default function MatchmakingTab({
                     <span>Mode A: Cari Rekan Sekelas ({classStudents.length})</span>
                 </button>
 
+                <button
+                    onClick={() => setSubTab('recommendations')}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                        subTab === 'recommendations'
+                            ? 'bg-blue-600 text-white shadow-xs'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                    }`}
+                >
+                    <Sparkles className="size-3.5" />
+                    <span>Mode B: Rekomendasi Cerdas ({sameClassCandidates.length})</span>
+                </button>
+
                 {teamOptimization && (
                     <button
                         onClick={() => setSubTab('optimal')}
@@ -162,140 +162,13 @@ export default function MatchmakingTab({
                                 : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                         }`}
                     >
-                        <Zap className="size-3.5 text-amber-500" />
-                        <span>Kombinasi Tim Optimal</span>
+                        <Zap className="size-3.5" />
+                        <span>Mode C: Kombinasi Tim Optimal</span>
                     </button>
                 )}
             </div>
 
-            {/* SUB-TAB 1: MODE B - SMART RECOMMENDATIONS */}
-            {subTab === 'recommendations' && (
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h3 className="text-base font-bold text-slate-900">
-                                Rekomendasi Kandidat Terbaik Berdasarkan Kebutuhan Tim
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Dihitung otomatis menggunakan formula 6-komponen transparan (Skill 30%, Peran 20%, Minat 15%, Availability 10%, Diversitas 15%, Fairness 10%).
-                            </p>
-                        </div>
-                    </div>
-
-                    {sameClassCandidates.length === 0 ? (
-                        <div className="glass-card rounded-2xl p-10 text-center">
-                            <Users className="size-10 text-slate-300 mx-auto mb-2" />
-                            <h4 className="text-sm font-bold text-slate-700">Belum Ada Kandidat Tersedia</h4>
-                            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                                Seluruh mahasiswa di kelas ini telah memiliki kelompok atau belum melengkapi profil keahlian mereka.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {sameClassCandidates.map((cand: any, idx: number) => {
-                                const u = cand.user || cand;
-                                const score = cand.match_score ?? cand.score ?? 75;
-                                const breakdown = cand.breakdown || {};
-
-                                return (
-                                    <div
-                                        key={idx}
-                                        className="glass-card rounded-2xl p-5 hover:border-blue-300 transition flex flex-col justify-between gap-4"
-                                    >
-                                        <div>
-                                            {/* Candidate Header */}
-                                            <div className="flex items-start justify-between gap-3">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="size-11 rounded-xl bg-blue-600/10 text-blue-700 font-black text-sm flex items-center justify-center shrink-0 border border-blue-500/20">
-                                                        {u.name?.charAt(0) || 'M'}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="text-sm font-black text-slate-900">{u.name}</h4>
-                                                        <span className="text-[11px] text-slate-500 font-medium">
-                                                            {u.email}
-                                                        </span>
-                                                    </div>
-                                                </div>
-
-                                                <div className="text-right">
-                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-black">
-                                                        {score}% Cocok
-                                                    </span>
-                                                </div>
-                                            </div>
-
-                                            {/* Explanation */}
-                                            <p className="text-xs text-slate-600 mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 leading-relaxed">
-                                                {cand.explanation || 'Kandidat memiliki keahlian komplementer yang melengkapi komposisi tim.'}
-                                            </p>
-
-                                            {/* 6-Component Score Breakdown Pills */}
-                                            <div className="grid grid-cols-3 gap-1.5 mt-3 text-[10px]">
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Skill (30%)</span>
-                                                    <strong className="text-slate-900 font-bold">{breakdown.skill ?? 70}%</strong>
-                                                </div>
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Peran (20%)</span>
-                                                    <strong className="text-slate-900 font-bold">{breakdown.role ?? 70}%</strong>
-                                                </div>
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Minat (15%)</span>
-                                                    <strong className="text-slate-900 font-bold">{breakdown.interest ?? 70}%</strong>
-                                                </div>
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Waktu (10%)</span>
-                                                    <strong className="text-slate-900 font-bold">{breakdown.availability ?? 70}%</strong>
-                                                </div>
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Diversitas (15%)</span>
-                                                    <strong className="text-slate-900 font-bold">{breakdown.diversity ?? 70}%</strong>
-                                                </div>
-                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
-                                                    <span className="text-slate-400 block font-semibold">Fairness (10%)</span>
-                                                    <strong className="text-emerald-700 font-bold">{breakdown.fairness ?? 70}%</strong>
-                                                </div>
-                                            </div>
-
-                                            {/* Complementary & Matched Skills */}
-                                            {cand.matched_skills && cand.matched_skills.length > 0 && (
-                                                <div className="mt-3">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
-                                                        Keahlian Sesuai Kebutuhan
-                                                    </span>
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {cand.matched_skills.map((s: string, si: number) => (
-                                                            <span key={si} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 inline-flex items-center gap-1">
-                                                                <Check className="w-3 h-3 stroke-[2.5]" />
-                                                                <span>{s}</span>
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        {/* Action */}
-                                        <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
-                                            {isLeader && (
-                                                <button
-                                                    onClick={() => handleOpenInvite(u)}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
-                                                >
-                                                    <Send className="size-3.5" />
-                                                    <span>Undang ke Tim</span>
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* SUB-TAB 2: MODE A - MANUAL SAME-CLASS SEARCH */}
+            {/* SUB-TAB 1: MODE A - MANUAL SAME-CLASS SEARCH */}
             {subTab === 'manual' && (
                 <div className="flex flex-col gap-4">
                     {/* Search & Filters */}
@@ -360,15 +233,15 @@ export default function MatchmakingTab({
                                                 </span>
                                             </div>
                                             {st.is_member ? (
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
                                                     Anggota Tim Ini
                                                 </span>
                                             ) : st.has_active_project ? (
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                                                     Sudah Punya Tim
                                                 </span>
                                             ) : (
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60">
                                                     Tersedia
                                                 </span>
                                             )}
@@ -423,22 +296,139 @@ export default function MatchmakingTab({
                 </div>
             )}
 
+            {/* SUB-TAB 2: MODE B - SMART RECOMMENDATIONS */}
+            {subTab === 'recommendations' && (
+                <div className="flex flex-col gap-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-base font-bold text-slate-900">
+                                Rekomendasi Kandidat Terbaik Berdasarkan Kebutuhan Tim
+                            </h3>
+                        </div>
+                    </div>
+
+                    {sameClassCandidates.length === 0 ? (
+                        <div className="glass-card rounded-2xl p-10 text-center">
+                            <Users className="size-10 text-slate-300 mx-auto mb-2" />
+                            <h4 className="text-sm font-bold text-slate-700">Belum Ada Kandidat Tersedia</h4>
+                            <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                                Seluruh mahasiswa di kelas ini telah memiliki kelompok atau belum melengkapi profil keahlian mereka.
+                            </p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {sameClassCandidates.map((cand: any, idx: number) => {
+                                const u = cand.user || cand;
+                                const score = cand.match_score ?? cand.score ?? 75;
+                                const breakdown = cand.breakdown || {};
+
+                                return (
+                                    <div
+                                        key={idx}
+                                        className="glass-card rounded-2xl p-5 hover:border-blue-300 transition flex flex-col justify-between gap-4"
+                                    >
+                                        <div>
+                                            {/* Candidate Header */}
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="size-11 rounded-xl bg-blue-600/10 text-blue-700 font-black text-sm flex items-center justify-center shrink-0 border border-blue-500/20">
+                                                        {u.name?.charAt(0) || 'M'}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="text-sm font-black text-slate-900">{u.name}</h4>
+                                                        <span className="text-[11px] text-slate-500 font-medium">
+                                                            {u.email}
+                                                        </span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-right">
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-black">
+                                                        {score}% Cocok
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Explanation */}
+                                            <p className="text-xs text-slate-600 mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 leading-relaxed">
+                                                {cand.explanation || 'Kandidat memiliki keahlian komplementer yang melengkapi komposisi tim.'}
+                                            </p>
+
+                                            {/* 6-Component Score Breakdown Pills */}
+                                            <div className="grid grid-cols-3 gap-1.5 mt-3 text-[10px]">
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Skill (30%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.skill ?? 70}%</strong>
+                                                </div>
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Peran (20%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.role ?? 70}%</strong>
+                                                </div>
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Minat (15%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.interest ?? 70}%</strong>
+                                                </div>
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Waktu (10%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.availability ?? 70}%</strong>
+                                                </div>
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Diversitas (15%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.diversity ?? 70}%</strong>
+                                                </div>
+                                                <div className="p-1.5 rounded-lg bg-white/80 border border-slate-200 text-center">
+                                                    <span className="text-slate-400 block font-semibold">Fairness (10%)</span>
+                                                    <strong className="text-slate-900 font-bold">{breakdown.fairness ?? 70}%</strong>
+                                                </div>
+                                            </div>
+
+                                            {/* Complementary & Matched Skills */}
+                                            {cand.matched_skills && cand.matched_skills.length > 0 && (
+                                                <div className="mt-3">
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                                                        Keahlian Sesuai Kebutuhan
+                                                    </span>
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {cand.matched_skills.map((s: string, si: number) => (
+                                                            <span key={si} className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 inline-flex items-center gap-1">
+                                                                <Check className="w-3 h-3 stroke-[2.5]" />
+                                                                <span>{s}</span>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action */}
+                                        <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+                                            {isLeader && (
+                                                <button
+                                                    onClick={() => handleOpenInvite(u)}
+                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                                                >
+                                                    <Send className="size-3.5" />
+                                                    <span>Undang ke Tim</span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* SUB-TAB 3: TEAM OPTIMIZATION ENGINE RESULTS */}
             {subTab === 'optimal' && teamOptimization && (
                 <div className="flex flex-col gap-4">
-                    <div className="glass-card rounded-2xl p-6 bg-gradient-to-br from-blue-50/50 via-white to-slate-50">
+                    <div className="glass-card rounded-2xl p-6 bg-white border border-slate-200/80">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200">
                             <div>
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold mb-2">
-                                    <Zap className="size-3.5 text-amber-600" />
-                                    <span>Hasil Optimasi Kombinasi Kelompok (TeamOptimizationService)</span>
-                                </div>
                                 <h3 className="text-lg font-black text-slate-900 tracking-tight">
                                     Kombinasi Rekan Komplementer Terbaik
                                 </h3>
-                                <p className="text-xs text-slate-600 mt-1 max-w-2xl leading-relaxed">
-                                    Algoritma mengevaluasi kumpulan kandidat sekelas secara terpadu untuk memaksimalkan cakupan peran dan keahlian tanpa terjadi penumpukan peran sejenis (*anti-clique*).
-                                </p>
                             </div>
 
                             <div className="text-right shrink-0">
@@ -461,16 +451,16 @@ export default function MatchmakingTab({
                             </div>
                             <div className="p-3 rounded-xl bg-white border border-slate-200">
                                 <span className="text-slate-400 block font-semibold text-[10px] uppercase">Keahlian Terpenuhi</span>
-                                <strong className="text-emerald-700 font-bold text-base">{teamOptimization.covered_skills?.length || 0} Keahlian</strong>
+                                <strong className="text-blue-700 font-bold text-base">{teamOptimization.covered_skills?.length || 0} Keahlian</strong>
                             </div>
                             <div className="p-3 rounded-xl bg-white border border-slate-200">
                                 <span className="text-slate-400 block font-semibold text-[10px] uppercase">Slot Lowong</span>
-                                <strong className="text-amber-700 font-bold text-base">{teamOptimization.unfilled_roles?.length || 0} Posisi</strong>
+                                <strong className="text-slate-900 font-bold text-base">{teamOptimization.unfilled_roles?.length || 0} Posisi</strong>
                             </div>
                         </div>
 
                         {/* Explanation */}
-                        <p className="text-xs text-slate-600 mt-4 p-3 rounded-xl bg-white border border-slate-200 leading-relaxed">
+                        <p className="text-xs text-slate-600 mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200/80 leading-relaxed">
                             {teamOptimization.explanation}
                         </p>
                     </div>
@@ -492,7 +482,7 @@ export default function MatchmakingTab({
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
                                             {item.individual_score}% Match
                                         </span>
                                     </div>

@@ -4,31 +4,25 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowRight,
-    Award,
     BookOpen,
     Bot,
     Calendar,
     Check,
     CheckCircle2,
     ChevronRight,
-    Clock,
     Copy,
     ExternalLink,
     FileCode,
     FileText,
     FolderKanban,
     Kanban,
-    Layers,
-    ListChecks,
     Loader2,
-    MessageSquare,
     Paperclip,
     Plus,
     RefreshCw,
     Send,
     Share2,
     Shield,
-    Sparkles,
     Trash2,
     Trophy,
     User,
@@ -36,7 +30,7 @@ import {
     X,
     Zap,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // --- Interfaces ---
 interface TeamItem {
@@ -99,11 +93,8 @@ interface Props {
 const ASSISTANT_METADATA = {
     project: {
         title: 'AI Project Assistant',
-        subtitle: 'Brainstorming ide, problem statement, arsitektur teknis, dan roadmap pengembangan fitur.',
+        subtitle: 'Diskusi ide, arsitektur teknis, dan roadmap fitur proyek.',
         icon: FolderKanban,
-        accent: 'blue',
-        gradient: 'from-blue-600 to-indigo-600',
-        badgeBg: 'bg-blue-50 text-blue-700 border-blue-200/80',
         suggestedPrompts: [
             'Bantu susun Problem Statement yang tajam untuk proyek kami.',
             'Buatkan rincian 5 tugas teknis MVP untuk diterapkan ke Kanban tim.',
@@ -113,11 +104,8 @@ const ASSISTANT_METADATA = {
     },
     competition: {
         title: 'Competition Assistant',
-        subtitle: 'Analisis syarat lomba, kriteria eligibilitas, checklist pendaftaran, dan strategi juara.',
+        subtitle: 'Analisis syarat lomba, kriteria eligibilitas, dan checklist berkas.',
         icon: Trophy,
-        accent: 'amber',
-        gradient: 'from-amber-500 to-orange-600',
-        badgeBg: 'bg-amber-50 text-amber-700 border-amber-200/80',
         suggestedPrompts: [
             'Apa saja berkas wajib dan checklist pendaftaran kompetisi kami?',
             'Bagaimana menyelaraskan solusi kami dengan kriteria penilaian juri?',
@@ -127,29 +115,23 @@ const ASSISTANT_METADATA = {
     },
     team: {
         title: 'Team Assistant',
-        subtitle: 'Distribusi peran, alokasi beban tugas, deteksi hambatan, dan sprint planning tim.',
+        subtitle: 'Distribusi peran, alokasi beban tugas, dan sprint planning tim.',
         icon: Users,
-        accent: 'emerald',
-        gradient: 'from-emerald-600 to-teal-600',
-        badgeBg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
         suggestedPrompts: [
             'Rekomendasikan pembagian peran optimal untuk anggota tim kami.',
             'Buatkan rencana Sprint 2 minggu dan pecah menjadi tugas-tugas Kanban.',
-            'Bantu identifikasi potensi bottleneck dalam pengerjaan proyek.',
+            'Bantu identifikasi potensi hambatan dalam pengerjaan proyek.',
             'Saran format standup mingguan yang efektif agar progres transparan.',
         ],
     },
     document: {
         title: 'Document Reviewer',
-        subtitle: 'Bedah proposal, abstrak, laporan teknis, dan evaluasi kesesuaian terhadap rubrik juri.',
+        subtitle: 'Bedah proposal, abstrak, laporan teknis, dan evaluasi naskah.',
         icon: BookOpen,
-        accent: 'purple',
-        gradient: 'from-purple-600 to-pink-600',
-        badgeBg: 'bg-purple-50 text-purple-700 border-purple-200/80',
         suggestedPrompts: [
             'Review draft abstrak proposal kami berikut dan beri saran perbaikan.',
             'Cek apakah ada bagian krusial yang terlewat dalam dokumen ini.',
-            'Tingkatkan keterbacaan, kejelasan argumen, dan bobot akademik teks ini.',
+            'Tingkatkan keterbacaan, kejelasan argumen, dan struktur tulisan.',
             'Evaluasi kekuatan latar belakang masalah dan justifikasi urgensi.',
         ],
     },
@@ -166,7 +148,7 @@ function parseAgenticAction(content: string): { cleanContent: string; action: Ag
                 cleanContent,
                 action: {
                     type: parsed.type,
-                    title: parsed.title || 'Tindakan Disarankan AI',
+                    title: parsed.title || 'Rekomendasi Tindakan',
                     payload: parsed.payload || parsed,
                 },
             };
@@ -185,7 +167,7 @@ function parseAgenticAction(content: string): { cleanContent: string; action: Ag
                 cleanContent,
                 action: {
                     type: parsed.type,
-                    title: parsed.title || 'Tindakan Disarankan AI',
+                    title: parsed.title || 'Rekomendasi Tindakan',
                     payload: parsed.payload || parsed,
                 },
             };
@@ -214,7 +196,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 // Header 3
                 if (trimmed.startsWith('### ')) {
                     return (
-                        <h4 key={idx} className="text-sm font-bold text-slate-900 dark:text-white pt-2 pb-0.5">
+                        <h4 key={idx} className="text-xs font-bold text-slate-900 dark:text-white pt-2 pb-0.5">
                             {trimmed.slice(4)}
                         </h4>
                     );
@@ -223,7 +205,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 // Header 2
                 if (trimmed.startsWith('## ')) {
                     return (
-                        <h3 key={idx} className="text-base font-extrabold text-slate-900 dark:text-white pt-3 pb-1 border-b border-slate-100 dark:border-slate-800">
+                        <h3 key={idx} className="text-sm font-bold text-slate-900 dark:text-white pt-2.5 pb-1 border-b border-slate-100 dark:border-slate-800">
                             {trimmed.slice(3)}
                         </h3>
                     );
@@ -232,7 +214,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 // Header 1
                 if (trimmed.startsWith('# ')) {
                     return (
-                        <h2 key={idx} className="text-lg font-black text-slate-900 dark:text-white pt-3 pb-1">
+                        <h2 key={idx} className="text-base font-bold text-slate-900 dark:text-white pt-2.5 pb-1">
                             {trimmed.slice(2)}
                         </h2>
                     );
@@ -243,7 +225,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                     const itemText = trimmed.slice(2);
                     return (
                         <div key={idx} className="flex items-start gap-2 pl-1">
-                            <span className="size-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
+                            <span className="size-1.5 rounded-full bg-blue-600 mt-2 shrink-0" />
                             <span className="flex-1">{formatInline(itemText)}</span>
                         </div>
                     );
@@ -254,7 +236,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 if (numMatch) {
                     return (
                         <div key={idx} className="flex items-start gap-2 pl-1">
-                            <span className="text-xs font-bold text-blue-600 dark:text-blue-400 min-w-[18px]">
+                            <span className="text-xs font-semibold text-blue-600 dark:text-blue-400 min-w-[18px]">
                                 {numMatch[1]}.
                             </span>
                             <span className="flex-1">{formatInline(numMatch[2])}</span>
@@ -265,7 +247,7 @@ function MarkdownRenderer({ content }: { content: string }) {
                 // Blockquote
                 if (trimmed.startsWith('> ')) {
                     return (
-                        <div key={idx} className="border-l-3 border-blue-500 bg-blue-50/50 dark:bg-blue-950/20 px-3 py-1.5 rounded-r-lg text-xs italic text-slate-700 dark:text-slate-300">
+                        <div key={idx} className="border-l-2 border-blue-500 bg-blue-50/40 dark:bg-blue-950/20 px-3 py-1.5 rounded-r-lg text-xs italic text-slate-700 dark:text-slate-300">
                             {formatInline(trimmed.slice(2))}
                         </div>
                     );
@@ -641,44 +623,33 @@ export default function AiWorkspaceIndex({
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title={`RAKIT AI Workspace — ${currentMeta.title}`} />
+            <Head title={`AI Workspace — ${currentMeta.title}`} />
 
             {/* Success Toast */}
             {successToast && (
-                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-slate-900 text-white text-xs font-semibold rounded-2xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-bottom-4">
-                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 bg-slate-900 text-white text-xs font-semibold rounded-xl shadow-xl border border-slate-700 animate-in fade-in slide-in-from-bottom-4">
+                    <CheckCircle2 className="size-4 text-blue-400 shrink-0" />
                     <span>{successToast}</span>
                 </div>
             )}
 
             <div className="space-y-4 pt-1 max-w-[1600px] mx-auto">
-                {/* Modern Organic Top Header Bar */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 p-4 bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-3xl shadow-xs transition-all">
-                    <div className="flex items-center gap-3.5">
-                        <div className={`size-11 rounded-2xl bg-gradient-to-tr ${currentMeta.gradient} text-white flex items-center justify-center shadow-md shadow-blue-500/10 shrink-0`}>
-                            <Bot className="size-6" />
+                {/* Clean Top Header Bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3.5 sm:p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs transition-all">
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <div className="size-9 sm:size-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                            <Bot className="size-4.5 sm:size-5" />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h1 className="text-base sm:text-lg font-black tracking-tight text-slate-900">
-                                    RAKIT AI Workspace
-                                </h1>
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/90 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                                    <Sparkles className="size-2.5 text-blue-600" />
-                                    Agentic Copilot
-                                </span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                                Asisten cerdas dengan eksekusi tugas otomatis ke Kanban, Sprint, dan Dokumen Proyek.
-                            </p>
-                        </div>
+                        <h1 className="text-base sm:text-lg font-bold tracking-tight text-slate-900">
+                            AI Workspace
+                        </h1>
                     </div>
 
-                    {/* Team Selection Dropdown & Quota Pill */}
-                    <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+                    {/* Team Selection Dropdown & Quota */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                         {teams.length > 0 && (
-                            <div className="flex items-center gap-1.5 bg-slate-50/90 border border-slate-200/80 rounded-2xl p-1 pr-2">
-                                <span className="text-[11px] font-semibold text-slate-400 pl-2 hidden sm:inline">
+                            <div className="flex items-center gap-1.5 sm:gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex-1 sm:flex-none">
+                                <span className="text-xs font-medium text-slate-500 hidden sm:inline">
                                     Tim:
                                 </span>
                                 <select
@@ -687,7 +658,7 @@ export default function AiWorkspaceIndex({
                                         const tId = e.target.value;
                                         router.get(`/ai-workspace?team_id=${tId}&assistant=${assistantType}`);
                                     }}
-                                    className="text-xs font-bold text-slate-800 bg-transparent rounded-xl px-2 py-1.5 cursor-pointer focus:outline-hidden"
+                                    className="text-xs font-semibold text-slate-800 bg-transparent cursor-pointer focus:outline-hidden w-full sm:w-auto"
                                 >
                                     {teams.map((t) => (
                                         <option key={t.id} value={t.id}>
@@ -698,32 +669,16 @@ export default function AiWorkspaceIndex({
                             </div>
                         )}
 
-                        {/* Quota Pill */}
+                        {/* Quota */}
                         {quotaInfo && (
-                            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs">
-                                <div>
-                                    <div className="text-[9px] font-bold uppercase tracking-wider text-slate-400">
-                                        Kuota AI Tim
-                                    </div>
-                                    <div className="text-xs font-black text-slate-800 tabular-nums">
-                                        {quotaInfo.quota_used} / {quotaInfo.quota_limit} sesi
-                                    </div>
-                                </div>
-                                <div className="h-5 w-px bg-slate-200" />
-                                <div className="text-[10px] text-slate-500">
-                                    {quotaInfo.is_exhausted ? (
-                                        <span className="font-bold text-rose-600">Habis</span>
-                                    ) : (
-                                        <span>
-                                            <strong className="text-blue-600 font-bold">{quotaInfo.quota_remaining}</strong> sisa
-                                        </span>
-                                    )}
-                                    {quotaInfo.reset_in_seconds && (
-                                        <div className="text-[9px] text-slate-400">
-                                            Reset {Math.ceil(quotaInfo.reset_in_seconds / 86400)}h
-                                        </div>
-                                    )}
-                                </div>
+                            <div className="flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                                <span className="text-slate-500 font-medium">Kuota Tim:</span>
+                                <span className="font-semibold text-slate-800 tabular-nums">
+                                    {quotaInfo.quota_used} / {quotaInfo.quota_limit} sesi
+                                </span>
+                                <span className="text-[11px] text-slate-400">
+                                    ({quotaInfo.quota_remaining} tersisa)
+                                </span>
                             </div>
                         )}
                     </div>
@@ -731,52 +686,54 @@ export default function AiWorkspaceIndex({
 
                 {/* 3-Column Clean Responsive Layout */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-                    {/* LEFT PANEL: Assistant Nav & Session History (3 cols) */}
-                    <div className="lg:col-span-3 space-y-3.5">
+                    {/* LEFT PANEL: Assistant Nav & Session History (3 cols - Order 2 on mobile) */}
+                    <div className="order-2 lg:order-1 lg:col-span-3 space-y-3.5">
                         {/* Assistant Modes Card */}
-                        <div className="bg-white border border-slate-200/80 rounded-3xl p-3.5 shadow-xs space-y-1.5">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs space-y-1">
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-2 pt-1 pb-1 block">
-                                Mode Asisten AI
+                                Mode Asisten
                             </span>
-                            {(Object.keys(ASSISTANT_METADATA) as Array<keyof typeof ASSISTANT_METADATA>).map((key) => {
-                                const meta = ASSISTANT_METADATA[key];
-                                const Icon = meta.icon;
-                                const isCurrent = assistantType === key;
-                                return (
-                                    <button
-                                        key={key}
-                                        type="button"
-                                        onClick={() => {
-                                            setAssistantType(key);
-                                            if (!activeSession && activeTeam) {
-                                                router.get(`/ai-workspace?team_id=${activeTeam.id}&assistant=${key}`);
-                                            }
-                                        }}
-                                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer ${
-                                            isCurrent
-                                                ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20'
-                                                : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
-                                        }`}
-                                    >
-                                        <div className={`p-1.5 rounded-xl shrink-0 ${isCurrent ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
-                                            <Icon className="size-4" />
-                                        </div>
-                                        <span className="truncate flex-1">{meta.title}</span>
-                                        {isCurrent && <ChevronRight className="size-3.5 text-white/80 shrink-0" />}
-                                    </button>
-                                );
-                            })}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-1">
+                                {(Object.keys(ASSISTANT_METADATA) as Array<keyof typeof ASSISTANT_METADATA>).map((key) => {
+                                    const meta = ASSISTANT_METADATA[key];
+                                    const Icon = meta.icon;
+                                    const isCurrent = assistantType === key;
+                                    return (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            onClick={() => {
+                                                setAssistantType(key);
+                                                if (!activeSession && activeTeam) {
+                                                    router.get(`/ai-workspace?team_id=${activeTeam.id}&assistant=${key}`);
+                                                }
+                                            }}
+                                            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all text-left cursor-pointer ${
+                                                isCurrent
+                                                    ? 'bg-blue-600 text-white shadow-xs'
+                                                    : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                            }`}
+                                        >
+                                            <div className={`p-1.5 rounded-lg shrink-0 ${isCurrent ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                                <Icon className="size-4" />
+                                            </div>
+                                            <span className="truncate flex-1">{meta.title}</span>
+                                            {isCurrent && <ChevronRight className="size-3.5 text-white/80 shrink-0 hidden sm:inline" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Recent History & New Conversation Action */}
-                        <div className="bg-white border border-slate-200/80 rounded-3xl p-3.5 shadow-xs space-y-3">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-xs space-y-3">
                             <div className="flex items-center justify-between px-1">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                     Riwayat Percakapan
                                 </span>
                                 <Link
                                     href="/ai-workspace/history"
-                                    className="text-[11px] font-bold text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
+                                    className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1"
                                 >
                                     <span>Semua</span>
                                     <ArrowRight className="size-3" />
@@ -788,10 +745,10 @@ export default function AiWorkspaceIndex({
                                 type="button"
                                 onClick={() => handleNewConversation()}
                                 disabled={quotaInfo?.is_exhausted}
-                                className={`w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                                className={`w-full flex items-center justify-center gap-2 py-2 px-3.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                     quotaInfo?.is_exhausted
                                         ? 'bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200'
-                                        : 'bg-slate-900 hover:bg-slate-800 text-white hover:shadow-md'
+                                        : 'bg-slate-900 hover:bg-slate-800 text-white active:scale-[0.99] shadow-xs'
                                 }`}
                                 title={quotaInfo?.is_exhausted ? 'Kuota AI Tim telah habis (10/10).' : 'Buat percakapan baru'}
                             >
@@ -800,10 +757,10 @@ export default function AiWorkspaceIndex({
                             </button>
 
                             {/* Session List */}
-                            <div className="space-y-1.5 max-h-[340px] overflow-y-auto no-scrollbar">
+                            <div className="space-y-1 max-h-[320px] overflow-y-auto no-scrollbar">
                                 {sessions.length === 0 ? (
                                     <div className="py-6 text-center text-xs text-slate-400 px-2">
-                                        Belum ada riwayat diskusi. Mulai percakapan untuk berkolaborasi dengan AI!
+                                        Belum ada riwayat percakapan.
                                     </div>
                                 ) : (
                                     sessions.map((sess) => {
@@ -811,9 +768,9 @@ export default function AiWorkspaceIndex({
                                         return (
                                             <div
                                                 key={sess.id}
-                                                className={`group flex items-center justify-between px-3 py-2 rounded-2xl text-xs transition-all cursor-pointer ${
+                                                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all cursor-pointer ${
                                                     isSelected
-                                                        ? 'bg-blue-50/80 border border-blue-200 text-blue-900 font-bold'
+                                                        ? 'bg-blue-50 border border-blue-200/80 text-blue-900 font-bold'
                                                         : 'hover:bg-slate-50 text-slate-700'
                                                 }`}
                                             >
@@ -821,9 +778,9 @@ export default function AiWorkspaceIndex({
                                                     href={`/ai-workspace?team_id=${activeTeam?.id}&assistant=${sess.assistant_type}&session_id=${sess.id}`}
                                                     className="flex-1 truncate pr-2"
                                                 >
-                                                    <div className="truncate font-semibold text-slate-800">{sess.title}</div>
+                                                    <div className="truncate font-medium text-slate-800">{sess.title}</div>
                                                     <div className="text-[10px] text-slate-400 font-normal capitalize">
-                                                        {sess.assistant_type} • {sess.session_type}
+                                                        {sess.assistant_type}
                                                     </div>
                                                 </Link>
                                                 {sess.is_own && (
@@ -844,30 +801,25 @@ export default function AiWorkspaceIndex({
                         </div>
                     </div>
 
-                    {/* CENTER PANEL: Conversational Area & Agentic Execution (6 cols) */}
-                    <div className="lg:col-span-6 bg-white border border-slate-200/80 rounded-3xl shadow-xs flex flex-col h-[740px] overflow-hidden">
+                    {/* CENTER PANEL: Conversational Area (6 cols - Order 1 on mobile) */}
+                    <div className="order-1 lg:order-2 lg:col-span-6 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col h-[520px] sm:h-[600px] lg:h-[650px] overflow-hidden">
                         {/* Chat Header */}
-                        <div className="px-4 py-3.5 border-b border-slate-200/70 flex items-center justify-between gap-3 bg-white/70 backdrop-blur-xs">
-                            <div className="flex items-center gap-3 min-w-0">
-                                <div className={`p-2 rounded-2xl border ${currentMeta.badgeBg}`}>
+                        <div className="px-3.5 sm:px-4 py-3 border-b border-slate-200/80 flex items-center justify-between gap-3 bg-white">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 shrink-0">
                                     <AssistantIcon className="size-4" />
                                 </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
-                                        {activeSession?.title || currentMeta.title}
-                                    </h2>
-                                    <p className="text-[11px] text-slate-500 truncate">
-                                        {currentMeta.subtitle}
-                                    </p>
-                                </div>
+                                <h2 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
+                                    {activeSession?.title || currentMeta.title}
+                                </h2>
                             </div>
 
                             {/* Session Actions (Share / Live Status) */}
                             {activeSession && (
                                 <div className="flex items-center gap-2 shrink-0">
                                     {isShared ? (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            <Users className="size-3" />
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200/80">
+                                            <Users className="size-3 text-blue-600" />
                                             <span>Dibagikan ke Tim</span>
                                         </span>
                                     ) : (
@@ -875,7 +827,7 @@ export default function AiWorkspaceIndex({
                                             <button
                                                 type="button"
                                                 onClick={handleShareSession}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
                                                 title="Bagikan percakapan ini ke semua anggota tim"
                                             >
                                                 <Share2 className="size-3" />
@@ -889,7 +841,7 @@ export default function AiWorkspaceIndex({
 
                         {/* Error Banner */}
                         {errorMsg && (
-                            <div className="mx-4 mt-3 p-3 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center justify-between gap-2">
+                            <div className="mx-4 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-center justify-between gap-2">
                                 <div className="flex items-center gap-2">
                                     <AlertCircle className="size-4 shrink-0" />
                                     <span>{errorMsg}</span>
@@ -901,19 +853,19 @@ export default function AiWorkspaceIndex({
                         )}
 
                         {/* Messages Scroll Area */}
-                        <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-5 text-xs">
+                        <div className="flex-1 p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
                             {messages.length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-center max-w-md mx-auto p-4 space-y-4">
-                                    <div className={`size-14 rounded-3xl bg-gradient-to-tr ${currentMeta.gradient} text-white flex items-center justify-center shadow-lg shadow-blue-500/10`}>
-                                        <AssistantIcon className="size-7" />
+                                <div className="h-full flex flex-col items-center justify-center text-center max-w-lg mx-auto p-4 space-y-3">
+                                    <div className="size-11 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0 mb-1">
+                                        <AssistantIcon className="size-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-extrabold text-slate-900">{currentMeta.title}</h3>
-                                        <p className="text-xs text-slate-500 mt-1 max-w-sm">
-                                            {currentMeta.subtitle} Ajukan pertanyaan atau gunakan rekomendasi topik berikut:
+                                        <h3 className="text-sm sm:text-base font-bold text-slate-900">{currentMeta.title}</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Pilih saran topik di bawah atau ketik pesan Anda untuk mulai berdiskusi:
                                         </p>
                                     </div>
-                                    <div className="w-full space-y-2 text-left pt-2">
+                                    <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 text-left">
                                         {currentMeta.suggestedPrompts.map((prompt, idx) => (
                                             <button
                                                 key={idx}
@@ -922,10 +874,10 @@ export default function AiWorkspaceIndex({
                                                     setInputMessage(prompt);
                                                     textareaRef.current?.focus();
                                                 }}
-                                                className="w-full p-3 rounded-2xl bg-slate-50 hover:bg-blue-50/70 border border-slate-200/80 hover:border-blue-300 text-slate-700 hover:text-blue-700 text-xs font-medium text-left transition-all cursor-pointer flex items-center gap-2 group"
+                                                className="p-3 rounded-xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200/80 hover:border-blue-200 text-slate-700 hover:text-blue-700 text-xs font-medium text-left transition-all cursor-pointer flex items-start justify-between gap-2 group active:scale-[0.99]"
                                             >
-                                                <Sparkles className="size-3.5 text-blue-500 shrink-0 group-hover:scale-110 transition-transform" />
-                                                <span className="flex-1">{prompt}</span>
+                                                <span className="line-clamp-2 leading-relaxed">{prompt}</span>
+                                                <ArrowRight className="size-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
                                             </button>
                                         ))}
                                     </div>
@@ -944,18 +896,18 @@ export default function AiWorkspaceIndex({
                                             className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
                                         >
                                             {!isUser && (
-                                                <div className={`size-8 rounded-2xl bg-gradient-to-tr ${currentMeta.gradient} text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs`}>
+                                                <div className="size-7 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
                                                     <Bot className="size-4" />
                                                 </div>
                                             )}
 
-                                            <div className="max-w-[88%] space-y-2.5">
+                                            <div className="max-w-[88%] space-y-2">
                                                 {/* Conversational Bubble */}
                                                 <div
-                                                    className={`rounded-3xl px-4.5 py-3.5 leading-relaxed text-xs shadow-2xs ${
+                                                    className={`rounded-2xl px-4 py-3 leading-relaxed text-xs shadow-2xs ${
                                                         isUser
                                                             ? 'bg-blue-600 text-white rounded-tr-xs'
-                                                            : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/80'
+                                                            : 'bg-white text-slate-800 rounded-tl-xs border border-slate-200/90'
                                                     }`}
                                                 >
                                                     {isUser ? (
@@ -966,8 +918,8 @@ export default function AiWorkspaceIndex({
 
                                                     {/* Assistant Message Quick Bar */}
                                                     {!isUser && (
-                                                        <div className="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px]">
-                                                            <div className="flex items-center gap-2">
+                                                        <div className="mt-3 pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[11px]">
+                                                            <div className="flex items-center gap-3">
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleCopy(cleanContent, index)}
@@ -975,46 +927,46 @@ export default function AiWorkspaceIndex({
                                                                 >
                                                                     {copiedIndex === index ? (
                                                                         <>
-                                                                            <Check className="size-3 text-emerald-600" />
-                                                                            <span className="text-emerald-600 font-bold">Tersalin</span>
+                                                                            <Check className="size-3 text-blue-600" />
+                                                                            <span className="text-blue-600 font-semibold">Tersalin</span>
                                                                         </>
                                                                     ) : (
                                                                         <>
                                                                             <Copy className="size-3" />
                                                                             <span>Salin</span>
-                                                                        </>
+                                                                    </>
                                                                     )}
                                                                 </button>
 
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => handleSaveArtifact(cleanContent)}
-                                                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-semibold transition cursor-pointer"
+                                                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-medium transition cursor-pointer"
                                                                 >
                                                                     <FileText className="size-3" />
                                                                     <span>Simpan ke Proyek</span>
                                                                 </button>
                                                             </div>
 
-                                                            {/* Quick Agentic Prompters (if no action attached) */}
+                                                            {/* Quick Prompters */}
                                                             {!action && (
                                                                 <div className="flex items-center gap-1.5">
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleQuickExtractTasks(cleanContent)}
-                                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60 font-semibold transition cursor-pointer"
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/60 font-medium transition cursor-pointer"
                                                                         title="Ekstrak saran ini menjadi tugas Kanban otomatis"
                                                                     >
-                                                                        <Zap className="size-2.5 text-blue-600" />
+                                                                        <Zap className="size-3 text-blue-600" />
                                                                         <span>Jadikan Kanban</span>
                                                                     </button>
                                                                     <button
                                                                         type="button"
                                                                         onClick={() => handleQuickCreateSprint(cleanContent)}
-                                                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60 font-semibold transition cursor-pointer"
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200/80 font-medium transition cursor-pointer"
                                                                         title="Jadikan saran ini Sprint baru di roadmap"
                                                                     >
-                                                                        <Calendar className="size-2.5 text-emerald-600" />
+                                                                        <Calendar className="size-3 text-slate-500" />
                                                                         <span>Jadikan Sprint</span>
                                                                     </button>
                                                                 </div>
@@ -1023,20 +975,20 @@ export default function AiWorkspaceIndex({
                                                     )}
                                                 </div>
 
-                                                {/* Agentic Action Execution Card */}
+                                                {/* Action Execution Card */}
                                                 {!isUser && action && (
-                                                    <div className="rounded-2xl border border-blue-200/90 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/50 p-3.5 shadow-sm space-y-2.5 transition-all">
+                                                    <div className="rounded-xl border border-blue-200 bg-blue-50/30 p-3.5 space-y-2.5">
                                                         <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-blue-100">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className="p-1 rounded-lg bg-blue-600 text-white">
+                                                                <span className="p-1 rounded-md bg-blue-600 text-white">
                                                                     <Zap className="size-3" />
                                                                 </span>
                                                                 <span className="text-xs font-bold text-slate-900">
                                                                     {action.title}
                                                                 </span>
                                                             </div>
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 bg-blue-100/70 px-2 py-0.5 rounded-full">
-                                                                Siap Diterapkan
+                                                            <span className="text-[11px] font-medium text-blue-700">
+                                                                Rekomendasi Tindakan
                                                             </span>
                                                         </div>
 
@@ -1044,30 +996,30 @@ export default function AiWorkspaceIndex({
                                                         {action.type === 'create_tasks' && Array.isArray(action.payload?.tasks) && (
                                                             <div className="space-y-1.5">
                                                                 <div className="text-[11px] font-medium text-slate-600">
-                                                                    Rincian Tugas yang Akan Ditambahkan ke Board Tim ({action.payload.tasks.length} item):
+                                                                    Rincian Tugas Kanban ({action.payload.tasks.length} item):
                                                                 </div>
                                                                 <div className="grid grid-cols-1 gap-1.5 max-h-36 overflow-y-auto pr-1">
                                                                     {action.payload.tasks.map((task: any, tIdx: number) => (
                                                                         <div
                                                                             key={tIdx}
-                                                                            className="flex items-center justify-between gap-2 p-2 rounded-xl bg-white border border-slate-200/80 text-xs shadow-2xs"
+                                                                            className="flex items-center justify-between gap-2 p-2 rounded-lg bg-white border border-slate-200/80 text-xs shadow-2xs"
                                                                         >
                                                                             <div className="min-w-0 flex items-center gap-2">
-                                                                                <span className="size-2 rounded-full bg-blue-500 shrink-0" />
-                                                                                <span className="font-semibold text-slate-800 truncate">
+                                                                                <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
+                                                                                <span className="font-medium text-slate-800 truncate">
                                                                                     {task.title}
                                                                                 </span>
                                                                             </div>
                                                                             <div className="flex items-center gap-1.5 shrink-0">
                                                                                 {task.recommended_role && (
-                                                                                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                                                                                    <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
                                                                                         {task.recommended_role}
                                                                                     </span>
                                                                                 )}
-                                                                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase ${
+                                                                                <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
                                                                                     task.priority === 'urgent' || task.priority === 'high'
                                                                                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                                                                        : 'bg-blue-50 text-blue-700 border border-blue-200'
+                                                                                        : 'bg-slate-100 text-slate-700 border border-slate-200'
                                                                                 }`}>
                                                                                     {task.priority || 'medium'}
                                                                                 </span>
@@ -1079,8 +1031,8 @@ export default function AiWorkspaceIndex({
                                                         )}
 
                                                         {action.type === 'create_sprint' && (
-                                                            <div className="p-2.5 rounded-xl bg-white border border-slate-200/80 space-y-1 text-xs">
-                                                                <div className="font-bold text-slate-900">{action.payload?.title}</div>
+                                                            <div className="p-2.5 rounded-lg bg-white border border-slate-200/80 space-y-1 text-xs">
+                                                                <div className="font-semibold text-slate-900">{action.payload?.title}</div>
                                                                 <div className="text-[11px] text-slate-600">{action.payload?.description}</div>
                                                                 <div className="text-[10px] text-slate-400">
                                                                     Estimasi Durasi: {action.payload?.estimated_days || 14} Hari
@@ -1090,15 +1042,15 @@ export default function AiWorkspaceIndex({
 
                                                         {/* Execution Button / Result Banner */}
                                                         {executedResult ? (
-                                                            <div className="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800">
+                                                            <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800">
                                                                 <div className="flex items-center gap-2">
-                                                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                                                                    <span className="font-bold">{executedResult.message}</span>
+                                                                    <CheckCircle2 className="size-4 text-blue-600 shrink-0" />
+                                                                    <span className="font-medium">{executedResult.message}</span>
                                                                 </div>
                                                                 {activeTeam && (
                                                                     <Link
                                                                         href={`/workspace/${activeTeam.id}`}
-                                                                        className="text-xs font-bold text-emerald-700 hover:underline flex items-center gap-1"
+                                                                        className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
                                                                     >
                                                                         <span>Buka Board</span>
                                                                         <ExternalLink className="size-3" />
@@ -1111,17 +1063,17 @@ export default function AiWorkspaceIndex({
                                                                     type="button"
                                                                     onClick={() => handleExecuteAction(action, actionKey)}
                                                                     disabled={isExecuting}
-                                                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20 transition-all cursor-pointer disabled:opacity-50"
+                                                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
                                                                 >
                                                                     {isExecuting ? (
                                                                         <>
                                                                             <Loader2 className="size-3.5 animate-spin" />
-                                                                            <span>Menerapkan ke Workspace...</span>
+                                                                            <span>Menerapkan...</span>
                                                                         </>
                                                                     ) : (
                                                                         <>
                                                                             <Zap className="size-3.5" />
-                                                                            <span>Konfirmasi & Terapkan ke Workspace Tim</span>
+                                                                            <span>Terapkan ke Workspace Tim</span>
                                                                         </>
                                                                     )}
                                                                 </button>
@@ -1132,7 +1084,7 @@ export default function AiWorkspaceIndex({
                                             </div>
 
                                             {isUser && (
-                                                <div className="size-8 rounded-2xl bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mt-0.5">
+                                                <div className="size-7 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 flex items-center justify-center shrink-0 mt-0.5">
                                                     <User className="size-4" />
                                                 </div>
                                             )}
@@ -1143,12 +1095,12 @@ export default function AiWorkspaceIndex({
 
                             {isLoading && (
                                 <div className="flex gap-3 items-center text-xs text-slate-500">
-                                    <div className={`size-8 rounded-2xl bg-gradient-to-tr ${currentMeta.gradient} text-white flex items-center justify-center shrink-0 animate-pulse`}>
+                                    <div className="size-7 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 animate-pulse">
                                         <Bot className="size-4" />
                                     </div>
-                                    <div className="px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center gap-2.5">
-                                        <RefreshCw className="size-3.5 animate-spin text-blue-600" />
-                                        <span className="font-medium">RAKIT AI sedang berpikir & menyusun solusi...</span>
+                                    <div className="px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center gap-2">
+                                        <RefreshCw className="size-3 animate-spin text-blue-600" />
+                                        <span className="font-medium">Sedang menyusun respon...</span>
                                     </div>
                                 </div>
                             )}
@@ -1158,12 +1110,12 @@ export default function AiWorkspaceIndex({
 
                         {/* File Attachment Pill Preview */}
                         {attachedFile && (
-                            <div className="mx-4 mb-2 px-3.5 py-2 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between text-xs text-blue-800">
+                            <div className="mx-4 mb-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs text-slate-700">
                                 <div className="flex items-center gap-2 truncate">
                                     <FileCode className="size-4 shrink-0 text-blue-600" />
-                                    <span className="truncate font-semibold">{attachedFile.name}</span>
-                                    <span className="text-[10px] text-blue-500">
-                                        ({Math.round(attachedFile.content.length / 1024)} KB teks)
+                                    <span className="truncate font-medium">{attachedFile.name}</span>
+                                    <span className="text-[10px] text-slate-400">
+                                        ({Math.round(attachedFile.content.length / 1024)} KB)
                                     </span>
                                 </div>
                                 <button
@@ -1176,7 +1128,7 @@ export default function AiWorkspaceIndex({
                             </div>
                         )}
 
-                        {/* Modern Floating Chat Input Box */}
+                        {/* Chat Input Box */}
                         <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/50">
                             <form
                                 onSubmit={(e) => {
@@ -1185,7 +1137,7 @@ export default function AiWorkspaceIndex({
                                 }}
                                 className="space-y-2"
                             >
-                                <div className="flex items-end gap-2 bg-white border border-slate-200/90 rounded-2xl p-2 shadow-xs focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10 transition-all">
+                                <div className="flex items-end gap-2 bg-white border border-slate-200 rounded-xl p-2 shadow-2xs focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/10 transition-all">
                                     <input
                                         type="file"
                                         ref={fileInputRef}
@@ -1196,8 +1148,8 @@ export default function AiWorkspaceIndex({
                                     <button
                                         type="button"
                                         onClick={() => fileInputRef.current?.click()}
-                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-xl transition cursor-pointer"
-                                        title="Lampirkan dokumen teks untuk direview"
+                                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-lg transition cursor-pointer"
+                                        title="Lampirkan dokumen"
                                     >
                                         <Paperclip className="size-4" />
                                     </button>
@@ -1214,39 +1166,35 @@ export default function AiWorkspaceIndex({
                                             }
                                         }}
                                         placeholder={`Tanya ${currentMeta.title}... (Tekan Enter untuk kirim)`}
-                                        className="flex-1 bg-transparent border-0 focus:outline-hidden text-xs text-slate-800 placeholder:text-slate-400 resize-none py-2 px-1 max-h-32"
+                                        className="flex-1 bg-transparent border-0 focus:outline-hidden text-xs text-slate-800 placeholder:text-slate-400 resize-none py-1.5 px-1 max-h-32"
                                     />
 
                                     <button
                                         type="submit"
                                         disabled={(!inputMessage.trim() && !attachedFile) || isLoading}
-                                        className={`p-2.5 rounded-xl transition-all cursor-pointer shrink-0 ${
+                                        className={`p-2 rounded-lg transition-all cursor-pointer shrink-0 ${
                                             (!inputMessage.trim() && !attachedFile) || isLoading
                                                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm shadow-blue-500/20'
+                                                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-2xs'
                                         }`}
                                     >
                                         <Send className="size-4" />
                                     </button>
                                 </div>
-                                <div className="flex items-center justify-between text-[10px] text-slate-400 px-2">
-                                    <span>Gunakan <kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded">Shift + Enter</kbd> untuk baris baru</span>
-                                    <span>Mendukung eksekusi tindakan & lampiran dokumen</span>
+                                <div className="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                                    <span>Tekan <kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[10px]">Enter</kbd> untuk kirim, <kbd className="font-mono bg-slate-100 px-1 py-0.5 rounded text-[10px]">Shift + Enter</kbd> baris baru</span>
                                 </div>
                             </form>
                         </div>
                     </div>
 
-                    {/* RIGHT PANEL: Live Active Context & Safety Guardrail (3 cols) */}
-                    <div className="lg:col-span-3 space-y-3.5">
+                    {/* RIGHT PANEL: Live Active Context (3 cols - Order 3 on mobile) */}
+                    <div className="order-3 lg:order-3 lg:col-span-3 space-y-3.5">
                         {/* Live Context Card */}
-                        <div className="bg-white border border-slate-200/80 rounded-3xl p-4 shadow-xs space-y-3 text-xs">
-                            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 sm:p-4 shadow-xs space-y-3 text-xs">
+                            <div className="pb-2 border-b border-slate-100">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Konteks Live Tim
-                                </span>
-                                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                                    Terhubung
+                                    Konteks Tim
                                 </span>
                             </div>
 
@@ -1258,29 +1206,29 @@ export default function AiWorkspaceIndex({
                                     </div>
 
                                     {activeTeam.project && (
-                                        <div className="p-2.5 rounded-2xl bg-blue-50/50 border border-blue-100">
-                                            <div className="text-[10px] text-blue-600 font-semibold">Proyek Terkait:</div>
+                                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                                            <div className="text-[10px] text-slate-400 font-medium">Proyek Terkait:</div>
                                             <Link
                                                 href={`/projects/${activeTeam.project.slug || activeTeam.project.id}`}
-                                                className="font-bold text-slate-800 hover:text-blue-600 hover:underline flex items-center justify-between gap-1 mt-0.5"
+                                                className="font-semibold text-slate-800 hover:text-blue-600 hover:underline flex items-center justify-between gap-1 mt-0.5"
                                             >
                                                 <span className="truncate">{activeTeam.project.title}</span>
-                                                <ArrowRight className="size-3 text-blue-600 shrink-0" />
+                                                <ArrowRight className="size-3 text-slate-400 shrink-0" />
                                             </Link>
                                         </div>
                                     )}
 
                                     {activeTeam.competitions && activeTeam.competitions.length > 0 && (
-                                        <div className="p-2.5 rounded-2xl bg-amber-50/50 border border-amber-100">
-                                            <div className="text-[10px] text-amber-700 font-semibold">Target Kompetisi:</div>
+                                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                                            <div className="text-[10px] text-slate-400 font-medium">Target Kompetisi:</div>
                                             <div className="space-y-1 mt-1">
                                                 {activeTeam.competitions.map((c) => (
                                                     <Link
                                                         key={c.id}
                                                         href={`/competitions/${c.slug || c.id}`}
-                                                        className="block text-xs font-bold text-slate-800 hover:text-amber-800 truncate"
+                                                        className="block text-xs font-semibold text-slate-800 hover:text-blue-600 truncate"
                                                     >
-                                                        🏆 {c.name}
+                                                        {c.name}
                                                     </Link>
                                                 ))}
                                             </div>
@@ -1288,14 +1236,14 @@ export default function AiWorkspaceIndex({
                                     )}
 
                                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-slate-600">
-                                        <span className="text-[11px]">Anggota Tim:</span>
-                                        <span className="font-bold text-slate-800">{activeTeam.members?.length || 1} Mahasiswa</span>
+                                        <span className="text-xs">Anggota Tim:</span>
+                                        <span className="font-semibold text-slate-800">{activeTeam.members?.length || 1} Mahasiswa</span>
                                     </div>
 
                                     {/* Direct Kanban Shortcut */}
                                     <Link
                                         href={`/workspace/${activeTeam.id}`}
-                                        className="w-full py-2 px-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
+                                        className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-[0.99] text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
                                     >
                                         <Kanban className="size-3.5" />
                                         <span>Buka Papan Kanban Tim</span>
@@ -1308,14 +1256,14 @@ export default function AiWorkspaceIndex({
                             )}
                         </div>
 
-                        {/* Safety & Agentic Guardrail Notice */}
-                        <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-4 space-y-2 text-xs text-slate-600">
-                            <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
-                                <Shield className="size-4 text-blue-600" />
-                                <span>Agentic Safety Guardrail</span>
+                        {/* Safety Footnote */}
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-1 text-xs text-slate-600">
+                            <div className="flex items-center gap-1.5 font-semibold text-slate-900 text-xs">
+                                <Shield className="size-3.5 text-slate-500" />
+                                <span>Keamanan Data Tim</span>
                             </div>
                             <p className="text-[11px] leading-relaxed text-slate-500">
-                                RAKIT AI dapat merekomendasikan dan memformulasikan tugas teknis secara otomatis, namun data tugas dan roadmap tim <strong>tidak akan pernah diterapkan tanpa klik konfirmasi Anda</strong>.
+                                AI hanya memberikan rekomendasi tugas dan strategi. Perubahan data tim atau papan Kanban tidak akan diterapkan tanpa persetujuan Anda.
                             </p>
                         </div>
                     </div>

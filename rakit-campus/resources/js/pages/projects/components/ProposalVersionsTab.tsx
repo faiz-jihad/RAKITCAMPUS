@@ -19,15 +19,12 @@ export default function ProposalVersionsTab({ project, livingProposal }: Props) 
                         <GitBranch className="size-5 text-blue-600" />
                         <span>Riwayat Versi Living Proposal (*Immutable History*)</span>
                     </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                        Setiap revisi tersimpan permanen dan tidak dapat diubah kembali. Anda dapat meninjau evolusi dokumen atau membandingkan perbedaan.
-                    </p>
                 </div>
 
                 {versions.length > 1 && (
                     <button
                         onClick={() => setShowCompareModal(true)}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer shrink-0"
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-bold transition-all duration-200 shadow-xs hover:shadow-md cursor-pointer shrink-0"
                     >
                         <GitCompare className="size-4" />
                         <span>Bandingkan Antar Versi</span>
@@ -43,20 +40,20 @@ export default function ProposalVersionsTab({ project, livingProposal }: Props) 
                         className="glass-card rounded-2xl p-5 shadow-xs flex flex-col gap-3 relative overflow-hidden"
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2.5">
-                                <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-blue-600 text-white">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs">
                                     Versi {v.version_number}
                                 </span>
                                 <h4 className="text-sm font-bold text-slate-900">
                                     {v.title}
                                 </h4>
                                 {v.is_locked ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                         <Lock className="size-3 text-slate-400" />
                                         <span>Terkunci</span>
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                         <span>Versi Aktif</span>
                                     </span>
                                 )}
@@ -64,14 +61,14 @@ export default function ProposalVersionsTab({ project, livingProposal }: Props) 
 
                             <div className="flex items-center gap-2 text-xs">
                                 <span
-                                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border uppercase ${
+                                    className={`px-3 py-0.5 rounded-full text-[10px] font-bold border uppercase ${
                                         v.status === 'approved'
-                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
                                             : v.status === 'submitted'
                                             ? 'bg-blue-50 text-blue-700 border-blue-200'
                                             : v.status === 'revision_requested'
-                                            ? 'bg-amber-50 text-amber-700 border-amber-200'
-                                            : 'bg-slate-100 text-slate-700 border-slate-200'
+                                            ? 'bg-slate-100 text-slate-700 border-slate-200'
+                                            : 'bg-slate-100 text-slate-600 border-slate-200'
                                     }`}
                                 >
                                     {v.status}

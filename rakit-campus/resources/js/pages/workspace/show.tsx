@@ -97,6 +97,11 @@ export default function WorkspaceShow({
     const [isTaskModalOpen, setTaskModalOpen] = useState(false);
     const [isEditModalOpen, setEditModalOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState<any>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<{
+        type: 'sprint' | 'task';
+        id: number;
+        title: string;
+    } | null>(null);
 
     // Create Task form
     const [taskTitle, setTaskTitle] = useState('');
@@ -206,11 +211,7 @@ export default function WorkspaceShow({
         }
     };
 
-    const handleDeleteSprint = async (mId: number, mTitle: string) => {
-        if (!confirm(`Hapus sprint "${mTitle}"? Semua tugas terkait akan tetap tersimpan di board (tugas dilepas dari sprint ini).`)) {
-            return;
-        }
-
+    const executeDeleteSprint = async (mId: number) => {
         try {
             const res = await fetch(`/workspace/${team.id}/milestones/${mId}`, {
                 method: 'DELETE',
@@ -234,12 +235,14 @@ export default function WorkspaceShow({
                     });
                     return next;
                 });
-            } else {
-                alert(json.message || 'Gagal menghapus sprint.');
             }
         } catch {
-            alert('Terjadi kendala saat menghapus sprint.');
+            // handle
         }
+    };
+
+    const handleDeleteSprint = (mId: number, mTitle: string) => {
+        setDeleteConfirm({ type: 'sprint', id: mId, title: mTitle });
     };
 
     // Search and View
@@ -404,9 +407,7 @@ export default function WorkspaceShow({
     };
 
     // Delete Task
-    const handleDeleteTask = async (taskId: number) => {
-        if (!confirm('Hapus kartu tugas ini dari papan Kanban?')) return;
-
+    const executeDeleteTask = async (taskId: number) => {
         try {
             const res = await fetch(`/workspace/${team.id}/tasks/${taskId}`, {
                 method: 'DELETE',
@@ -427,12 +428,14 @@ export default function WorkspaceShow({
                     return nextKanban;
                 });
                 if (isEditModalOpen) setEditModalOpen(false);
-            } else {
-                alert('Gagal menghapus tugas.');
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            // handle
         }
+    };
+
+    const handleDeleteTask = (taskId: number) => {
+        setDeleteConfirm({ type: 'task', id: taskId, title: '' });
     };
 
     // Move Status
@@ -621,17 +624,17 @@ export default function WorkspaceShow({
     };
 
     const columns = [
-        { key: 'todo', label: 'To Do', colorDot: 'bg-slate-400', badgeColor: 'bg-slate-200 text-slate-700' },
-        { key: 'in_progress', label: 'In Process', colorDot: 'bg-blue-500', badgeColor: 'bg-blue-100 text-blue-700' },
-        { key: 'in_review', label: 'In Review', colorDot: 'bg-amber-500', badgeColor: 'bg-amber-100 text-amber-800' },
-        { key: 'completed', label: 'Completed', colorDot: 'bg-emerald-500', badgeColor: 'bg-emerald-100 text-emerald-800' },
+        { key: 'todo', label: 'To Do', colorDot: 'bg-slate-400', badgeColor: 'bg-white text-slate-600 border border-slate-200/80' },
+        { key: 'in_progress', label: 'In Process', colorDot: 'bg-blue-600', badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200/80' },
+        { key: 'in_review', label: 'In Review', colorDot: 'bg-amber-500', badgeColor: 'bg-amber-50 text-amber-700 border border-amber-200/80' },
+        { key: 'completed', label: 'Completed', colorDot: 'bg-emerald-600', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' },
     ];
 
     const priorityBadge: Record<string, { label: string; cls: string; dot: string }> = {
-        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200', dot: 'bg-rose-500' },
-        high: { label: 'High Priority', cls: 'bg-amber-50 text-amber-800 border-amber-200', dot: 'bg-amber-500' },
-        medium: { label: 'Standard', cls: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-        low: { label: 'Low', cls: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
+        high: { label: 'High', cls: 'bg-amber-50 text-amber-700 border-amber-200/80', dot: 'bg-amber-500' },
+        medium: { label: 'Medium', cls: 'bg-blue-50 text-blue-700 border-blue-200/80', dot: 'bg-blue-600' },
+        low: { label: 'Low', cls: 'bg-slate-50 text-slate-600 border-slate-200/80', dot: 'bg-slate-400' },
     };
 
     const filterTasks = (list: any[]) => {
@@ -649,9 +652,9 @@ export default function WorkspaceShow({
         <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
             <Head title={`Workspace & Roadmap — ${team.name}`} />
 
-            <div className="space-y-6 pt-2">
+            <div className="pt-4 sm:pt-6 pb-12 flex flex-col gap-6 sm:gap-7">
                 {/* Top Row: Back & Team Identity */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
                         <div className="flex items-center gap-3">
                             <Link
                                 href="/workspace"
@@ -666,32 +669,19 @@ export default function WorkspaceShow({
                                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                                     {team.name}
                                 </h1>
-                                {project && (
-                                    <Link
-                                        href={`/projects/${project.id}`}
-                                        className="text-xs px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 font-semibold hover:underline border border-blue-200/80"
-                                    >
-                                        Proyek: {project.title}
-                                    </Link>
-                                )}
                             </div>
                         </div>
 
                         {/* Top Action Pills: Capacity, GitHub status, & Add Task */}
                         <div className="flex flex-wrap items-center gap-3">
                             {/* Capacity Pill */}
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
                                 <Users className="size-3.5 text-slate-400" />
-                                <span>{team.members?.length || 1} / {team.capacity} Anggota</span>
-                                {isFull ? (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-black">
-                                        Penuh
-                                    </span>
-                                ) : (
-                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 font-black">
-                                        Slot Terbuka
-                                    </span>
-                                )}
+                                <span className="font-bold text-slate-900">{team.members?.length || 1}/{team.capacity} Anggota</span>
+                                <span className="text-slate-300">·</span>
+                                <span className={`font-semibold ${isFull ? 'text-blue-600' : 'text-slate-500'}`}>
+                                    {isFull ? 'Penuh' : 'Slot Terbuka'}
+                                </span>
                             </span>
 
                             {/* GitHub Status Pill */}
@@ -733,8 +723,8 @@ export default function WorkspaceShow({
                     </div>
 
                     {/* Navigation Tabs Bar */}
-                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 gap-2">
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 sm:pb-4 pt-1 gap-3">
+                        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
                             <button
                                 type="button"
                                 onClick={() => setMainTab('kanban')}
@@ -813,17 +803,12 @@ export default function WorkspaceShow({
                         <div className="bg-white rounded-xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 mb-5">
                                 <div className="flex items-center gap-3">
-                                    <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
-                                        <GraduationCap className="size-5" />
+                                    <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                        <GraduationCap className="size-4" />
                                     </div>
-                                    <div>
-                                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                                            Evaluasi & Catatan Penilaian Dosen
-                                        </h2>
-                                        <p className="text-xs text-slate-500 mt-0.5">
-                                            Tinjau progres tugas tim mahasiswa, berikan nilai, dan tulis catatan perbaikan.
-                                        </p>
-                                    </div>
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                                        Evaluasi & Catatan Penilaian Dosen
+                                    </h2>
                                 </div>
 
                                 {/* Overall Progress Gauge */}
@@ -935,35 +920,30 @@ export default function WorkspaceShow({
 
                     {/* Object Storage Quota Widget */}
                     {storageQuota && (
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                                <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
-                                    <HardDrive className="size-5" />
+                        <div className="bg-white rounded-xl border border-slate-200/80 px-4 py-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/70 text-blue-600 flex items-center justify-center shrink-0">
+                                    <HardDrive className="size-4" />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h3 className="text-xs font-bold text-slate-900">
-                                            Kapasitas Penyimpanan Berkas Tim (Object Storage)
-                                        </h3>
-                                        <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
-                                            Batas 70 MB / Tim
-                                        </span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 mt-0.5">
-                                        Terpakai <strong className="text-slate-800">{storageQuota.used_mb} MB</strong> dari kuota maksimal <strong className="text-slate-800">{storageQuota.max_mb} MB</strong> ({storageQuota.percent_used}% terpakai, sisa {storageQuota.remaining_mb} MB)
-                                    </p>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-xs font-bold text-slate-900">
+                                        Penyimpanan Berkas Tim
+                                    </h3>
+                                    <span className="text-xs font-semibold text-slate-500">
+                                        ({storageQuota.used_mb} / {storageQuota.max_mb} MB)
+                                    </span>
                                 </div>
                             </div>
-                            <div className="w-full sm:w-48 flex items-center gap-2.5">
-                                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                            <div className="w-full sm:w-56 flex items-center gap-2.5">
+                                <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/60">
                                     <div
-                                        className={`h-2 rounded-full transition-all duration-500 ${
+                                        className={`h-1.5 rounded-full transition-all duration-500 ${
                                             storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
                                         }`}
                                         style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
                                     />
                                 </div>
-                                <span className="text-[11px] font-mono font-bold text-slate-700 shrink-0">
+                                <span className="text-[11px] font-mono font-bold text-slate-600 shrink-0">
                                     {storageQuota.percent_used}%
                                 </span>
                             </div>
@@ -971,31 +951,21 @@ export default function WorkspaceShow({
                     )}
 
                     {/* 2. ROADMAP & JADWAL PENGERJAAN TIM */}
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-5 sm:p-6 shadow-2xs">
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
                         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                             <div className="flex items-center gap-3">
-                                <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
-                                    <Bot className="size-5" />
+                                <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Calendar className="size-4" />
                                 </div>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
-                                            Roadmap & Jadwal Pengerjaan Tim
-                                        </h2>
-                                        <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
-                                            Tahapan Sprint
-                                        </span>
-                                    </div>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Target pengerjaan bertahap dan pembagian tugas otomatis sesuai keahlian tiap anggota tim.
-                                    </p>
-                                </div>
+                                <h2 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                                    Roadmap & Jadwal Pengerjaan Tim
+                                </h2>
                             </div>
 
                             <div className="flex items-center gap-2 shrink-0">
                                 <Link
                                     href={`/ai-workspace?team_id=${team.id}`}
-                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-blue-50 hover:bg-blue-100 border border-blue-200/80 text-blue-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
                                 >
                                     <Bot className="size-3.5 text-blue-600" />
                                     <span>AI Workspace</span>
@@ -1011,9 +981,9 @@ export default function WorkspaceShow({
                                 <button
                                     onClick={handleTriggerAiAgent}
                                     disabled={orchestrating}
-                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
+                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
                                 >
-                                    <Wand2 className="size-3.5 text-blue-400" />
+                                    <Wand2 className="size-3.5 text-white" />
                                     <span>{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
                                 </button>
                             </div>
@@ -1022,26 +992,23 @@ export default function WorkspaceShow({
                         {/* Visual Milestones / Sprint Cards (Trello Roadmap) */}
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
                             {milestones.length === 0 ? (
-                                <div className="col-span-full py-8 px-4 text-center border border-dashed border-neutral-200 rounded-2xl bg-neutral-50/50">
-                                    <Calendar className="size-8 text-neutral-400 mx-auto mb-2" />
-                                    <p className="text-xs font-bold text-neutral-700">Belum ada roadmap pengerjaan</p>
-                                    <p className="text-[11px] text-neutral-500 mt-0.5 max-w-sm mx-auto mb-3">
-                                        Klik tombol "Tambah Sprint" atau "Bagi Tugas & Roadmap Otomatis" di atas untuk membuat tahapan pengerjaan tim.
-                                    </p>
+                                <div className="col-span-full py-8 px-4 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                                    <Calendar className="size-8 text-slate-400 mx-auto mb-2" />
+                                    <p className="text-xs font-bold text-slate-700">Belum ada roadmap pengerjaan</p>
                                 </div>
                             ) : (
                                 milestones.map((m: any, idx: number) => (
                                     <div
                                         key={m.id || idx}
-                                        className="group p-4 rounded-2xl border border-purple-100/80 bg-gradient-to-b from-[#FAF8FF] to-white flex flex-col justify-between shadow-2xs hover:shadow-xs transition relative"
+                                        className="group p-4 rounded-xl border border-slate-200/90 bg-white flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-slate-300 transition relative"
                                     >
                                         <div>
                                             <div className="flex items-center justify-between gap-1 mb-2">
-                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB] font-extrabold">
+                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 font-bold">
                                                     Sprint {idx + 1}
                                                 </span>
                                                 <div className="flex items-center gap-1">
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white border border-neutral-200 text-neutral-600 font-semibold capitalize">
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 text-slate-600 font-semibold capitalize">
                                                         {m.status?.replace('_', ' ') || 'Planned'}
                                                     </span>
                                                     {(isLeader || isLecturer) && (
@@ -1067,30 +1034,30 @@ export default function WorkspaceShow({
                                                 </div>
                                             </div>
 
-                                            <h4 className="text-xs font-bold text-[#0E121B] line-clamp-1 leading-snug">
+                                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1 leading-snug">
                                                 {m.title}
                                             </h4>
 
                                             {m.description && (
-                                                <p className="text-[11px] text-neutral-500 mt-1 line-clamp-2 leading-relaxed">
+                                                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
                                                     {m.description}
                                                 </p>
                                             )}
                                         </div>
 
-                                        <div className="mt-4 pt-3 border-t border-purple-100/60">
-                                            <div className="flex items-center justify-between text-[10px] text-neutral-500 mb-1">
+                                        <div className="mt-4 pt-3 border-t border-slate-100">
+                                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
                                                 <span className="flex items-center gap-1">
-                                                    <Clock className="size-3 text-neutral-400" />
+                                                    <Clock className="size-3 text-slate-400" />
                                                     <span>{m.due_on || 'Tenggat Waktu'}</span>
                                                 </span>
-                                                <span className="font-bold text-neutral-800">
+                                                <span className="font-bold text-slate-800">
                                                     {m.completed_tasks_count || 0}/{m.tasks_count || 0} Selesai
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/40">
                                                 <div
-                                                    className="bg-[#2563EB] h-1.5 rounded-full transition-all duration-500"
+                                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
                                                     style={{ width: `${m.progress || 0}%` }}
                                                 />
                                             </div>
@@ -1102,15 +1069,15 @@ export default function WorkspaceShow({
                     </div>
 
                     {/* 3. TASK BOARDS CONTROL BAR */}
-                    <div className="bg-white border border-neutral-200/80 rounded-3xl p-4 sm:p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:px-4 sm:py-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
                         {/* Left: View Tabs */}
-                        <div className="flex items-center gap-1.5 bg-neutral-100/70 p-1 rounded-full text-xs self-start">
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs self-start">
                             <button
                                 onClick={() => setActiveView('board')}
-                                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold transition ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition cursor-pointer ${
                                     activeView === 'board'
-                                        ? 'bg-white shadow-xs text-[#2563EB]'
-                                        : 'text-neutral-600 hover:text-neutral-900'
+                                        ? 'bg-white shadow-2xs text-blue-600'
+                                        : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
                                 <LayoutGrid className="size-3.5" />
@@ -1118,10 +1085,10 @@ export default function WorkspaceShow({
                             </button>
                             <button
                                 onClick={() => setActiveView('list')}
-                                className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full font-semibold transition ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition cursor-pointer ${
                                     activeView === 'list'
-                                        ? 'bg-white shadow-xs text-[#2563EB]'
-                                        : 'text-neutral-600 hover:text-neutral-900'
+                                        ? 'bg-white shadow-2xs text-blue-600'
+                                        : 'text-slate-600 hover:text-slate-900'
                                 }`}
                             >
                                 <List className="size-3.5" />
@@ -1132,13 +1099,13 @@ export default function WorkspaceShow({
                         {/* Right: Search Filter */}
                         <div className="flex items-center gap-3 w-full md:w-auto">
                             <div className="relative flex-1 md:w-64">
-                                <Search className="size-3.5 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
+                                <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     placeholder="Cari tugas di papan..."
-                                    className="w-full pl-9 pr-3.5 py-1.5 rounded-full border border-neutral-200/80 text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                    className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-slate-200/80 bg-slate-50 focus:bg-white text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                 />
                             </div>
                         </div>
@@ -1158,22 +1125,22 @@ export default function WorkspaceShow({
                                         onDragOver={(e) => handleDragOver(e, col.key)}
                                         onDragLeave={(e) => handleDragLeave(e, col.key)}
                                         onDrop={(e) => handleDrop(e, col.key)}
-                                        className={`rounded-2xl p-3 flex flex-col gap-2.5 min-h-[480px] transition-all duration-150 ${
+                                        className={`rounded-xl p-3 flex flex-col gap-2.5 min-h-[160px] sm:min-h-[480px] transition-all duration-150 ${
                                             isDragTarget
                                                 ? 'bg-blue-50/90 border-2 border-dashed border-blue-400 ring-2 ring-blue-500/20'
-                                                : 'bg-[#F1F2F4] border border-slate-200/80 shadow-2xs'
+                                                : 'bg-slate-50/80 border border-slate-200/80 shadow-2xs'
                                         }`}
                                     >
                                         {/* Column Header */}
                                         <div className="flex items-center justify-between px-1.5 py-1">
                                             <div className="flex items-center gap-2">
                                                 <span className={`size-2 rounded-full ${col.colorDot}`} />
-                                                <h3 className="text-xs font-bold text-slate-800 tracking-tight">
+                                                <h3 className="text-xs font-bold text-slate-900 tracking-tight">
                                                     {col.label}
                                                 </h3>
                                             </div>
                                             <div className="flex items-center gap-1.5">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${col.badgeColor}`}>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${col.badgeColor}`}>
                                                     {tasks.length}
                                                 </span>
                                                 <button
@@ -1192,7 +1159,7 @@ export default function WorkspaceShow({
                                         {/* Cards Stack */}
                                         <div className="flex flex-col gap-2.5 flex-1">
                                             {tasks.length === 0 && !isAddingHere && (
-                                                <div className="h-28 flex flex-col items-center justify-center p-3 text-center border border-dashed border-slate-300 rounded-xl text-slate-400">
+                                                <div className="h-28 flex flex-col items-center justify-center p-3 text-center border border-dashed border-slate-200 rounded-xl text-slate-400">
                                                     <span className="text-[11px] font-medium">
                                                         Belum ada kartu di kolom ini
                                                     </span>
@@ -1218,7 +1185,7 @@ export default function WorkspaceShow({
                                                         draggable
                                                         onDragStart={(e) => handleDragStart(e, task.id, col.key)}
                                                         onClick={() => handleOpenEditModal(task)}
-                                                        className={`group bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:shadow-md hover:border-blue-300 transition-all cursor-pointer relative flex flex-col gap-2 select-none ${
+                                                        className={`group bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all cursor-pointer relative flex flex-col gap-2 select-none ${
                                                             isBeingDragged ? 'opacity-40 scale-95 border-blue-400' : ''
                                                         }`}
                                                     >
@@ -1287,7 +1254,7 @@ export default function WorkspaceShow({
                                                             </div>
 
                                                             {task.milestone && (
-                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[100px]">
+                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[100px]">
                                                                     {task.milestone.title?.split(':')[0] || task.milestone.title}
                                                                 </span>
                                                             )}
@@ -1298,7 +1265,7 @@ export default function WorkspaceShow({
 
                                             {/* Inline Card Composer (Trello Style) */}
                                             {isAddingHere && (
-                                                <div className="bg-white rounded-xl p-3 border border-blue-400 shadow-sm flex flex-col gap-2 animate-in fade-in">
+                                                <div className="bg-white rounded-xl p-3 border border-blue-400 shadow-2xs flex flex-col gap-2 animate-in fade-in">
                                                     <textarea
                                                         autoFocus
                                                         value={inlineTitle}
@@ -1344,7 +1311,7 @@ export default function WorkspaceShow({
                                                     setInlineAddingCol(col.key);
                                                     setInlineTitle('');
                                                 }}
-                                                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-200/70 transition w-full text-left cursor-pointer"
+                                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition w-full text-left cursor-pointer"
                                             >
                                                 <Plus className="size-4 text-slate-500" />
                                                 <span>Tambah kartu</span>
@@ -1356,15 +1323,15 @@ export default function WorkspaceShow({
                         </div>
                     ) : (
                         /* List View */
-                        <div className="bg-white border border-neutral-200/80 rounded-3xl p-6 shadow-sm">
-                            <div className="flex flex-col gap-3">
+                        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
+                            <div className="flex flex-col gap-4">
                                 {columns.map((col) => {
                                     const tasks = filterTasks((kanban as any)[col.key] || []);
                                     return (
                                         <div key={col.key} className="flex flex-col gap-2">
-                                            <div className="flex items-center gap-2 py-2 border-b border-neutral-100">
-                                                <span className="text-xs font-bold text-neutral-900">{col.label}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.2 rounded-full ${col.badgeColor}`}>
+                                            <div className="flex items-center gap-2 py-1.5 border-b border-slate-100">
+                                                <span className="text-xs font-bold text-slate-900">{col.label}</span>
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${col.badgeColor}`}>
                                                     {tasks.length}
                                                 </span>
                                             </div>
@@ -1372,23 +1339,25 @@ export default function WorkspaceShow({
                                             {tasks.map((task: any) => (
                                                 <div
                                                     key={task.id}
-                                                    className="p-3.5 border border-neutral-200/70 rounded-2xl flex items-center justify-between gap-3 hover:bg-neutral-50/70 transition"
+                                                    className="p-3 border border-slate-200/70 rounded-xl flex items-center justify-between gap-3 hover:bg-slate-50 transition"
                                                 >
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="size-2 rounded-full bg-[#2563EB]" />
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="size-2 rounded-full bg-blue-600 shrink-0" />
                                                         <div>
-                                                            <h4 className="text-xs font-bold text-neutral-900">{task.title}</h4>
-                                                            <p className="text-[11px] text-neutral-500">{task.description}</p>
+                                                            <h4 className="text-xs font-bold text-slate-900">{task.title}</h4>
+                                                            {task.description && (
+                                                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
+                                                            )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="text-[11px] text-neutral-600 font-medium">
+                                                    <div className="flex items-center gap-2.5">
+                                                        <span className="text-[11px] text-slate-600 font-medium">
                                                             {task.assignee?.name || 'Unassigned'}
                                                         </span>
                                                         <button
                                                             onClick={() => handleOpenEditModal(task)}
-                                                            className="p-1 rounded text-neutral-400 hover:text-[#2563EB] transition"
+                                                            className="p-1 rounded text-slate-400 hover:text-blue-600 transition cursor-pointer"
                                                             title="Edit Tugas"
                                                         >
                                                             <Edit3 className="size-3.5" />
@@ -1396,7 +1365,7 @@ export default function WorkspaceShow({
                                                         <select
                                                             value={task.status}
                                                             onChange={(e) => handleMoveStatus(task, e.target.value)}
-                                                            className="text-[10px] border border-neutral-200 rounded-full px-2 py-1 text-neutral-700 outline-none"
+                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer"
                                                         >
                                                             <option value="todo">To Do</option>
                                                             <option value="in_progress">In Process</option>
@@ -1419,10 +1388,10 @@ export default function WorkspaceShow({
                 {/* MODAL: TAMBAH TUGAS BARU */}
                 {isTaskModalOpen && (
                     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 relative">
+                        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 relative">
                             <button
                                 onClick={() => setTaskModalOpen(false)}
-                                className="absolute top-6 right-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+                                className="absolute top-5 right-5 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
@@ -1431,15 +1400,12 @@ export default function WorkspaceShow({
                                 <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
                                     <Kanban className="size-4" />
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-bold text-slate-900">Buat Tugas Baru</h3>
-                                    <p className="text-xs text-slate-500">Papan: {team.name}</p>
-                                </div>
+                                <h3 className="text-base font-bold text-slate-900">Buat Tugas Baru</h3>
                             </div>
 
                             <form onSubmit={handleCreateTask} className="mt-5 flex flex-col gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Judul Tugas *
                                     </label>
                                     <input
@@ -1448,12 +1414,12 @@ export default function WorkspaceShow({
                                         onChange={(e) => setTaskTitle(e.target.value)}
                                         placeholder="Contoh: Implementasi Layar Auth di Flutter"
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Deskripsi / Catatan Tambahan
                                     </label>
                                     <textarea
@@ -1461,19 +1427,19 @@ export default function WorkspaceShow({
                                         onChange={(e) => setTaskDescription(e.target.value)}
                                         placeholder="Rincian subtask, referensi desain, atau acceptance criteria..."
                                         rows={3}
-                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                        className="w-full p-3 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition resize-none"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                             Prioritas Tugas
                                         </label>
                                         <select
                                             value={taskPriority}
                                             onChange={(e) => setTaskPriority(e.target.value)}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                         >
                                             <option value="urgent">Urgent</option>
                                             <option value="high">High</option>
@@ -1483,13 +1449,13 @@ export default function WorkspaceShow({
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                             Kolom Awal
                                         </label>
                                         <select
                                             value={targetColumn}
                                             onChange={(e) => setTargetColumn(e.target.value)}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                         >
                                             <option value="todo">To Do</option>
                                             <option value="in_progress">In Process</option>
@@ -1500,13 +1466,13 @@ export default function WorkspaceShow({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Sprint / Milestone Terkait
                                     </label>
                                     <select
                                         value={taskMilestone}
                                         onChange={(e) => setTaskMilestone(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                     >
                                         <option value="">-- Tanpa Sprint Khusus --</option>
                                         {milestones.map((m: any) => (
@@ -1518,13 +1484,13 @@ export default function WorkspaceShow({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Pemberian Tugas (Assignee)
                                     </label>
                                     <select
                                         value={taskAssignee}
                                         onChange={(e) => setTaskAssignee(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] focus:border-transparent outline-none transition"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                     >
                                         <option value="">-- Belum Ditugaskan (Unassigned) --</option>
                                         {allMembers.map((m: any) => (
@@ -1539,14 +1505,14 @@ export default function WorkspaceShow({
                                     <button
                                         type="button"
                                         onClick={() => setTaskModalOpen(false)}
-                                        className="px-4 py-2 border border-neutral-200 rounded-full text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition"
+                                        className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={submitting}
-                                        className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                        className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 shadow-2xs cursor-pointer"
                                     >
                                         {submitting ? 'Menyimpan...' : 'Tambah Tugas'}
                                     </button>
@@ -1559,10 +1525,10 @@ export default function WorkspaceShow({
                 {/* MODAL: EDIT TUGAS (TRELLO CARD EDIT) */}
                 {isEditModalOpen && taskToEdit && (
                     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 relative">
+                        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 relative">
                             <button
                                 onClick={() => setEditModalOpen(false)}
-                                className="absolute top-6 right-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 hover:bg-neutral-100 transition"
+                                className="absolute top-5 right-5 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
@@ -1571,15 +1537,12 @@ export default function WorkspaceShow({
                                 <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
                                     <Edit3 className="size-4" />
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-bold text-slate-900">Edit Kartu Tugas</h3>
-                                    <p className="text-xs text-slate-500">Perbarui rincian atau delegasikan ulang</p>
-                                </div>
+                                <h3 className="text-base font-bold text-slate-900">Edit Kartu Tugas</h3>
                             </div>
 
                             <form onSubmit={handleUpdateTask} className="mt-5 flex flex-col gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Judul Tugas *
                                     </label>
                                     <input
@@ -1587,31 +1550,31 @@ export default function WorkspaceShow({
                                         value={taskToEdit.title}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, title: e.target.value })}
                                         required
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none transition"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Deskripsi / Acceptance Criteria
                                     </label>
                                     <textarea
                                         value={taskToEdit.description || ''}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, description: e.target.value })}
                                         rows={3}
-                                        className="w-full p-3.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 focus:ring-2 focus:ring-[#2563EB] outline-none transition"
+                                        className="w-full p-3 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition resize-none"
                                     />
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                             Prioritas
                                         </label>
                                         <select
                                             value={taskToEdit.priority}
                                             onChange={(e) => setTaskToEdit({ ...taskToEdit, priority: e.target.value })}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 outline-none"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                         >
                                             <option value="urgent">Urgent</option>
                                             <option value="high">High</option>
@@ -1621,13 +1584,13 @@ export default function WorkspaceShow({
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                             Status Kolom
                                         </label>
                                         <select
                                             value={taskToEdit.status}
                                             onChange={(e) => setTaskToEdit({ ...taskToEdit, status: e.target.value })}
-                                            className="w-full px-3 py-2 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 outline-none"
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                         >
                                             <option value="todo">To Do</option>
                                             <option value="in_progress">In Process</option>
@@ -1638,13 +1601,13 @@ export default function WorkspaceShow({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Penerima Tugas (Assignee)
                                     </label>
                                     <select
                                         value={taskToEdit.assignee_id || ''}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, assignee_id: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                     >
                                         <option value="">-- Belum Ditugaskan --</option>
                                         {allMembers.map((m: any) => (
@@ -1656,13 +1619,13 @@ export default function WorkspaceShow({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold text-neutral-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Sprint / Milestone Terkait
                                     </label>
                                     <select
                                         value={taskToEdit.milestone_id || ''}
                                         onChange={(e) => setTaskToEdit({ ...taskToEdit, milestone_id: e.target.value })}
-                                        className="w-full px-3.5 py-2.5 border border-neutral-200/90 rounded-2xl text-xs text-neutral-900 outline-none"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                     >
                                         <option value="">-- Tanpa Sprint --</option>
                                         {milestones.map((m: any) => (
@@ -1673,11 +1636,11 @@ export default function WorkspaceShow({
                                     </select>
                                 </div>
 
-                                <div className="flex items-center justify-between gap-2.5 mt-4 pt-3 border-t border-neutral-100">
+                                <div className="flex items-center justify-between gap-2.5 mt-4 pt-3 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => handleDeleteTask(taskToEdit.id)}
-                                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-full transition"
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition cursor-pointer"
                                     >
                                         <Trash2 className="size-3.5" />
                                         <span>Hapus Tugas</span>
@@ -1687,14 +1650,14 @@ export default function WorkspaceShow({
                                         <button
                                             type="button"
                                             onClick={() => setEditModalOpen(false)}
-                                            className="px-4 py-2 border border-neutral-200 rounded-full text-xs font-semibold text-neutral-700 hover:bg-neutral-50 transition"
+                                            className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
                                         >
                                             Batal
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={submitting}
-                                            className="px-6 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-full text-xs font-semibold transition disabled:opacity-50 shadow-md shadow-indigo-500/25"
+                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 shadow-2xs cursor-pointer"
                                         >
                                             {submitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                                         </button>
@@ -1708,22 +1671,15 @@ export default function WorkspaceShow({
                 {/* Sprint / Milestone Modal (Add & Edit) */}
                 {isSprintModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-                        <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-neutral-100 flex flex-col gap-4">
-                            <div className="flex items-center justify-between pb-3 border-b border-neutral-100">
-                                <div>
-                                    <h3 className="text-base font-bold text-slate-900">
-                                        {sprintToEdit ? 'Ubah Sprint / Milestone' : 'Tambah Sprint Baru'}
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        {sprintToEdit
-                                            ? 'Perbarui target, status tahapan, atau tenggat waktu sprint.'
-                                            : 'Tentukan target pengerjaan dan batas waktu sprint tim Anda.'}
-                                    </p>
-                                </div>
+                        <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4">
+                            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                <h3 className="text-base font-bold text-slate-900">
+                                    {sprintToEdit ? 'Ubah Sprint / Milestone' : 'Tambah Sprint Baru'}
+                                </h3>
                                 <button
                                     type="button"
                                     onClick={() => setSprintModalOpen(false)}
-                                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
                                 >
                                     <X className="size-5" />
                                 </button>
@@ -1740,7 +1696,7 @@ export default function WorkspaceShow({
                                         value={sprintTitle}
                                         onChange={(e) => setSprintTitle(e.target.value)}
                                         placeholder="Contoh: Sprint 1: Perancangan Arsitektur & Wireframe"
-                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
+                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition"
                                     />
                                 </div>
 
@@ -1782,7 +1738,7 @@ export default function WorkspaceShow({
                                         value={sprintDescription}
                                         onChange={(e) => setSprintDescription(e.target.value)}
                                         placeholder="Tuliskan tujuan spesifik sprint ini dan output yang diharapkan..."
-                                        className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                                        className="w-full p-3 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
                                     />
                                 </div>
 
@@ -1812,13 +1768,49 @@ export default function WorkspaceShow({
                                         <button
                                             type="submit"
                                             disabled={sprintSubmitting}
-                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition disabled:opacity-50 shadow-2xs cursor-pointer"
                                         >
                                             {sprintSubmitting ? 'Menyimpan...' : (sprintToEdit ? 'Simpan Perubahan' : 'Buat Sprint')}
                                         </button>
                                     </div>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* MODAL: KONFIRMASI HAPUS */}
+                {deleteConfirm && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
+                        <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                {deleteConfirm.type === 'sprint'
+                                    ? `Hapus sprint "${deleteConfirm.title}"?`
+                                    : 'Hapus kartu tugas ini?'}
+                            </h3>
+                            <div className="flex items-center justify-end gap-2 mt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setDeleteConfirm(null)}
+                                    className="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (deleteConfirm.type === 'sprint') {
+                                            executeDeleteSprint(deleteConfirm.id);
+                                        } else {
+                                            executeDeleteTask(deleteConfirm.id);
+                                        }
+                                        setDeleteConfirm(null);
+                                    }}
+                                    className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
+                                >
+                                    Hapus
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

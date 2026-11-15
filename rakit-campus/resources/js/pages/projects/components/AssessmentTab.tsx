@@ -200,7 +200,7 @@ export default function AssessmentTab({
                                     : submission?.status === 'submitted'
                                     ? 'bg-blue-50 text-blue-700 border-blue-200'
                                     : submission?.status === 'revision_required'
-                                    ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                    ? 'bg-slate-100 text-slate-700 border-slate-200'
                                     : 'bg-slate-100 text-slate-600 border-slate-200'
                             }`}
                         >
@@ -210,9 +210,6 @@ export default function AssessmentTab({
                     <h3 className="text-base font-bold text-slate-900">
                         {period?.description || (isUas ? 'Penilaian Capstone Akhir & Verifikasi Portofolio Proyek' : 'Evaluasi Progres Tengah Semester & Living Proposal Snapshot')}
                     </h3>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                        Batas Pengumpulan: {period?.deadline ? new Date(period.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Sesuai Jadwal Akademik'}
-                    </p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -231,7 +228,7 @@ export default function AssessmentTab({
                             onClick={() => setShowReviewModal(true)}
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
                         >
-                            <GraduationCap className="size-4 text-amber-400" />
+                            <GraduationCap className="size-4 text-blue-400" />
                             <span>Penilaian Rubrik Dosen</span>
                         </button>
                     )}
@@ -240,16 +237,16 @@ export default function AssessmentTab({
 
             {/* If Graded: Score Summary Card */}
             {submission?.total_score && (
-                <div className="glass-card rounded-2xl p-6 bg-emerald-50/40 border-emerald-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="glass-card rounded-2xl p-6 bg-blue-50/50 border-blue-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block mb-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-blue-800 block mb-1">
                             Hasil Penilaian Resmi Dosen
                         </span>
                         <div className="flex items-center gap-3">
-                            <span className="text-3xl font-black text-emerald-700 tracking-tight">
+                            <span className="text-3xl font-black text-blue-700 tracking-tight">
                                 {submission.total_score}
                             </span>
-                            <span className="text-xl font-black px-3 py-1 rounded-xl bg-emerald-600 text-white shadow-2xs">
+                            <span className="text-xl font-black px-3 py-1 rounded-xl bg-blue-600 text-white shadow-2xs">
                                 Grade: {submission.final_grade}
                             </span>
                         </div>
@@ -312,7 +309,7 @@ export default function AssessmentTab({
                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                                 Status Tugas Saat Dikumpulkan
                             </span>
-                            <span className="text-xs font-bold text-emerald-700 mt-1 block">
+                            <span className="text-xs font-bold text-blue-700 mt-1 block">
                                 Selesai: {latestSnapshot.tasks_summary?.completed || 0} / Total: {latestSnapshot.tasks_summary?.total || 0} Tugas
                             </span>
                             <span className="text-[10px] text-slate-500">
@@ -616,7 +613,7 @@ export default function AssessmentTab({
                             <label className="block text-xs font-bold text-slate-700 mb-1.5">Keputusan Penilaian</label>
                             <div className="grid grid-cols-2 gap-3">
                                 <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    decision === 'accepted' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-white border-slate-200 text-slate-700'
+                                    decision === 'accepted' ? 'bg-blue-50 border-blue-300 text-blue-900' : 'bg-white border-slate-200 text-slate-700'
                                 }`}>
                                     <input
                                         type="radio"
@@ -626,12 +623,12 @@ export default function AssessmentTab({
                                         onChange={() => setDecision('accepted')}
                                         className="sr-only"
                                     />
-                                    <CheckCircle2 className="size-4 text-emerald-600" />
+                                    <CheckCircle2 className="size-4 text-blue-600" />
                                     <span>Lulus / Terima (Accepted)</span>
                                 </label>
 
                                 <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    decision === 'revision_required' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-200 text-slate-700'
+                                    decision === 'revision_required' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-white border-slate-200 text-slate-700'
                                 }`}>
                                     <input
                                         type="radio"
@@ -641,7 +638,7 @@ export default function AssessmentTab({
                                         onChange={() => setDecision('revision_required')}
                                         className="sr-only"
                                     />
-                                    <RotateCcw className="size-4 text-amber-600" />
+                                    <RotateCcw className="size-4 text-slate-600" />
                                     <span>Perlu Revisi</span>
                                 </label>
                             </div>

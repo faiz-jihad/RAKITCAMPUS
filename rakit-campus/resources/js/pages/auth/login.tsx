@@ -192,7 +192,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                                 {canResetPassword && (
                                     <Link
                                         href={route('password.request')}
-                                        className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                                        className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium"
                                         tabIndex={5}
                                     >
                                         Lupa sandi?
@@ -305,7 +305,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                         Belum punya akun?{' '}
                         <Link
                             href={route('register')}
-                            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                            className="font-semibold text-blue-600 hover:text-blue-700"
                             tabIndex={6}
                         >
                             Daftar akun mahasiswa

@@ -6,6 +6,7 @@ use App\Contracts\Notifications\NotificationCounterInterface;
 use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Services\Notifications\NotificationPreferenceService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -55,7 +56,7 @@ class NotificationWebController extends Controller
     /**
      * Mark a specific notification as read.
      */
-    public function markAsRead(Request $request, string $id): RedirectResponse
+    public function markAsRead(Request $request, string $id): RedirectResponse|JsonResponse
     {
         $user = $request->user();
         $notification = $user->notifications()->where('id', $id)->firstOrFail();
@@ -63,18 +64,26 @@ class NotificationWebController extends Controller
 
         $this->counter->invalidateUnreadCountCache($user);
 
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Notifikasi telah ditandai dibaca.']);
+        }
+
         return back()->with('success', 'Notifikasi telah ditandai dibaca.');
     }
 
     /**
      * Mark all unread notifications as read.
      */
-    public function markAllAsRead(Request $request): RedirectResponse
+    public function markAllAsRead(Request $request): RedirectResponse|JsonResponse
     {
         $user = $request->user();
         $user->unreadNotifications()->update(['read_at' => now()]);
 
         $this->counter->invalidateUnreadCountCache($user);
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Semua notifikasi berhasil ditandai dibaca.']);
+        }
 
         return back()->with('success', 'Semua notifikasi berhasil ditandai dibaca.');
     }

@@ -311,11 +311,11 @@ export default function Register() {
                                 className="text-xs sm:text-sm leading-tight text-slate-600 select-none cursor-pointer"
                             >
                                 Saya menyetujui{' '}
-                                <a href="#" className="font-medium text-blue-600 hover:underline">
+                                <a href="#" className="font-medium text-blue-600 hover:text-blue-700">
                                     Ketentuan Penggunaan
                                 </a>{' '}
                                 dan{' '}
-                                <a href="#" className="font-medium text-blue-600 hover:underline">
+                                <a href="#" className="font-medium text-blue-600 hover:text-blue-700">
                                     Kebijakan Privasi
                                 </a>
                             </label>
@@ -381,7 +381,7 @@ export default function Register() {
                         Sudah punya akun?{' '}
                         <Link
                             href={route('login')}
-                            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                            className="font-semibold text-blue-600 hover:text-blue-700"
                             tabIndex={6}
                         >
                             Masuk di sini

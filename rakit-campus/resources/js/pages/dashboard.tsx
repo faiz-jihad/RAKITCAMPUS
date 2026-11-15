@@ -91,13 +91,14 @@ interface Props {
         role: string;
         is_admin?: boolean;
         is_lecturer?: boolean;
+        is_verified?: boolean;
         campus: string;
         major: string;
         nim?: string;
         academic_status?: string;
         batch_year?: string;
         headline?: string;
-        availability: string;
+        availability?: string | null;
         skills: any[];
     };
     stats: {
@@ -195,44 +196,52 @@ export default function Dashboard({
     const totalTasks = completedTasks + pendingTasks;
     const taskPercent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     const readinessScore = profileCompletion?.percent ?? stats?.team_readiness_avg ?? 0;
+    const primaryTeam = myTeams && myTeams.length > 0 ? myTeams[0] : null;
 
-    // Helper Badge Status Formasi Tim
+    // Helper Status Formasi Tim
     const getFormationBadgeStyle = (formationStatus?: string) => {
         switch (formationStatus) {
             case 'formation_review':
                 return {
                     label: 'Menunggu Persetujuan Dosen',
-                    className: 'bg-amber-50 text-amber-800 border-amber-200',
+                    className: 'text-amber-700 bg-amber-50',
+                    dotColor: 'bg-amber-500',
                 };
             case 'lecturer_approved':
                 return {
                     label: 'Disetujui Dosen',
-                    className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    className: 'text-blue-700 bg-blue-50',
+                    dotColor: 'bg-blue-600',
                 };
             case 'workspace_activated':
                 return {
                     label: 'Workspace Aktif',
-                    className: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    className: 'text-blue-700 bg-blue-50',
+                    dotColor: 'bg-blue-600',
                 };
             case 'team_locked':
                 return {
                     label: 'Formasi Terkunci',
-                    className: 'bg-blue-50 text-blue-700 border-blue-200',
+                    className: 'text-slate-700 bg-slate-100',
+                    dotColor: 'bg-slate-600',
                 };
             case 'formation_rejected':
                 return {
                     label: 'Ditolak',
-                    className: 'bg-rose-50 text-rose-700 border-rose-200',
+                    className: 'text-rose-700 bg-rose-50',
+                    dotColor: 'bg-rose-500',
                 };
             case 'matchmaking_open':
                 return {
                     label: 'Matchmaking Terbuka',
-                    className: 'bg-blue-50 text-blue-700 border-blue-200',
+                    className: 'text-blue-700 bg-blue-50',
+                    dotColor: 'bg-blue-600',
                 };
             default:
                 return {
                     label: 'Tahap Pembentukan',
-                    className: 'bg-slate-100 text-slate-600 border-slate-200',
+                    className: 'text-slate-600 bg-slate-100',
+                    dotColor: 'bg-slate-400',
                 };
         }
     };
@@ -1942,25 +1951,25 @@ export default function Dashboard({
     return (
         <AppLayout activeTab="dashboard" title="Dashboard - RakitCampus">
             {/* 1. HEADER ROW */}
-            <section className="flex items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                     Dashboard Mahasiswa
                 </h1>
 
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                     <Link
                         href="/projects/create"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                        className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                         <span>Buat Proyek</span>
                     </Link>
                     <Link
                         href="/workspace"
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs font-semibold shadow-2xs transition"
+                        className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all duration-200 cursor-pointer group"
                     >
                         <span>Workspace Tim</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </Link>
                 </div>
             </section>
@@ -1984,127 +1993,327 @@ export default function Dashboard({
                 </div>
             )}
 
-            {/* 2. REAL METRIC SUMMARY CARDS (4 CARDS) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                {/* Metric 1: Tasks */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+            {/* 2. BENTO GRID UTAMA (4 KARTU: PROGRES TUGAS TALL + TIM UTAMA + KESIAPAN PROFIL & REKRUTMEN) */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
+                {/* CARD 1: PROGRES TUGAS SPRINT (TALL / 4 COLS LG) */}
+                <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                     <div>
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
+                        <div className="flex items-center justify-between mb-4">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                 Progres Tugas
                             </span>
-                            <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
-                                {completedTasks}
-                            </span>
                             <span className="text-xs text-slate-400 font-medium">
-                                / {totalTasks > 0 ? totalTasks : 0} Selesai
+                                Sprint Aktif
                             </span>
+                        </div>
+
+                        {/* Circular Donut Gauge */}
+                        <div className="flex flex-col items-center justify-center my-3 sm:my-4">
+                            <div className="relative size-36 sm:size-40 flex items-center justify-center">
+                                <svg className="size-full -rotate-90 transform" viewBox="0 0 120 120">
+                                    <circle
+                                        cx="60"
+                                        cy="60"
+                                        r="46"
+                                        stroke="currentColor"
+                                        strokeWidth="9"
+                                        className="text-slate-100"
+                                        fill="transparent"
+                                    />
+                                    <circle
+                                        cx="60"
+                                        cy="60"
+                                        r="46"
+                                        stroke="currentColor"
+                                        strokeWidth="9"
+                                        strokeDasharray={2 * Math.PI * 46}
+                                        strokeDashoffset={2 * Math.PI * 46 * (1 - Math.min(100, Math.max(0, taskPercent)) / 100)}
+                                        strokeLinecap="round"
+                                        className="text-blue-600 transition-all duration-700 ease-out"
+                                        fill="transparent"
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                        {taskPercent}%
+                                    </span>
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                                        TUNTAS
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="mt-2 text-left">
+                            <div className="text-sm font-bold text-slate-900">
+                                {completedTasks} / {totalTasks} Tugas Selesai
+                            </div>
+                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                {totalTasks === 0
+                                    ? 'Belum ada tugas sprint aktif.'
+                                    : pendingTasks === 0
+                                    ? 'Semua tugas sprint telah selesai.'
+                                    : `${pendingTasks} tugas sedang berjalan.`}
+                            </p>
                         </div>
                     </div>
-                    <div>
-                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-1.5">
-                            <div
-                                className="bg-blue-600 h-full rounded-full transition-all duration-500"
-                                style={{ width: `${taskPercent}%` }}
-                            />
-                        </div>
-                        <span className="text-[11px] text-slate-500 font-medium">
-                            {pendingTasks} tugas aktif menunggu
-                        </span>
+
+                    <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-100">
+                        <Link
+                            href={primaryTeam ? `/workspace/${primaryTeam.id}` : '/workspace'}
+                            className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
+                        >
+                            <span>Buka Workspace</span>
+                            <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                        </Link>
                     </div>
                 </div>
 
-                {/* Metric 2: Teams */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                    <div>
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                Tim Akademik
-                            </span>
-                            <Users className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
-                                {stats?.my_teams_count ?? 0}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">
-                                Tim Terdaftar
-                            </span>
-                        </div>
-                    </div>
-                    <Link
-                        href="/projects"
-                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
-                    >
-                        <span>{myTeams.length > 0 ? myTeams[0].name : 'Eksplor tim kelas'}</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                    </Link>
-                </div>
+                {/* RIGHT COLUMN (8 COLS LG): CARD 2 ON TOP, CARDS 3 & 4 AT BOTTOM */}
+                <div className="lg:col-span-8 flex flex-col justify-between gap-4 sm:gap-5">
+                    {/* CARD 2: TIM AKADEMIK / MANDIRI & SUSUNAN TIM */}
+                    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex-1 flex flex-col justify-between group/card">
+                        <div>
+                            {/* Header Row */}
+                            <div className="flex items-center justify-between mb-3">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                    {primaryTeam
+                                        ? (primaryTeam.is_academic || primaryTeam.project?.category === 'academic' ? 'Tim Akademik' : 'Tim Mandiri')
+                                        : 'Tim Proyek'}
+                                </span>
+                                {primaryTeam?.project?.class_label && (
+                                    <span className="text-xs text-slate-400 font-medium truncate max-w-[160px] sm:max-w-[200px]">
+                                        {primaryTeam.project.class_label}
+                                    </span>
+                                )}
+                            </div>
 
-                {/* Metric 3: Readiness */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                    <div>
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                Kesiapan Profil
-                            </span>
-                            <UserCheck className="w-4 h-4 text-emerald-600" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
-                                {readinessScore}%
-                            </span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                                Siap Kolaborasi
-                            </span>
-                        </div>
-                    </div>
-                    <Link
-                        href="/settings/profile"
-                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
-                    >
-                        <span>Kelola keahlian & biodata</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                    </Link>
-                </div>
+                            {/* Middle content: Team Info on Left, Susunan Tim box on Right */}
+                            <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-5">
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex flex-wrap items-baseline gap-2 mb-1.5">
+                                        <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">
+                                            {primaryTeam ? primaryTeam.name : 'Belum Memiliki Tim'}
+                                        </h3>
+                                        {primaryTeam && (
+                                            <span className="text-xs text-slate-500 font-semibold">
+                                                · {primaryTeam.members_count || primaryTeam.members?.length || 1} Anggota
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed line-clamp-2">
+                                        {primaryTeam?.project?.title ? (
+                                            <span className="font-semibold text-slate-800">
+                                                Proyek: {primaryTeam.project.title}
+                                            </span>
+                                        ) : (
+                                            primaryTeam?.description || 'Bergabunglah dengan tim atau mulai proyek baru Anda.'
+                                        )}
+                                    </p>
 
-                {/* Metric 4: Recommendations */}
-                <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                    <div>
-                        <div className="flex items-center justify-between text-slate-400 mb-1">
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                Rekrutmen Terbuka
-                            </span>
-                            <FolderKanban className="w-4 h-4 text-slate-500" />
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                            <span className="text-2xl font-bold text-slate-900 tracking-tight">
-                                {recommendedProjects.length}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">
-                                Proyek
-                            </span>
+                                    {/* Action Buttons */}
+                                    <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-2 sm:gap-2.5">
+                                        {primaryTeam ? (
+                                            primaryTeam.can_access_workspace ? (
+                                                <Link
+                                                    href={`/workspace/${primaryTeam.id}`}
+                                                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                                >
+                                                    <FolderKanban className="size-3.5" />
+                                                    <span>Buka Workspace</span>
+                                                    <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                                </Link>
+                                            ) : (
+                                                <Link
+                                                    href={primaryTeam.project ? `/projects/${primaryTeam.project.slug || primaryTeam.project.id}` : '/projects'}
+                                                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                                >
+                                                    <Users className="size-3.5" />
+                                                    <span>Kelola Tim</span>
+                                                    <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                                </Link>
+                                            )
+                                        ) : (
+                                            <Link
+                                                href="/projects/create"
+                                                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                            >
+                                                <Plus className="size-3.5" />
+                                                <span>Buat Proyek</span>
+                                            </Link>
+                                        )}
+
+                                        {primaryTeam?.project && (
+                                            <Link
+                                                href={`/projects/${primaryTeam.project.slug || primaryTeam.project.id}`}
+                                                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-blue-300 text-xs font-semibold shadow-2xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                                            >
+                                                <span>Detail Proyek</span>
+                                                <ArrowRight className="size-3 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                            </Link>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Susunan Tim Box (Right side of Card 2) */}
+                                {primaryTeam && primaryTeam.members && primaryTeam.members.length > 0 && (
+                                    <div className="bg-slate-50/70 rounded-xl p-3 sm:p-3.5 border border-slate-200/70 w-full md:w-auto md:min-w-[210px] shrink-0">
+                                        <div className="mb-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                                Susunan Tim
+                                            </span>
+                                        </div>
+
+                                        {/* Colorful Avatar Row */}
+                                        <div className="flex items-center gap-1.5 mb-2">
+                                            {primaryTeam.members.map((member: any, idx: number) => {
+                                                const memberInitials = (member.name || 'M')
+                                                    .split(' ')
+                                                    .filter(Boolean)
+                                                    .slice(0, 2)
+                                                    .map((w: string) => w[0].toUpperCase())
+                                                    .join('');
+                                                const avatarColors = [
+                                                    'bg-blue-600 text-white',
+                                                    'bg-amber-500 text-white',
+                                                    'bg-emerald-600 text-white',
+                                                    'bg-purple-600 text-white',
+                                                    'bg-rose-600 text-white',
+                                                    'bg-indigo-600 text-white',
+                                                ];
+                                                const grad = avatarColors[idx % avatarColors.length];
+
+                                                return (
+                                                    <div
+                                                        key={member.id || idx}
+                                                        className={`size-7 rounded-full ${grad} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs hover:scale-110 transition-transform cursor-pointer`}
+                                                        title={`${member.name} - ${member.role || 'Anggota'}`}
+                                                    >
+                                                        {memberInitials}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Roles list */}
+                                        <div className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]">
+                                            {primaryTeam.members
+                                                .map((m: any) => m.role?.replace(/ Specialist| Developer/gi, '') || 'Anggota')
+                                                .slice(0, 3)
+                                                .join(' · ')}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                    <Link
-                        href="/projects?status=recruiting"
-                        className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 transition flex items-center justify-between"
-                    >
-                        <span>Cari proyek yang sesuai</span>
-                        <ArrowUpRight className="w-3 h-3" />
-                    </Link>
+
+                    {/* BOTTOM ROW: KESIAPAN PROFIL & REKRUTMEN TERBUKA (2 CARDS) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                        {/* CARD 3: KESIAPAN PROFIL */}
+                        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                            <div>
+                                <div className="mb-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Kesiapan Profil
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                        <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                            {readinessScore}%
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
+                                            Lengkapi keahlian & biodata Anda.
+                                        </p>
+                                    </div>
+
+                                    {/* Verified / Mahasiswa Badge */}
+                                    <div className="size-12 sm:size-14 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0 group-hover/card:scale-105 transition-transform duration-200">
+                                        <ShieldCheck className="size-4 sm:size-5" />
+                                        <span className="text-[8px] font-extrabold tracking-wider uppercase mt-0.5">
+                                            {user?.is_verified ? 'VERIFIED' : 'MAHASISWA'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100">
+                                <Link
+                                    href="/settings/profile"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline transition flex items-center justify-between group cursor-pointer"
+                                >
+                                    <span>Kelola Profil</span>
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* CARD 4: REKRUTMEN TERBUKA */}
+                        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                            <div>
+                                <div className="mb-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Rekrutmen Terbuka
+                                    </span>
+                                </div>
+
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                                {recommendedProjects.length}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-500">
+                                                Proyek Terbuka
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-1">
+                                            Peluang bergabung dengan tim proyek baru.
+                                        </p>
+                                        {recommendedProjects.length > 0 && (
+                                            <div className="text-[11px] text-slate-500 truncate mt-1.5 flex items-center gap-1.5">
+                                                <span className="font-medium text-slate-700 truncate">
+                                                    {recommendedProjects[0]?.title}
+                                                </span>
+                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/70 shrink-0">
+                                                    Open Slot
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Open Slot Badge */}
+                                    <div className="size-14 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0 group-hover/card:scale-105 transition-transform duration-200">
+                                        <Building2 className="size-5" />
+                                        <span className="text-[8px] font-extrabold tracking-wider uppercase mt-0.5">
+                                            OPEN SLOT
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-slate-100">
+                                <Link
+                                    href="/projects?status=recruiting"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline transition flex items-center justify-between group cursor-pointer"
+                                >
+                                    <span>Eksplorasi Proyek</span>
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* 3. MAIN CONTENT (TWO COLUMNS: 8 COLS / 4 COLS) */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
                 {/* LEFT COLUMN: TASKS, ACTIVE PROJECTS, INVITATIONS, RECRUITING */}
-                <div className="lg:col-span-8 space-y-6">
+                <div className="lg:col-span-8 space-y-5 sm:space-y-6">
                     {/* Panel 1: Tugas Prioritas */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <div>
                                 <h2 className="text-sm font-bold text-slate-900">
@@ -2168,20 +2377,17 @@ export default function Dashboard({
                     </div>
 
                     {/* Panel 2: Proyek Kelas & Living Proposal */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
-                            <div>
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Proyek Akademik Anda
-                                </h2>
-
-                            </div>
+                            <h2 className="text-sm font-bold text-slate-900">
+                                Proyek & Tim Anda
+                            </h2>
                             <Link
                                 href="/projects"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1"
+                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
                             >
                                 <span>Semua Proyek</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
+                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
 
@@ -2192,32 +2398,31 @@ export default function Dashboard({
                                     const fBadge = getFormationBadgeStyle(fStatus);
                                     const fLabel = team.formation_status_label || team.project?.formation_status_label || fBadge.label;
                                     const fNotes = team.formation_notes || team.project?.formation_notes;
+                                    const isAcademicProject = Boolean(team.is_academic || team.project?.category === 'academic');
 
                                     return (
                                         <div
                                             key={team.id}
-                                            className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col justify-between gap-3"
+                                            className="p-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/50 hover:border-slate-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group/item"
                                         >
                                             <div>
-                                                <div className="flex flex-wrap items-center justify-between gap-1.5 mb-2">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                                                        PROYEK KELAS
+                                                <div className="flex items-center justify-between gap-2 mb-2">
+                                                    <span className="text-[11px] font-semibold text-slate-500">
+                                                        {isAcademicProject ? 'Proyek Akademik' : 'Proyek Mandiri'}
                                                     </span>
-                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${fBadge.className}`}>
-                                                        {fLabel}
+                                                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+                                                        <span className={`size-1.5 rounded-full ${fBadge.dotColor}`} />
+                                                        <span>{fLabel}</span>
                                                     </span>
                                                 </div>
-                                                <h3 className="text-sm font-bold text-slate-900 line-clamp-1">
+                                                <h3 className="text-sm font-bold text-slate-900 group-hover/item:text-blue-600 transition">
                                                     {team.name}
                                                 </h3>
-                                                {team.project?.title && (
-                                                    <p className="text-[11px] font-semibold text-slate-700 mt-0.5 line-clamp-1">
+                                                {team.project?.title && team.project.title !== team.name && (
+                                                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
                                                         Proyek: {team.project.title}
                                                     </p>
                                                 )}
-                                                <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                                    {team.description || team.project?.short_description || 'Ruang kolaborasi tim mahasiswa RakitCampus.'}
-                                                </p>
 
                                                 {fStatus === 'formation_rejected' && fNotes && (
                                                     <div className="mt-2 p-2 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800 flex items-start gap-1.5">
@@ -2226,25 +2431,26 @@ export default function Dashboard({
                                                     </div>
                                                 )}
                                                 {fStatus === 'lecturer_approved' && fNotes && (
-                                                    <div className="mt-2 p-2 rounded-lg bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800">
+                                                    <div className="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-blue-800">
                                                         <strong>Catatan Dosen:</strong> {fNotes}
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {team.can_access_workspace && team.project && (
-                                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                                                    <span className="text-slate-500 font-medium">Evaluasi Semester:</span>
-                                                    <div className="flex items-center gap-1.5">
+                                            {isAcademicProject && team.can_access_workspace && team.project && (
+                                                <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                    <span className="text-slate-500 text-[11px]">Evaluasi Semester:</span>
+                                                    <div className="flex items-center gap-2">
                                                         <Link
                                                             href={`/projects/${team.project.slug || team.project.id}?tab=uts`}
-                                                            className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10px]"
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
                                                         >
                                                             Snapshot UTS
                                                         </Link>
+                                                        <span className="text-slate-300">·</span>
                                                         <Link
                                                             href={`/projects/${team.project.slug || team.project.id}?tab=uas`}
-                                                            className="px-2 py-0.5 rounded bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-[10px]"
+                                                            className="text-xs font-semibold text-slate-600 hover:text-blue-600 hover:underline"
                                                         >
                                                             Snapshot UAS
                                                         </Link>
@@ -2252,15 +2458,16 @@ export default function Dashboard({
                                                 </div>
                                             )}
 
-                                            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
-                                                <span className="text-slate-500">
-                                                    {team.members_count || 1} Anggota • Progress {team.progress_percent ?? 0}%
+                                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                <span className="text-[11px] text-slate-500">
+                                                    {team.members_count || 1} Anggota · Progres {team.progress_percent ?? 0}%
                                                 </span>
                                                 <Link
                                                     href={team.project ? `/projects/${team.project.slug || team.project.id}` : `/workspace/${team.id}`}
-                                                    className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                                                    className="font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
                                                 >
-                                                    Buka Detail →
+                                                    <span>Buka Detail</span>
+                                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/item:translate-x-0.5" />
                                                 </Link>
                                             </div>
                                         </div>
@@ -2406,21 +2613,17 @@ export default function Dashboard({
                     )}
 
                     {/* Panel 3: Proyek yang Membuka Rekrutmen */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
-                            <div>
-                                <h2 className="text-sm font-bold text-slate-900">
-                                    Proyek yang Membuka Rekrutmen
-                                </h2>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    Peluang kolaborasi tim yang sedang membuka pendaftaran anggota
-                                </p>
-                            </div>
+                            <h2 className="text-sm font-bold text-slate-900">
+                                Proyek yang Membuka Rekrutmen
+                            </h2>
                             <Link
                                 href="/projects?status=recruiting"
-                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
                             >
-                                Eksplorasi Semua →
+                                <span>Eksplorasi Semua</span>
+                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
 
@@ -2430,51 +2633,42 @@ export default function Dashboard({
                                     <Link
                                         key={proj.id}
                                         href={`/projects/${proj.slug || proj.id}`}
-                                        className="p-4 rounded-xl border border-slate-200/80 hover:border-blue-400 hover:bg-slate-50/50 transition flex flex-col justify-between gap-3 group block"
+                                        className="p-4 rounded-xl border border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50/50 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group block"
                                     >
                                         <div>
-                                            <div className="flex items-center justify-between gap-2 mb-1.5">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
-                                                    {proj.category || 'AKADEMIK'}
+                                            <div className="flex items-center justify-between gap-2 mb-1.5 text-xs">
+                                                <span className="font-semibold text-slate-500 capitalize">
+                                                    {proj.category?.replace(/_/g, ' ') || 'Proyek'}
                                                 </span>
-                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                    Rekrutmen Terbuka
+                                                <span className="font-semibold text-blue-600">
+                                                    {proj.open_roles?.length || 1} Posisi Dicari
                                                 </span>
                                             </div>
-                                            <h3 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
+                                            <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
                                                 {proj.title}
                                             </h3>
-                                            <p className="text-xs text-slate-500 mt-1 line-clamp-2">
-                                                {proj.short_description || 'Proyek kolaborasi terpadu mahasiswa.'}
+                                            <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                {proj.short_description || 'Proyek kolaborasi mahasiswa.'}
                                             </p>
 
                                             {proj.open_roles && proj.open_roles.length > 0 && (
-                                                <div className="flex flex-wrap items-center gap-1 mt-2">
-                                                    <Briefcase className="w-3 h-3 text-emerald-600 shrink-0" />
-                                                    {proj.open_roles.slice(0, 2).map((r: any) => (
-                                                        <span
-                                                            key={r.id || r.name}
-                                                            className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80"
-                                                        >
-                                                            {r.name}
-                                                        </span>
-                                                    ))}
-                                                    {proj.open_roles.length > 2 && (
-                                                        <span className="text-[10px] text-slate-400 font-semibold">
-                                                            +{proj.open_roles.length - 2}
-                                                        </span>
-                                                    )}
+                                                <div className="flex items-center gap-1.5 mt-2.5 text-xs text-slate-600">
+                                                    <span className="text-slate-400 font-medium">Posisi:</span>
+                                                    <span className="font-medium text-slate-800 truncate">
+                                                        {proj.open_roles.map((r: any) => r.name).slice(0, 2).join(', ')}
+                                                        {proj.open_roles.length > 2 ? ` +${proj.open_roles.length - 2}` : ''}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
 
                                         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                                             <span className="text-[11px] text-slate-500 truncate">
-                                                {proj.leader?.name || 'Ketua Tim'} • {proj.members_count ?? 1}/{proj.max_team_size ?? 4} Anggota
+                                                {proj.leader?.name || 'Ketua Tim'} · {proj.members_count ?? 1}/{proj.max_team_size ?? 4} Anggota
                                             </span>
-                                            <span className="font-semibold text-blue-600 flex items-center gap-1 shrink-0">
+                                            <span className="font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 shrink-0 group-hover:underline">
                                                 <span>Detail</span>
-                                                <ArrowUpRight className="w-3.5 h-3.5" />
+                                                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                             </span>
                                         </div>
                                     </Link>
@@ -2493,9 +2687,9 @@ export default function Dashboard({
                 </div>
 
                 {/* RIGHT COLUMN: PROFILE & ACTIVITIES */}
-                <div className="lg:col-span-4 space-y-6">
+                <div className="lg:col-span-4 space-y-5 sm:space-y-6">
                     {/* User Card */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-5 shadow-2xs">
+                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <h2 className="text-sm font-bold text-slate-900">
                                 Profil Mahasiswa
@@ -2509,7 +2703,7 @@ export default function Dashboard({
                         </div>
 
                         <div className="flex items-center gap-3 py-2">
-                            <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 font-bold text-xs flex items-center justify-center shrink-0">
+                            <div className="size-11 rounded-full bg-blue-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
                                 {initials || 'RC'}
                             </div>
                             <div className="min-w-0">
@@ -2528,11 +2722,101 @@ export default function Dashboard({
                                 <span className="font-semibold text-slate-800">{user?.nim || '-'}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">Status</span>
-                                <span className="font-semibold text-emerald-600">Aktif</span>
+                                <span className="text-[10px] text-slate-400 block font-medium">Kampus</span>
+                                <span className="font-semibold text-slate-800 truncate block">{user?.campus || 'Kampus'}</span>
                             </div>
                         </div>
+
+                        {user?.skills && user.skills.length > 0 && (
+                            <div className="pt-3 border-t border-slate-100">
+                                <span className="text-[10px] text-slate-400 block font-medium mb-1.5">Keahlian</span>
+                                <div className="flex flex-wrap gap-1">
+                                    {user.skills.slice(0, 4).map((s: any, idx: number) => (
+                                        <span key={s.id || idx} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                                            {s.name}
+                                        </span>
+                                    ))}
+                                    {user.skills.length > 4 && (
+                                        <span className="text-[10px] text-slate-400 font-medium self-center">
+                                            +{user.skills.length - 4}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+                        )}
                     </div>
+
+                    {/* Rekan Kolaborasi Tim (Real teammates from active projects) */}
+                    {teammates && teammates.length > 0 && (
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Rekan Kolaborasi Tim
+                                </h2>
+                                <span className="text-xs text-slate-400 font-medium">
+                                    {teammates.length} Rekan
+                                </span>
+                            </div>
+
+                            <div className="space-y-3">
+                                {teammates.slice(0, 5).map((peer: any, idx: number) => {
+                                    const peerInitials = (peer.name || 'M')
+                                        .split(' ')
+                                        .filter(Boolean)
+                                        .slice(0, 2)
+                                        .map((w: string) => w[0].toUpperCase())
+                                        .join('');
+                                    const peerColors = [
+                                        'bg-blue-50 text-blue-700',
+                                        'bg-amber-50 text-amber-700',
+                                        'bg-emerald-50 text-emerald-700',
+                                        'bg-purple-50 text-purple-700',
+                                    ];
+                                    const peerColor = peerColors[idx % peerColors.length];
+
+                                    return (
+                                        <div key={peer.id || idx} className="flex items-center gap-2.5">
+                                            <div className={`size-8 rounded-full ${peerColor} font-bold text-xs flex items-center justify-center shrink-0`}>
+                                                {peerInitials}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="text-xs font-semibold text-slate-900 truncate">
+                                                    {peer.name}
+                                                </div>
+                                                <div className="text-[11px] text-slate-500 truncate">
+                                                    {peer.role || 'Anggota'} · {peer.team}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Aktivitas Tim Terbaru (Real team activities) */}
+                    {recentActivities && recentActivities.length > 0 && (
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
+                                <h2 className="text-sm font-bold text-slate-900">
+                                    Aktivitas Terbaru
+                                </h2>
+                            </div>
+
+                            <div className="space-y-3">
+                                {recentActivities.slice(0, 4).map((act: any, idx: number) => (
+                                    <div key={act.id || idx} className="text-xs text-slate-600">
+                                        <span className="font-semibold text-slate-900">{act.actor?.name || 'Rekan Tim'}</span>{' '}
+                                        <span>{act.description || act.action || 'memperbarui proyek'}</span>
+                                        <div className="text-[10px] text-slate-400 mt-0.5">
+                                            {act.team?.name ? `${act.team.name} · ` : ''}
+                                            {act.created_at ? new Date(act.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Baru saja'}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

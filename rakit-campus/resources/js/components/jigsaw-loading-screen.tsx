@@ -82,30 +82,33 @@ export function JigsawLoadingScreen({
     onClose,
     className = '',
 }: JigsawLoadingScreenProps) {
-    // Animation Step: 0 to 9
+    // Animation Step: 0 to 7
     // 0: Scatter
-    // 1: Piece 0 assembled
-    // 2: Piece 1 assembled
-    // 3: Piece 2 assembled
-    // 4: Piece 3 assembled (100% UTUH!)
-    // 5-7: Hold fully assembled + sheen wave + pulse
-    // 8: Dissolve / uncouple back to scatter
+    // 1: Piece 0 assembled (~190ms)
+    // 2: Piece 1 assembled (~380ms)
+    // 3: Piece 2 assembled (~570ms)
+    // 4: Piece 3 assembled (~760ms - 100% UTUH!)
+    // 5-7: Hold fully assembled + sheen wave sweep (~760ms - ~1400ms)
     const [step, setStep] = useState(0);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setStep((prev) => (prev + 1) % 9);
-        }, 220); // Snappy 220ms beat (~2s full assemble-and-shine cycle)
+            setStep((prev) => {
+                if (prev < 7) return prev + 1;
+                // Once fully assembled, loop sheen steps (5..7) so the logo remains fully assembled & gleaming
+                return 5;
+            });
+        }, 190); // ~190ms per step (~760ms to complete assembly, ~1.4s for full sheen sweep)
 
         return () => clearInterval(interval);
     }, []);
 
     const isAssembled = (pieceIndex: number) => {
-        if (step === 0 || step === 8) return false;
+        if (step === 0) return false;
         return step >= pieceIndex + 1;
     };
 
-    const isFullyAssembled = step >= 4 && step <= 7;
+    const isFullyAssembled = step >= 4;
     const isJustCompleted = step === 4;
 
     // Progress bar value (0 to 100%)
@@ -115,7 +118,7 @@ export function JigsawLoadingScreen({
         <div
             className={`select-none ${
                 fullScreen
-                    ? 'fixed inset-0 z-50 flex flex-col items-center justify-center bg-white/95 backdrop-blur-md'
+                    ? 'fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/95 backdrop-blur-md'
                     : 'relative flex flex-col items-center justify-center p-6'
             } ${className}`}
             role="status"
@@ -233,9 +236,7 @@ export function JigsawLoadingScreen({
                                     transform,
                                     transformOrigin: offset.origin,
                                     transition:
-                                        step === 8
-                                            ? 'transform 0.35s ease-out, opacity 0.3s ease'
-                                            : 'transform 0.24s cubic-bezier(0.34, 1.45, 0.64, 1), opacity 0.2s ease',
+                                        'transform 0.24s cubic-bezier(0.34, 1.45, 0.64, 1), opacity 0.2s ease',
                                     filter: isSnapping ? 'url(#jigsawSnapGlow)' : 'url(#jigsawPieceShadow)',
                                 }}
                             >
@@ -408,21 +409,31 @@ export function checkJigsawTrigger(event: any): JigsawTriggerMatch {
     return { allowed: false };
 }
 
+const MIN_DISPLAY_MS = 1400; // ~1.4s minimum duration for full jigsaw assembly & sheen sweep
+const FADE_OUT_MS = 250;     // 250ms smooth opacity fade-out
+
 /**
  * Hook to automatically show the Jigsaw Loading Screen during Inertia page navigations
  */
 export function useJigsawLoader() {
     const [isLoading, setIsLoading] = useState(false);
+    const [isFadingOut, setIsFadingOut] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('Memuat...');
     const activeRequestsRef = React.useRef(0);
     const isJigsawActiveRef = React.useRef(false);
-    const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const startTimeRef = React.useRef<number>(0);
+    const minTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const fadeTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const safetyTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const clearTimers = React.useCallback(() => {
-        if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
+        if (minTimerRef.current) {
+            clearTimeout(minTimerRef.current);
+            minTimerRef.current = null;
+        }
+        if (fadeTimerRef.current) {
+            clearTimeout(fadeTimerRef.current);
+            fadeTimerRef.current = null;
         }
         if (safetyTimeoutRef.current) {
             clearTimeout(safetyTimeoutRef.current);
@@ -434,8 +445,27 @@ export function useJigsawLoader() {
         activeRequestsRef.current = 0;
         isJigsawActiveRef.current = false;
         clearTimers();
+        setIsFadingOut(false);
         setIsLoading(false);
     }, [clearTimers]);
+
+    const finishGracefully = React.useCallback(() => {
+        if (!isJigsawActiveRef.current) return;
+        if (activeRequestsRef.current > 0) return;
+
+        const elapsed = Date.now() - startTimeRef.current;
+        const remaining = Math.max(0, MIN_DISPLAY_MS - elapsed);
+
+        if (minTimerRef.current) clearTimeout(minTimerRef.current);
+
+        minTimerRef.current = setTimeout(() => {
+            setIsFadingOut(true);
+            if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+            fadeTimerRef.current = setTimeout(() => {
+                dismiss();
+            }, FADE_OUT_MS);
+        }, remaining);
+    }, [dismiss]);
 
     useEffect(() => {
         const handleBefore = (event: any) => {
@@ -472,25 +502,27 @@ export function useJigsawLoader() {
 
             isJigsawActiveRef.current = true;
             activeRequestsRef.current++;
+            startTimeRef.current = Date.now();
+
             if (trigger.message) {
                 setLoadingMessage(trigger.message);
             }
 
-            // Immediately display the Jigsaw loading screen for the 5 selected flows
+            clearTimers();
+            setIsFadingOut(false);
             setIsLoading(true);
 
-            // Safety watchdog: auto-dismiss after 3.5 seconds to prevent any freeze
-            if (safetyTimeoutRef.current) clearTimeout(safetyTimeoutRef.current);
+            // Safety watchdog: auto-dismiss after 5 seconds to prevent any freeze
             safetyTimeoutRef.current = setTimeout(() => {
                 dismiss();
-            }, 3500);
+            }, 5000);
         };
 
-        const handleComplete = () => {
+        const handleFinish = () => {
             if (!isJigsawActiveRef.current) return;
             activeRequestsRef.current = Math.max(0, activeRequestsRef.current - 1);
             if (activeRequestsRef.current === 0) {
-                dismiss();
+                finishGracefully();
             }
         };
 
@@ -501,38 +533,35 @@ export function useJigsawLoader() {
                 np.style.display = 'none';
                 np.remove();
             }
-            // When Inertia renders the new page in the DOM, immediately dismiss the loader!
-            dismiss();
+            if (activeRequestsRef.current <= 0) {
+                finishGracefully();
+            }
         };
 
         const beforeListener = router.on('before', handleBefore);
         const startListener = router.on('start', handleStart);
-        const finishListener = router.on('finish', handleComplete);
+        const finishListener = router.on('finish', handleFinish);
         const navigateListener = router.on('navigate', handleNavigate);
-        const successListener = router.on('success', handleComplete);
-        const cancelListener = router.on('cancel', handleComplete);
-        const errorListener = router.on('error', handleComplete);
+        const cancelListener = router.on('cancel', handleFinish);
 
         return () => {
             beforeListener();
             startListener();
             finishListener();
             navigateListener();
-            successListener();
             cancelListener();
-            errorListener();
             clearTimers();
         };
-    }, [clearTimers, dismiss]);
+    }, [clearTimers, dismiss, finishGracefully]);
 
-    return { isLoading, loadingMessage, dismiss };
+    return { isLoading, isFadingOut, loadingMessage, dismiss };
 }
 
 /**
  * Standalone Global Loader that listens to Inertia page transitions
  */
 export function GlobalJigsawLoader() {
-    const { isLoading, loadingMessage, dismiss } = useJigsawLoader();
+    const { isLoading, isFadingOut, loadingMessage, dismiss } = useJigsawLoader();
 
     // Support Esc key to dismiss loader if user chooses
     useEffect(() => {
@@ -548,7 +577,11 @@ export function GlobalJigsawLoader() {
 
     if (!isLoading) return null;
     return (
-        <>
+        <div
+            className={`transition-opacity duration-300 ease-out ${
+                isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+        >
             <style>{`
                 #nprogress,
                 #nprogress .bar,
@@ -561,7 +594,7 @@ export function GlobalJigsawLoader() {
                 }
             `}</style>
             <JigsawLoadingScreen fullScreen={true} message={loadingMessage} onClose={dismiss} />
-        </>
+        </div>
     );
 }
 

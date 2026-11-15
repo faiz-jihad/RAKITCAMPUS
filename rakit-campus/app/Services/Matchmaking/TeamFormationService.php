@@ -340,7 +340,9 @@ class TeamFormationService
      */
     public function activateWorkspace(Project $project, User $actor): void
     {
-        if (! in_array($project->formation_status, ['lecturer_approved', 'team_locked'], true)) {
+        $isAcademic = !empty($project->academic_class_id) || $project->category === 'academic';
+
+        if ($isAcademic && ! in_array($project->formation_status, ['lecturer_approved', 'team_locked'], true)) {
             throw ValidationException::withMessages([
                 'workspace' => ['Ruang kerja proyek belum dapat diaktifkan sebelum susunan tim disetujui oleh dosen pengampu.'],
             ]);
@@ -428,6 +430,29 @@ class TeamFormationService
         }
 
         $isMember = $project->team && $project->team->hasMember($user);
+        $isAcademic = !empty($project->academic_class_id) || $project->category === 'academic';
+
+        if (! $isAcademic) {
+            // Proyek Mandiri: Workspace otomatis aktif ketika kuota anggota terpenuhi
+            $isFull = $project->team && $project->team->isFull();
+            $isActivated = in_array($project->formation_status, ['workspace_activated', 'team_locked'], true) || $isFull;
+
+            if ($isFull && $project->formation_status !== 'workspace_activated') {
+                $project->update([
+                    'formation_status' => 'workspace_activated',
+                    'status' => ProjectStatus::InProgress,
+                ]);
+                if ($project->team) {
+                    $project->team->update(['status' => 'active']);
+                    $project->team->members()->update(['status' => 'active']);
+                    $project->team->recruitment?->update(['status' => RecruitmentStatus::Closed]);
+                    self::ensureStarterMilestones($project, $user);
+                }
+            }
+
+            return $isMember && $isActivated;
+        }
+
         $isActivated = in_array($project->formation_status, ['lecturer_approved', 'team_locked', 'workspace_activated'], true);
 
         return $isMember && $isActivated;

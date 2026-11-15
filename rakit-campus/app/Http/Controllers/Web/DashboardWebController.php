@@ -8,6 +8,7 @@ use App\Enums\MembershipStatus;
 use App\Enums\ProjectStatus;
 use App\Enums\RecruitmentStatus;
 use App\Enums\TaskStatus;
+use App\Enums\TeamPermission;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
@@ -279,6 +280,7 @@ class DashboardWebController extends Controller
 
         // Enforce onboarding for authenticated students before accessing dashboard
         if (!$isAdmin && !$isLecturer) {
+            $user->loadMissing('profile');
             $profile = $user->profile;
             if (!$profile || !$profile->is_onboarded) {
                 return redirect()->route('onboarding')
@@ -650,7 +652,7 @@ class DashboardWebController extends Controller
             $profile->loadMissing(['skills', 'campus']);
         }
 
-        // 1. User's Teams & Workspaces (strictly academic project teams)
+        // 1. User's Teams & Workspaces
         $myTeams = Team::where('type', '!=', 'competition')
             ->where(function ($q) use ($user) {
                 $q->where('leader_id', $user->id)
@@ -659,7 +661,7 @@ class DashboardWebController extends Controller
                 'project:id,academic_class_id,title,slug,status,category,progress,short_description,formation_status,formation_notes,formation_approved_at,formation_approved_by,min_team_size,max_team_size',
                 'project.academicClass:id,name,code,target_team_size',
                 'project.formationApprover:id,name',
-                'members' => fn ($m) => $m->where('status', 'active')->with('user:id,name,email'),
+                'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar', 'role:id,name']),
                 'tasks:id,team_id,status',
             ])->latest()->get()->map(function ($team) use ($user) {
                 $totalTasks = $team->tasks->count();
@@ -667,6 +669,10 @@ class DashboardWebController extends Controller
                 $isLeader = $team->leader_id === $user->id || $team->isLeader($user);
                 $project = $team->project;
                 $formationStatus = $project?->formation_status ?? 'draft';
+                $isAcademic = !empty($project?->academic_class_id) || ($project?->category?->value ?? $project?->category) === 'academic';
+                $isFull = $team->members->count() >= ($project?->max_team_size ?: 4);
+                $canAccessWorkspace = in_array($formationStatus, ['lecturer_approved', 'team_locked', 'workspace_activated'], true)
+                    || (!$isAcademic && $isFull);
 
                 return [
                     'id' => $team->id,
@@ -679,7 +685,8 @@ class DashboardWebController extends Controller
                     'formation_notes' => $project?->formation_notes,
                     'formation_approved_at' => $project?->formation_approved_at?->translatedFormat('d M Y, H:i'),
                     'formation_approver_name' => $project?->formationApprover?->name,
-                    'can_access_workspace' => in_array($formationStatus, ['lecturer_approved', 'team_locked', 'workspace_activated'], true),
+                    'can_access_workspace' => $canAccessWorkspace,
+                    'is_academic' => $isAcademic,
                     'project' => $project ? [
                         'id' => $project->id,
                         'title' => $project->title,
@@ -694,11 +701,14 @@ class DashboardWebController extends Controller
                         'class_label' => $project->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : null,
                     ] : null,
                     'members_count' => $team->members->count(),
-                    'members' => $team->members->take(5)->map(fn ($m) => [
+                    'members' => $team->members->map(fn ($m) => [
                         'id' => $m->user_id,
                         'name' => $m->user?->name ?? 'Mahasiswa',
-                        'role' => $m->role_name ?? ($m->permission === 'leader' ? 'Leader' : 'Anggota'),
-                    ]),
+                        'email' => $m->user?->email ?? '',
+                        'avatar' => $m->user?->avatar,
+                        'role' => $m->role_name ?: ($m->role?->name ?: ($m->recruitmentRole?->name ?: (($m->permission === TeamPermission::Leader || $m->permission?->value === 'leader' || $m->permission === 'leader' || $m->user_id === $team->leader_id) ? 'Ketua Tim' : 'Anggota'))),
+                        'is_leader' => $m->user_id === $team->leader_id || $m->permission === TeamPermission::Leader || $m->permission?->value === 'leader' || $m->permission === 'leader',
+                    ])->values()->all(),
                     'total_tasks' => $totalTasks,
                     'done_tasks' => $doneTasks,
                     'progress_percent' => $totalTasks > 0 ? (int) round(($doneTasks / $totalTasks) * 100) : ($project?->progress ?? 0),
@@ -835,6 +845,7 @@ class DashboardWebController extends Controller
                 'email' => $user->email,
                 'role' => $membership?->role?->value ?? 'student',
                 'is_lecturer' => false,
+                'is_verified' => $membership?->verification_status === VerificationStatus::Verified || (bool) $membership?->verified_at,
                 'campus' => $membership?->campus?->name ?? 'Kampus Anda',
                 'major' => $profile?->study_program ?? $profile?->department ?? $profile?->major ?? 'Teknik Informatika',
                 'nim' => $membership?->student_number ?? $profile?->nim,

@@ -7,6 +7,7 @@ import {
     Briefcase,
     Calendar,
     CheckCircle2,
+    Clock,
     Compass,
     Filter,
     FolderKanban,
@@ -17,6 +18,7 @@ import {
     Search,
     Send,
     Sparkles,
+    UserPlus,
     Users,
     X,
 } from 'lucide-react';
@@ -169,17 +171,17 @@ export default function ProjectIndex({
                     <div className="flex items-center gap-2 self-start sm:self-auto">
                         <Link
                             href="/workspace"
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
+                            className="group inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition"
                         >
-                            <FolderKanban className="size-3.5 text-blue-600" />
+                            <FolderKanban className="size-3.5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
                             <span>Workspace Tim</span>
                         </Link>
                         {!isLecturer && (
                             <Link
                                 href="/projects/create"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                className="group inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
                             >
-                                <Plus className="size-3.5" />
+                                <Plus className="size-3.5 transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
                                 <span>Buat Proyek</span>
                             </Link>
                         )}
@@ -280,142 +282,190 @@ export default function ProjectIndex({
                             )}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-2">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
                                 return (
                                     <div
                                         key={proj.id}
-                                        className="bg-white rounded-xl border border-slate-200/80 hover:border-blue-400 hover:shadow-xs transition p-5 flex flex-col justify-between gap-4 group"
+                                        className="group relative pt-6 transition-all duration-300"
                                     >
-                                        <div>
-                                            {/* Badges row with clean squircle */}
-                                            <div className="flex items-start justify-between gap-2 mb-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
-                                                        {proj.category.replace('_', ' ')}
-                                                    </span>
-                                                </div>
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${getStatusBadge(proj.status)}`}>
-                                                    {proj.status.replace('_', ' ')}
-                                                </span>
+                                        {/* 1. FOLDER TAB (Kuping Tab Map di Kiri Atas - Polos Tanpa Ikon/Teks Tertutup) */}
+                                        <div className="absolute top-0 left-0 w-32 sm:w-36 h-7.5 rounded-t-xl bg-blue-800 border-t border-x border-blue-400/40 shadow-xs z-0" />
+
+                                        {/* 2. INNER DOCUMENT PAPER (Menyembul keluar saat folder dibuka saat di-hover) */}
+                                        <div className="absolute inset-x-3.5 top-2.5 h-12 rounded-t-xl bg-amber-100 shadow-md border border-amber-300/80 transition-all duration-300 ease-out transform group-hover:-translate-y-5 group-hover:rotate-[-0.5deg] z-10 pointer-events-none overflow-hidden">
+                                            {/* Garis-garis representasi dokumen dalam folder (Kuning Manila / Cream) */}
+                                            <div className="flex items-center gap-2 px-3.5 pt-2.5 opacity-90">
+                                                <div className="w-10 h-1.5 rounded-full bg-amber-400" />
+                                                <div className="w-16 h-1.5 rounded-full bg-amber-300" />
+                                                <div className="w-8 h-1.5 rounded-full bg-amber-200" />
                                             </div>
-
-                                            {/* Title */}
-                                            <Link href={`/projects/${proj.slug || proj.id}`} className="block group-hover:text-blue-600 transition">
-                                                <h3 className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
-                                                    {proj.title}
-                                                </h3>
-                                            </Link>
-
-                                            {/* Description */}
-                                            <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-                                                {proj.short_description}
-                                            </p>
-
-                                            {/* Open Recruitment Alert if recruiting */}
-                                            {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 && (
-                                                <div className="mt-3.5 p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-xs">
-                                                    <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block mb-1">
-                                                        Membuka {openRoles.length} Posisi:
-                                                    </span>
-                                                    <div className="flex flex-wrap gap-1">
-                                                        {openRoles.slice(0, 3).map((r, rIdx) => (
-                                                            <span
-                                                                key={rIdx}
-                                                                className="text-[10px] font-semibold bg-white text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200"
-                                                            >
-                                                                {r}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {/* Tech Stack Chips */}
-                                            {proj.tech_stack && proj.tech_stack.length > 0 && (
-                                                <div className="flex flex-wrap gap-1 mt-3.5">
-                                                    {proj.tech_stack.slice(0, 4).map((tech, i) => (
-                                                        <span
-                                                            key={i}
-                                                            className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md border border-slate-200/60"
-                                                        >
-                                                            {tech}
-                                                        </span>
-                                                    ))}
-                                                    {proj.tech_stack.length > 4 && (
-                                                        <span className="text-[10px] text-slate-400 font-semibold self-center">
-                                                            +{proj.tech_stack.length - 4}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            )}
                                         </div>
 
-                                        {/* Card Footer */}
-                                        <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
-                                            <div className="flex items-center gap-1.5 text-slate-500">
-                                                <Users className="size-3.5 text-slate-400" />
-                                                <span className="font-semibold text-slate-700">
-                                                    {proj.team?.members?.length || 1} Anggota
-                                                </span>
+                                        {/* 3. FOLDER BODY (Badan Folder Berwarna Biru, Teks & Ikon Putih) */}
+                                        <div className="relative z-20 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 text-white rounded-2xl rounded-tl-none p-5 sm:p-6 shadow-md border border-blue-400/40 transition-all duration-300 ease-out group-hover:shadow-2xl group-hover:border-blue-300 group-hover:translate-y-0.5 flex flex-col justify-between min-h-[340px]">
+                                            <div>
+                                                {/* Top Bar Dalam Folder: Kategori, Kelas / Jalur & Status Rekrutmen */}
+                                                <div className="flex items-center justify-between gap-2 mb-3">
+                                                    <div className="flex items-center gap-1.5 truncate">
+                                                        <span className="text-[11px] font-black tracking-wider uppercase text-blue-200 truncate">
+                                                            {proj.category.replace('_', ' ')}
+                                                        </span>
+                                                        {proj.academic_class ? (
+                                                            <>
+                                                                <span className="text-blue-300 text-xs shrink-0">•</span>
+                                                                <span className="text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
+                                                                    {proj.academic_class.code || proj.academic_class.name}
+                                                                </span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="text-blue-300 text-xs shrink-0">•</span>
+                                                                <span className="text-[11px] font-semibold text-blue-100 truncate">
+                                                                    Mandiri
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </div>
+
+                                                    {proj.status === 'recruiting' ? (
+                                                        <div className="inline-flex items-center gap-1.5 text-white bg-white/20 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shrink-0 border border-white/25">
+                                                            <UserPlus className="size-3.5 text-white" />
+                                                            <span>Rekrutmen</span>
+                                                        </div>
+                                                    ) : proj.status === 'in_progress' ? (
+                                                        <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
+                                                            <Clock className="size-3.5 text-blue-200" />
+                                                            <span>Sedang Berjalan</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
+                                                            <CheckCircle2 className="size-3.5 text-blue-200" />
+                                                            <span>Selesai</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Title */}
+                                                <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
+                                                    <h3 className="text-base sm:text-lg font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
+                                                        {proj.title}
+                                                    </h3>
+                                                </Link>
+
+                                                {/* Description */}
+                                                <p className="text-xs text-blue-100 mt-2 line-clamp-2 leading-relaxed min-h-[34px]">
+                                                    {proj.short_description}
+                                                </p>
+
+                                                {/* Integrated Recruitment Strip / Team Status */}
+                                                <div className="mt-3.5 pt-3 border-t border-white/15 min-h-[52px] flex flex-col justify-center">
+                                                    {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 ? (
+                                                        <div>
+                                                            <div className="flex items-center justify-between text-[11px] mb-1.5">
+                                                                <span className="font-bold text-white">Dibutuhkan:</span>
+                                                                <span className="text-[10px] font-bold text-blue-100 bg-white/20 px-2 py-0.5 rounded-full">{openRoles.length} Posisi Terbuka</span>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {openRoles.slice(0, 2).map((r, rIdx) => (
+                                                                    <span
+                                                                        key={rIdx}
+                                                                        className="text-[10px] font-semibold bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20 truncate max-w-[150px]"
+                                                                    >
+                                                                        {r}
+                                                                    </span>
+                                                                ))}
+                                                                {openRoles.length > 2 && (
+                                                                    <span className="text-[10px] font-medium text-blue-200 self-center px-1">
+                                                                        +{openRoles.length - 2} lagi
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center justify-between text-[11px] py-1">
+                                                            <span className="font-medium text-blue-100">Susunan Tim:</span>
+                                                            <span className="text-[10px] font-semibold text-white bg-white/20 px-2 py-0.5 rounded-md border border-white/20">
+                                                                Tim Lengkap
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Tech Stack Chips */}
+                                                {proj.tech_stack && proj.tech_stack.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                                        {proj.tech_stack.slice(0, 4).map((tech, i) => (
+                                                            <span
+                                                                key={i}
+                                                                className="text-[10px] font-medium bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/10"
+                                                            >
+                                                                {tech}
+                                                            </span>
+                                                        ))}
+                                                        {proj.tech_stack.length > 4 && (
+                                                            <span className="text-[10px] text-blue-200 font-medium self-center px-0.5">
+                                                                +{proj.tech_stack.length - 4}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
 
-                                            <div className="flex items-center gap-2 shrink-0">
-                                                {proj.status === 'recruiting' && !isLecturer && (
-                                                    proj.is_member ? (
-                                                        proj.can_access_workspace ? (
-                                                            <Link
-                                                                href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition shadow-2xs"
-                                                                title="Buka Workspace Tim Proyek"
-                                                            >
-                                                                <FolderKanban className="size-3" />
-                                                                <span>Workspace Tim</span>
-                                                            </Link>
-                                                        ) : (
-                                                            <span
-                                                                title="Workspace Tim menunggu persetujuan dosen pengampu kelas"
-                                                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 text-[11px] font-bold"
-                                                            >
-                                                                <span>Tim Anda</span>
+                                            {/* Card Footer */}
+                                            <div className="pt-3.5 mt-3.5 border-t border-white/15 flex items-center justify-between gap-2 text-xs">
+                                                <div className="flex items-center gap-1.5 text-white">
+                                                    <Users className="size-3.5 text-blue-200" />
+                                                    <span className="font-bold text-white text-xs">
+                                                        {proj.team?.members?.length || 1} Anggota
+                                                    </span>
+                                                </div>
+
+                                                <div className="flex items-center gap-1.5 shrink-0">
+                                                    {proj.status === 'recruiting' && !isLecturer && (
+                                                        proj.is_member ? (
+                                                            proj.can_access_workspace ? (
+                                                                <Link
+                                                                    href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
+                                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition"
+                                                                    title="Buka Workspace Tim Proyek"
+                                                                >
+                                                                    <FolderKanban className="size-3 text-white" />
+                                                                    <span>Workspace</span>
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="text-[11px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-md border border-white/30">
+                                                                    Tim Anda
+                                                                </span>
+                                                            )
+                                                        ) : proj.has_applied ? (
+                                                            <span className="text-[11px] font-medium text-blue-100 bg-white/15 px-2 py-1 rounded-md border border-white/20">
+                                                                Sudah Melamar
                                                             </span>
-                                                        )
-                                                    ) : proj.has_applied ? (
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 text-amber-800 border border-amber-200 text-[11px] font-bold">
-                                                            <span>Sudah Melamar</span>
-                                                        </span>
-                                                    ) : isGuest ? (
-                                                        proj.has_open_recruitment === false ? (
-                                                            <span className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-semibold">
-                                                                <span>Rekrutmen Ditutup</span>
-                                                            </span>
-                                                        ) : (
-                                                            <Link
-                                                                href="/login"
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs"
+                                                        ) : isGuest ? (
+                                                            proj.has_open_recruitment !== false && (
+                                                                <Link
+                                                                    href="/login"
+                                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition"
+                                                                >
+                                                                    <Send className="size-3 text-blue-700" />
+                                                                    <span>Lamar</span>
+                                                                </Link>
+                                                            )
+                                                        ) : proj.can_apply ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openJoinModal(proj)}
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition cursor-pointer"
                                                             >
-                                                                <Send className="size-3" />
-                                                                <span>Gabung Tim</span>
-                                                            </Link>
-                                                        )
-                                                    ) : proj.can_apply ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openJoinModal(proj)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
-                                                        >
-                                                            <Send className="size-3" />
-                                                            <span>Gabung Tim</span>
-                                                        </button>
-                                                    ) : (
-                                                        <span
-                                                            title={proj.apply_block_reason || 'Tidak memenuhi syarat gabung'}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-semibold"
-                                                        >
-                                                            <span>
+                                                                <Send className="size-3 text-blue-700" />
+                                                                <span>Lamar Posisi</span>
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-[11px] font-medium text-blue-200">
                                                                 {proj.has_open_recruitment === false
-                                                                    ? 'Rekrutmen Ditutup'
+                                                                    ? 'Rekrutmen Tutup'
                                                                     : proj.has_capacity === false
                                                                     ? 'Penuh'
                                                                     : proj.is_class_restricted
@@ -424,17 +474,17 @@ export default function ProjectIndex({
                                                                     ? 'Sudah Punya Tim'
                                                                     : 'Tidak Memenuhi Syarat'}
                                                             </span>
-                                                        </span>
-                                                    )
-                                                )}
+                                                        )
+                                                    )}
 
-                                                <Link
-                                                    href={`/projects/${proj.slug || proj.id}`}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 group-hover:bg-blue-600 text-white text-xs font-bold transition shadow-2xs"
-                                                >
-                                                    <span>Detail</span>
-                                                    <ArrowRight className="size-3" />
-                                                </Link>
+                                                    <Link
+                                                        href={`/projects/${proj.slug || proj.id}`}
+                                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-extrabold transition shadow-xs duration-150 active:scale-95"
+                                                    >
+                                                        <span>Detail</span>
+                                                        <ArrowRight className="size-3 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
+                                                    </Link>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -465,39 +515,36 @@ export default function ProjectIndex({
 
             {/* QUICK JOIN / APPLY MODAL */}
             {joiningProject && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-4">
-                        <div className="flex items-start justify-between gap-3">
+                <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
+                        <div className="flex items-start justify-between p-5 sm:p-6 border-b border-slate-100">
                             <div>
-                                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">
-                                    Gabung Tim Proyek
-                                </span>
-                                <h3 className="text-lg font-bold text-slate-900 leading-snug">
-                                    {joiningProject.title}
+                                <h3 className="text-base font-bold text-slate-900 leading-snug">
+                                    Ajukan Lamaran Tim
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Pilih posisi yang ingin dilamar dan kirimkan pesan singkat ke ketua tim.
+                                    Mengajukan diri untuk bergabung ke proyek <strong className="text-slate-800 font-semibold">{joiningProject.title}</strong>
                                 </p>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setJoiningProject(null)}
-                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer shrink-0"
+                                className="size-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer shrink-0"
                             >
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleQuickApply} className="flex flex-col gap-4">
+                        <form onSubmit={handleQuickApply} className="p-5 sm:p-6 flex flex-col gap-4">
                             {joiningProject.team?.recruitment?.roles && joiningProject.team.recruitment.roles.length > 0 && (
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                                         Pilih Posisi / Peran
                                     </label>
                                     <select
                                         value={selectedRoleId}
                                         onChange={(e) => setSelectedRoleId(e.target.value ? Number(e.target.value) : '')}
-                                        className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                        className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 bg-white text-xs font-medium text-slate-800 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition shadow-2xs"
                                     >
                                         {joiningProject.team.recruitment.roles.map((r) => (
                                             <option key={r.id} value={r.id}>
@@ -509,40 +556,41 @@ export default function ProjectIndex({
                             )}
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Pesan Perkenalan & Keahlian Singkat *
+                                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                    Pesan Singkat & Portofolio Relevan <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
                                     rows={4}
                                     required
                                     value={applyMessage}
                                     onChange={(e) => setApplyMessage(e.target.value)}
-                                    placeholder="Jelaskan keahlian, pengalaman relevan, atau kontribusi yang ingin Anda berikan..."
-                                    className="w-full p-3 rounded-xl border border-slate-200 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    placeholder="Jelaskan keahlian teknis, pengalaman relevan, atau kontribusi yang ingin Anda berikan..."
+                                    className="w-full p-3 border border-slate-300 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition shadow-2xs resize-none leading-relaxed"
                                 />
                             </div>
 
-                            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                            <div className="flex items-center justify-between gap-2 pt-4 border-t border-slate-100 -mx-5 sm:-mx-6 -mb-5 sm:-mb-6 px-5 sm:px-6 py-4 bg-slate-50/80">
                                 <Link
                                     href={`/projects/${joiningProject.slug || joiningProject.id}`}
-                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700"
                                 >
-                                    Lihat Detail Lengkap Proyek &rarr;
+                                    Detail Proyek &rarr;
                                 </Link>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2.5">
                                     <button
                                         type="button"
                                         onClick={() => setJoiningProject(null)}
-                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                        className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer shadow-2xs"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={submittingJoin}
-                                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition disabled:opacity-50 shadow-xs cursor-pointer"
+                                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-semibold transition disabled:opacity-50 shadow-xs cursor-pointer"
                                     >
-                                        {submittingJoin ? 'Mengirim...' : 'Kirim Lamaran'}
+                                        <Send className="size-3.5" />
+                                        <span>{submittingJoin ? 'Mengirim...' : 'Kirim Lamaran'}</span>
                                     </button>
                                 </div>
                             </div>

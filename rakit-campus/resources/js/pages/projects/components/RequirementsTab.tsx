@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import {
     Briefcase,
+    Calendar,
     Check,
     Clock,
     Plus,
@@ -68,6 +69,7 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
     );
 
     const [newSkillName, setNewSkillName] = useState('');
+    const [newSkillLevel, setNewSkillLevel] = useState(3);
     const [saving, setSaving] = useState(false);
 
     const handleAddRole = () => {
@@ -81,10 +83,16 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
         setRoles(roles.filter((_, i) => i !== idx));
     };
 
-    const handleAddSkill = (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAddSkill = (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
         if (!newSkillName.trim()) return;
-        setSkills([...skills, { name: newSkillName.trim(), min_proficiency: 2 }]);
+        const trimmed = newSkillName.trim();
+        const exists = skills.some(s => s.name.toLowerCase() === trimmed.toLowerCase());
+        if (exists) {
+            setNewSkillName('');
+            return;
+        }
+        setSkills([...skills, { name: trimmed, min_proficiency: newSkillLevel }]);
         setNewSkillName('');
     };
 
@@ -119,16 +127,9 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
             <div className="glass-card rounded-2xl p-6 relative overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold mb-2">
-                            <Settings className="size-3.5" />
-                            <span>Konfigurasi Kebutuhan Tim Proyek</span>
-                        </div>
                         <h2 className="text-xl font-black text-slate-900 tracking-tight">
                             Persyaratan Keahlian & Pembagian Peran
                         </h2>
-                        <p className="text-xs text-slate-500 mt-1 max-w-2xl leading-relaxed">
-                            Tentukan kapasitas anggota, peran spesifik yang dicari, serta standar minimal kompetensi teknis agar mesin Smart Matchmaking dapat merekomendasikan rekan yang saling melengkapi.
-                        </p>
                     </div>
 
                     {canConfigure && (
@@ -189,13 +190,12 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                             />
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-2">Target kelas: {academicClass?.target_team_size || 4} orang</p>
                 </div>
 
                 <div className="glass-card rounded-2xl p-5">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Komitmen Waktu</span>
-                        <Clock className="size-4 text-emerald-600" />
+                        <Clock className="size-4 text-blue-600" />
                     </div>
                     <div className="mt-3">
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Jam / Minggu Per Anggota</label>
@@ -212,13 +212,12 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                             <span className="text-xs text-slate-500 font-semibold shrink-0">Jam / Mgg</span>
                         </div>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-2">Digunakan untuk evaluasi kecocokan availability.</p>
                 </div>
 
                 <div className="glass-card rounded-2xl p-5">
                     <div className="flex items-center justify-between gap-2 mb-2">
                         <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Tenggat Pembentukan</span>
-                        <Zap className="size-4 text-amber-600" />
+                        <Calendar className="size-4 text-blue-600" />
                     </div>
                     <div className="mt-3">
                         <label className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Batas Akhir Formasi</label>
@@ -230,20 +229,16 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                             className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900"
                         />
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-2">Setelah tenggat, formasi tim diajukan ke dosen pengampu.</p>
                 </div>
             </div>
 
             {/* Configurable Roles Section */}
             <div className="glass-card rounded-2xl p-6">
                 <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-4">
-                    <div>
-                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <Briefcase className="size-4.5 text-blue-600" />
-                            <span>Peran & Tanggung Jawab Anggota ({roles.length} Posisi)</span>
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Daftar peran yang dibutuhkan dalam tim proyek capstone ini.</p>
-                    </div>
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Briefcase className="size-4.5 text-blue-600" />
+                        <span>Peran & Tanggung Jawab Anggota ({roles.length} Posisi)</span>
+                    </h3>
 
                     {canConfigure && (
                         <button
@@ -343,58 +338,144 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                 </div>
             </div>
 
-            {/* Technical Skills Requirements */}
+            {/* Technical Skills Requirements (2-Column Balanced Layout) */}
             <div className="glass-card rounded-2xl p-6">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-4">
-                    <div>
-                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <Shield className="size-4.5 text-blue-600" />
-                            <span>Kebutuhan Keahlian Teknis ({skills.length} Keahlian)</span>
-                        </h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Keahlian wajib yang harus dikuasai oleh anggota tim (skala profisiensi 1–5).</p>
-                    </div>
+                <div className="flex items-center justify-between pb-4 border-b border-slate-200/80 mb-5">
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <Shield className="size-4.5 text-blue-600" />
+                        <span>Kebutuhan Keahlian Teknis ({skills.length} Keahlian)</span>
+                    </h3>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {skills.map((skill, idx) => (
-                        <div
-                            key={idx}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 shadow-2xs"
-                        >
-                            <span>{skill.name}</span>
-                            <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-50 text-blue-700">
-                                Min Lvl {skill.min_proficiency}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    {/* Left Column (7 cols): Active Technical Skills Badges & Recommendations */}
+                    <div className="lg:col-span-7 flex flex-col gap-4">
+                        <div>
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-2.5">
+                                Daftar Keahlian Wajib
                             </span>
-                            {canConfigure && (
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveSkill(idx)}
-                                    className="text-slate-400 hover:text-rose-600 cursor-pointer ml-1"
-                                >
-                                    ×
-                                </button>
+                            {skills.length > 0 ? (
+                                <div className="flex flex-wrap gap-2">
+                                    {skills.map((skill, idx) => (
+                                        <div
+                                            key={idx}
+                                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-slate-200/90 hover:border-slate-300 text-xs font-bold text-slate-800 shadow-2xs transition"
+                                        >
+                                            <span className="font-extrabold text-slate-900">{skill.name}</span>
+                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                Min Lvl {skill.min_proficiency}
+                                            </span>
+                                            {canConfigure && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleRemoveSkill(idx)}
+                                                    className="size-5 rounded-md flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer ml-1"
+                                                    title={`Hapus ${skill.name}`}
+                                                >
+                                                    ×
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-400 text-center">
+                                    Belum ada keahlian yang ditambahkan.
+                                </div>
                             )}
                         </div>
-                    ))}
-                </div>
 
-                {canConfigure && (
-                    <form onSubmit={handleAddSkill} className="flex items-center gap-2 max-w-md">
-                        <input
-                            type="text"
-                            value={newSkillName}
-                            onChange={(e) => setNewSkillName(e.target.value)}
-                            placeholder="Tambah keahlian (cth: Docker, PostgreSQL)..."
-                            className="flex-1 px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-medium text-slate-900"
-                        />
-                        <button
-                            type="submit"
-                            className="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800 transition cursor-pointer"
-                        >
-                            Tambah
-                        </button>
-                    </form>
-                )}
+                        {/* Quick Suggestions */}
+                        {canConfigure && (
+                            <div className="pt-3 border-t border-slate-100">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                                    Saran Cepat Keahlian Populer
+                                </span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {['TypeScript', 'Docker', 'Python', 'PostgreSQL', 'Tailwind CSS', 'Figma', 'Next.js', 'Git']
+                                        .filter((rec) => !skills.some((s) => s.name.toLowerCase() === rec.toLowerCase()))
+                                        .slice(0, 6)
+                                        .map((rec) => (
+                                            <button
+                                                key={rec}
+                                                type="button"
+                                                onClick={() => {
+                                                    setSkills([...skills, { name: rec, min_proficiency: 3 }]);
+                                                }}
+                                                className="px-2.5 py-1 rounded-lg bg-slate-50 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 border border-slate-200/70 text-[11px] font-semibold text-slate-600 transition cursor-pointer flex items-center gap-1"
+                                            >
+                                                <span>+ {rec}</span>
+                                            </button>
+                                        ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column (5 cols): Add Skill Form & Level Selector */}
+                    {canConfigure ? (
+                        <div className="lg:col-span-5 p-4.5 rounded-xl bg-slate-50/80 border border-slate-200/80 flex flex-col gap-3">
+                            <span className="text-xs font-black text-slate-900 block">
+                                Tambah Keahlian Baru
+                            </span>
+
+                            <form onSubmit={handleAddSkill} className="flex flex-col gap-3">
+                                <div>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-1">
+                                        Nama Keahlian / Teknologi
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={newSkillName}
+                                        onChange={(e) => setNewSkillName(e.target.value)}
+                                        placeholder="cth: Docker, PostgreSQL, Flutter..."
+                                        className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                </div>
+
+                                <div>
+                                    <div className="flex items-center justify-between mb-1">
+                                        <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                                            Minimal Profisiensi
+                                        </label>
+                                        <span className="text-[11px] font-extrabold text-blue-700">
+                                            Level {newSkillLevel} / 5
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-5 gap-1.5">
+                                        {[1, 2, 3, 4, 5].map((lvl) => (
+                                            <button
+                                                key={lvl}
+                                                type="button"
+                                                onClick={() => setNewSkillLevel(lvl)}
+                                                className={`py-1.5 rounded-lg text-xs font-bold transition text-center cursor-pointer ${
+                                                    newSkillLevel === lvl
+                                                        ? 'bg-blue-600 text-white shadow-xs'
+                                                        : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                                                }`}
+                                            >
+                                                Lvl {lvl}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={!newSkillName.trim()}
+                                    className="w-full mt-1 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <Plus className="size-3.5" />
+                                    <span>Tambahkan Keahlian</span>
+                                </button>
+                            </form>
+                        </div>
+                    ) : (
+                        <div className="lg:col-span-5 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-500">
+                            Hanya ketua tim atau dosen yang dapat mengubah kebutuhan keahlian proyek ini.
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

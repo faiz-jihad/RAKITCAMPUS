@@ -168,33 +168,32 @@ class MembershipService
                 ]);
             }
 
-            // 1. Check if applicant already joined an active project in this class (or overall if non-class project)
+            // 1. Enforce 1 active project rule (ONLY for academic class projects)
             $classId = $project->academic_class_id;
-            $hasActive = TeamMember::where('user_id', $applicant->id)
-                ->where('status', 'active')
-                ->whereHas('team.project', function ($q) use ($classId) {
-                    $q->whereNotIn('status', [
-                        ProjectStatus::Archived->value,
-                        ProjectStatus::Completed->value,
+            if ($classId !== null) {
+                $hasActive = TeamMember::where('user_id', $applicant->id)
+                    ->where('status', 'active')
+                    ->whereHas('team.project', function ($q) use ($classId) {
+                        $q->whereNotIn('status', [
+                            ProjectStatus::Archived->value,
+                            ProjectStatus::Completed->value,
+                        ])->where('academic_class_id', $classId);
+                    })
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($hasActive) {
+                    $application->update([
+                        'status' => 'rejected',
+                        'decided_by' => $decidedBy->id,
+                        'decided_at' => now(),
+                        'decision_note' => 'Otomatis ditolak: Mahasiswa telah bergabung dengan proyek aktif lain di kelas ini.',
                     ]);
-                    if ($classId !== null) {
-                        $q->where('academic_class_id', $classId);
-                    }
-                })
-                ->lockForUpdate()
-                ->exists();
 
-            if ($hasActive) {
-                $application->update([
-                    'status' => 'rejected',
-                    'decided_by' => $decidedBy->id,
-                    'decided_at' => now(),
-                    'decision_note' => 'Otomatis ditolak: Mahasiswa telah bergabung dengan proyek aktif lain.',
-                ]);
-
-                throw ValidationException::withMessages([
-                    'applicant' => ['Mahasiswa ini telah bergabung dalam proyek aktif lain (Aturan 1 Mahasiswa 1 Proyek).'],
-                ]);
+                    throw ValidationException::withMessages([
+                        'applicant' => ['Mahasiswa ini telah bergabung dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek).'],
+                    ]);
+                }
             }
 
             // 2. Check team capacity, including the lecturer's class limit
@@ -246,6 +245,27 @@ class MembershipService
                 'decided_at' => now(),
                 'decision_note' => $decisionNote,
             ]);
+
+            // 5. If team is now at full capacity, automatically close recruitment
+            $newActiveCount = $team->members()->where('status', 'active')->count();
+            if ($newActiveCount >= $maxCapacity) {
+                if ($team->recruitment) {
+                    $team->recruitment->update(['status' => 'closed']);
+                }
+                $project->update(['has_open_recruitment' => false]);
+
+                $isAcademic = !empty($project->academic_class_id) || $project->category === 'academic';
+                if (! $isAcademic) {
+                    // Proyek mandiri: kuota terpenuhi => workspace otomatis aktif
+                    $project->update([
+                        'formation_status' => 'workspace_activated',
+                        'status' => \App\Enums\ProjectStatus::InProgress->value,
+                    ]);
+                    $team->update(['status' => 'active']);
+                    $team->members()->update(['status' => 'active']);
+                    \App\Services\Matchmaking\TeamFormationService::ensureStarterMilestones($project, $decidedBy);
+                }
+            }
 
             MatchingAuditLog::log(
                 'application_accepted',
@@ -315,25 +335,24 @@ class MembershipService
             $project = $team->project;
             $classId = $project?->academic_class_id;
 
-            // 1. Enforce 1 active project rule (per class when applicable)
-            $hasActive = TeamMember::where('user_id', $student->id)
-                ->where('status', 'active')
-                ->whereHas('team.project', function ($q) use ($classId) {
-                    $q->whereNotIn('status', [
-                        ProjectStatus::Archived->value,
-                        ProjectStatus::Completed->value,
-                    ]);
-                    if ($classId !== null) {
-                        $q->where('academic_class_id', $classId);
-                    }
-                })
-                ->lockForUpdate()
-                ->exists();
+            // 1. Enforce 1 active project rule (per class for academic projects)
+            if ($classId !== null) {
+                $hasActive = TeamMember::where('user_id', $student->id)
+                    ->where('status', 'active')
+                    ->whereHas('team.project', function ($q) use ($classId) {
+                        $q->whereNotIn('status', [
+                            ProjectStatus::Archived->value,
+                            ProjectStatus::Completed->value,
+                        ])->where('academic_class_id', $classId);
+                    })
+                    ->lockForUpdate()
+                    ->exists();
 
-            if ($hasActive) {
-                throw ValidationException::withMessages([
-                    'invitation' => ['Anda sudah terdaftar dalam proyek aktif lain. Selesaikan proyek saat ini terlebih dahulu.'],
-                ]);
+                if ($hasActive) {
+                    throw ValidationException::withMessages([
+                        'invitation' => ['Anda sudah terdaftar dalam proyek aktif lain di kelas ini (Aturan 1 Mahasiswa 1 Proyek Aktif).'],
+                    ]);
+                }
             }
 
             // 2. Check team capacity, including the lecturer's class limit
@@ -366,6 +385,27 @@ class MembershipService
                 'responded_at' => now(),
                 'pending_marker' => null,
             ]);
+
+            // If team is now at full capacity, automatically close recruitment
+            $newActiveCount = $team->members()->where('status', 'active')->count();
+            if ($newActiveCount >= $maxCapacity) {
+                if ($team->recruitment) {
+                    $team->recruitment->update(['status' => 'closed']);
+                }
+                $project->update(['has_open_recruitment' => false]);
+
+                $isAcademic = !empty($project->academic_class_id) || $project->category === 'academic';
+                if (! $isAcademic) {
+                    // Proyek mandiri: kuota terpenuhi => workspace otomatis aktif
+                    $project->update([
+                        'formation_status' => 'workspace_activated',
+                        'status' => \App\Enums\ProjectStatus::InProgress->value,
+                    ]);
+                    $team->update(['status' => 'active']);
+                    $team->members()->update(['status' => 'active']);
+                    \App\Services\Matchmaking\TeamFormationService::ensureStarterMilestones($project, $student);
+                }
+            }
 
             return $member;
         });

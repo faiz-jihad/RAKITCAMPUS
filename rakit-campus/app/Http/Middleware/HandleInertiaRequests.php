@@ -67,7 +67,7 @@ class HandleInertiaRequests extends Middleware
                     'unread_notifications_count' => app(\App\Contracts\Notifications\NotificationCounterInterface::class)->getUnreadCount($user),
                     'recent_notifications' => $user->notifications()
                         ->latest()
-                        ->limit(5)
+                        ->limit(7)
                         ->get(['id', 'data', 'read_at', 'created_at'])
                         ->map(fn ($n) => [
                             'id' => $n->id,
