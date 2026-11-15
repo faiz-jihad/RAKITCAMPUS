@@ -14,15 +14,20 @@ import {
     Copy,
     Download,
     ExternalLink,
+    Eye,
     FileText,
     Filter,
+    Folder,
+    FolderArchive,
     FolderKanban,
+    FolderOpen,
     GitBranch,
     Github,
     Globe,
     GraduationCap,
     HardDrive,
     History,
+    Image as ImageIcon,
     Lock,
     PenLine,
     Phone,
@@ -98,7 +103,7 @@ export default function CompetitionWorkspace({
     canManageGitHub = false,
 }: Props) {
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
-    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'rounds' | 'mentoring' | 'results' | 'history'>(() => {
+    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'mentoring' | 'results' | 'history'>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
             if (params.get('tab') === 'github' || window.location.hash === '#github') {
@@ -126,6 +131,8 @@ export default function CompetitionWorkspace({
     const [selectedDocToReplace, setSelectedDocToReplace] = useState<any>(null);
     const [reviewModalOpen, setReviewModalOpen] = useState(false);
     const [reviewDocId, setReviewDocId] = useState<number | null>(null);
+    const [selectedDocFolder, setSelectedDocFolder] = useState<string>('all');
+    const [docSearchQuery, setDocSearchQuery] = useState<string>('');
     const [mentorModalOpen, setMentorModalOpen] = useState(false);
     const [resultModalOpen, setResultModalOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
@@ -559,6 +566,16 @@ export default function CompetitionWorkspace({
         }
     };
 
+    // Folder Categories for File Explorer UI
+    const DOC_FOLDERS = [
+        { key: 'proposal', label: 'Proposal & Makalah', desc: 'Latar belakang ide, analisis inovasi, & perancangan', icon: FileText, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+        { key: 'pitch_deck', label: 'Pitch Deck & Slide', desc: 'Slide presentasi karya untuk juri & kurasi', icon: Briefcase, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+        { key: 'video_demo', label: 'Video Demo & Media', desc: 'Video demonstrasi produk / teaser karya', icon: Globe, color: 'text-violet-600 bg-violet-50 border-violet-200' },
+        { key: 'repo_url', label: 'Kode & Repositori Git', desc: 'Tautan GitHub atau kode sumber proyek', icon: GitBranch, color: 'text-slate-700 bg-slate-100 border-slate-200' },
+        { key: 'poster', label: 'Poster & Infografis', desc: 'Desain poster publikasi dan infografis kompetisi', icon: ImageIcon, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+        { key: 'registration_proof', label: 'Bukti Administrasi', desc: 'KTM, surat tugas, bukti registrasi resmi', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+    ];
+
     // Standard Deliverables List
     const deliverableTemplates = [
         { key: 'proposal', label: 'Proposal / Makalah Proyek', desc: 'Dokumen latar belakang, analisis inovasi, dan perancangan' },
@@ -815,7 +832,6 @@ export default function CompetitionWorkspace({
                         { id: 'github', label: 'Monitoring GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
                         { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
                         { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
-                        { id: 'rounds', label: 'Babak Seleksi', icon: Clock, count: rounds.length },
                         { id: 'mentoring', label: 'Bimbingan', icon: GraduationCap },
                         { id: 'results', label: 'Prestasi', icon: Trophy },
                         { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
@@ -1025,17 +1041,18 @@ export default function CompetitionWorkspace({
                                     Batas Pendaftaran: <strong className="text-slate-800 font-semibold">{formattedDeadline}</strong>
                                 </p>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                    {rounds.length > 0 ? `${rounds.length} Babak Seleksi Resmi` : `Format: ${participation.competition?.competition_type || 'Tim'}`}
+                                    Format: {participation.competition?.competition_type || 'Tim'}
                                 </p>
                             </div>
-                            <button
-                                type="button"
-                                onClick={() => setActiveTab('rounds')}
-                                className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
-                            >
-                                <span>Lihat Jadwal Seleksi</span>
-                                <span>&rarr;</span>
-                            </button>
+                            {participation.competition?.slug && (
+                                <Link
+                                    href={route('competitions.show', participation.competition.slug)}
+                                    className="w-full py-2 px-3 rounded-lg border border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white text-xs font-bold text-slate-700 hover:text-blue-600 transition flex items-center justify-center gap-1.5 shadow-2xs"
+                                >
+                                    <span>Panduan & Info Kompetisi</span>
+                                    <ExternalLink className="size-3" />
+                                </Link>
+                            )}
                         </div>
 
                         {/* BENTO CARD 4: Kesiapan Dokumen & Deliverables (lg:col-span-4) */}
@@ -1439,39 +1456,54 @@ export default function CompetitionWorkspace({
                                     </p>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 items-stretch">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 items-stretch">
                                     {recruitmentRoles.map((r: any) => (
                                         <div
                                             key={r.id}
-                                            className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col justify-between gap-2.5"
+                                            className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs hover:border-slate-300 transition flex flex-col justify-between gap-2.5"
                                         >
                                             <div className="flex-1 flex flex-col">
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0 flex-1">
                                                         <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
-                                                        <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 mt-1 shrink-0">
-                                                            {r.slots} Slot
+                                                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 mt-1 shrink-0">
+                                                            {r.slots} Slot Terbuka
                                                         </span>
                                                     </div>
                                                     {isLeader && !participation.is_formation_locked && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleDeleteRecruitmentRole(r.id)}
-                                                            className="text-slate-400 hover:text-slate-900 p-1 rounded transition shrink-0 cursor-pointer"
+                                                            className="text-slate-400 hover:text-rose-600 p-1 rounded transition shrink-0 cursor-pointer"
                                                             title="Hapus lowongan"
                                                         >
                                                             <Trash2 className="size-3.5" />
                                                         </button>
                                                     )}
                                                 </div>
-                                                {r.requirements && (
+                                                {r.requirements ? (
                                                     <p className="text-[11px] text-slate-500 mt-2 line-clamp-2 flex-1">
                                                         {r.requirements}
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-[11px] text-slate-400 mt-2 italic flex-1">
+                                                        Terbuka untuk semua jurusan
                                                     </p>
                                                 )}
                                             </div>
                                         </div>
                                     ))}
+
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setAddingRole(true)}
+                                            className="p-3.5 rounded-xl border border-dashed border-slate-300 hover:border-blue-400 bg-slate-50/50 hover:bg-blue-50/30 text-slate-500 hover:text-blue-600 flex flex-col items-center justify-center gap-1.5 transition text-center min-h-[90px] cursor-pointer"
+                                        >
+                                            <Plus className="size-4" />
+                                            <span className="text-xs font-semibold">Tambah Posisi Lain</span>
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1490,7 +1522,7 @@ export default function CompetitionWorkspace({
                                     <Users className="size-8 text-slate-400 mx-auto mb-2" />
                                     <p className="text-xs font-bold text-slate-800">Belum Ada Pelamar Masuk</p>
                                     <p className="text-[11px] text-slate-500 mt-0.5 max-w-sm mx-auto">
-                                        Lamaran mahasiswa akan muncul di sini lengkap dengan resume keahlian dan tombol WhatsApp langsung.
+                                        Lamaran mahasiswa akan muncul di sini lengkap dengan resume keahlian dan tombol kontak WhatsApp langsung.
                                     </p>
                                 </div>
                             ) : (
@@ -1504,89 +1536,103 @@ export default function CompetitionWorkspace({
                                         return (
                                             <div
                                                 key={app.id}
-                                                className={`p-3.5 rounded-xl border transition space-y-2.5 ${
+                                                className={`p-4 rounded-xl border transition-all ${
                                                     app.status === 'accepted'
-                                                        ? 'bg-emerald-50/20 border-emerald-200'
+                                                        ? 'bg-white border-emerald-200 shadow-2xs ring-1 ring-emerald-500/10'
                                                         : app.status === 'rejected'
-                                                        ? 'bg-slate-50 border-slate-200 opacity-60'
-                                                        : 'bg-white border-slate-200 hover:border-blue-300'
+                                                        ? 'bg-slate-50/60 border-slate-200 opacity-60'
+                                                        : 'bg-white border-slate-200/90 hover:border-slate-300 shadow-2xs'
                                                 }`}
                                             >
-                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
-                                                    <div className="flex items-start gap-3 min-w-0">
-                                                        <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                                            {applicant?.name ? applicant.name.charAt(0) : 'U'}
+                                                {/* Applicant Header Info */}
+                                                <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="size-10 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                                                            {applicant?.name ? applicant.name.charAt(0).toUpperCase() : 'U'}
                                                         </div>
                                                         <div className="min-w-0">
                                                             <div className="flex items-center gap-2 flex-wrap">
-                                                                <span className="text-xs font-bold text-slate-900 truncate">
+                                                                <span className="text-sm font-bold text-slate-900 truncate">
                                                                     {applicant?.name || 'Mahasiswa'}
                                                                 </span>
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
-                                                                    Posisi: {app.role_name}
+                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
+                                                                    Posisi: {app.role_name || 'Anggota Tim'}
                                                                 </span>
                                                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                                                                     app.status === 'accepted'
-                                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                         : app.status === 'rejected'
-                                                                        ? 'bg-rose-100 text-rose-800'
-                                                                        : 'bg-amber-100 text-amber-800'
+                                                                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                                        : 'bg-amber-50 text-amber-700 border border-amber-200'
                                                                 }`}>
-                                                                    {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu'}
+                                                                    {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
                                                                 </span>
                                                             </div>
-                                                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                                                            <p className="text-xs text-slate-500 mt-0.5 truncate">
                                                                 {applicant?.study_program || 'Mahasiswa'} {applicant?.semester ? `• Semester ${applicant.semester}` : ''}
                                                             </p>
                                                         </div>
                                                     </div>
 
                                                     {app.created_at && (
-                                                        <span className="text-[10px] text-slate-400 shrink-0">
-                                                            Melamar: {new Date(app.created_at).toLocaleDateString('id-ID')}
+                                                        <span className="text-[11px] text-slate-400 shrink-0 self-start sm:self-center">
+                                                            Melamar: {new Date(app.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                         </span>
                                                     )}
                                                 </div>
 
+                                                {/* Motivation Message */}
                                                 {app.message && (
-                                                    <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 text-[11px] text-slate-700">
-                                                        <p className="italic">"{app.message}"</p>
+                                                    <div className="mt-3 px-3.5 py-2.5 rounded-lg bg-slate-50 border border-slate-100 text-xs text-slate-700 flex items-start gap-2">
+                                                        <span className="text-slate-400 font-serif text-lg leading-none shrink-0 select-none">“</span>
+                                                        <p className="italic leading-relaxed flex-1">{app.message}</p>
                                                     </div>
                                                 )}
 
-                                                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                                                    {waUrl ? (
-                                                        <a
-                                                            href={waUrl}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-semibold transition shrink-0"
-                                                        >
-                                                            <Phone className="size-3" />
-                                                            <span>Chat WhatsApp ({phone})</span>
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-[10px] text-slate-400 italic">No WhatsApp tidak tersedia</span>
-                                                    )}
+                                                {/* Actions & WhatsApp Contact */}
+                                                <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
+                                                    <div>
+                                                        {waUrl ? (
+                                                            <a
+                                                                href={waUrl}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shrink-0 shadow-2xs"
+                                                            >
+                                                                <Phone className="size-3.5" />
+                                                                <span>Chat WhatsApp ({phone})</span>
+                                                            </a>
+                                                        ) : (
+                                                            <span className="text-[11px] text-slate-400 italic">No WhatsApp tidak tersedia</span>
+                                                        )}
+                                                    </div>
 
-                                                    {isLeader && app.status === 'pending' && !participation.is_formation_locked && (
-                                                        <div className="flex items-center gap-1.5 shrink-0">
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRespondApplication(app.id, 'reject')}
-                                                                className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer"
-                                                            >
-                                                                Tolak
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => handleRespondApplication(app.id, 'accept')}
-                                                                className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
-                                                            >
-                                                                Terima Masuk Tim
-                                                            </button>
-                                                        </div>
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {isLeader && app.status === 'pending' && !participation.is_formation_locked && (
+                                                            <>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRespondApplication(app.id, 'reject')}
+                                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer"
+                                                                >
+                                                                    Tolak
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleRespondApplication(app.id, 'accept')}
+                                                                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                                                                >
+                                                                    Terima Masuk Tim
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {app.status === 'accepted' && (
+                                                            <span className="text-xs text-emerald-700 font-semibold flex items-center gap-1">
+                                                                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                                <span>Sudah Bergabung</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -1901,281 +1947,404 @@ export default function CompetitionWorkspace({
                     </div>
                 )}
 
-                {/* 5) TAB CONTENT: DOCUMENTS & DELIVERABLES */}
-                {activeTab === 'documents' && (
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                                <div>
-                                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                        <FileText className="size-4 text-blue-600 shrink-0" />
-                                        <span>Berkas & Karya</span>
-                                    </h3>
+                {/* 5) TAB CONTENT: DOCUMENTS & DELIVERABLES (FOLDER EXPLORER UI) */}
+                {activeTab === 'documents' && (() => {
+                    const allDocs = participation.documents || [];
+                    const activeFolderObj = DOC_FOLDERS.find((f) => f.key === selectedDocFolder);
+                    const getFolderDocCount = (key: string) => allDocs.filter((d: any) => d.required_document_key === key).length;
+                    const filteredDocs = allDocs.filter((doc: any) => {
+                        const matchesFolder = selectedDocFolder === 'all' || doc.required_document_key === selectedDocFolder;
+                        const q = docSearchQuery.trim().toLowerCase();
+                        const matchesSearch = !q ||
+                            (doc.name && doc.name.toLowerCase().includes(q)) ||
+                            (doc.uploader?.name && doc.uploader.name.toLowerCase().includes(q)) ||
+                            (doc.notes && doc.notes.toLowerCase().includes(q));
+                        return matchesFolder && matchesSearch;
+                    });
+
+                    return (
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-5">
+                                {/* Header */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                                    <div>
+                                        <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                            <FolderOpen className="size-4 text-blue-600 shrink-0" />
+                                            <span>Direktori Berkas & Karya Tim</span>
+                                        </h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Kelola proposal, pitch deck, repositori kode, dan berkas administrasi tim dalam folder terstruktur.
+                                        </p>
+                                    </div>
+
+                                    {canManageTasks && (
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                docForm.setData('required_document_key', selectedDocFolder !== 'all' ? selectedDocFolder : 'proposal');
+                                                const found = deliverableTemplates.find((t) => t.key === (selectedDocFolder !== 'all' ? selectedDocFolder : 'proposal'));
+                                                if (found) docForm.setData('name', found.label);
+                                                setDocModalOpen(true);
+                                            }}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
+                                        >
+                                            <Upload className="size-3.5" />
+                                            <span>Unggah Berkas Baru</span>
+                                        </button>
+                                    )}
                                 </div>
 
-                                {canManageTasks && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setDocModalOpen(true)}
-                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
-                                    >
-                                        <Upload className="size-3.5" />
-                                        <span>Unggah Berkas Baru</span>
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Object Storage Quota Widget */}
-                            {storageQuota && (
-                                <div className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
-                                            <HardDrive className="size-4" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h4 className="text-xs font-bold text-slate-900">
-                                                    Kapasitas Object Storage Tim
-                                                </h4>
-                                                <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
-                                                    Batas 70 MB / Tim
-                                                </span>
+                                {/* Object Storage Quota Widget */}
+                                {storageQuota && (
+                                    <div className="bg-slate-50 rounded-xl border border-slate-200/80 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-3">
+                                            <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
+                                                <HardDrive className="size-4" />
                                             </div>
-                                            <p className="text-[11px] text-slate-500 mt-0.5">
-                                                Terpakai <strong className="text-slate-800">{storageQuota.used_mb} MB</strong> dari batas <strong className="text-slate-800">{storageQuota.max_mb} MB</strong> ({storageQuota.percent_used}% terpakai, sisa {storageQuota.remaining_mb} MB)
-                                            </p>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="text-xs font-bold text-slate-900">
+                                                        Kapasitas Object Storage Tim
+                                                    </h4>
+                                                    <span className="text-[10px] font-bold text-blue-700 bg-blue-50 border border-blue-200/80 px-2 py-0.5 rounded-md">
+                                                        Batas 70 MB / Tim
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                                    Terpakai <strong className="text-slate-800">{storageQuota.used_mb} MB</strong> dari batas <strong className="text-slate-800">{storageQuota.max_mb} MB</strong> ({storageQuota.percent_used}% terpakai, sisa {storageQuota.remaining_mb} MB)
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="w-full sm:w-48 flex items-center gap-2.5">
+                                            <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden border border-slate-200/60">
+                                                <div
+                                                    className={`h-2 rounded-full transition-all duration-500 ${
+                                                        storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
+                                                    }`}
+                                                    style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
+                                                />
+                                            </div>
+                                            <span className="text-[11px] font-mono font-bold text-slate-700 shrink-0">
+                                                {storageQuota.percent_used}%
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="w-full sm:w-48 flex items-center gap-2.5">
-                                        <div className="w-full bg-slate-200/70 rounded-full h-2 overflow-hidden border border-slate-200/60">
-                                            <div
-                                                className={`h-2 rounded-full transition-all duration-500 ${
-                                                    storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
-                                                }`}
-                                                style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-[11px] font-mono font-bold text-slate-700 shrink-0">
-                                            {storageQuota.percent_used}%
+                                )}
+
+                                {/* 6 Interactive Folder Cards Grid */}
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                                            <Folder className="size-3.5 text-blue-600" />
+                                            <span>Folder Kategori Berkas</span>
+                                        </span>
+                                        <span className="text-[11px] text-slate-400">
+                                            Klik folder untuk memfilter tampilan berkas
                                         </span>
                                     </div>
-                                </div>
-                            )}
 
-                            {/* Standard Templates Checklist */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {deliverableTemplates.map((tpl) => {
-                                    const matchedDoc = participation.documents?.find((d: any) => d.required_document_key === tpl.key);
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {DOC_FOLDERS.map((folder) => {
+                                            const count = getFolderDocCount(folder.key);
+                                            const isSelected = selectedDocFolder === folder.key;
+                                            const FolderIcon = folder.icon || Folder;
 
-                                    return (
-                                        <div
-                                            key={tpl.key}
-                                            className={`rounded-xl border flex flex-col gap-2.5 p-3.5 ${
-                                                matchedDoc ? 'bg-emerald-50/30 border-emerald-200' : 'bg-slate-50 border-slate-200/80'
-                                            }`}
-                                        >
-                                            <div className="flex items-start justify-between gap-2">
-                                                <span className="text-xs font-bold text-slate-900 leading-snug">{tpl.label}</span>
-                                                {matchedDoc ? (
-                                                    <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
-                                                ) : (
-                                                    <span className="text-[9px] font-semibold text-slate-400 bg-slate-200/70 px-1.5 py-0.5 rounded shrink-0">
-                                                        Kosong
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <p className="text-[10px] text-slate-400 line-clamp-2 leading-relaxed flex-1">
-                                                {tpl.desc}
-                                            </p>
-
-                                            <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
-                                                {matchedDoc ? (
-                                                    <>
-                                                        <span className="text-[10px] text-slate-500 font-mono">v{matchedDoc.version}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            <a
-                                                                href={matchedDoc.file_path || matchedDoc.file_url || matchedDoc.url || (matchedDoc.path ? (matchedDoc.path.startsWith('http') ? matchedDoc.path : '/storage/' + matchedDoc.path) : '#')}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="font-bold text-blue-600 hover:underline flex items-center gap-1 text-[11px]"
-                                                            >
-                                                                <span>Buka</span>
-                                                                <ExternalLink className="size-3 shrink-0" />
-                                                            </a>
-                                                            {isMember && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => openReplaceModal(matchedDoc)}
-                                                                    className="font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1 text-[11px] cursor-pointer"
-                                                                    title="Ganti atau perbarui berkas"
-                                                                >
-                                                                    <RefreshCw className="size-2.5 shrink-0" />
-                                                                    <span>Ganti</span>
-                                                                </button>
+                                            return (
+                                                <div
+                                                    key={folder.key}
+                                                    onClick={() => setSelectedDocFolder(isSelected ? 'all' : folder.key)}
+                                                    className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between gap-3 text-left ${
+                                                        isSelected
+                                                            ? 'bg-blue-50/60 border-blue-500 shadow-xs ring-1 ring-blue-500/20'
+                                                            : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-2xs'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className={`p-2.5 rounded-xl border ${isSelected ? 'bg-blue-600 text-white border-blue-600 shadow-2xs' : folder.color}`}>
+                                                            {isSelected ? <FolderOpen className="size-5" /> : <FolderIcon className="size-5" />}
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            {count > 0 ? (
+                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                                                                    <CheckCircle2 className="size-2.5" />
+                                                                    <span>{count} Berkas</span>
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                                                                    Kosong
+                                                                </span>
                                                             )}
                                                         </div>
-                                                    </>
-                                                ) : (
-                                                    isMember ? (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                docForm.setData('required_document_key', tpl.key);
-                                                                docForm.setData('name', tpl.label);
-                                                                setDocModalOpen(true);
-                                                            }}
-                                                            className="text-[11px] font-bold text-blue-600 hover:text-blue-700 text-left cursor-pointer"
-                                                        >
-                                                            + Unggah sekarang
-                                                        </button>
-                                                    ) : (
-                                                        <span className="text-[11px] text-slate-400 italic">Belum diunggah</span>
-                                                    )
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-
-                            {/* Submitted Documents Detailed Table */}
-                            {participation.documents && participation.documents.length > 0 && (
-                                <div className="mt-6 pt-4 border-t border-slate-100 space-y-3">
-                                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                                        Daftar Berkas Terunggah ({participation.documents.length})
-                                    </h4>
-
-                                    <div className="divide-y divide-slate-100">
-                                        {participation.documents.map((doc: any) => (
-                                            <div key={doc.id} className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                                <div>
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <FileText className="size-3.5 text-blue-600 shrink-0" />
-                                                        <span className="font-bold text-slate-900">{doc.name}</span>
-                                                        <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">v{doc.version}</span>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                                                            doc.status === 'approved' ? 'bg-emerald-50 text-emerald-700' : doc.status === 'revision_required' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'
-                                                        }`}>
-                                                            {doc.status}
-                                                        </span>
                                                     </div>
-                                                    <p className="text-[11px] text-slate-400 mt-0.5">
-                                                        Diunggah oleh: {doc.uploader?.name || 'Anggota Tim'} • {new Date(doc.created_at).toLocaleDateString('id-ID')}
-                                                    </p>
-                                                    {doc.feedback && (
-                                                        <p className="text-[11px] text-amber-800 bg-amber-50 p-2 rounded-lg mt-1 border border-amber-200">
-                                                            <strong>Masukan Dosen:</strong> {doc.feedback}
+
+                                                    <div>
+                                                        <h4 className={`text-xs font-bold transition ${isSelected ? 'text-blue-900' : 'text-slate-900'}`}>
+                                                            {folder.label}
+                                                        </h4>
+                                                        <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                                                            {folder.desc}
                                                         </p>
-                                                    )}
+                                                    </div>
+
+                                                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                                                        {isSelected ? (
+                                                            <span className="font-bold text-blue-600 flex items-center gap-1">
+                                                                <span>Folder Terbuka</span>
+                                                                <ChevronDown className="size-3" />
+                                                            </span>
+                                                        ) : count > 0 ? (
+                                                            <span className="text-slate-500 font-medium hover:text-blue-600 flex items-center gap-1">
+                                                                <span>Lihat Berkas</span>
+                                                                <span>&rarr;</span>
+                                                            </span>
+                                                        ) : isMember ? (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    docForm.setData('required_document_key', folder.key);
+                                                                    docForm.setData('name', folder.label);
+                                                                    setDocModalOpen(true);
+                                                                }}
+                                                                className="font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
+                                                            >
+                                                                <Plus className="size-3" />
+                                                                <span>Unggah</span>
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic">Belum ada</span>
+                                                        )}
+                                                    </div>
                                                 </div>
-
-                                                <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                                    {(doc.file_path || doc.file_url || doc.url || doc.path) && (
-                                                        <a
-                                                            href={doc.file_path || doc.file_url || doc.url || (doc.path ? (doc.path.startsWith('http') ? doc.path : '/storage/' + doc.path) : '#')}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1.5 transition"
-                                                        >
-                                                            <Download className="size-3 shrink-0" />
-                                                            <span>Unduh / Tinjau</span>
-                                                        </a>
-                                                    )}
-
-                                                    {isMember && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => openReplaceModal(doc)}
-                                                            className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50/70 hover:bg-blue-100 text-blue-700 font-bold flex items-center gap-1 cursor-pointer transition"
-                                                            title="Ganti atau perbarui berkas ini"
-                                                        >
-                                                            <RefreshCw className="size-3 shrink-0" />
-                                                            <span>Ganti</span>
-                                                        </button>
-                                                    )}
-
-                                                    {(isMember || isAdmin) && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleDeleteDoc(doc)}
-                                                            className="px-2.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50/60 hover:bg-rose-100 text-rose-700 font-bold flex items-center gap-1 cursor-pointer transition"
-                                                            title="Hapus berkas ini secara permanen"
-                                                        >
-                                                            <Trash2 className="size-3 shrink-0" />
-                                                            <span>Hapus</span>
-                                                        </button>
-                                                    )}
-
-                                                    {(isMentor || isAdmin) && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setReviewDocId(doc.id);
-                                                                setReviewModalOpen(true);
-                                                            }}
-                                                            className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer transition"
-                                                        >
-                                                            Ulas Berkas
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                )}
 
-                {/* 10. TAB CONTENT: ROUNDS & TIMELINE */}
-                {activeTab === 'rounds' && (
-                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
-                        <div className="border-b border-slate-100 pb-3">
-                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <Clock className="size-4 text-blue-600 shrink-0" />
-                                <span>Jadwal & Babak ({rounds.length})</span>
-                            </h3>
-                        </div>
+                                {/* Explorer Toolbar & File List */}
+                                <div className="mt-6 pt-5 border-t border-slate-100 space-y-4">
+                                    {/* Toolbar */}
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedDocFolder('all')}
+                                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                                                    selectedDocFolder === 'all'
+                                                        ? 'bg-slate-900 text-white shadow-2xs'
+                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                }`}
+                                            >
+                                                <FolderArchive className="size-3.5" />
+                                                <span>Semua Berkas ({allDocs.length})</span>
+                                            </button>
 
-                        {rounds.length === 0 ? (
-                            <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                                <p className="text-xs font-semibold text-slate-600">Penyelenggara belum menetapkan rincian babak bertingkat</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Pantau jadwal keseluruhan pada detail kompetisi.</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-3">
-                                {rounds.map((rnd: any, i: number) => (
-                                    <div key={rnd.id || i} className="p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <span className="size-5 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-[10px] shrink-0">
-                                                    {rnd.round_number || i + 1}
-                                                </span>
-                                                <span className="font-bold text-slate-900 text-sm">{rnd.name}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
-                                                    rnd.status === 'active' ? 'bg-blue-50 text-blue-700' : rnd.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'
-                                                }`}>
-                                                    {rnd.status}
-                                                </span>
-                                            </div>
-                                            {rnd.description && <p className="text-[11px] text-slate-500 mt-1">{rnd.description}</p>}
+                                            {selectedDocFolder !== 'all' && (
+                                                <>
+                                                    <span className="text-slate-300 text-xs">/</span>
+                                                    <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-200 flex items-center gap-1.5">
+                                                        <FolderOpen className="size-3.5 text-blue-600" />
+                                                        <span>{activeFolderObj?.label || selectedDocFolder} ({getFolderDocCount(selectedDocFolder)})</span>
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
 
-                                        <div className="text-right sm:text-right text-slate-500 shrink-0">
-                                            {rnd.deadline && (
-                                                <span className="font-semibold text-slate-800 block">
-                                                    Deadline: {new Date(rnd.deadline).toLocaleDateString('id-ID')}
-                                                </span>
+                                        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                            <div className="relative w-full sm:w-56">
+                                                <Search className="size-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Cari nama berkas..."
+                                                    value={docSearchQuery}
+                                                    onChange={(e) => setDocSearchQuery(e.target.value)}
+                                                    className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                                />
+                                                {docSearchQuery && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setDocSearchQuery('')}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                                                    >
+                                                        <X className="size-3" />
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            {canManageTasks && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (selectedDocFolder !== 'all' && activeFolderObj) {
+                                                            docForm.setData('required_document_key', activeFolderObj.key);
+                                                            docForm.setData('name', activeFolderObj.label);
+                                                        } else {
+                                                            docForm.setData('required_document_key', 'proposal');
+                                                            docForm.setData('name', 'Proposal / Makalah Proyek');
+                                                        }
+                                                        setDocModalOpen(true);
+                                                    }}
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer"
+                                                >
+                                                    <Upload className="size-3.5" />
+                                                    <span>{selectedDocFolder !== 'all' ? `Unggah ke Folder Ini` : `Unggah Berkas`}</span>
+                                                </button>
                                             )}
                                         </div>
                                     </div>
-                                ))}
+
+                                    {/* Files List */}
+                                    {filteredDocs.length > 0 ? (
+                                        <div className="space-y-2.5">
+                                            {filteredDocs.map((doc: any) => {
+                                                const folderInfo = DOC_FOLDERS.find((f) => f.key === doc.required_document_key);
+                                                const fileUrl = doc.file_path || doc.file_url || doc.url || (doc.path ? (doc.path.startsWith('http') ? doc.path : '/storage/' + doc.path) : '#');
+                                                const isExternal = Boolean(doc.url || (doc.path && doc.path.startsWith('http')));
+
+                                                return (
+                                                    <div
+                                                        key={doc.id}
+                                                        className="p-3.5 rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 hover:shadow-2xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                                                    >
+                                                        <div className="flex items-start gap-3 min-w-0 flex-1">
+                                                            <div className="size-9 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+                                                                <FileText className="size-4" />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="font-bold text-slate-900 truncate max-w-sm">{doc.name}</span>
+                                                                    <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                                                                        v{doc.version || 1}
+                                                                    </span>
+                                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                                                                        doc.status === 'approved'
+                                                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                                            : doc.status === 'revision_required'
+                                                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                                            : 'bg-amber-50 text-amber-700 border border-amber-200'
+                                                                    }`}>
+                                                                        {doc.status === 'approved' ? 'Disetujui' : doc.status === 'revision_required' ? 'Perlu Revisi' : 'Menunggu Kurasi'}
+                                                                    </span>
+                                                                    {folderInfo && (
+                                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
+                                                                            📁 {folderInfo.label}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                <p className="text-[11px] text-slate-400 mt-1">
+                                                                    Diunggah oleh <strong className="text-slate-600 font-medium">{doc.uploader?.name || 'Anggota Tim'}</strong> • {new Date(doc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                </p>
+                                                                {doc.feedback && (
+                                                                    <div className="mt-2 p-2.5 rounded-lg bg-amber-50/90 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
+                                                                        <AlertCircle className="size-3.5 text-amber-600 shrink-0 mt-0.5" />
+                                                                        <div>
+                                                                            <strong className="font-semibold">Masukan Mentor/Juri:</strong> {doc.feedback}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
+                                                            {fileUrl !== '#' && (
+                                                                <a
+                                                                    href={fileUrl}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                    className="px-2.5 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold flex items-center gap-1 transition text-xs shadow-2xs"
+                                                                    title={isExternal ? 'Buka tautan' : 'Unduh berkas'}
+                                                                >
+                                                                    {isExternal ? <ExternalLink className="size-3.5 text-slate-500" /> : <Download className="size-3.5 text-slate-500" />}
+                                                                    <span>{isExternal ? 'Buka' : 'Unduh'}</span>
+                                                                </a>
+                                                            )}
+
+                                                            {isMember && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openReplaceModal(doc)}
+                                                                    className="px-2.5 py-1.5 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-blue-700 font-bold flex items-center gap-1 cursor-pointer transition text-xs shadow-2xs"
+                                                                    title="Ganti atau perbarui versi berkas ini"
+                                                                >
+                                                                    <RefreshCw className="size-3 shrink-0" />
+                                                                    <span>Ganti</span>
+                                                                </button>
+                                                            )}
+
+                                                            {(isMember || isAdmin) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleDeleteDoc(doc)}
+                                                                    className="p-1.5 rounded-lg border border-slate-200 hover:border-rose-200 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                                                                    title="Hapus berkas"
+                                                                >
+                                                                    <Trash2 className="size-3.5 shrink-0" />
+                                                                </button>
+                                                            )}
+
+                                                            {(isMentor || isAdmin) && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setReviewDocId(doc.id);
+                                                                        setReviewModalOpen(true);
+                                                                    }}
+                                                                    className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold cursor-pointer transition text-xs shadow-2xs"
+                                                                >
+                                                                    Ulas
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-10 px-4 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                                            <div className="size-12 rounded-2xl bg-white border border-slate-200 shadow-2xs mx-auto mb-3 flex items-center justify-center text-slate-400">
+                                                <FolderOpen className="size-6 text-slate-400" />
+                                            </div>
+                                            <p className="text-xs font-bold text-slate-800">
+                                                {selectedDocFolder === 'all'
+                                                    ? (docSearchQuery ? 'Tidak ada berkas yang sesuai dengan kata kunci' : 'Belum Ada Berkas yang Diunggah')
+                                                    : `Folder "${activeFolderObj?.label}" Masih Kosong`}
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+                                                {selectedDocFolder === 'all'
+                                                    ? 'Unggah proposal, pitch deck, atau repositori kode tim Anda untuk persiapan seleksi kompetisi.'
+                                                    : `Unggah berkas untuk ${activeFolderObj?.desc.toLowerCase() || 'kategori ini'}.`}
+                                            </p>
+                                            {canManageTasks && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (selectedDocFolder !== 'all' && activeFolderObj) {
+                                                            docForm.setData('required_document_key', activeFolderObj.key);
+                                                            docForm.setData('name', activeFolderObj.label);
+                                                        } else {
+                                                            docForm.setData('required_document_key', 'proposal');
+                                                            docForm.setData('name', 'Proposal / Makalah Proyek');
+                                                        }
+                                                        setDocModalOpen(true);
+                                                    }}
+                                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                >
+                                                    <Upload className="size-3.5" />
+                                                    <span>
+                                                        {selectedDocFolder === 'all'
+                                                            ? 'Unggah Berkas Baru'
+                                                            : `Unggah ke Folder ${activeFolderObj?.label}`}
+                                                    </span>
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </div>
-                )}
+                        </div>
+                    );
+                })()}
 
                 {/* 11. TAB CONTENT: MENTORING */}
                 {activeTab === 'mentoring' && (

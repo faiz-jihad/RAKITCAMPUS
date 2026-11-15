@@ -1199,6 +1199,7 @@ class CompetitionWebController extends Controller
             'competition.sources',
             'competition.campus:id,name',
             'competition.rounds',
+            'team.githubRepository',
             'team.members.user.profile.skills',
             'team.tasks.assignee:id,name,avatar',
             'team.tasks.creator:id,name,avatar',
@@ -1324,7 +1325,7 @@ class CompetitionWebController extends Controller
                 $analyticsService = app(\App\Services\GitHub\GitHubAnalyticsService::class);
                 $githubData = $analyticsService->getOverview($githubRepo);
             } catch (\Throwable $e) {
-                // Ignore analytics error
+                \Illuminate\Support\Facades\Log::error('GitHub overview error on competition workspace: ' . $e->getMessage());
             }
         }
         $canManageGitHub = $team && ($isLeader || $isAdmin);

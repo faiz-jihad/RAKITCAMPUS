@@ -1,7 +1,4 @@
-import AppFooter from '@/components/app-footer';
 import HubGatewayModal from '@/components/gateway/HubGatewayModal';
-import { playNotificationChime, sendBrowserNotification } from '@/lib/push-notifications';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,32 +8,9 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { type BreadcrumbItem, type SharedData } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/react';
-import {
-    ArrowLeftRight,
-    Award,
-    Bell,
-    BookmarkCheck,
-    Bot,
-    Briefcase,
-    ChevronDown,
-    ChevronRight,
-    Compass,
-    FolderKanban,
-    GraduationCap,
-    KeyRound,
-    Layers,
-    LayoutDashboard,
-    LogOut,
-    Mail,
-    PlusCircle,
-    RefreshCw,
-    Settings,
-    ShieldCheck,
-    Trophy,
-    User,
-    Users,
-} from 'lucide-react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { Bell, ChevronDown, ChevronRight, KeyRound, Layers, LogOut, RefreshCw, Settings, User } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface AppLayoutProps {
     children: React.ReactNode;
@@ -55,110 +29,17 @@ export default function AppLayout({
     const auth = page.props.auth as any;
     const user = auth?.user;
     const url = page.url || '';
-    const showHubSelectorProp = (page.props as any).show_hub_selector;
-    const isPlatformAdmin = Boolean(user?.is_platform_admin);
-    const isCampusAdmin = Boolean(user?.is_campus_admin);
-    const isAdmin = isPlatformAdmin || isCampusAdmin || user?.role === 'campus_admin' || user?.role === 'platform_admin' || user?.campus?.role === 'campus_admin';
     const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer' || user?.campus?.role === 'lecturer');
-
-    const roleLabel = isAdmin
-        ? (isPlatformAdmin ? 'Superadmin Platform' : 'Admin Kampus')
-        : isLecturer
-        ? 'Dosen Pembimbing'
-        : 'Mahasiswa';
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
-    // Persistent & route-aware active hub state (defaults to 'competition' to protect user flow)
-    const [activeHub, setActiveHub] = useState<'competition' | 'project'>(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            const hubParam = params.get('hub');
-            if (hubParam === 'competition') return 'competition';
-            if (hubParam === 'project') return 'project';
-
-            const pathname = window.location.pathname;
-            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
-                return 'competition';
-            }
-            if (
-                pathname.startsWith('/projects') ||
-                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
-            ) {
-                return 'project';
-            }
-
-            try {
-                const saved = localStorage.getItem('rakit_active_hub');
-                if (saved === 'competition' || saved === 'project') {
-                    return saved;
-                }
-            } catch {
-                // ignore
-            }
-        }
-        return 'competition';
-    });
-
-    // Synchronize hub state and prevent accidental jumping to project hub
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            const hubParam = params.get('hub');
-            const pathname = window.location.pathname;
-
-            let detectedHub: 'competition' | 'project' | null = null;
-
-            if (hubParam === 'competition') {
-                detectedHub = 'competition';
-            } else if (hubParam === 'project') {
-                detectedHub = 'project';
-            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
-                detectedHub = 'competition';
-            } else if (
-                pathname.startsWith('/projects') ||
-                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
-            ) {
-                detectedHub = 'project';
-            } else if (pathname === '/dashboard') {
-                if (!isAdmin) {
-                    const saved = localStorage.getItem('rakit_active_hub');
-                    // If student was in competition hub, prevent sudden jump to project dashboard from system redirects
-                    if (saved === 'competition' && !params.has('hub')) {
-                        router.get('/competitions');
-                        return;
-                    }
-                }
-                detectedHub = 'project';
-            }
-
-            if (detectedHub) {
-                setActiveHub(detectedHub);
-                try {
-                    localStorage.setItem('rakit_active_hub', detectedHub);
-                    sessionStorage.setItem('rakit_hub_chosen', detectedHub);
-                } catch {
-                    // ignore
-                }
-            } else {
-                // On neutral pages (/notifications, /settings/*, /terms, /privacy, /leaderboard overall),
-                // maintain currently saved active hub so the user never loses their hub context
-                try {
-                    const saved = localStorage.getItem('rakit_active_hub') as 'competition' | 'project' | null;
-                    if (saved && (saved === 'competition' || saved === 'project')) {
-                        setActiveHub(saved);
-                    }
-                } catch {
-                    // ignore
-                }
-            }
-        }
+    // Determine current Hub mode strictly
+    const isCompetitionHub = useMemo(() => {
+        return url.startsWith('/competitions') || url.startsWith('/competition-workspace');
     }, [url]);
 
-    const isCompetitionHub = activeHub === 'competition';
-
-    // Check login or initial session trigger
+    // Check explicit select_hub URL parameter only (never auto-popup on tab click or /dashboard)
     useEffect(() => {
-        if (isLecturer || isAdmin) {
+        if (isLecturer) {
             setIsGatewayOpen(false);
             return;
         }
@@ -169,18 +50,11 @@ export default function AppLayout({
                 setIsGatewayOpen(true);
                 return;
             }
-
-            // Fresh login trigger only when no hub has EVER been chosen
-            if (user && !sessionStorage.getItem('rakit_hub_chosen') && !localStorage.getItem('rakit_active_hub')) {
-                if (url === '/dashboard' || url === '/') {
-                    setIsGatewayOpen(true);
-                }
-            }
         }
 
         // Jangan pernah memunculkan pop-up otomatis saat pindah tab atau klik Dashboard
         setIsGatewayOpen(false);
-    }, [url, isLecturer, isAdmin]);
+    }, [url, isLecturer]);
 
     const initials = useMemo(() => {
         const name = user?.name || 'Mahasiswa';
@@ -195,20 +69,16 @@ export default function AppLayout({
     }, [user?.name]);
 
     const unreadCount = user?.unread_notifications_count || 0;
-    const prevUnreadRef = useRef<number>(unreadCount);
-
-    useEffect(() => {
-        if (unreadCount > prevUnreadRef.current) {
-            playNotificationChime();
-            sendBrowserNotification('RAKIT Campus — Notifikasi Baru', {
-                body: `Anda memiliki ${unreadCount} notifikasi baru. Klik untuk meninjau.`,
-            });
-        }
-        prevUnreadRef.current = unreadCount;
-    }, [unreadCount]);
 
     const renderUserActions = () => (
         <div className="flex items-center gap-1.5 sm:gap-2">
+            <Link
+                href="/settings/profile"
+                className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition"
+                title="Pengaturan"
+            >
+                <Settings className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+            </Link>
             <Link
                 href="/notifications"
                 className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 relative transition"
@@ -266,16 +136,8 @@ export default function AppLayout({
                                         {user.email}
                                     </div>
                                     <div className="mt-1 flex items-center gap-1">
-                                        <span
-                                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded capitalize ${
-                                                isAdmin
-                                                    ? 'text-rose-700 bg-rose-100/90'
-                                                    : isLecturer
-                                                    ? 'text-emerald-700 bg-emerald-100/90'
-                                                    : 'text-blue-700 bg-blue-100/80'
-                                            }`}
-                                        >
-                                            {roleLabel}
+                                        <span className="text-[9px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded capitalize">
+                                            {user.role || 'Mahasiswa'}
                                         </span>
                                         {user.campus && (
                                             <span className="text-[9px] text-slate-400 truncate">
@@ -306,7 +168,7 @@ export default function AppLayout({
                                     <span>Keamanan Sandi</span>
                                 </Link>
                             </DropdownMenuItem>
-                            {!isLecturer && !isAdmin && (
+                            {!isLecturer && (
                                 <DropdownMenuItem
                                     onSelect={() => setIsGatewayOpen(true)}
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
@@ -321,20 +183,6 @@ export default function AppLayout({
                                     </div>
                                 </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    href="/ai-workspace"
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                    <Bot className="size-4 text-blue-600" />
-                                    <div className="flex-1 flex items-center justify-between">
-                                        <span>AI Workspace</span>
-                                        <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                            Kopilot
-                                        </span>
-                                    </div>
-                                </Link>
-                            </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link
                                     href="/notifications"
@@ -352,78 +200,6 @@ export default function AppLayout({
                                 </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
-
-                        {isAdmin && (
-                            <>
-                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Menu Administrator
-                                </div>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/admin"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-800 hover:bg-rose-50 transition cursor-pointer"
-                                    >
-                                        <ShieldCheck className="size-4 text-rose-600" />
-                                        <span>Panel Admin Utama</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/admin/students"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                    >
-                                        <Users className="size-4 text-slate-400" />
-                                        <span>Verifikasi Mahasiswa</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/admin/competitions"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                    >
-                                        <Award className="size-4 text-slate-400" />
-                                        <span>Kelola Kompetisi Kampus</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/admin/notifications"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                    >
-                                        <Bell className="size-4 text-slate-400" />
-                                        <span>Monitoring Email</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/leaderboard/admin"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                    >
-                                        <Trophy className="size-4 text-slate-400" />
-                                        <span>Aturan Leaderboard</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                            </>
-                        )}
-
-                        {isLecturer && (
-                            <>
-                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                                <div className="px-3 py-1 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Menu Dosen
-                                </div>
-                                <DropdownMenuItem asChild>
-                                    <Link
-                                        href="/classes"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 transition cursor-pointer"
-                                    >
-                                        <GraduationCap className="size-4 text-emerald-600" />
-                                        <span>Kelas & Bimbingan Saya</span>
-                                    </Link>
-                                </DropdownMenuItem>
-                            </>
-                        )}
 
                         <DropdownMenuSeparator className="my-1 bg-slate-100" />
 
@@ -466,119 +242,73 @@ export default function AppLayout({
 
             {/* 1. TOP NAVBAR (Full-width edge-to-edge, sticky) */}
             <header className="w-full bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 sticky top-0 z-40 transition-all">
-                <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-                    {/* Brand Logo & Active Hub Pill */}
-                    <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                        <Link
-                            href={isAdmin ? '/admin' : isLecturer ? '/dashboard' : isCompetitionHub ? '/competitions' : '/dashboard'}
-                            className="flex items-center gap-1.5 sm:gap-2 group shrink-0"
-                        >
-                            <img
-                                src="/images/rakit-mark.png"
-                                alt="RAKIT"
-                                className="h-6 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
-                            />
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-base sm:text-xl font-black tracking-tight text-slate-900 dark:text-white">
-                                    RAKIT
-                                </span>
-                                <span className="hidden sm:inline-block text-[10px] font-bold text-blue-600 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 border border-blue-200/80 tracking-wider">
-                                    Campus
-                                </span>
-                            </div>
-                        </Link>
-
-                        {/* Interactive Hub Pill Indicator / Admin / Dosen */}
-                        {isAdmin ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-rose-50 border border-rose-200 text-rose-700 shrink-0">
-                                <ShieldCheck className="size-3 text-rose-600" />
-                                <span>Mode Administrator</span>
-                            </div>
-                        ) : isLecturer ? (
-                            <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 border border-blue-200 text-blue-700 shrink-0">
-                                <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-600 animate-pulse shrink-0" />
-                                <span>Portal Dosen Pengampu</span>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => setIsGatewayOpen(true)}
-                                className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold border transition-colors shadow-2xs cursor-pointer group shrink-0 ${
-                                    isCompetitionHub
-                                        ? 'bg-amber-50 hover:bg-amber-100/90 border-amber-200/80 text-amber-900'
-                                        : 'bg-blue-50 hover:bg-blue-100/90 border-blue-200/80 text-blue-900'
-                                }`}
-                                title="Beralih Ruang Kerja (Hub)"
-                            >
-                                <span
-                                    className={`size-1.5 rounded-full shrink-0 ${
-                                        isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
-                                    }`}
+                <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-2.5 sm:gap-4">
+                    {/* Top Row on Mobile: Brand Logo + Hub Pill on Left, User Actions on Right */}
+                    <div className="w-full md:w-auto flex items-center justify-between gap-3">
+                        {/* Brand Logo & Active Hub Pill */}
+                        <div className="flex items-center gap-2 sm:gap-3.5">
+                            <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+                                <img
+                                    src="/images/rakit-mark.png"
+                                    alt="RAKIT"
+                                    className="h-7 sm:h-8 w-auto object-contain transition-transform group-hover:scale-105"
                                 />
-                                <span className="hidden sm:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
-                                <span className="sm:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
-                                <RefreshCw className="size-2.5 sm:size-3 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
-                            </button>
-                        )}
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.8)]">
+                                        RAKIT
+                                    </span>
+                                    <span className="text-[9px] sm:text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-800 tracking-wider">
+                                        Campus
+                                    </span>
+                                </div>
+                            </Link>
+
+                            {/* Dosen Portal Pill OR Interactive Student Hub Switcher */}
+                            {isLecturer ? (
+                                <div className="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold bg-blue-50 dark:bg-blue-950/60 border border-blue-200/80 dark:border-blue-900 text-blue-700 dark:text-blue-300 shadow-2xs">
+                                    <span className="w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full bg-blue-600 animate-pulse" />
+                                    <span>Portal Dosen Pengampu</span>
+                                </div>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsGatewayOpen(true)}
+                                    className={`inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-bold transition shadow-2xs cursor-pointer group ${
+                                        isCompetitionHub
+                                            ? 'bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900'
+                                            : 'bg-blue-50 hover:bg-blue-100/90 border border-blue-200/80 text-blue-900'
+                                    }`}
+                                    title="Klik untuk berpindah ruang kerja"
+                                >
+                                    <span
+                                        className={`w-1.5 sm:w-2 h-1.5 sm:h-2 rounded-full ${
+                                            isCompetitionHub ? 'bg-amber-500 animate-pulse' : 'bg-blue-600 animate-pulse'
+                                        }`}
+                                    />
+                                    <span className="hidden xs:inline">{isCompetitionHub ? 'Competition Hub' : 'Project Hub'}</span>
+                                    <span className="xs:hidden">{isCompetitionHub ? 'Lomba' : 'Proyek'}</span>
+                                    <span
+                                        className={`p-0.5 rounded-md transition ${
+                                            isCompetitionHub
+                                                ? 'bg-amber-200/70 text-amber-900 group-hover:bg-amber-300'
+                                                : 'bg-blue-200/70 text-blue-900 group-hover:bg-blue-300'
+                                        }`}
+                                    >
+                                        <RefreshCw className="size-2.5" />
+                                    </span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Mobile User Actions (visible on mobile only, beside brand) */}
+                        <div className="flex md:hidden items-center gap-1.5">
+                            {renderUserActions()}
+                        </div>
                     </div>
 
-                    {/* Desktop Navigation Capsule / Pills (Hidden on Mobile, placed in Bottom Nav) */}
-                    <div className="hidden md:flex items-center justify-center overflow-x-auto scrollbar-none">
-                        {isAdmin ? (
-                            <nav className="inline-flex items-center gap-1 bg-[#fff1f2] p-1 rounded-full border border-rose-200/80 overflow-x-auto max-w-full">
-                                <Link
-                                    href="/admin"
-                                    className={`px-4 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
-                                        url === '/admin' || url === '/dashboard'
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
-                                    }`}
-                                >
-                                    <ShieldCheck className="size-3.5" />
-                                    <span>Pusat Kendali</span>
-                                </Link>
-                                <Link
-                                    href="/admin/students"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/admin/students')
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
-                                    }`}
-                                >
-                                    Verifikasi Mahasiswa
-                                </Link>
-                                <Link
-                                    href="/admin/competitions"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/admin/competitions')
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
-                                    }`}
-                                >
-                                    Kelola Kompetisi
-                                </Link>
-                                <Link
-                                    href="/admin/notifications"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/admin/notifications')
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
-                                    }`}
-                                >
-                                    Monitoring Email
-                                </Link>
-                                <Link
-                                    href="/leaderboard/admin"
-                                    className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                                        url.startsWith('/leaderboard/admin')
-                                            ? 'bg-rose-600 text-white shadow-sm'
-                                            : 'text-rose-800 hover:text-rose-950 hover:bg-rose-100/60'
-                                    }`}
-                                >
-                                    Aturan Poin
-                                </Link>
-                            </nav>
-                        ) : isLecturer ? (
+                    {/* Navigation Capsule / Pills */}
+                    <div className="w-full md:w-auto flex justify-center md:justify-start overflow-x-auto scrollbar-none -mx-1 px-1">
+                        {isLecturer ? (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] dark:bg-slate-900/80 p-1 rounded-full border border-slate-200/70 dark:border-slate-800 overflow-x-auto max-w-full">
                                 <Link
                                     href="/dashboard"
@@ -631,7 +361,7 @@ export default function AppLayout({
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
-                                    Cari Tim
+                                    Cari Tim (MinSatu)
                                 </Link>
                                 <Link
                                     href="/competitions?tab=categories"
@@ -673,32 +403,6 @@ export default function AppLayout({
                                 >
                                     Leaderboard
                                 </Link>
-                                {isAdmin && (
-                                    <Link
-                                        href="/admin"
-                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
-                                            url.startsWith('/admin')
-                                                ? 'bg-rose-600 text-white shadow-sm'
-                                                : 'text-rose-700 hover:text-rose-900 bg-rose-50 border border-rose-200/80 hover:bg-rose-100'
-                                        }`}
-                                    >
-                                        <ShieldCheck className="size-3.5" />
-                                        <span>Panel Admin</span>
-                                    </Link>
-                                )}
-                                {isLecturer && (
-                                    <Link
-                                        href="/classes"
-                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
-                                            url.startsWith('/classes')
-                                                ? 'bg-emerald-600 text-white shadow-sm'
-                                                : 'text-emerald-700 hover:text-emerald-900 bg-emerald-50 border border-emerald-200/80 hover:bg-emerald-100'
-                                        }`}
-                                    >
-                                        <GraduationCap className="size-3.5" />
-                                        <span>Kelas Bimbingan</span>
-                                    </Link>
-                                )}
                             </nav>
                         ) : (
                             <nav className="inline-flex items-center gap-1 bg-[#f1f3f7] p-1 rounded-full border border-slate-200/70 overflow-x-auto max-w-full">
@@ -752,54 +456,34 @@ export default function AppLayout({
                                 >
                                     Leaderboard
                                 </Link>
-                                {isAdmin ? (
-                                    <Link
-                                        href="/admin"
-                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
-                                            url.startsWith('/admin')
-                                                ? 'bg-rose-600 text-white shadow-sm'
-                                                : 'text-rose-700 hover:text-rose-900 bg-rose-50 border border-rose-200/80 hover:bg-rose-100'
-                                        }`}
-                                    >
-                                        <ShieldCheck className="size-3.5" />
-                                        <span>Panel Admin</span>
-                                    </Link>
-                                ) : !isLecturer ? (
-                                    <Link
-                                        href="/projects/create"
-                                        className="px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition whitespace-nowrap"
-                                    >
-                                        + Buat Proyek
-                                    </Link>
-                                ) : null}
                             </nav>
                         )}
                     </div>
 
-                    {/* Right User Actions (visible on all screens) */}
-                    <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                    {/* Desktop Right User Actions */}
+                    <div className="hidden md:flex items-center gap-2 sm:gap-2.5 shrink-0">
                         {renderUserActions()}
                     </div>
                 </div>
             </header>
 
-            {/* 2. MAIN FULL SCREEN CONTENT AREA (with safe bottom padding for mobile bottom bar) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 pb-24 md:pb-7">
+            {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
-                    <div className="flex items-center gap-1.5 pb-3 sm:pb-4 text-xs text-slate-500 overflow-x-auto no-scrollbar whitespace-nowrap">
+                    <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
                         {breadcrumbs.map((crumb, idx) => (
                             <React.Fragment key={crumb.href || idx}>
-                                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-300 shrink-0" />}
+                                {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-300" />}
                                 {crumb.href && idx < breadcrumbs.length - 1 ? (
                                     <Link
                                         href={crumb.href}
-                                        className="hover:text-blue-600 font-medium transition shrink-0"
+                                        className="hover:text-blue-600 font-medium transition"
                                     >
                                         {crumb.title}
                                     </Link>
                                 ) : (
-                                    <span className="font-semibold text-slate-800 truncate max-w-[200px] sm:max-w-[320px] shrink-0">
+                                    <span className="font-semibold text-slate-800 truncate max-w-[280px]">
                                         {crumb.title}
                                     </span>
                                 )}
@@ -811,352 +495,6 @@ export default function AppLayout({
                 {/* Page Content */}
                 <div>{children}</div>
             </main>
-
-            {/* Platform Footer */}
-            <AppFooter />
-
-            {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
-            <nav
-                aria-label="Mobile Navigation"
-                className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
-            >
-                <div className="grid grid-cols-5 h-16 items-center px-1 max-w-lg mx-auto">
-                    {isAdmin ? (
-                        <>
-                            {/* 1. Dashboard Admin */}
-                            <Link
-                                href="/admin"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url === '/admin' || url === '/dashboard'
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <LayoutDashboard
-                                    className={`size-5 ${
-                                        url === '/admin' || url === '/dashboard'
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Admin</span>
-                            </Link>
-
-                            {/* 2. Verifikasi Mahasiswa */}
-                            <Link
-                                href="/admin/students"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/admin/students')
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Users
-                                    className={`size-5 ${
-                                        url.startsWith('/admin/students')
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Verifikasi</span>
-                            </Link>
-
-                            {/* 3. Kelola Lomba */}
-                            <Link
-                                href="/admin/competitions"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/admin/competitions')
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Trophy
-                                    className={`size-5 ${
-                                        url.startsWith('/admin/competitions')
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Kompetisi</span>
-                            </Link>
-
-                            {/* 4. Monitoring Email */}
-                            <Link
-                                href="/admin/notifications"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/admin/notifications')
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Mail
-                                    className={`size-5 ${
-                                        url.startsWith('/admin/notifications')
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Email</span>
-                            </Link>
-
-                            {/* 5. Aturan Leaderboard */}
-                            <Link
-                                href="/leaderboard/admin"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/leaderboard/admin')
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Award
-                                    className={`size-5 ${
-                                        url.startsWith('/leaderboard/admin')
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Poin</span>
-                            </Link>
-                        </>
-                    ) : isCompetitionHub ? (
-                        <>
-                            {/* 1. Eksplor Lomba */}
-                            <Link
-                                href="/competitions?tab=explore"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    (url === '/competitions' || url.includes('tab=explore')) &&
-                                    !url.includes('tab=teams') &&
-                                    !url.includes('tab=my_competitions')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Compass
-                                    className={`size-5 ${
-                                        (url === '/competitions' || url.includes('tab=explore')) &&
-                                        !url.includes('tab=teams') &&
-                                        !url.includes('tab=my_competitions')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Eksplor</span>
-                            </Link>
-
-                            {/* 2. Cari Tim */}
-                            <Link
-                                href="/competitions?tab=teams"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.includes('tab=teams')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Users
-                                    className={`size-5 ${
-                                        url.includes('tab=teams') ? 'stroke-[2.25] text-blue-600' : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Cari Tim</span>
-                            </Link>
-
-                            {/* 3. Lomba Saya */}
-                            <Link
-                                href="/competitions?tab=my_competitions"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.includes('tab=my_competitions')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <BookmarkCheck
-                                    className={`size-5 ${
-                                        url.includes('tab=my_competitions')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Lomba Saya</span>
-                            </Link>
-
-                            {/* 4. Workspace Tim */}
-                            <Link
-                                href="/competition-workspace"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/competition-workspace')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Briefcase
-                                    className={`size-5 ${
-                                        url.startsWith('/competition-workspace')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
-                            </Link>
-
-                            {/* 5. Leaderboard */}
-                            <Link
-                                href="/leaderboard?hub=competition"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/leaderboard')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Trophy
-                                    className={`size-5 ${
-                                        url.startsWith('/leaderboard')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
-                            </Link>
-                        </>
-                    ) : (
-                        <>
-                            {/* 1. Dashboard */}
-                            <Link
-                                href="/dashboard"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url === '/dashboard' || url === '/'
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <LayoutDashboard
-                                    className={`size-5 ${
-                                        url === '/dashboard' || url === '/'
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
-                            </Link>
-
-                            {/* 2. Proyek Kelas */}
-                            <Link
-                                href="/projects"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/projects') && !url.startsWith('/projects/create')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <FolderKanban
-                                    className={`size-5 ${
-                                        url.startsWith('/projects') && !url.startsWith('/projects/create')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Proyek</span>
-                            </Link>
-
-                            {/* 3. Workspace / Kelas */}
-                            {isLecturer ? (
-                                <Link
-                                    href="/classes"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/classes')
-                                            ? 'text-emerald-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <GraduationCap
-                                        className={`size-5 ${
-                                            url.startsWith('/classes')
-                                                ? 'stroke-[2.25] text-emerald-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Kelas</span>
-                                </Link>
-                            ) : (
-                                <Link
-                                    href="/workspace"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/workspace')
-                                            ? 'text-blue-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <Layers
-                                        className={`size-5 ${
-                                            url.startsWith('/workspace')
-                                                ? 'stroke-[2.25] text-blue-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Workspace</span>
-                                </Link>
-                            )}
-
-                            {/* 4. Leaderboard */}
-                            <Link
-                                href="/leaderboard?hub=project"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/leaderboard')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Trophy
-                                    className={`size-5 ${
-                                        url.startsWith('/leaderboard')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
-                            </Link>
-
-                            {/* 5. Buat Proyek / Admin */}
-                            {isAdmin ? (
-                                <Link
-                                    href="/admin"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/admin')
-                                            ? 'text-rose-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <ShieldCheck
-                                        className={`size-5 ${
-                                            url.startsWith('/admin')
-                                                ? 'stroke-[2.25] text-rose-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Admin</span>
-                                </Link>
-                            ) : (
-                                <Link
-                                    href="/projects/create"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/projects/create')
-                                            ? 'text-blue-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <PlusCircle
-                                        className={`size-5 ${
-                                            url.startsWith('/projects/create')
-                                                ? 'stroke-[2.25] text-blue-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Buat</span>
-                                </Link>
-                            )}
-                        </>
-                    )}
-                </div>
-            </nav>
         </div>
     );
 }

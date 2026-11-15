@@ -27,6 +27,7 @@ import {
     Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 import { apiFetch } from '@/lib/api';
 import GitHubConnectModal from './GitHubConnectModal';
 import GitHubHeatmap from './GitHubHeatmap';
@@ -52,6 +53,14 @@ export default function GitHubContributionMonitor({
     const [overview, setOverview] = useState<any>(initialData);
     const [activeSubTab, setActiveSubTab] = useState<'overview' | 'members' | 'branches' | 'timeline' | 'settings'>('overview');
 
+    useEffect(() => {
+        if (initialRepo) setRepo(initialRepo);
+    }, [initialRepo]);
+
+    useEffect(() => {
+        if (initialData) setOverview(initialData);
+    }, [initialData]);
+
     // Modals
     const [connectModalOpen, setConnectModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<any>(null);
@@ -70,17 +79,18 @@ export default function GitHubContributionMonitor({
 
     const isConnected = Boolean(repo && (repo.status === 'active' || repo.sync_status === 'synced' || repo.sync_status === 'syncing'));
 
-    // Fetch overview data if not provided
+    // Fetch overview data
     const fetchOverview = async () => {
-        if (!isConnected) return;
         try {
             setLoading(true);
             const res = await apiFetch(`/api/v1/workspaces/${teamId}/github/overview`);
             if (res.ok) {
                 const json = await res.json();
-                setOverview(json.data);
-                if (json.data?.repository) {
-                    setRepo(json.data.repository);
+                if (json.data) {
+                    setOverview(json.data);
+                    if (json.data.repository) {
+                        setRepo(json.data.repository);
+                    }
                 }
             }
         } catch (e) {
@@ -89,6 +99,12 @@ export default function GitHubContributionMonitor({
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (isConnected && !overview) {
+            fetchOverview();
+        }
+    }, [isConnected, overview]);
 
     // Fetch members analytics
     const fetchMembers = async () => {
@@ -270,8 +286,10 @@ export default function GitHubContributionMonitor({
                     isOpen={connectModalOpen}
                     onClose={() => setConnectModalOpen(false)}
                     teamId={teamId}
-                    onConnected={() => {
+                    onConnected={(newRepo) => {
+                        if (newRepo) setRepo(newRepo);
                         fetchOverview();
+                        router.reload();
                     }}
                 />
             </div>
