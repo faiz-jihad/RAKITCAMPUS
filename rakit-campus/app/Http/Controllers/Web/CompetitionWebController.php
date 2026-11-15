@@ -1317,6 +1317,18 @@ class CompetitionWebController extends Controller
             ])
             : collect();
 
+        $githubRepo = $team?->githubRepository;
+        $githubData = null;
+        if ($githubRepo && $githubRepo->isConnected()) {
+            try {
+                $analyticsService = app(\App\Services\GitHub\GitHubAnalyticsService::class);
+                $githubData = $analyticsService->getOverview($githubRepo);
+            } catch (\Throwable $e) {
+                // Ignore analytics error
+            }
+        }
+        $canManageGitHub = $team && ($isLeader || $isAdmin);
+
         return Inertia::render('competitions/workspace', [
             'participation' => $participation,
             'readinessScore' => $readinessScore,
@@ -1332,6 +1344,20 @@ class CompetitionWebController extends Controller
             'isMentor' => $isMentor,
             'isAdmin' => $isAdmin,
             'storageQuota' => $participation->team_id ? ObjectStorageService::getTeamStorageQuotaInfo($participation->team_id) : null,
+            'githubRepo' => $githubRepo ? [
+                'id' => $githubRepo->id,
+                'full_name' => $githubRepo->full_name,
+                'html_url' => $githubRepo->html_url,
+                'default_branch' => $githubRepo->default_branch,
+                'is_private' => $githubRepo->is_private,
+                'status' => $githubRepo->status,
+                'sync_status' => $githubRepo->sync_status,
+                'sync_error' => $githubRepo->sync_error,
+                'last_synced_at' => $githubRepo->last_synced_at?->toIso8601String(),
+                'webhook_url' => url('/api/v1/integrations/github/webhook'),
+            ] : null,
+            'githubData' => $githubData,
+            'canManageGitHub' => $canManageGitHub,
         ]);
     }
 

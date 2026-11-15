@@ -17,6 +17,8 @@ import {
     FileText,
     Filter,
     FolderKanban,
+    GitBranch,
+    Github,
     Globe,
     GraduationCap,
     HardDrive,
@@ -46,6 +48,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import React, { useState } from 'react';
+import GitHubContributionMonitor from '@/components/github/GitHubContributionMonitor';
 
 interface Props {
     participation: any;
@@ -70,6 +73,9 @@ interface Props {
         remaining_mb: number;
         percent_used: number;
     };
+    githubRepo?: any;
+    githubData?: any;
+    canManageGitHub?: boolean;
 }
 
 export default function CompetitionWorkspace({
@@ -87,9 +93,20 @@ export default function CompetitionWorkspace({
     isMentor,
     isAdmin,
     storageQuota,
+    githubRepo,
+    githubData,
+    canManageGitHub = false,
 }: Props) {
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
-    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'documents' | 'rounds' | 'mentoring' | 'results' | 'history'>('overview');
+    const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'rounds' | 'mentoring' | 'results' | 'history'>(() => {
+        if (typeof window !== 'undefined') {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('tab') === 'github' || window.location.hash === '#github') {
+                return 'github';
+            }
+        }
+        return 'overview';
+    });
 
     // MinSatu Roles & Applicants State
     const [newRoleName, setNewRoleName] = useState('');
@@ -752,6 +769,28 @@ export default function CompetitionWorkspace({
                             </DropdownMenu>
                         )}
 
+                        {/* GitHub Integration Shortcut Pill */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('github')}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200/90 bg-white text-xs font-bold text-slate-700 hover:border-blue-300 hover:text-blue-600 transition cursor-pointer shadow-2xs"
+                            title="Buka Monitoring GitHub Tim"
+                        >
+                            <Github className="size-3.5 text-slate-700" />
+                            {githubRepo ? (
+                                <>
+                                    <span className="font-mono text-[11px] truncate max-w-[120px] text-slate-800">
+                                        {githubRepo.full_name}
+                                    </span>
+                                    <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                                </>
+                            ) : (
+                                <span className="text-[11px] font-semibold text-slate-500">
+                                    + Hubungkan GitHub
+                                </span>
+                            )}
+                        </button>
+
                         {canManageTasks && (
                             <button
                                 type="button"
@@ -773,6 +812,7 @@ export default function CompetitionWorkspace({
                     {[
                         { id: 'overview', label: 'Ikhtisar Tim', icon: Users },
                         { id: 'kanban', label: 'Papan Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
+                        { id: 'github', label: 'Monitoring GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
                         { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
                         { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
                         { id: 'rounds', label: 'Babak Seleksi', icon: Clock, count: rounds.length },
@@ -1837,6 +1877,27 @@ export default function CompetitionWorkspace({
                                 );
                             })}
                         </div>
+                    </div>
+                )}
+
+                {/* TAB CONTENT: GITHUB CONTRIBUTION MONITORING */}
+                {activeTab === 'github' && (
+                    <div className="space-y-4">
+                        <GitHubContributionMonitor
+                            teamId={participation.team_id}
+                            initialRepo={githubRepo}
+                            initialData={githubData}
+                            canManage={canManageGitHub}
+                            allMembers={participation.team?.members?.map((m: any) => ({
+                                id: m.id,
+                                user_id: m.user_id,
+                                name: m.user?.name || 'Anggota',
+                                email: m.user?.email || '',
+                                role_name: m.role_name || (m.permission === 'leader' ? 'Leader' : 'Anggota'),
+                                permission: m.permission,
+                                skills: m.user?.profile?.skills?.map((s: any) => s.name) || [],
+                            })) || []}
+                        />
                     </div>
                 )}
 
