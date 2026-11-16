@@ -1513,9 +1513,17 @@ class CompetitionWebController extends Controller
                 if ($userPart) {
                     return $userPart;
                 }
+
+                $invitePart = (clone $query)->whereHas('team.invitations', fn ($q) => $q->where('invitee_id', $user->id)->where('status', \App\Enums\InvitationStatus::Pending->value))->first();
+                if ($invitePart) {
+                    return $invitePart;
+                }
             }
 
-            return $query->first() ?? CompetitionParticipation::with($relations)->findOrFail($identifier);
+            $firstPart = $query->first();
+            if ($firstPart) {
+                return $firstPart;
+            }
         }
 
         return CompetitionParticipation::with($relations)->findOrFail($identifier);
