@@ -490,7 +490,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Kompetisi '{$competition->name}' kategori {$competition->category} telah resmi dibuka. Cari teman tim dan daftarkan tim Anda!",
             options: [
                 'priority' => 'medium',
-                'action_url' => url("/competitions/{$competition->id}"),
+                'action_url' => url('/dashboard'),
                 'action_text' => 'Lihat Info Kompetisi',
                 'entity_type' => 'competition',
                 'entity_id' => $competition->id,
@@ -516,7 +516,7 @@ class NotificationService implements NotificationServiceInterface
             message: "{$inviterName} mengundang Anda bergabung ke tim '{$team->name}' untuk mengikuti kompetisi {$competition->name} sebagai {$role}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competitions/{$competition->id}"),
+                'action_url' => url('/dashboard'),
                 'action_text' => 'Tanggapi Undangan Lomba',
                 'entity_type' => 'team',
                 'entity_id' => $team->id,

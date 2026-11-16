@@ -38,7 +38,7 @@ class CompetitionParticipation extends Model
 
     public function competition(): BelongsTo
     {
-        return $this->belongsTo(Competition::class);
+        return $this->belongsTo(Competition::class)->withTrashed();
     }
 
     public function team(): BelongsTo

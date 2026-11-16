@@ -215,11 +215,12 @@ class CompetitionTeamFormationService
                 $inviter->id
             );
 
-            if ($participation->competition) {
+            $competition = $participation->competition ?: \App\Models\Competition::withTrashed()->find($participation->competition_id);
+            if ($competition) {
                 app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitation(
                     $invitee,
                     $team,
-                    $participation->competition,
+                    $competition,
                     $roleName,
                     $inviter
                 );
