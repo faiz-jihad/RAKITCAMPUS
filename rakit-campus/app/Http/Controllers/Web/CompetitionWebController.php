@@ -1373,21 +1373,30 @@ class CompetitionWebController extends Controller
         }
         $canManageGitHub = $team && ($isLeader || $isAdmin);
 
-        // Available students in the same campus to recruit/invite
-        $campusId = $participation->competition?->campus_id ?? $user->campusId();
+        // Available students to recruit/invite
+        $compCampusId = $participation->competition?->campus_id;
+        $userCampusId = $user->campusId();
         $teamMemberIds = $team ? $team->members()->pluck('user_id')->toArray() : [];
+        $excludeIds = array_unique(array_merge($teamMemberIds, [$user->id]));
 
-        $availableStudents = User::whereHas('memberships', function ($q) use ($campusId) {
+        $studentsQuery = User::whereHas('memberships', function ($q) use ($compCampusId) {
             $q->where('role', \App\Enums\CampusRole::Student->value)
               ->where('status', \App\Enums\MembershipStatus::Active->value);
-            if ($campusId) {
-                $q->where('campus_id', $campusId);
+            if ($compCampusId) {
+                $q->where('campus_id', $compCampusId);
             }
         })
-        ->whereNotIn('id', $teamMemberIds)
-        ->with(['profile.skills', 'profile.campus'])
-        ->take(40)
-        ->get()
+        ->whereNotIn('id', $excludeIds)
+        ->with(['profile.skills', 'profile.campus']);
+
+        // For open/national competitions, prioritize students from the same campus, then others
+        if (!$compCampusId && $userCampusId) {
+            $studentsQuery->orderByRaw("CASE WHEN id IN (SELECT user_id FROM campus_memberships WHERE campus_id = ? AND role = 'student' AND status = 'active') THEN 0 ELSE 1 END", [$userCampusId]);
+        }
+
+        $availableStudents = $studentsQuery
+            ->take(50)
+            ->get()
         ->map(function ($s) {
             return [
                 'id' => $s->id,

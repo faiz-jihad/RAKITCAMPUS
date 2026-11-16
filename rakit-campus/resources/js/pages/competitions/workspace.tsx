@@ -30,6 +30,7 @@ import {
     HardDrive,
     History,
     Image as ImageIcon,
+    Info,
     LayoutGrid,
     Linkedin,
     List,
@@ -45,6 +46,7 @@ import {
     Sparkles,
     Trash2,
     Upload,
+    UserCheck,
     UserMinus,
     UserPlus,
     Users,
@@ -1499,32 +1501,32 @@ export default function CompetitionWorkspace({
                                         </div>
 
                                         <div className="space-y-2">
-                                            {recommendedCandidates.slice(0, 2).map((cand: any) => (
-                                                <div
-                                                    key={cand.user.id}
-                                                    className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/70 space-y-1.5 text-xs"
-                                                >
-                                                    <div className="flex items-center justify-between gap-2">
-                                                        <span className="font-bold text-slate-900 truncate">{cand.user.name}</span>
-                                                        <span className="text-[10px] font-mono font-bold px-1 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
-                                                            {cand.final_score}% Cocok
-                                                        </span>
+                                            {recommendedCandidates.slice(0, 2).map((cand: any) => {
+                                                const u = cand.user || cand;
+                                                return (
+                                                    <div
+                                                        key={u.id}
+                                                        className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/70 space-y-1.5 text-xs"
+                                                    >
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <span className="font-bold text-slate-900 truncate">{u.name}</span>
+                                                            <span className="text-[10px] font-mono font-bold px-1 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                                                {cand.final_score}% Cocok
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-400 truncate">{cand.explanation}</p>
+                                                        {isLeader && !participation.is_formation_locked && cand.eligible && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => openInviteModalForCandidate(cand)}
+                                                                className="w-full py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer mt-1"
+                                                            >
+                                                                Undang ke Tim
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    <p className="text-[10px] text-slate-400 truncate">{cand.explanation}</p>
-                                                    {isLeader && !participation.is_formation_locked && cand.eligible && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setSelectedCandidate(cand);
-                                                                setInviteModalOpen(true);
-                                                            }}
-                                                            className="w-full py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold transition cursor-pointer mt-1"
-                                                        >
-                                                            Undang ke Tim
-                                                        </button>
-                                                    )}
-                                                </div>
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -1805,9 +1807,9 @@ export default function CompetitionWorkspace({
 
                                                     {inv.invitee?.skills && inv.invitee.skills.length > 0 && (
                                                         <div className="flex items-center gap-1 flex-wrap mt-1.5">
-                                                            {inv.invitee.skills.slice(0, 3).map((sk: string, i: number) => (
+                                                            {inv.invitee.skills.slice(0, 3).map((sk: any, i: number) => (
                                                                 <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                                                    {sk}
+                                                                    {typeof sk === 'string' ? sk : sk?.name}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -3093,8 +3095,9 @@ export default function CompetitionWorkspace({
                                             {selectedCandidate.user?.name || selectedCandidate.name}
                                         </p>
                                         <p className="text-[11px] text-slate-500 truncate">
-                                            {selectedCandidate.user?.study_program || selectedCandidate.study_program || 'Mahasiswa'}
-                                            {(selectedCandidate.user?.semester || selectedCandidate.semester) ? ` • Sem ${selectedCandidate.user?.semester || selectedCandidate.semester}` : ''}
+                                            {selectedCandidate.user?.study_program || selectedCandidate.user?.profile?.study_program || selectedCandidate.study_program || selectedCandidate.profile?.study_program || 'Mahasiswa'}
+                                            {(selectedCandidate.user?.semester || selectedCandidate.user?.profile?.semester || selectedCandidate.semester || selectedCandidate.profile?.semester) ? ` • Sem ${selectedCandidate.user?.semester || selectedCandidate.user?.profile?.semester || selectedCandidate.semester || selectedCandidate.profile?.semester}` : ''}
+                                            {(selectedCandidate.user?.campus_name || selectedCandidate.user?.profile?.campus?.name || selectedCandidate.campus_name || selectedCandidate.profile?.campus?.name) ? ` • ${selectedCandidate.user?.campus_name || selectedCandidate.user?.profile?.campus?.name || selectedCandidate.campus_name || selectedCandidate.profile?.campus?.name}` : ''}
                                         </p>
                                     </div>
                                 </div>
@@ -3222,44 +3225,54 @@ export default function CompetitionWorkspace({
                                     </div>
 
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                        {recommendedCandidates.map((cand: any) => (
-                                            <div
-                                                key={cand.user.id}
-                                                className="p-3.5 rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50/40 to-white flex flex-col justify-between gap-2.5 shadow-2xs hover:border-blue-300 transition"
-                                            >
-                                                <div>
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="text-xs font-bold text-slate-900 truncate">{cand.user.name}</p>
-                                                            <p className="text-[11px] text-slate-500 truncate">
-                                                                {cand.user.study_program || 'Mahasiswa'} {cand.user.semester ? `• Sem ${cand.user.semester}` : ''}
-                                                            </p>
+                                        {recommendedCandidates.map((cand: any) => {
+                                            const u = cand.user || cand;
+                                            const name = u.name || 'Mahasiswa';
+                                            const studyProgram = u.study_program || u.profile?.study_program || 'Mahasiswa';
+                                            const semester = u.semester || u.profile?.semester;
+                                            const campusName = u.campus_name || u.profile?.campus?.name;
+                                            const skills = Array.isArray(u.skills) ? u.skills : (u.profile?.skills || []);
+
+                                            return (
+                                                <div
+                                                    key={u.id}
+                                                    className="p-3.5 rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50/40 to-white flex flex-col justify-between gap-2.5 shadow-2xs hover:border-blue-300 transition"
+                                                >
+                                                    <div>
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="text-xs font-bold text-slate-900 truncate">{name}</p>
+                                                                <p className="text-[11px] text-slate-500 truncate">
+                                                                    {studyProgram} {semester ? `• Sem ${semester}` : ''}
+                                                                    {campusName ? ` • ${campusName}` : ''}
+                                                                </p>
+                                                            </div>
+                                                            <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-600 text-white shrink-0 shadow-2xs">
+                                                                {cand.final_score}% Cocok
+                                                            </span>
                                                         </div>
-                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-600 text-white shrink-0 shadow-2xs">
-                                                            {cand.final_score}% Cocok
-                                                        </span>
+
+                                                        {skills.length > 0 && (
+                                                            <div className="flex flex-wrap gap-1 mt-2">
+                                                                {skills.slice(0, 3).map((sk: any, i: number) => (
+                                                                    <span key={i} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+                                                                        {typeof sk === 'string' ? sk : sk.name}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
 
-                                                    {cand.user.skills && cand.user.skills.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1 mt-2">
-                                                            {cand.user.skills.slice(0, 3).map((sk: any, i: number) => (
-                                                                <span key={i} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
-                                                                    {typeof sk === 'string' ? sk : sk.name}
-                                                                </span>
-                                                            ))}
-                                                        </div>
-                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openInviteModalForCandidate(cand)}
+                                                        className="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs text-center"
+                                                    >
+                                                        Undang ke Tim
+                                                    </button>
                                                 </div>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openInviteModalForCandidate(cand)}
-                                                    className="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs text-center"
-                                                >
-                                                    Undang ke Tim
-                                                </button>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -3273,14 +3286,15 @@ export default function CompetitionWorkspace({
                                 {(() => {
                                     const pool = availableStudents && availableStudents.length > 0
                                         ? availableStudents
-                                        : recommendedCandidates.map((r: any) => r.user);
+                                        : recommendedCandidates.map((r: any) => r.user || r);
 
                                     const filtered = pool.filter((s: any) => {
                                         if (!candidateSearchQuery.trim()) return true;
                                         const q = candidateSearchQuery.toLowerCase();
                                         const nameMatch = (s.name || '').toLowerCase().includes(q);
-                                        const prodiMatch = (s.study_program || '').toLowerCase().includes(q);
-                                        const skillsMatch = Array.isArray(s.skills) && s.skills.some((sk: any) => (typeof sk === 'string' ? sk : sk.name || '').toLowerCase().includes(q));
+                                        const prodiMatch = (s.study_program || s.profile?.study_program || '').toLowerCase().includes(q);
+                                        const skills = Array.isArray(s.skills) ? s.skills : (s.profile?.skills || []);
+                                        const skillsMatch = skills.some((sk: any) => (typeof sk === 'string' ? sk : sk.name || '').toLowerCase().includes(q));
                                         return nameMatch || prodiMatch || skillsMatch;
                                     });
 
@@ -3295,41 +3309,50 @@ export default function CompetitionWorkspace({
 
                                     return (
                                         <div className="space-y-2">
-                                            {filtered.map((s: any) => (
-                                                <div
-                                                    key={s.id}
-                                                    className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
-                                                >
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                                            {(s.name || 'M').charAt(0).toUpperCase()}
-                                                        </div>
-                                                        <div className="min-w-0">
-                                                            <p className="text-xs font-bold text-slate-900 truncate">{s.name}</p>
-                                                            <p className="text-[11px] text-slate-500 truncate">
-                                                                {s.study_program || 'Mahasiswa'} {s.semester ? `• Semester ${s.semester}` : ''}
-                                                            </p>
-                                                            {s.skills && s.skills.length > 0 && (
-                                                                <div className="flex flex-wrap gap-1 mt-1">
-                                                                    {s.skills.slice(0, 3).map((sk: any, i: number) => (
-                                                                        <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                                                            {typeof sk === 'string' ? sk : sk.name}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
+                                            {filtered.map((s: any) => {
+                                                const name = s.name || 'Mahasiswa';
+                                                const studyProgram = s.study_program || s.profile?.study_program || 'Mahasiswa';
+                                                const semester = s.semester || s.profile?.semester;
+                                                const campusName = s.campus_name || s.profile?.campus?.name;
+                                                const skills = Array.isArray(s.skills) ? s.skills : (s.profile?.skills || []);
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openInviteModalForCandidate(s)}
-                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs shrink-0 self-end sm:self-center"
+                                                return (
+                                                    <div
+                                                        key={s.id}
+                                                        className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
                                                     >
-                                                        Undang ke Tim
-                                                    </button>
-                                                </div>
-                                            ))}
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                                                {name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <p className="text-xs font-bold text-slate-900 truncate">{name}</p>
+                                                                <p className="text-[11px] text-slate-500 truncate">
+                                                                    {studyProgram} {semester ? `• Semester ${semester}` : ''}
+                                                                    {campusName ? ` • ${campusName}` : ''}
+                                                                </p>
+                                                                {skills.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                                        {skills.slice(0, 3).map((sk: any, i: number) => (
+                                                                            <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                                                {typeof sk === 'string' ? sk : sk.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openInviteModalForCandidate(s)}
+                                                            className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs shrink-0 self-end sm:self-center"
+                                                        >
+                                                            Undang ke Tim
+                                                        </button>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     );
                                 })()}

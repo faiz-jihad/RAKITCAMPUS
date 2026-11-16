@@ -37,30 +37,36 @@ class CompetitionMatchmakingService
     {
         $competition = $participation->competition;
         $team = $participation->team;
-        $campusId = $competition->campus_id ?? ($viewer?->campusId() ?? $team?->campus_id);
+        $compCampusId = $competition?->campus_id;
+        $userCampusId = $viewer?->campusId() ?? $team?->campus_id;
 
-        // Fetch students from same campus with eager loaded skills & counts (Zero N+1)
+        // Fetch students (restricted to campus only if competition is campus-specific)
         $query = User::query()
-            ->whereHas('memberships', function ($q) use ($campusId) {
+            ->whereHas('memberships', function ($q) use ($compCampusId) {
                 $q->where('role', \App\Enums\CampusRole::Student->value)
                   ->where('status', \App\Enums\MembershipStatus::Active->value);
-                if ($campusId) {
-                    $q->where('campus_id', $campusId);
+                if ($compCampusId) {
+                    $q->where('campus_id', $compCampusId);
                 }
             })
-            ->with(['profile.skills'])
+            ->with(['profile.skills', 'profile.campus'])
             ->withCount([
                 'achievements',
                 'teamMemberships as completed_projects_count' => fn ($q) => $q->where('status', 'completed'),
                 'applications as rejected_applications_count' => fn ($q) => $q->where('status', 'rejected'),
             ]);
 
-        // Exclude members already in this team
+        // Exclude members already in this team and the viewer
+        $excludeIds = [];
         if ($team) {
-            $existingMemberIds = $team->members()->pluck('user_id')->toArray();
-            if (!empty($existingMemberIds)) {
-                $query->whereNotIn('id', $existingMemberIds);
-            }
+            $excludeIds = $team->members()->pluck('user_id')->toArray();
+        }
+        if ($viewer) {
+            $excludeIds[] = $viewer->id;
+        }
+        $excludeIds = array_unique(array_filter($excludeIds));
+        if (!empty($excludeIds)) {
+            $query->whereNotIn('id', $excludeIds);
         }
 
         $students = $query->take(100)->get();
@@ -229,8 +235,24 @@ class CompetitionMatchmakingService
             ? 'Kandidat potensial dengan profil kompetensi aktif.'
             : implode('. ', $explanationParts) . '.';
 
+        $prof = $student->profile ?? $student->studentProfile;
         return [
-            'user' => $student,
+            'user' => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'email' => $student->email,
+                'avatar' => $student->avatar,
+                'study_program' => $prof?->study_program ?? 'Mahasiswa',
+                'semester' => $prof?->semester,
+                'campus_name' => $prof?->campus?->name,
+                'skills' => $prof?->skills?->pluck('name')->toArray() ?? [],
+                'profile' => [
+                    'study_program' => $prof?->study_program ?? 'Mahasiswa',
+                    'semester' => $prof?->semester,
+                    'campus' => ['name' => $prof?->campus?->name],
+                    'skills' => $prof?->skills?->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->toArray() ?? [],
+                ],
+            ],
             'final_score' => $finalScore,
             'breakdown' => [
                 'skill' => $skillScore,
