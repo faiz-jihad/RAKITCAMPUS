@@ -399,7 +399,7 @@ export default function AppLayout({
                 <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
                     {/* Brand Logo & Hub Switcher */}
                     <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                        <Link href={isCompetitionHub ? '/competitions' : '/dashboard'} className="flex items-center gap-2 group shrink-0">
+                        <Link href={isCompetitionHub ? '/competitions/dashboard' : '/dashboard'} className="flex items-center gap-2 group shrink-0">
                             <img
                                 src="/images/rakit-mark.png"
                                 alt="RAKIT"
@@ -415,6 +415,16 @@ export default function AppLayout({
                     <div className="hidden md:flex items-center justify-center h-full overflow-x-auto scrollbar-none">
                         {isCompetitionHub ? (
                             <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                                <Link
+                                    href="/competitions/dashboard"
+                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/competitions/dashboard')
+                                            ? 'text-blue-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-blue-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Dashboard
+                                </Link>
                                 <Link
                                     href="/competitions?tab=explore"
                                     className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
@@ -699,7 +709,26 @@ export default function AppLayout({
                         </>
                     ) : isCompetitionHub ? (
                         <>
-                            {/* 1. Eksplor Lomba */}
+                            {/* 1. Dashboard Lomba */}
+                            <Link
+                                href="/competitions/dashboard"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/competitions/dashboard')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <LayoutDashboard
+                                    className={`size-5 ${
+                                        url.startsWith('/competitions/dashboard')
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+                            </Link>
+
+                            {/* 2. Eksplor Lomba */}
                             <Link
                                 href="/competitions?tab=explore"
                                 className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${

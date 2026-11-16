@@ -1252,7 +1252,13 @@ class CompetitionWebController extends Controller
         $isMentor = $participation->mentor_id === $user->id || $participation->mentors->contains('user_id', $user->id);
         $isAdmin = $user->isCampusAdminOf($participation->competition?->campus_id) || $user->isPlatformAdmin();
 
-        if (!$isMember && !$isMentor && !$isAdmin) {
+        $myPendingInvitation = $team ? Invitation::where('team_id', $team->id)
+            ->where('invitee_id', $user->id)
+            ->where('status', \App\Enums\InvitationStatus::Pending->value)
+            ->with(['inviter:id,name,avatar', 'role:id,name'])
+            ->first() : null;
+
+        if (!$isMember && !$isMentor && !$isAdmin && !$myPendingInvitation) {
             abort(403, 'Anda tidak memiliki hak akses ke Preparation Workspace tim kompetisi ini.');
         }
 
@@ -1451,6 +1457,17 @@ class CompetitionWebController extends Controller
             'isMember' => $isMember,
             'isMentor' => $isMentor,
             'isAdmin' => $isAdmin,
+            'myPendingInvitation' => $myPendingInvitation ? [
+                'id' => $myPendingInvitation->id,
+                'role_name' => $myPendingInvitation->role?->name ?? $myPendingInvitation->role_name ?? 'Anggota Tim',
+                'message' => $myPendingInvitation->message,
+                'inviter' => [
+                    'id' => $myPendingInvitation->inviter?->id,
+                    'name' => $myPendingInvitation->inviter?->name ?? 'Ketua Tim',
+                    'avatar' => $myPendingInvitation->inviter?->avatar,
+                ],
+                'created_at' => $myPendingInvitation->created_at?->diffForHumans(),
+            ] : null,
             'storageQuota' => $participation->team_id ? ObjectStorageService::getTeamStorageQuotaInfo($participation->team_id) : null,
             'githubRepo' => $githubRepo ? [
                 'id' => $githubRepo->id,

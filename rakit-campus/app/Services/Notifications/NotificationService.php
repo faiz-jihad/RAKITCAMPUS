@@ -343,8 +343,8 @@ class NotificationService implements NotificationServiceInterface
             message: "{$inviterName} mengundang Anda bergabung dengan tim '{$team->name}' untuk peran: {$invitation->role_name}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url('/matching'),
-                'action_text' => 'Tanggapi Undangan',
+                'action_url' => $team->project ? url("/projects/{$team->project->slug}") : url("/workspace/{$team->id}"),
+                'action_text' => 'Tanggapi Undangan Proyek',
                 'entity_type' => 'invitation',
                 'entity_id' => $invitation->id,
                 'details' => [
@@ -516,8 +516,8 @@ class NotificationService implements NotificationServiceInterface
             message: "{$inviterName} mengundang Anda bergabung ke tim '{$team->name}' untuk mengikuti kompetisi {$competition->name} sebagai {$role}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url('/dashboard'),
-                'action_text' => 'Tanggapi Undangan Lomba',
+                'action_url' => url("/competition-workspace/{$competition->slug}"),
+                'action_text' => 'Tinjau & Tanggapi di Workspace Lomba',
                 'entity_type' => 'team',
                 'entity_id' => $team->id,
                 'details' => [

@@ -105,8 +105,14 @@ class WorkspaceWebController extends Controller
         $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
         $isLecturer = $user->isLecturer() || $isClassLecturer;
 
-        // If not a lecturer and not a member, verify authorization
-        if (! $isLecturer) {
+        $myPendingInvitation = $team->invitations()
+            ->where('invitee_id', $user->id)
+            ->where('status', 'pending')
+            ->with(['inviter:id,name,avatar', 'role:id,name'])
+            ->first();
+
+        // If not a lecturer and not a member and no pending invitation, verify authorization
+        if (! $isLecturer && ! $team->hasMember($user) && ! $myPendingInvitation) {
             $this->authorize('view', $team);
         }
 
@@ -222,6 +228,17 @@ class WorkspaceWebController extends Controller
             ] : null,
             'githubData' => $githubData,
             'canManageGitHub' => $user->can('manageGitHub', $team),
+            'myPendingInvitation' => $myPendingInvitation ? [
+                'id' => $myPendingInvitation->id,
+                'role_name' => $myPendingInvitation->role?->name ?? $myPendingInvitation->role_name ?? 'Anggota Tim',
+                'message' => $myPendingInvitation->message,
+                'inviter' => [
+                    'id' => $myPendingInvitation->inviter?->id,
+                    'name' => $myPendingInvitation->inviter?->name ?? 'Ketua Tim',
+                    'avatar' => $myPendingInvitation->inviter?->avatar,
+                ],
+                'created_at' => $myPendingInvitation->created_at?->diffForHumans(),
+            ] : null,
         ]);
     }
 

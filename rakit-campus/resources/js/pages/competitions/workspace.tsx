@@ -90,6 +90,7 @@ interface Props {
     canManageGitHub?: boolean;
     availableStudents?: any[];
     sentInvitations?: any[];
+    myPendingInvitation?: any;
 }
 
 export default function CompetitionWorkspace({
@@ -112,6 +113,7 @@ export default function CompetitionWorkspace({
     githubRepo,
     githubData,
     canManageGitHub = false,
+    myPendingInvitation,
 }: Props) {
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
@@ -129,6 +131,35 @@ export default function CompetitionWorkspace({
     const [newRoleSlots, setNewRoleSlots] = useState(1);
     const [newRoleReqs, setNewRoleReqs] = useState('');
     const [addingRole, setAddingRole] = useState(false);
+
+    // In-Workspace Direct Invitation Acceptance State
+    const [isAcceptingOffer, setIsAcceptingOffer] = useState(false);
+    const [isDecliningOffer, setIsDecliningOffer] = useState(false);
+
+    const handleAcceptOffer = (invitationId: number) => {
+        setIsAcceptingOffer(true);
+        router.post(
+            `/competition-invitations/${invitationId}/accept`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsAcceptingOffer(false),
+            }
+        );
+    };
+
+    const handleDeclineOffer = (invitationId: number) => {
+        const reason = prompt('Alasan menolak tawaran (opsional):');
+        setIsDecliningOffer(true);
+        router.post(
+            `/competition-invitations/${invitationId}/decline`,
+            { reason },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsDecliningOffer(false),
+            }
+        );
+    };
 
     // Modals
     const [stageModalOpen, setStageModalOpen] = useState(false);
@@ -647,6 +678,52 @@ export default function CompetitionWorkspace({
                         >
                             <X className="size-4" />
                         </button>
+                    </div>
+                )}
+
+                {/* INVITATION OFFER BANNER (Direct in-workspace acceptance) */}
+                {myPendingInvitation && (
+                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-amber-500/15 via-amber-100/50 to-emerald-500/10 border-2 border-amber-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+                        <div className="flex items-start gap-4">
+                            <div className="size-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <Trophy className="size-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-900 bg-amber-200/90 px-2.5 py-0.5 rounded-full border border-amber-300">
+                                        Tawaran Bergabung Tim Lomba
+                                    </span>
+                                    <span className="text-xs text-slate-500">• {myPendingInvitation.created_at || 'Baru saja'}</span>
+                                </div>
+                                <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                                    Anda diundang bergabung ke tim "{participation.team?.name}" sebagai <span className="text-blue-700 font-bold">{myPendingInvitation.role_name}</span>!
+                                </h3>
+                                <p className="text-xs text-slate-600 mt-0.5">
+                                    Diundang oleh <strong>{myPendingInvitation.inviter?.name || 'Ketua Tim'}</strong> untuk persiapan kompetisi <strong>{participation.competition?.name}</strong>.
+                                    {myPendingInvitation.message && <span className="italic block mt-1">"{myPendingInvitation.message}"</span>}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                            <button
+                                type="button"
+                                disabled={isAcceptingOffer}
+                                onClick={() => handleAcceptOffer(myPendingInvitation.id)}
+                                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs hover:shadow transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                            >
+                                <CheckCircle2 className="size-4" />
+                                <span>{isAcceptingOffer ? 'Memproses...' : 'Terima Tawaran & Resmi Masuk Tim'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isDecliningOffer}
+                                onClick={() => handleDeclineOffer(myPendingInvitation.id)}
+                                className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 font-semibold text-xs transition disabled:opacity-50 cursor-pointer"
+                            >
+                                {isDecliningOffer ? 'Menolak...' : 'Tolak Tawaran'}
+                            </button>
+                        </div>
                     </div>
                 )}
 

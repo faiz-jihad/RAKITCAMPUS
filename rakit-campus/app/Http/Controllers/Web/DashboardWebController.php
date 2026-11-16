@@ -800,17 +800,20 @@ class DashboardWebController extends Controller
         // 3. Open recruiting projects eligible for discovery (flat payload, zero 404 links)
         $recommendedProjects = $this->openRecruitingProjectsPayload($profile, $user, 4);
 
-        // 3b. Peer collaboration invitations received by this student (strictly separated from lecturer approvals)
+        // 3b. Peer collaboration invitations received by this student (strictly for Project Hub)
         $receivedInvitations = Invitation::where('invitee_id', $user->id)
             ->whereIn('status', [
                 InvitationStatus::Pending->value,
                 InvitationStatus::Accepted->value,
                 InvitationStatus::Declined->value,
             ])
+            ->where(function ($q) {
+                $q->whereHas('team', fn ($t) => $t->where('type', '!=', 'competition')->whereDoesntHave('participations'))
+                  ->whereNull('competition_id');
+            })
             ->with([
                 'team.project:id,title,slug,category,academic_class_id',
                 'team.project.academicClass:id,name,code',
-                'team.participations.competition:id,name,slug,category,level',
                 'team.members' => fn ($m) => $m->where('status', 'active'),
                 'inviter:id,name,email',
                 'role:id,name',
@@ -822,32 +825,24 @@ class DashboardWebController extends Controller
             ->map(function (Invitation $inv) {
                 $statusValue = $inv->status instanceof InvitationStatus ? $inv->status->value : (string) $inv->status;
                 $project = $inv->team?->project;
-                $participation = $inv->team?->participations?->first();
-                $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
                 $isExpired = $inv->isExpired();
-                $isCompetition = (bool) $competition || $inv->team?->type === TeamType::Competition || $inv->team?->type === 'competition';
-                $slug = $competition?->slug ?: $participation?->id;
 
                 return [
                     'id' => $inv->id,
                     'status' => $isExpired && $statusValue === 'pending' ? 'expired' : $statusValue,
                     'team_id' => $inv->team_id,
-                    'team_name' => $inv->team?->name ?? 'Tim Kolaborasi',
+                    'team_name' => $inv->team?->name ?? 'Tim Kolaborasi Proyek',
                     'team_members_count' => $inv->team?->members?->count() ?? 1,
                     'team_capacity' => $inv->team?->capacity ?? 4,
-                    'is_competition' => $isCompetition,
-                    'competition_name' => $competition?->name,
-                    'competition_slug' => $competition?->slug,
+                    'is_competition' => false,
                     'project_id' => $project?->id,
-                    'project_title' => $isCompetition ? "Kompetisi: {$competition?->name}" : ($project?->title ?? 'Proyek Kampus'),
-                    'project_slug' => $isCompetition ? $slug : $project?->slug,
-                    'target_url' => $isCompetition ? ($slug ? "/competitions/{$slug}" : "/competitions") : ($project ? "/projects/{$project->slug}" : null),
-                    'workspace_url' => $isCompetition
-                        ? ($slug ? "/competition-workspace/{$slug}" : "/competitions")
-                        : ($project ? "/projects/{$project->slug}" : "/workspace/{$inv->team_id}"),
-                    'accept_url' => $isCompetition ? "/competition-invitations/{$inv->id}/accept" : "/invitations/{$inv->id}/accept",
-                    'decline_url' => $isCompetition ? "/competition-invitations/{$inv->id}/decline" : "/invitations/{$inv->id}/decline",
-                    'class_label' => $project?->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : ($competition ? "Kompetisi {$competition->level}" : null),
+                    'project_title' => $project?->title ?? 'Proyek Kampus',
+                    'project_slug' => $project?->slug,
+                    'target_url' => $project ? "/projects/{$project->slug}" : null,
+                    'workspace_url' => $project ? "/projects/{$project->slug}" : "/workspace/{$inv->team_id}",
+                    'accept_url' => "/invitations/{$inv->id}/accept",
+                    'decline_url' => "/invitations/{$inv->id}/decline",
+                    'class_label' => $project?->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : null,
                     'inviter_name' => $inv->inviter?->name ?? 'Ketua Tim',
                     'role_name' => $inv->role?->name ?? $inv->role_name ?? 'Anggota Tim',
                     'message' => $inv->message,
@@ -945,7 +940,7 @@ class DashboardWebController extends Controller
             ],
             'stats' => $stats,
             'myTeams' => $myTeams,
-            'myCompetitionTeams' => $myCompetitionTeams,
+            'myCompetitionTeams' => [],
             'myTasks' => $myTasks,
             'teammates' => $realTeammates,
             'monthlyActivity' => $monthlyActivity,
@@ -958,6 +953,288 @@ class DashboardWebController extends Controller
             'pendingTeamApprovals' => [],
             'teamApprovalHistory' => [],
             'enrolledClasses' => $enrolledClasses,
+        ]);
+    }
+
+    public function competitionDashboard(Request $request): Response|\Illuminate\Http\RedirectResponse
+    {
+        $user = $request->user();
+
+        // 1. Guest / Public Access Mode for Competition Hub
+        if (!$user) {
+            $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
+                ->latest('registration_deadline')
+                ->take(8)
+                ->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id,
+                    'name' => $c->name,
+                    'slug' => $c->slug,
+                    'organizer' => $c->organizer,
+                    'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
+                    'status' => is_object($c->status) ? ($c->status->value ?? 'open') : ($c->status ?? 'open'),
+                    'category' => $c->category ?? 'Umum',
+                    'level' => $c->level ?? 'Nasional',
+                    'prize_pool' => $c->prize_pool ?? 'Sertifikat & Hadiah',
+                    'description' => $c->description,
+                ]);
+
+            return Inertia::render('competitions/dashboard', [
+                'isPublic' => true,
+                'user' => [
+                    'id' => 0,
+                    'name' => 'Tamu (Eksplorasi Lomba)',
+                    'email' => 'tamu@rakitcampus.id',
+                    'role' => 'guest',
+                    'is_lecturer' => false,
+                    'campus' => 'Kampus Anda',
+                    'major' => 'Eksplorasi Kampus',
+                    'nim' => 'GUEST',
+                    'availability' => 'mode_eksplorasi',
+                    'skills' => [],
+                ],
+                'stats' => [
+                    'my_competition_teams_count' => 0,
+                    'team_readiness_avg' => 0,
+                    'pending_invitations_count' => 0,
+                    'upcoming_competitions_count' => $upcomingCompetitions->count(),
+                    'completed_tasks_count' => 0,
+                ],
+                'myCompetitionTeams' => [],
+                'receivedInvitations' => [],
+                'upcomingCompetitions' => $upcomingCompetitions,
+                'myTasks' => [],
+                'recentActivities' => [],
+            ]);
+        }
+
+        $membership = $user->activeMembership();
+        if (!$membership) {
+            $campus = Campus::where('slug', 'polindra')->first() ?? Campus::first();
+            if (!$campus) {
+                $campus = Campus::create([
+                    'name' => 'Kampus RAKIT',
+                    'slug' => 'kampus-rakit',
+                ]);
+            }
+            $membership = CampusMembership::firstOrCreate(
+                ['campus_id' => $campus->id, 'user_id' => $user->id],
+                [
+                    'role' => CampusRole::Student,
+                    'status' => MembershipStatus::Active,
+                    'verification_status' => VerificationStatus::Verified,
+                    'student_number' => 'USR-' . substr(abs(crc32($user->email)), 0, 7),
+                    'verified_at' => now(),
+                ]
+            );
+        }
+        $membership?->loadMissing('campus');
+        $isAdmin = $user->isCampusAdmin() || $user->isPlatformAdmin() || $membership?->role === CampusRole::CampusAdmin;
+        $isLecturer = $user->isLecturer() || ($membership?->role === CampusRole::Lecturer);
+
+        if (!$isAdmin && !$isLecturer) {
+            $user->loadMissing('profile');
+            $profile = $user->profile;
+            if (!$profile || !$profile->is_onboarded) {
+                return redirect()->route('onboarding')
+                    ->with('info', 'Yuk lengkapi biodata singkatmu agar rekan tim dan ketua lomba dapat mengenalimu!');
+            }
+        }
+
+        $profile = $user->profile()->with(['skills', 'campus'])->first();
+
+        // 1. My Competition Teams
+        $myCompetitionTeams = Team::where('type', TeamType::Competition)
+            ->where(function ($q) use ($user) {
+                $q->where('leader_id', $user->id)
+                  ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id)->where('status', 'active'));
+            })->with([
+                'participations.competition' => fn ($q) => $q->withTrashed(),
+                'participations.competition.sources',
+                'participations.competition.campus:id,name',
+                'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar']),
+                'tasks:id,team_id,status,title,due_date',
+            ])->latest()->get()->map(function ($team) use ($user) {
+                $participation = $team->participations->first();
+                $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
+                $totalTasks = $team->tasks->count();
+                $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
+                $isLeader = $team->leader_id === $user->id || $team->isLeader($user);
+                $myMemberRecord = $team->members->firstWhere('user_id', $user->id);
+                $roleName = $myMemberRecord?->role_name ?? ($isLeader ? 'Ketua Tim' : 'Anggota Tim');
+                $progressPercent = $participation ? $participation->calculatePreparationProgress() : 0;
+                $slug = $competition?->slug ?: $participation?->id;
+
+                $stageLabels = [
+                    'recruiting' => 'Perekrutan Anggota',
+                    'team_formation' => 'Formasi Final',
+                    'preparing' => 'Persiapan Karya',
+                    'registered' => 'Terdaftar Resmi',
+                    'submitted' => 'Karya Terkirim',
+                    'administrative_selection' => 'Seleksi Administrasi',
+                    'shortlisted' => 'Lolos Tahap Awal',
+                    'finalist' => 'Finalis Kompetisi',
+                    'final_presentation' => 'Presentasi Final',
+                    'winner' => 'Juara / Pemenang',
+                    'not_selected' => 'Belum Lolos',
+                    'withdrawn' => 'Mengundurkan Diri',
+                ];
+
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'description' => $team->description,
+                    'is_leader' => $isLeader,
+                    'role_name' => $roleName,
+                    'participation_id' => $participation?->id,
+                    'stage' => $participation?->stage ?? 'recruiting',
+                    'stage_label' => $stageLabels[$participation?->stage ?? 'recruiting'] ?? 'Tahap Kompetisi',
+                    'is_formation_locked' => (bool) $participation?->is_formation_locked,
+                    'workspace_url' => $slug ? "/competition-workspace/{$slug}" : "/competitions",
+                    'competition' => $competition ? [
+                        'id' => $competition->id,
+                        'name' => $competition->name,
+                        'slug' => $competition->slug,
+                        'category' => $competition->category,
+                        'level' => $competition->level,
+                        'deadline' => $competition->deadline?->translatedFormat('d M Y'),
+                        'registration_end' => $competition->registration_end?->translatedFormat('d M Y'),
+                        'organizer' => $competition->organizer,
+                    ] : null,
+                    'members_count' => $team->members->count(),
+                    'members' => $team->members->map(fn ($m) => [
+                        'id' => $m->user_id,
+                        'name' => $m->user?->name ?? 'Mahasiswa',
+                        'avatar' => $m->user?->avatar,
+                        'role' => $m->role_name ?? 'Anggota',
+                        'is_leader' => $m->user_id === $team->leader_id,
+                    ])->values()->all(),
+                    'total_tasks' => $totalTasks,
+                    'done_tasks' => $doneTasks,
+                    'progress_percent' => $progressPercent,
+                ];
+            });
+
+        // 2. Competition Invitations Received ONLY
+        $receivedInvitations = Invitation::where('invitee_id', $user->id)
+            ->whereIn('status', [
+                InvitationStatus::Pending->value,
+                InvitationStatus::Accepted->value,
+                InvitationStatus::Declined->value,
+            ])
+            ->where(function ($q) {
+                $q->whereHas('team', fn ($t) => $t->where('type', TeamType::Competition)->orWhereHas('participations'))
+                  ->orWhereNotNull('competition_id');
+            })
+            ->with([
+                'team.participations.competition:id,name,slug,category,level',
+                'team.members' => fn ($m) => $m->where('status', 'active'),
+                'inviter:id,name,email,avatar',
+                'role:id,name',
+            ])
+            ->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")
+            ->latest('id')
+            ->take(10)
+            ->get()
+            ->map(function (Invitation $inv) {
+                $statusValue = $inv->status instanceof InvitationStatus ? $inv->status->value : (string) $inv->status;
+                $participation = $inv->team?->participations?->first();
+                $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
+                $isExpired = $inv->isExpired();
+                $slug = $competition?->slug ?: $participation?->id;
+
+                return [
+                    'id' => $inv->id,
+                    'status' => $isExpired && $statusValue === 'pending' ? 'expired' : $statusValue,
+                    'team_id' => $inv->team_id,
+                    'team_name' => $inv->team?->name ?? 'Tim Lomba',
+                    'team_members_count' => $inv->team?->members?->count() ?? 1,
+                    'team_capacity' => $inv->team?->capacity ?? 4,
+                    'is_competition' => true,
+                    'competition_name' => $competition?->name,
+                    'competition_slug' => $slug,
+                    'workspace_url' => $slug ? "/competition-workspace/{$slug}" : "/competitions",
+                    'accept_url' => "/competition-invitations/{$inv->id}/accept",
+                    'decline_url' => "/competition-invitations/{$inv->id}/decline",
+                    'level_label' => $competition ? "Kompetisi {$competition->level}" : 'Lomba',
+                    'inviter_name' => $inv->inviter?->name ?? 'Ketua Tim',
+                    'inviter_avatar' => $inv->inviter?->avatar,
+                    'role_name' => $inv->role?->name ?? $inv->role_name ?? 'Anggota Tim',
+                    'message' => $inv->message,
+                    'declined_reason' => $inv->declined_reason,
+                    'expires_at' => $inv->expires_at?->diffForHumans(),
+                    'responded_at' => $inv->responded_at?->diffForHumans(),
+                    'created_at' => $inv->created_at?->diffForHumans(),
+                ];
+            })
+            ->values();
+
+        // 3. Upcoming Competitions (Rich list for competition hub)
+        $upcomingCompetitions = Competition::whereIn('status', ['open', 'upcoming'])
+            ->latest('registration_deadline')
+            ->take(8)
+            ->get()
+            ->map(fn ($c) => [
+                'id' => $c->id,
+                'name' => $c->name,
+                'slug' => $c->slug,
+                'organizer' => $c->organizer,
+                'registration_deadline' => $c->registration_deadline?->translatedFormat('d M Y') ?? 'Segera',
+                'status' => is_object($c->status) ? ($c->status->value ?? 'open') : ($c->status ?? 'open'),
+                'category' => $c->category ?? 'Umum',
+                'level' => $c->level ?? 'Nasional',
+                'prize_pool' => $c->prize_pool ?? 'Sertifikat & Hadiah',
+                'description' => $c->description,
+            ]);
+
+        // 4. Tasks from user's competition teams
+        $competitionTeamIds = $myCompetitionTeams->pluck('id');
+        $myCompetitionTasks = Task::where('assignee_id', $user->id)
+            ->whereIn('team_id', $competitionTeamIds)
+            ->whereIn('status', [TaskStatus::Todo, TaskStatus::InProgress, TaskStatus::InReview])
+            ->with(['team:id,name'])
+            ->latest('updated_at')
+            ->take(6)
+            ->get();
+
+        // 5. Activity logs from competition teams
+        $recentActivities = ActivityLog::whereIn('team_id', $competitionTeamIds)
+            ->with(['actor:id,name', 'team:id,name'])
+            ->latest()
+            ->take(6)
+            ->get();
+
+        $avgReadiness = $myCompetitionTeams->isNotEmpty()
+            ? (int) round($myCompetitionTeams->avg('progress_percent'))
+            : 0;
+
+        $stats = [
+            'my_competition_teams_count' => $myCompetitionTeams->count(),
+            'team_readiness_avg' => $avgReadiness,
+            'pending_invitations_count' => $receivedInvitations->where('status', 'pending')->count(),
+            'upcoming_competitions_count' => $upcomingCompetitions->count(),
+            'completed_tasks_count' => $myCompetitionTeams->sum('done_tasks'),
+        ];
+
+        return Inertia::render('competitions/dashboard', [
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $membership?->role?->value ?? 'student',
+                'is_lecturer' => false,
+                'is_verified' => $membership?->verification_status === VerificationStatus::Verified || (bool) $membership?->verified_at,
+                'campus' => $membership?->campus?->name ?? 'Kampus Anda',
+                'major' => $profile?->study_program ?? $profile?->department ?? $profile?->major ?? 'Teknik Informatika',
+                'nim' => $membership?->student_number ?? $profile?->nim,
+                'skills' => $profile?->skills ?? [],
+            ],
+            'stats' => $stats,
+            'myCompetitionTeams' => $myCompetitionTeams,
+            'receivedInvitations' => $receivedInvitations,
+            'upcomingCompetitions' => $upcomingCompetitions,
+            'myTasks' => $myCompetitionTasks,
+            'recentActivities' => $recentActivities,
         ]);
     }
 }

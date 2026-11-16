@@ -63,6 +63,7 @@ interface Props {
     githubRepo?: any;
     githubData?: any;
     canManageGitHub?: boolean;
+    myPendingInvitation?: any;
 }
 
 export default function WorkspaceShow({
@@ -79,6 +80,7 @@ export default function WorkspaceShow({
     githubRepo,
     githubData,
     canManageGitHub = false,
+    myPendingInvitation,
 }: Props) {
     const [mainTab, setMainTab] = useState<'kanban' | 'github'>(() => {
         if (typeof window !== 'undefined') {
@@ -92,6 +94,35 @@ export default function WorkspaceShow({
     const [kanban, setKanban] = useState(initialKanban);
     const [milestones, setMilestones] = useState(initialMilestones);
     const [project, setProject] = useState(initialProject || team.project);
+
+    // In-Workspace Direct Invitation Acceptance State
+    const [isAcceptingOffer, setIsAcceptingOffer] = useState(false);
+    const [isDecliningOffer, setIsDecliningOffer] = useState(false);
+
+    const handleAcceptOffer = (invitationId: number) => {
+        setIsAcceptingOffer(true);
+        router.post(
+            `/invitations/${invitationId}/accept`,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setIsAcceptingOffer(false),
+            }
+        );
+    };
+
+    const handleDeclineOffer = (invitationId: number) => {
+        const reason = prompt('Alasan menolak tawaran (opsional):');
+        setIsDecliningOffer(true);
+        router.post(
+            `/invitations/${invitationId}/decline`,
+            { reason },
+            {
+                preserveScroll: true,
+                onFinish: () => setIsDecliningOffer(false),
+            }
+        );
+    };
 
     // Modals
     const [isTaskModalOpen, setTaskModalOpen] = useState(false);
@@ -653,6 +684,52 @@ export default function WorkspaceShow({
             <Head title={`Workspace & Roadmap — ${team.name}`} />
 
             <div className="pt-4 sm:pt-6 pb-12 flex flex-col gap-6 sm:gap-7">
+                {/* INVITATION OFFER BANNER (Direct in-workspace acceptance) */}
+                {myPendingInvitation && (
+                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-500/15 via-blue-50 to-indigo-500/10 border-2 border-blue-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+                        <div className="flex items-start gap-4">
+                            <div className="size-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <Users className="size-6" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900 bg-blue-200/90 px-2.5 py-0.5 rounded-full border border-blue-300">
+                                        Tawaran Bergabung Tim Proyek
+                                    </span>
+                                    <span className="text-xs text-slate-500">• {myPendingInvitation.created_at || 'Baru saja'}</span>
+                                </div>
+                                <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                                    Anda diundang bergabung ke tim "{team.name}" sebagai <span className="text-blue-700 font-bold">{myPendingInvitation.role_name}</span>!
+                                </h3>
+                                <p className="text-xs text-slate-600 mt-0.5">
+                                    Diundang oleh <strong>{myPendingInvitation.inviter?.name || 'Ketua Tim'}</strong>{project?.title ? ` untuk proyek ${project.title}` : ''}.
+                                    {myPendingInvitation.message && <span className="italic block mt-1">"{myPendingInvitation.message}"</span>}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                            <button
+                                type="button"
+                                disabled={isAcceptingOffer}
+                                onClick={() => handleAcceptOffer(myPendingInvitation.id)}
+                                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                            >
+                                <CheckCircle2 className="size-4" />
+                                <span>{isAcceptingOffer ? 'Memproses...' : 'Terima Tawaran & Masuk Tim'}</span>
+                            </button>
+                            <button
+                                type="button"
+                                disabled={isDecliningOffer}
+                                onClick={() => handleDeclineOffer(myPendingInvitation.id)}
+                                className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 font-semibold text-xs transition disabled:opacity-50 cursor-pointer"
+                            >
+                                {isDecliningOffer ? 'Menolak...' : 'Tolak Tawaran'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* Top Row: Back & Team Identity */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
                         <div className="flex items-center gap-3">

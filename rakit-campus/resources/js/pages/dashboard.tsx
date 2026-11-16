@@ -18,6 +18,7 @@ import {
     ExternalLink,
     FileCheck,
     FileText,
+    FolderGit2,
     FolderKanban,
     GraduationCap,
     HelpCircle,
@@ -2123,23 +2124,47 @@ export default function Dashboard({
         <AppLayout activeTab="dashboard" title="Dashboard - RakitCampus">
             {/* 1. HEADER ROW */}
             <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                    Dashboard Mahasiswa
-                </h1>
+                <div>
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80 flex items-center gap-1.5">
+                            <FolderGit2 className="size-3 text-blue-600" />
+                            <span>Project Hub</span>
+                        </span>
+                        <span className="text-xs text-slate-400">• Ruang Kolaborasi Proyek & Portofolio</span>
+                    </div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+                        Dashboard Proyek Mahasiswa
+                    </h1>
+                </div>
 
-                <div className="flex items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+                    {/* Hub Switcher Pill */}
+                    <div className="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shrink-0">
+                        <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-2xs flex items-center gap-1.5">
+                            <FolderGit2 className="size-3.5 text-blue-600" />
+                            <span>Dashboard Proyek</span>
+                        </span>
+                        <Link
+                            href="/competitions/dashboard"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5"
+                        >
+                            <Trophy className="size-3.5 text-amber-500" />
+                            <span>Dashboard Lomba</span>
+                        </Link>
+                    </div>
+
                     <Link
                         href="/projects/create"
-                        className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 cursor-pointer"
+                        className="justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                         <span>Buat Proyek</span>
                     </Link>
                     <Link
                         href="/workspace"
-                        className="flex-1 sm:flex-none justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all duration-200 cursor-pointer group"
+                        className="justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all duration-200 cursor-pointer group"
                     >
-                        <span>Workspace Tim</span>
+                        <span>Workspace Proyek</span>
                         <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </Link>
                 </div>
@@ -2543,115 +2568,6 @@ export default function Dashboard({
                                 <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
                                 <p className="font-semibold text-slate-700">Semua tugas telah diselesaikan</p>
                                 <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada tugas mendesak saat ini.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Panel 2a: Tim Kompetisi & Lomba Aktif (Dedicated Competition Hub - Strictly Separated) */}
-                    <div className="bg-white rounded-xl border border-amber-200/80 p-4 sm:p-5 shadow-2xs">
-                        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
-                            <div>
-                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                    <Trophy className="w-4 h-4 text-amber-500" />
-                                    <span>Tim Kompetisi & Lomba Anda</span>
-                                    {myCompetitionTeams && myCompetitionTeams.length > 0 && (
-                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                                            {myCompetitionTeams.length} Terdaftar
-                                        </span>
-                                    )}
-                                </h2>
-                                <p className="text-xs text-slate-400 mt-0.5">
-                                    Tim lomba nasional & kampus, persiapan karya, dan berkas kompetisi
-                                </p>
-                            </div>
-                            <Link
-                                href="/competitions"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
-                            >
-                                <span>Hub Kompetisi</span>
-                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                            </Link>
-                        </div>
-
-                        {myCompetitionTeams && myCompetitionTeams.length > 0 ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                {myCompetitionTeams.map((cTeam: any) => (
-                                    <div
-                                        key={cTeam.id}
-                                        className="p-4 rounded-xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/20 to-white hover:border-amber-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group/item"
-                                    >
-                                        <div>
-                                            <div className="flex items-center justify-between gap-2 mb-2">
-                                                <span className="text-[11px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
-                                                    Kompetisi {cTeam.competition?.level || 'Nasional'}
-                                                </span>
-                                                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
-                                                    {cTeam.stage_label}
-                                                </span>
-                                            </div>
-                                            <h3 className="text-sm font-bold text-slate-900 group-hover/item:text-blue-600 transition">
-                                                {cTeam.name}
-                                            </h3>
-                                            {cTeam.competition?.name && (
-                                                <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
-                                                    {cTeam.competition.name}
-                                                </p>
-                                            )}
-                                            <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
-                                                <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/80">
-                                                    Peran: {cTeam.role_name}
-                                                </span>
-                                                {cTeam.is_leader && (
-                                                    <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border border-emerald-200">
-                                                        Ketua Tim
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-2 border-t border-slate-100 space-y-2">
-                                            {/* Readiness Score Progress */}
-                                            <div className="flex items-center justify-between text-[11px]">
-                                                <span className="text-slate-500">Kesiapan Berkas & Tugas:</span>
-                                                <span className="font-bold text-slate-900">{cTeam.progress_percent}%</span>
-                                            </div>
-                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                                <div
-                                                    className="bg-gradient-to-r from-amber-500 to-emerald-500 h-1.5 rounded-full transition-all duration-300"
-                                                    style={{ width: `${cTeam.progress_percent}%` }}
-                                                />
-                                            </div>
-
-                                            <div className="pt-1 flex items-center justify-between text-xs">
-                                                <span className="text-[11px] text-slate-500">
-                                                    {cTeam.members_count || 1} Anggota Terdaftar
-                                                </span>
-                                                <Link
-                                                    href={cTeam.workspace_url}
-                                                    className="font-bold text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
-                                                >
-                                                    <span>Buka Workspace Lomba</span>
-                                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/item:translate-x-0.5" />
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                                <Trophy className="w-8 h-8 text-amber-300 mx-auto mb-2" />
-                                <p className="font-semibold text-slate-700">Belum Mengikuti Tim Kompetisi</p>
-                                <p className="text-[11px] text-slate-500 mt-0.5 max-w-sm mx-auto">
-                                    Jelajahi kompetisi nasional & kampus untuk membentuk tim riset atau lomba inovasi.
-                                </p>
-                                <Link
-                                    href="/competitions"
-                                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs transition shadow-2xs"
-                                >
-                                    <Trophy className="w-3.5 h-3.5" />
-                                    <span>Jelajahi Hub Kompetisi</span>
-                                </Link>
                             </div>
                         )}
                     </div>
