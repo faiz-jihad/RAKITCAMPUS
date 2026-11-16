@@ -103,6 +103,9 @@ interface RecruitingTeam {
             phone?: string;
         };
         members_count: number;
+        tasks_count?: number;
+        completed_tasks_count?: number;
+        progress_percent?: number;
         members: Array<{
             id: number;
             user_id: number;
@@ -162,6 +165,9 @@ interface MyParticipation {
     is_formation_locked: boolean;
     can_manage: boolean;
     next_milestone: string;
+    tasks_count?: number;
+    completed_tasks_count?: number;
+    progress_percent?: number;
     competition: {
         id: number;
         name: string;
@@ -1676,12 +1682,20 @@ export default function CompetitionIndex({
                                     }
 
                                     return (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                             {filteredParticipations.map((part) => {
                                                 const comp = part.competition;
                                                 const team = part.team;
-                                                const result = part.result;
                                                 const status = part.lifecycle_status;
+
+                                                const tasksCount = part.tasks_count ?? team?.tasks_count ?? 0;
+                                                const completedTasksCount = part.completed_tasks_count ?? team?.completed_tasks_count ?? 0;
+                                                const progressPercent =
+                                                    part.progress_percent ??
+                                                    team?.progress_percent ??
+                                                    (tasksCount > 0
+                                                        ? Math.round((completedTasksCount / tasksCount) * 100)
+                                                        : (status === 'completed' ? 100 : (status === 'in_progress' ? 50 : (status === 'registered' ? 25 : 0))));
 
                                                 const statusBadge =
                                                     status === 'completed'
@@ -1694,161 +1708,147 @@ export default function CompetitionIndex({
                                                         ? 'bg-rose-50 text-rose-800 border-rose-300'
                                                         : 'bg-amber-50 text-amber-800 border-amber-300';
 
+                                                const statusLabel =
+                                                    status === 'planning'
+                                                        ? 'Rencana'
+                                                        : status === 'registered'
+                                                        ? 'Terdaftar Resmi'
+                                                        : status === 'in_progress'
+                                                        ? 'Sedang Berjalan'
+                                                        : status === 'completed'
+                                                        ? 'Selesai'
+                                                        : 'Dibatalkan';
+
+                                                const workspaceUrl = `/competition-workspace/${comp?.slug || part.id}`;
+
                                                 return (
-                                                    <div
-                                                        key={part.id}
-                                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between gap-4 group"
-                                                    >
-                                                        <div>
-                                                            {/* Top Status Row */}
-                                                            <div className="flex items-center justify-between gap-2 mb-2.5">
-                                                                <div className="flex flex-wrap items-center gap-1.5">
-                                                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 px-2 py-0.5 bg-slate-100 rounded-md">
-                                                                        {comp?.category?.replace('_', ' ') || 'KOMPETISI'}
-                                                                    </span>
-                                                                    {comp?.level && (
-                                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 uppercase">
-                                                                            {comp.level}
-                                                                        </span>
-                                                                    )}
+                                                    <div key={part.id} className="flex flex-col group">
+                                                        {/* Laptop Workstation Mockup Card */}
+                                                        <Link
+                                                            href={workspaceUrl}
+                                                            className="block cursor-pointer transition-all duration-300 hover:-translate-y-1.5 focus:outline-none"
+                                                        >
+                                                            {/* Laptop Lid / Outer Chassis */}
+                                                            <div className="bg-[#0b1020] p-2.5 sm:p-3 rounded-t-[22px] border-t border-x border-slate-700/60 shadow-xl transition-all duration-300 group-hover:border-blue-500/40 group-hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.25)]">
+                                                                {/* Center Camera Bezel Dot */}
+                                                                <div className="flex items-center justify-center mb-2">
+                                                                    <div className="size-1.5 rounded-full bg-slate-900 border border-slate-700/60 shadow-inner" />
                                                                 </div>
 
-                                                                <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
-                                                                    {status === 'planning'
-                                                                        ? 'Rencana'
-                                                                        : status === 'registered'
-                                                                        ? 'Terdaftar Resmi'
-                                                                        : status === 'in_progress'
-                                                                        ? 'Sedang Berjalan'
-                                                                        : status === 'completed'
-                                                                        ? 'Selesai'
-                                                                        : 'Dibatalkan'}
-                                                                </span>
+                                                                {/* Display Screen Canvas */}
+                                                                <div className="relative overflow-hidden rounded-xl border border-blue-900/40 bg-gradient-to-b from-[#060c1d] via-[#091530] to-[#040916] p-4 sm:p-5 flex flex-col justify-between min-h-[220px] shadow-inner">
+                                                                    {/* Ambient Radial Glow */}
+                                                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/15 via-transparent to-transparent pointer-events-none" />
+
+                                                                    {/* Screen Header Bar */}
+                                                                    <div className="relative z-10 flex items-center justify-between gap-2">
+                                                                        {/* 3 Blue Window Control Dots */}
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                                                        </div>
+
+                                                                        {/* Center Path Pill */}
+                                                                        <div className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-700/70 font-mono text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1 shadow-inner">
+                                                                            <span className="text-slate-400">~/workspace/</span>
+                                                                            <span className="text-white font-bold">{part.team?.id || part.id}</span>
+                                                                        </div>
+
+                                                                        {/* Right Role Badge */}
+                                                                        <div className="px-2 py-0.5 rounded-md bg-blue-950/40 border border-blue-500/30 text-blue-300 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-2xs">
+                                                                            <Award className="size-3 text-blue-400" />
+                                                                            <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {/* Screen Body: Team & Competition */}
+                                                                    <div className="relative z-10 my-5 space-y-1">
+                                                                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug line-clamp-1 group-hover:text-blue-200 transition">
+                                                                            {team?.name || 'Mandiri'}
+                                                                        </h3>
+                                                                        <p className="text-xs sm:text-sm font-medium text-blue-400/95 leading-normal line-clamp-1">
+                                                                            {comp?.name || 'Kompetisi'}
+                                                                        </p>
+                                                                    </div>
+
+                                                                    {/* Screen Footer: Progress & Stats */}
+                                                                    <div className="relative z-10 space-y-2 pt-2 border-t border-slate-800/60">
+                                                                        {/* Progress Row */}
+                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs">
+                                                                            <span className="text-slate-400 font-medium">Progres</span>
+                                                                            <span className="text-white font-bold">{progressPercent}%</span>
+                                                                        </div>
+
+                                                                        {/* Progress Bar Track */}
+                                                                        <div className="w-full h-1.5 bg-slate-800/90 rounded-full overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.7)] transition-all duration-500"
+                                                                                style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                                                                            />
+                                                                        </div>
+
+                                                                        {/* Meta Stats Row */}
+                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-300 pt-0.5">
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <Users className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <span>{team?.members_count || 1} Anggota</span>
+                                                                            </div>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <CheckCircle2 className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <span>{completedTasksCount}/{tasksCount} Selesai</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
 
-                                                            {/* Title */}
-                                                            <Link href={`/competitions/${comp?.slug || comp?.id}`}>
-                                                                <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                                    {comp?.name || 'Kompetisi'}
-                                                                </h4>
-                                                            </Link>
-                                                            <p className="text-xs text-slate-400 mt-0.5">
-                                                                {comp?.organizer} • Tim: <strong className="text-slate-700">{team?.name || 'Mandiri'}</strong>
-                                                            </p>
-
-                                                            {/* Next Milestone & Deadline */}
-                                                            <div className="mt-3.5 p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-xs">
-                                                                <div className="flex items-center justify-between text-[11px]">
-                                                                    <span className="text-slate-500 font-medium">Agenda / Milestone:</span>
-                                                                    <span className="font-bold text-slate-800 text-right truncate max-w-[160px]">
-                                                                        {part.next_milestone}
-                                                                    </span>
+                                                            {/* Laptop Bottom Chassis / Base */}
+                                                            <div className="relative">
+                                                                {/* Hinge & Main Base */}
+                                                                <div className="h-3.5 sm:h-4 bg-gradient-to-b from-[#0c1222] to-[#040711] rounded-b-xl border-t border-slate-700/50 shadow-md relative flex items-start justify-center">
+                                                                    {/* Center Thumb Notch */}
+                                                                    <div className="w-14 sm:w-16 h-1 bg-slate-900 border-b border-x border-slate-700/80 rounded-b-sm" />
                                                                 </div>
+                                                                {/* Wider Base Feet Lip */}
+                                                                <div className="w-[103%] -ml-[1.5%] h-1 sm:h-1.5 bg-[#0a0f1d] rounded-b-2xl border-t border-slate-700/40 shadow-xl" />
+                                                            </div>
+                                                        </Link>
 
-                                                                <div className="flex items-center justify-between text-[11px] pt-1 border-t border-slate-200/60">
-                                                                    <span className="text-slate-500 font-medium">Tahap Seleksi:</span>
-                                                                    <span className="font-bold text-blue-700">
+                                                        {/* Bottom Meta & Quick Action Toolbar */}
+                                                        <div className="mt-3 flex items-center justify-between gap-2 px-1 text-xs">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
+                                                                    {statusLabel}
+                                                                </span>
+                                                                {part.stage_label && (
+                                                                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[130px]">
                                                                         {part.stage_label}
                                                                     </span>
-                                                                </div>
-
-                                                                {part.external_registration_proof && (
-                                                                    <div className="flex items-center justify-between text-[10px] pt-1 border-t border-slate-200/60 text-slate-500">
-                                                                        <span>Bukti / ID Reg:</span>
-                                                                        <span className="font-mono font-semibold text-slate-700 truncate max-w-[150px]">
-                                                                            {part.external_registration_proof}
-                                                                        </span>
-                                                                    </div>
                                                                 )}
                                                             </div>
 
-                                                            {/* Team Members Summary */}
-                                                            {team && (
-                                                                <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Users className="size-3.5 text-slate-400" />
-                                                                        <span className="font-medium text-[11px]">
-                                                                            {team.members_count} Anggota Tim
-                                                                        </span>
-                                                                    </div>
-                                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">
-                                                                        {team.is_leader ? 'Ketua Tim' : 'Anggota'}
-                                                                    </span>
-                                                                </div>
-                                                            )}
-
-                                                            {/* Completed Result details */}
-                                                            {result && (
-                                                                <div className="mt-3 p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/80 space-y-1">
-                                                                    <div className="flex items-center justify-between text-xs">
-                                                                        <span className="font-bold text-emerald-950 flex items-center gap-1">
-                                                                            <Trophy className="size-3.5 text-emerald-600" />
-                                                                            <span>{result.outcome_label}</span>
-                                                                        </span>
-                                                                        <span className="text-[10px] font-bold px-2 py-0.2 rounded-md bg-emerald-100 text-emerald-800">
-                                                                            {result.verification_status === 'verified' ? 'Terverifikasi' : 'Mandiri'}
-                                                                        </span>
-                                                                    </div>
-                                                                    <p className="text-[11px] font-semibold text-emerald-900 truncate">
-                                                                        {result.achievement_title}
-                                                                    </p>
-                                                                    {result.certificate_path && (
-                                                                        <a
-                                                                            href={result.certificate_path.startsWith('http') ? result.certificate_path : `/storage/${result.certificate_path}`}
-                                                                            target="_blank"
-                                                                            rel="noreferrer"
-                                                                            className="text-[11px] text-blue-600 hover:underline flex items-center gap-1 pt-1 font-semibold"
-                                                                        >
-                                                                            <span>Lihat Sertifikat</span>
-                                                                            <ExternalLink className="size-3" />
-                                                                        </a>
-                                                                    )}
-                                                                </div>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Actions Toolbar */}
-                                                        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center gap-2">
-                                                            {part.can_manage && status !== 'completed' && status !== 'withdrawn' && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedStagePart(part);
-                                                                        setStageModalOpen(true);
-                                                                    }}
-                                                                    className="px-3 py-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                                            <div className="flex items-center gap-1.5">
+                                                                {part.can_manage && status !== 'completed' && status !== 'withdrawn' && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            setSelectedStagePart(part);
+                                                                            setStageModalOpen(true);
+                                                                        }}
+                                                                        className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs transition cursor-pointer"
+                                                                    >
+                                                                        Update Tahap
+                                                                    </button>
+                                                                )}
+                                                                <Link
+                                                                    href={`/competitions/${comp?.slug || comp?.id}`}
+                                                                    className="p-1 text-slate-400 hover:text-slate-700 transition"
+                                                                    title="Detail Lomba"
                                                                 >
-                                                                    Update Tahap
-                                                                </button>
-                                                            )}
-
-                                                            {(status === 'in_progress' || status === 'completed') && part.can_manage && (
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setSelectedResultPart(part);
-                                                                        setResultModalOpen(true);
-                                                                    }}
-                                                                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
-                                                                >
-                                                                    {result ? 'Edit Prestasi' : 'Catat Prestasi'}
-                                                                </button>
-                                                            )}
-
-                                                            <Link
-                                                                href={`/competition-workspace/${comp?.slug || part.id}`}
-                                                                className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold transition flex-1 text-center"
-                                                            >
-                                                                Workspace
-                                                            </Link>
-
-                                                            <Link
-                                                                href={`/competitions/${comp?.slug || comp?.id}`}
-                                                                className="px-2.5 py-1.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl text-xs transition"
-                                                                title="Detail Lomba"
-                                                            >
-                                                                ↗
-                                                            </Link>
+                                                                    <ExternalLink className="size-3.5" />
+                                                                </Link>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );

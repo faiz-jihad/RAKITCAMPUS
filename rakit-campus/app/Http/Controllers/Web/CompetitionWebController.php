@@ -312,6 +312,7 @@ class CompetitionWebController extends Controller
                     'competition.rounds',
                     'team.members.user:id,name,avatar',
                     'team.leader',
+                    'team.tasks:id,team_id,status',
                     'result.verifier:id,name',
                     'statusHistories',
                     'documents',
@@ -358,6 +359,13 @@ class CompetitionWebController extends Controller
                 $isLeader = $p->team && $p->team->leader_id === $user->id;
                 $isAdmin = $user->isCampusAdminOf($comp?->campus_id) || $user->isPlatformAdmin();
 
+                $tasksCount = $p->team?->tasks?->count() ?? 0;
+                $completedTasksCount = $p->team?->tasks?->filter(function ($t) {
+                    $st = $t->status instanceof \BackedEnum ? $t->status->value : (string) $t->status;
+                    return in_array($st, ['completed', 'done'], true);
+                })->count() ?? 0;
+                $progressPercent = $tasksCount > 0 ? (int) round(($completedTasksCount / $tasksCount) * 100) : 0;
+
                 return [
                     'id' => $p->id,
                     'lifecycle_status' => $lifecycle,
@@ -372,6 +380,9 @@ class CompetitionWebController extends Controller
                     'is_formation_locked' => (bool) $p->is_formation_locked,
                     'can_manage' => $isLeader || $isAdmin,
                     'next_milestone' => $nextMilestone,
+                    'tasks_count' => $tasksCount,
+                    'completed_tasks_count' => $completedTasksCount,
+                    'progress_percent' => $progressPercent,
                     'competition' => $comp ? [
                         'id' => $comp->id,
                         'name' => $comp->name,
@@ -394,6 +405,9 @@ class CompetitionWebController extends Controller
                         'name' => $p->team->name,
                         'is_leader' => $isLeader,
                         'members_count' => $p->team->members->count(),
+                        'tasks_count' => $tasksCount,
+                        'completed_tasks_count' => $completedTasksCount,
+                        'progress_percent' => $progressPercent,
                         'members' => $p->team->members->map(fn($m) => [
                             'id' => $m->id,
                             'user_id' => $m->user_id,
