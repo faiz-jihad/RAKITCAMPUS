@@ -931,6 +931,17 @@ export default function Dashboard({
     if (isUserLecturer) {
 
         const displayedApprovals = approvalTab === 'pending' ? pendingTeamApprovals : teamApprovalHistory;
+        const totalApprovalsHandled = teamApprovalHistory.length;
+        const totalApprovalsPending = pendingTeamApprovals.length;
+        const totalApprovalsAll = totalApprovalsHandled + totalApprovalsPending;
+        const approvalCompletionRate = totalApprovalsAll > 0 ? Math.round((totalApprovalsHandled / totalApprovalsAll) * 100) : 100;
+
+        const avgGuidedProgress = guidedProjects.length > 0
+            ? Math.round(guidedProjects.reduce((acc: number, p: any) => acc + (p.progress || 0), 0) / guidedProjects.length)
+            : 0;
+        const readyProjectsCount = guidedProjects.filter((p: any) => p.is_competition_ready || (p.progress || 0) >= 60).length;
+        const approvedProposalsCount = guidedProjects.filter((p: any) => p.proposal_status === 'approved').length;
+        const pendingProposalsCount = stats?.pending_proposals_count ?? pendingProposals.length;
 
         return (
             <AppLayout activeTab="dashboard" title="Dashboard Dosen Pengampu — RakitCampus">
@@ -981,7 +992,7 @@ export default function Dashboard({
 
                 {/* 2. BENTO GRID UTAMA STATISTIK DOSEN PENGAMPU */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
-                    {/* CARD 1: PERSETUJUAN PENGAJUAN TIM (FEATURED / 4 COLS LG) */}
+                    {/* CARD 1: PERSETUJUAN PENGAJUAN TIM (TALL FEATURED / 4 COLS LG) */}
                     <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                         <div>
                             <div className="flex items-center justify-between mb-3">
@@ -993,25 +1004,57 @@ export default function Dashboard({
                                 </span>
                             </div>
 
-                            <div className="mt-2">
-                                <div className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-                                    {pendingTeamApprovals.length}
-                                </div>
-                                <div className="text-xs font-semibold text-slate-500 mt-1">
-                                    Menunggu Keputusan Formasi
+                            {/* Circular Donut Gauge */}
+                            <div className="flex flex-col items-center justify-center my-2 sm:my-3">
+                                <div className="relative size-36 sm:size-40 flex items-center justify-center">
+                                    <svg className="size-full -rotate-90 transform" viewBox="0 0 120 120">
+                                        <circle
+                                            cx="60"
+                                            cy="60"
+                                            r="46"
+                                            stroke="currentColor"
+                                            strokeWidth="9"
+                                            className="text-slate-100"
+                                            fill="transparent"
+                                        />
+                                        <circle
+                                            cx="60"
+                                            cy="60"
+                                            r="46"
+                                            stroke="currentColor"
+                                            strokeWidth="9"
+                                            strokeDasharray={2 * Math.PI * 46}
+                                            strokeDashoffset={2 * Math.PI * 46 * (1 - Math.min(100, Math.max(0, approvalCompletionRate)) / 100)}
+                                            strokeLinecap="round"
+                                            className="text-blue-600 transition-all duration-700 ease-out"
+                                            fill="transparent"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                        <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                            {totalApprovalsPending > 0 ? totalApprovalsPending : `${approvalCompletionRate}%`}
+                                        </span>
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
+                                            {totalApprovalsPending > 0 ? 'ANTREAN TIM' : 'TERTINJAU'}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 leading-relaxed">
-                                {pendingTeamApprovals.length > 0 ? (
-                                    <>
-                                        Terdapat <strong className="text-slate-900">{pendingTeamApprovals.length} tim mahasiswa</strong> yang telah memenuhi syarat kuota dan siap untuk ditinjau pembentukannya.
-                                    </>
-                                ) : (
-                                    <>
-                                        Seluruh ajuan pembentukan tim mahasiswa telah ditinjau. Belum ada antrean baru.
-                                    </>
-                                )}
+                            <div className="mt-2 text-left">
+                                <div className="flex items-center justify-between text-xs">
+                                    <span className="font-bold text-slate-900">
+                                        {totalApprovalsPending > 0 ? `${totalApprovalsPending} Tim Menunggu Keputusan` : 'Semua Formasi Disetujui'}
+                                    </span>
+                                    <span className="text-[11px] text-slate-400 font-medium">
+                                        {totalApprovalsHandled} Selesai
+                                    </span>
+                                </div>
+                                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                    {totalApprovalsPending > 0
+                                        ? 'Mahasiswa telah memenuhi kuota formasi kelompok dan menunggu persetujuan Anda.'
+                                        : 'Belum ada pengajuan formasi kelompok baru yang tertunda.'}
+                                </p>
                             </div>
                         </div>
 
@@ -1028,7 +1071,7 @@ export default function Dashboard({
 
                     {/* RIGHT COLUMN (8 COLS LG): CARD 2 ON TOP (WIDE), CARDS 3 & 4 SIDE BY SIDE */}
                     <div className="lg:col-span-8 flex flex-col justify-between gap-4 sm:gap-5">
-                        {/* CARD 2: KELAS DIAMPU (WIDE) */}
+                        {/* CARD 2: KELAS DIAMPU (WIDE / 8 COLS LG) */}
                         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex-1 flex flex-col justify-between group/card">
                             <div>
                                 <div className="flex items-center justify-between mb-3">
@@ -1040,47 +1083,65 @@ export default function Dashboard({
                                     </span>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-1">
                                     <div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                                 {stats?.taught_classes_count ?? taughtClasses.length}
                                             </span>
-                                            <span className="text-xs font-semibold text-slate-500">
+                                            <span className="text-xs font-bold text-slate-500">
                                                 Kelas Kuliah Aktif
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1">
-                                            Membina <strong className="text-slate-800">{stats?.total_students_count ?? 0} mahasiswa</strong> terdaftar di semester ini.
+                                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+                                                <Users className="size-3 text-blue-600" />
+                                                <span>{stats?.total_students_count ?? 0} Mahasiswa</span>
+                                            </span>
+                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
+                                                <FolderKanban className="size-3 text-slate-500" />
+                                                <span>{stats?.total_guided_projects_count ?? guidedProjects.length} Tim Proyek</span>
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                                            Manajemen silabus, anggota kelas, dan supervisi pembentukan tim capstone.
                                         </p>
                                     </div>
 
                                     {taughtClasses && taughtClasses.length > 0 && (
-                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 self-start sm:self-auto">
-                                            {taughtClasses.slice(0, 3).map((c: any) => (
-                                                <span
-                                                    key={c.id}
-                                                    className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 truncate max-w-[140px]"
-                                                    title={c.name}
+                                        <div className="flex flex-col gap-2 w-full md:w-64 shrink-0">
+                                            {taughtClasses.slice(0, 2).map((cls: any) => (
+                                                <Link
+                                                    key={cls.id}
+                                                    href={`/classes/${cls.id}`}
+                                                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200/80 hover:border-blue-200 transition-all flex items-center justify-between group/cls cursor-pointer"
                                                 >
-                                                    {c.code || c.name}
-                                                </span>
+                                                    <div className="min-w-0 pr-2">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-xs font-bold text-slate-900 group-hover/cls:text-blue-600 transition truncate">
+                                                                {cls.name}
+                                                            </span>
+                                                            <span className="text-[10px] font-semibold text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200 shrink-0">
+                                                                {cls.code}
+                                                            </span>
+                                                        </div>
+                                                        <span className="text-[11px] text-slate-400 block mt-0.5">
+                                                            {cls.students_count || 0} Mahasiswa • {cls.projects_count || 0} Kelompok
+                                                        </span>
+                                                    </div>
+                                                    <ArrowRight className="size-3 text-slate-400 group-hover/cls:text-blue-600 group-hover/cls:translate-x-0.5 transition-all shrink-0" />
+                                                </Link>
                                             ))}
-                                            {taughtClasses.length > 3 && (
-                                                <span className="text-[10px] font-semibold text-slate-400 px-1">
-                                                    +{taughtClasses.length - 3} lagi
-                                                </span>
-                                            )}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
-                                <span className="text-xs text-slate-400">Manajemen silabus, anggota, dan evaluasi</span>
+                                <span className="text-xs text-slate-400">Total {stats?.taught_classes_count ?? taughtClasses.length} ruang kelas aktif semester ini</span>
                                 <Link
                                     href="/classes"
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer"
+                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer"
                                 >
                                     <span>Buka Manajemen Kelas</span>
                                     <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -1110,15 +1171,35 @@ export default function Dashboard({
                                             Tim Proyek
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Proyek capstone dan mandiri dalam supervisi bimbingan Anda.
-                                    </p>
+
+                                    {/* Progress Bar Rata-rata Proyek */}
+                                    <div className="mt-3 space-y-1.5">
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className="text-slate-500 font-medium text-[11px]">Rata-rata Progres Tim</span>
+                                            <span className="text-slate-900 font-bold text-xs">{avgGuidedProgress}%</span>
+                                        </div>
+                                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                            <div
+                                                className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                                                style={{ width: `${Math.min(100, Math.max(0, avgGuidedProgress))}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-wrap items-center gap-1.5 mt-3">
+                                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                            {readyProjectsCount} Siap Evaluasi / Lomba
+                                        </span>
+                                        <span className="text-[10px] font-medium text-slate-400">
+                                            • {stats?.completed_tasks_count ?? 0} Tugas Selesai
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <div className="mt-4 pt-3.5 border-t border-slate-100">
                                     <Link
                                         href="/projects"
-                                        className="w-full text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
+                                        className="w-full text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
                                     >
                                         <span>Tinjau Progres Proyek</span>
                                         <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -1140,21 +1221,35 @@ export default function Dashboard({
 
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                                            {stats?.pending_proposals_count ?? pendingProposals.length}
+                                            {pendingProposalsCount}
                                         </span>
                                         <span className="text-xs font-semibold text-slate-500">
                                             Menunggu Persetujuan
                                         </span>
                                     </div>
-                                    <p className="text-xs text-slate-500 mt-1">
-                                        Living Proposal mahasiswa kelas menunggu tinjauan dan evaluasi.
+
+                                    {/* Status Box & Badges */}
+                                    <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`size-2 rounded-full ${pendingProposalsCount > 0 ? 'bg-blue-600 animate-pulse' : 'bg-emerald-500'}`} />
+                                            <span className="font-semibold text-slate-700 text-[11px]">
+                                                {pendingProposalsCount > 0 ? `${pendingProposalsCount} Perlu Ditinjau` : 'Semua Proposal Selesai'}
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                            {approvedProposalsCount} Disetujui
+                                        </span>
+                                    </div>
+
+                                    <p className="text-xs text-slate-500 mt-2 line-clamp-1 leading-relaxed">
+                                        Living Proposal mahasiswa kelas menunggu tinjauan dan arahan.
                                     </p>
                                 </div>
 
                                 <div className="mt-4 pt-3.5 border-t border-slate-100">
                                     <Link
                                         href="/projects?category=academic"
-                                        className="w-full text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
+                                        className="w-full text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
                                     >
                                         <span>Tinjau Living Proposal</span>
                                         <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
