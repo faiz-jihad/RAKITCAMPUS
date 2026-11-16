@@ -113,12 +113,13 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
 
         $payload = [
             'title' => $this->title,
-            'greeting' => 'Halo ' . ($notifiable->name ?? 'Rekan RAKIT') . ',',
+            'greeting' => 'Halo ' . ($notifiable->name ?? 'Rekan Mahasiswa') . ',',
             'message' => $this->message,
             'category_name' => ucfirst(str_replace('_', ' ', $this->category)),
             'action_url' => $this->actionUrl,
             'action_text' => $this->actionText,
             'details' => $this->details,
+            'recipient_email' => $notifiable->email ?? null,
         ];
 
         $html = $templateService->renderHtml($payload);
