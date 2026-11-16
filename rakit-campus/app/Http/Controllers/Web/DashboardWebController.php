@@ -808,8 +808,7 @@ class DashboardWebController extends Controller
                 InvitationStatus::Declined->value,
             ])
             ->where(function ($q) {
-                $q->whereHas('team', fn ($t) => $t->where('type', '!=', 'competition')->whereDoesntHave('participations'))
-                  ->whereNull('competition_id');
+                $q->whereHas('team', fn ($t) => $t->where('type', '!=', 'competition')->whereDoesntHave('participations'));
             })
             ->with([
                 'team.project:id,title,slug,category,academic_class_id',
@@ -1123,8 +1122,7 @@ class DashboardWebController extends Controller
                 InvitationStatus::Declined->value,
             ])
             ->where(function ($q) {
-                $q->whereHas('team', fn ($t) => $t->where('type', TeamType::Competition)->orWhereHas('participations'))
-                  ->orWhereNotNull('competition_id');
+                $q->whereHas('team', fn ($t) => $t->where('type', TeamType::Competition)->orWhereHas('participations'));
             })
             ->with([
                 'team.participations.competition:id,name,slug,category,level',
