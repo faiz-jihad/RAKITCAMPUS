@@ -10,7 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ApplicationStatusNotification extends Notification implements ShouldQueue
+class ApplicationStatusNotification extends Notification
 {
     use Queueable;
 
@@ -27,6 +27,7 @@ class ApplicationStatusNotification extends Notification implements ShouldQueue
     {
         $this->application->loadMissing(['recruitment.team.project']);
         $team = $this->application->recruitment?->team;
+        $project = $team?->project;
         $teamName = $team?->name ?? 'Tim Proyek';
         $statusIndo = $this->status === 'accepted' ? 'diterima' : 'belum dapat diterima';
         $title = $this->status === 'accepted'
@@ -34,7 +35,8 @@ class ApplicationStatusNotification extends Notification implements ShouldQueue
             : "Pembaruan Status Lamaran: {$teamName}";
 
         $message = "Lamaran Anda untuk bergabung ke {$teamName} telah {$statusIndo}.";
-        $actionUrl = $team?->project_id ? "/projects/{$team->project_id}?tab=workspace" : '/dashboard';
+        $projectTarget = $project?->slug ?: $team?->project_id;
+        $actionUrl = $projectTarget ? "/projects/{$projectTarget}?tab=workspace" : '/dashboard';
 
         if (isset($notifiable->id)) {
             app(NotificationCounterInterface::class)->invalidateUnreadCountCache($notifiable->id);

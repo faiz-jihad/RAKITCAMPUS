@@ -1,5 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import {
+    AlertCircle,
     ArrowLeft,
     ArrowRight,
     Briefcase,
@@ -16,7 +17,7 @@ import {
     User,
     X,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { PIECE_PATHS, BOARD_WIDTH, BOARD_HEIGHT } from '@/components/animated-jigsaw-background';
 
 interface CurrentUser {
@@ -321,6 +322,10 @@ export default function OnboardingIndex({
         }
     };
 
+    const [isNextLoading, setIsNextLoading] = useState(false);
+    const lastCheckedNimRef = useRef<string | null>(null);
+    const inFlightCheckRef = useRef<Promise<boolean> | null>(null);
+
     const checkNimAvailability = async (nimValue: string): Promise<boolean> => {
         const trimmed = nimValue.trim();
         if (!trimmed) {
@@ -336,45 +341,69 @@ export default function OnboardingIndex({
             return false;
         }
 
-        setCheckingNim(true);
-        try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
-            const res = await fetch('/onboarding/check-nim', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                },
-                body: JSON.stringify({ nim: trimmed }),
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                if (!data.available) {
-                    setNimError(data.message || 'NIM sudah terdaftar oleh mahasiswa lain.');
-                    setCheckingNim(false);
-                    return false;
-                }
-            }
-            setNimError(null);
-            setCheckingNim(false);
-            return true;
-        } catch (err) {
-            setCheckingNim(false);
+        // Return cached valid result if this exact NIM was already successfully verified
+        if (lastCheckedNimRef.current === trimmed && !nimError) {
             return true;
         }
+
+        // Reuse in-flight validation promise if one is already running for the exact same check
+        if (inFlightCheckRef.current) {
+            return inFlightCheckRef.current;
+        }
+
+        setCheckingNim(true);
+        const checkPromise = (async () => {
+            try {
+                const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content || '';
+                const res = await fetch('/onboarding/check-nim', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ nim: trimmed }),
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (!data.available) {
+                        setNimError(data.message || 'NIM sudah terdaftar oleh mahasiswa lain.');
+                        lastCheckedNimRef.current = null;
+                        return false;
+                    }
+                }
+                setNimError(null);
+                lastCheckedNimRef.current = trimmed;
+                return true;
+            } catch (err) {
+                return true;
+            } finally {
+                setCheckingNim(false);
+                inFlightCheckRef.current = null;
+            }
+        })();
+
+        inFlightCheckRef.current = checkPromise;
+        return checkPromise;
     };
 
     const handleNext = async () => {
+        if (isNextLoading || submitting) return;
+
         if (step === 1) {
             if (!name.trim()) {
                 alert('Nama lengkap wajib diisi.');
                 return;
             }
-            const isNimValid = await checkNimAvailability(nim);
-            if (!isNimValid) {
-                return;
+            setIsNextLoading(true);
+            try {
+                const isNimValid = await checkNimAvailability(nim);
+                if (!isNimValid) {
+                    return;
+                }
+            } finally {
+                setIsNextLoading(false);
             }
         }
         if (step === 2) {
@@ -667,9 +696,10 @@ export default function OnboardingIndex({
                                                 const cleaned = e.target.value.replace(/\D/g, '');
                                                 setNim(cleaned);
                                                 if (nimError) setNimError(null);
+                                                lastCheckedNimRef.current = null;
                                             }}
                                             onBlur={() => {
-                                                if (nim.trim()) {
+                                                if (nim.trim() && nim.trim().length >= 7) {
                                                     checkNimAvailability(nim);
                                                 }
                                             }}
@@ -682,7 +712,7 @@ export default function OnboardingIndex({
                                         />
                                         {nimError && (
                                             <p className="text-xs text-rose-600 font-medium flex items-center gap-1 mt-1">
-                                                <span>⚠️</span>
+                                                <AlertCircle className="size-3.5 shrink-0" />
                                                 <span>{nimError}</span>
                                             </p>
                                         )}
@@ -1145,7 +1175,7 @@ export default function OnboardingIndex({
 
                             <button
                                 type="button"
-                                disabled={submitting || checkingNim}
+                                disabled={submitting || isNextLoading}
                                 onClick={handleNext}
                                 className={`${
                                     step === 1 ? 'w-full sm:w-auto sm:ml-auto' : 'flex-1 sm:flex-initial sm:ml-auto'
@@ -1156,11 +1186,11 @@ export default function OnboardingIndex({
                                         ? submitting
                                             ? 'Menyimpan...'
                                             : 'Selesai & Mulai Eksplor Tim'
-                                        : checkingNim
-                                            ? 'Memeriksa NIM...'
+                                        : isNextLoading
+                                            ? 'Memeriksa...'
                                             : 'Lanjut'}
                                 </span>
-                                {submitting || checkingNim ? (
+                                {submitting || isNextLoading ? (
                                     <LoaderCircle className="size-4 animate-spin shrink-0" />
                                 ) : (
                                     <ArrowRight className="size-4 stroke-[2.5] shrink-0" />

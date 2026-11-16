@@ -15,6 +15,7 @@ use App\Models\RecruitmentRole;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\ApplicationStatusNotification;
 use App\Notifications\ApplicationSubmittedNotification;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -144,10 +145,10 @@ class MembershipService
      */
     public function acceptApplication(Application $application, User $decidedBy, ?string $decisionNote = null): TeamMember
     {
-        return DB::transaction(function () use ($application, $decidedBy, $decisionNote) {
+        $member = DB::transaction(function () use (&$application, $decidedBy, $decisionNote) {
             // Eager load relationships with lock
             $application = Application::where('id', $application->id)
-                ->with(['recruitment.team.project', 'user', 'role'])
+                ->with(['recruitment.team.project.academicClass', 'user', 'role'])
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -277,6 +278,49 @@ class MembershipService
 
             return $member;
         });
+
+        // Notify applicant about acceptance
+        $application->loadMissing(['recruitment.team.project', 'user', 'role']);
+        $applicant = $application->user;
+        if ($applicant) {
+            try {
+                $applicant->notify(new ApplicationStatusNotification($application, 'accepted'));
+            } catch (\Throwable $e) {
+                // Guaranteed in-app fallback if mail or queued notification driver fails
+                $team = $application->recruitment?->team;
+                $project = $team?->project;
+                $teamName = $team?->name ?? 'Tim Proyek';
+                $projectTarget = $project?->slug ?: $team?->project_id;
+                $actionUrl = $projectTarget ? "/projects/{$projectTarget}?tab=workspace" : '/dashboard';
+
+                $applicant->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid()->toString(),
+                    'type' => 'App\Notifications\ApplicationStatusNotification',
+                    'data' => [
+                        'type' => 'application_accepted',
+                        'notification_type' => 'application_accepted',
+                        'category' => 'project_hub',
+                        'priority' => 'high',
+                        'application_id' => $application->id,
+                        'team_id' => $team?->id,
+                        'team_name' => $teamName,
+                        'status' => 'accepted',
+                        'title' => "Selamat! Lamaran Anda Diterima di {$teamName}",
+                        'message' => "Lamaran Anda untuk bergabung ke {$teamName} telah diterima oleh ketua tim.",
+                        'action_url' => $actionUrl,
+                        'action_text' => 'Buka Workspace Tim',
+                        'details' => [
+                            'Tim' => $teamName,
+                            'Status' => 'Diterima',
+                        ],
+                        'created_at' => now()->toIso8601String(),
+                    ],
+                ]);
+            }
+            app(NotificationCounterInterface::class)->invalidateUnreadCountCache($applicant);
+        }
+
+        return $member;
     }
 
     /**
@@ -284,7 +328,7 @@ class MembershipService
      */
     public function rejectApplication(Application $application, User $decidedBy, ?string $decisionNote = null): void
     {
-        $application->loadMissing('recruitment.team.project');
+        $application->loadMissing(['recruitment.team.project', 'user']);
         $team = $application->recruitment?->team;
         $project = $team?->project;
 
@@ -313,6 +357,40 @@ class MembershipService
             'decided_at' => now(),
             'decision_note' => $decisionNote,
         ]);
+
+        // Notify applicant about rejection
+        $applicant = $application->user;
+        if ($applicant) {
+            try {
+                $applicant->notify(new ApplicationStatusNotification($application, 'rejected'));
+            } catch (\Throwable $e) {
+                $teamName = $team?->name ?? 'Tim Proyek';
+                $applicant->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid()->toString(),
+                    'type' => 'App\Notifications\ApplicationStatusNotification',
+                    'data' => [
+                        'type' => 'application_rejected',
+                        'notification_type' => 'application_rejected',
+                        'category' => 'project_hub',
+                        'priority' => 'medium',
+                        'application_id' => $application->id,
+                        'team_id' => $team?->id,
+                        'team_name' => $teamName,
+                        'status' => 'rejected',
+                        'title' => "Pembaruan Status Lamaran: {$teamName}",
+                        'message' => "Lamaran Anda untuk bergabung ke {$teamName} belum dapat diterima.",
+                        'action_url' => '/dashboard',
+                        'action_text' => 'Lihat Peluang Lain',
+                        'details' => [
+                            'Tim' => $teamName,
+                            'Status' => 'Belum Diterima',
+                        ],
+                        'created_at' => now()->toIso8601String(),
+                    ],
+                ]);
+            }
+            app(NotificationCounterInterface::class)->invalidateUnreadCountCache($applicant);
+        }
     }
 
     /**
@@ -466,12 +544,11 @@ class MembershipService
      */
     protected function effectiveTeamCapacity(Project $project, Team $team): int
     {
-        $baseCapacity = (int) ($project->max_team_size ?: ($team->capacity ?: 5));
+        $baseCapacity = (int) ($project->max_team_size ?: ($team->capacity ?: 4));
 
         if ($project->academic_class_id) {
-            $classTarget = $project->relationLoaded('academicClass')
-                ? $project->academicClass?->target_team_size
-                : \App\Models\AcademicClass::where('id', $project->academic_class_id)->value('target_team_size');
+            $classTarget = $project->academicClass?->target_team_size
+                ?? \App\Models\AcademicClass::where('id', $project->academic_class_id)->value('target_team_size');
 
             if ($classTarget && (int) $classTarget > 0) {
                 return min($baseCapacity, (int) $classTarget);

@@ -2582,7 +2582,12 @@ class CompetitionWebController extends Controller
             // Notify applicant via in-app & queued email
             $status = $validated['action'] === 'accept' ? 'accepted' : 'rejected';
             if ($application->user) {
-                $application->user->notify(new ApplicationStatusNotification($application, $status));
+                try {
+                    $application->user->notify(new ApplicationStatusNotification($application, $status));
+                } catch (\Throwable $e) {
+                    // Ignore fail
+                }
+                app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($application->user);
             }
         });
 

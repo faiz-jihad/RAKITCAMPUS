@@ -3,7 +3,7 @@ import ProjectJigsawTracker from '@/components/project-jigsaw-tracker';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertCircle, ArrowLeft, ArrowRight, BookOpen, Check, CheckCircle2, ChevronRight, Compass, FolderPlus, GraduationCap, Info, Route, Users } from 'lucide-react';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useEffect, useState } from 'react';
 
 interface EnrolledClass {
     id: number;
@@ -40,6 +40,16 @@ export default function ProjectCreate({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [isMerging, setIsMerging] = useState(false);
     const [mergePhase, setMergePhase] = useState<'idle' | 'snapping' | 'fused' | 'complete'>('idle');
+    const [canSubmitStep4, setCanSubmitStep4] = useState(false);
+
+    useEffect(() => {
+        if (step === 4) {
+            const timer = setTimeout(() => setCanSubmitStep4(true), 350);
+            return () => clearTimeout(timer);
+        } else {
+            setCanSubmitStep4(false);
+        }
+    }, [step]);
 
     const stepsList = [
         { id: 1, key: 'card-class', label: 'Jalur Proyek', icon: Route },
@@ -91,14 +101,13 @@ export default function ProjectCreate({
 
     const isMandiri = !data.academic_class_id;
 
-    // For independent projects (Proyek Mandiri), proposal card is optional (can be filled or left blank)
-    const isProposalCardComplete = isMandiri
-        ? true
-        : Boolean(
-            data.problem_statement.trim().length >= 5 ||
-            data.objectives.trim().length >= 5 ||
-            data.proposed_solution.trim().length >= 5
-        );
+    // For independent projects (Proyek Mandiri), proposal card is optional (can be filled or left blank upon submission)
+    const hasFilledProposal = Boolean(
+        data.problem_statement.trim().length >= 5 ||
+        data.objectives.trim().length >= 5 ||
+        data.proposed_solution.trim().length >= 5
+    );
+    const isProposalCardComplete = hasFilledProposal || (isMandiri && step === 4);
 
     const allCompleted =
         isClassCardComplete &&
@@ -217,8 +226,28 @@ export default function ProjectCreate({
         return meta?.content || '';
     };
 
+    const handleFormKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+        if (e.key === 'Enter' && (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) {
+            e.preventDefault();
+            if (step < 4) {
+                handleNext();
+            }
+        }
+    };
+
     const submit: FormEventHandler = async (e) => {
         e.preventDefault();
+
+        // Prevent premature submit if user hasn't reached step 4 yet
+        if (step < 4) {
+            handleNext();
+            return;
+        }
+
+        // Prevent accidental rapid/double click when transitioning into step 4
+        if (!canSubmitStep4 && isMandiri) {
+            return;
+        }
 
         // Validate all preceding steps
         if (!validateStep(1)) {
@@ -373,7 +402,7 @@ export default function ProjectCreate({
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                     {/* Left Column: Multi-Step Form Wizard */}
                     <div className="lg:col-span-7 xl:col-span-7">
-                        <form onSubmit={submit} className="space-y-8">
+                        <form onSubmit={submit} onKeyDown={handleFormKeyDown} className="space-y-8">
                             {/* Step 1: Project Pathway & Class Selection */}
                             {step === 1 && (
                                 <div id="card-class" className="space-y-6 transition-all duration-300 animate-in fade-in">
@@ -907,7 +936,7 @@ export default function ProjectCreate({
                                     ) : (
                                         <button
                                             type="submit"
-                                            disabled={submitting || hasActiveProjectInSelectedClass}
+                                            disabled={submitting || !canSubmitStep4 || hasActiveProjectInSelectedClass}
                                             title={hasActiveProjectInSelectedClass ? 'Anda sudah memiliki proyek aktif di kelas perkuliahan ini' : undefined}
                                             className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 flex items-center gap-2 cursor-pointer"
                                         >
