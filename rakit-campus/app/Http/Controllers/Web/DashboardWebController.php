@@ -9,6 +9,7 @@ use App\Enums\ProjectStatus;
 use App\Enums\RecruitmentStatus;
 use App\Enums\TaskStatus;
 use App\Enums\TeamPermission;
+use App\Enums\TeamType;
 use App\Enums\VerificationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
@@ -388,6 +389,7 @@ class DashboardWebController extends Controller
                     'enrolled_classes_count' => 0,
                 ],
                 'myTeams' => [],
+                'myCompetitionTeams' => [],
                 'myTasks' => [],
                 'teammates' => [],
                 'monthlyActivity' => [],
@@ -613,6 +615,7 @@ class DashboardWebController extends Controller
                     'enrolled_classes_count' => 0,
                 ],
                 'myTeams' => [],
+                'myCompetitionTeams' => [],
                 'myTasks' => [],
                 'teammates' => [],
                 'monthlyActivity' => [],
@@ -715,6 +718,77 @@ class DashboardWebController extends Controller
                 ];
             });
 
+        // 1b. User's Competition Teams (Strictly Separated from Project Hub)
+        $myCompetitionTeams = Team::where('type', TeamType::Competition)
+            ->where(function ($q) use ($user) {
+                $q->where('leader_id', $user->id)
+                  ->orWhereHas('members', fn ($m) => $m->where('user_id', $user->id)->where('status', 'active'));
+            })->with([
+                'participations.competition' => fn ($q) => $q->withTrashed(),
+                'participations.competition.sources',
+                'participations.competition.campus:id,name',
+                'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar']),
+                'tasks:id,team_id,status',
+            ])->latest()->get()->map(function ($team) use ($user) {
+                $participation = $team->participations->first();
+                $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
+                $totalTasks = $team->tasks->count();
+                $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
+                $isLeader = $team->leader_id === $user->id || $team->isLeader($user);
+                $myMemberRecord = $team->members->firstWhere('user_id', $user->id);
+                $roleName = $myMemberRecord?->role_name ?? ($isLeader ? 'Ketua Tim' : 'Anggota Tim');
+                $progressPercent = $participation ? $participation->calculatePreparationProgress() : 0;
+                $slug = $competition?->slug ?: $participation?->id;
+
+                $stageLabels = [
+                    'recruiting' => 'Perekrutan Anggota',
+                    'team_formation' => 'Formasi Final',
+                    'preparing' => 'Persiapan Karya',
+                    'registered' => 'Terdaftar Resmi',
+                    'submitted' => 'Karya Terkirim',
+                    'administrative_selection' => 'Seleksi Administrasi',
+                    'shortlisted' => 'Lolos Tahap Awal',
+                    'finalist' => 'Finalis Kompetisi',
+                    'final_presentation' => 'Presentasi Final',
+                    'winner' => 'Juara / Pemenang',
+                    'not_selected' => 'Belum Lolos',
+                    'withdrawn' => 'Mengundurkan Diri',
+                ];
+
+                return [
+                    'id' => $team->id,
+                    'name' => $team->name,
+                    'description' => $team->description,
+                    'is_leader' => $isLeader,
+                    'role_name' => $roleName,
+                    'participation_id' => $participation?->id,
+                    'stage' => $participation?->stage ?? 'recruiting',
+                    'stage_label' => $stageLabels[$participation?->stage ?? 'recruiting'] ?? 'Tahap Kompetisi',
+                    'is_formation_locked' => (bool) $participation?->is_formation_locked,
+                    'workspace_url' => $slug ? "/competition-workspace/{$slug}" : "/competitions",
+                    'competition' => $competition ? [
+                        'id' => $competition->id,
+                        'name' => $competition->name,
+                        'slug' => $competition->slug,
+                        'category' => $competition->category,
+                        'level' => $competition->level,
+                        'deadline' => $competition->deadline?->translatedFormat('d M Y'),
+                        'registration_end' => $competition->registration_end?->translatedFormat('d M Y'),
+                    ] : null,
+                    'members_count' => $team->members->count(),
+                    'members' => $team->members->map(fn ($m) => [
+                        'id' => $m->user_id,
+                        'name' => $m->user?->name ?? 'Mahasiswa',
+                        'avatar' => $m->user?->avatar,
+                        'role' => $m->role_name ?? 'Anggota',
+                        'is_leader' => $m->user_id === $team->leader_id,
+                    ])->values()->all(),
+                    'total_tasks' => $totalTasks,
+                    'done_tasks' => $doneTasks,
+                    'progress_percent' => $progressPercent,
+                ];
+            });
+
         // 2. User's pending tasks across all teams
         $myTasks = Task::where('assignee_id', $user->id)
             ->whereIn('status', [TaskStatus::Todo, TaskStatus::InProgress, TaskStatus::InReview])
@@ -748,8 +822,11 @@ class DashboardWebController extends Controller
             ->map(function (Invitation $inv) {
                 $statusValue = $inv->status instanceof InvitationStatus ? $inv->status->value : (string) $inv->status;
                 $project = $inv->team?->project;
-                $competition = $inv->team?->participations?->first()?->competition;
+                $participation = $inv->team?->participations?->first();
+                $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
                 $isExpired = $inv->isExpired();
+                $isCompetition = (bool) $competition || $inv->team?->type === TeamType::Competition || $inv->team?->type === 'competition';
+                $slug = $competition?->slug ?: $participation?->id;
 
                 return [
                     'id' => $inv->id,
@@ -758,11 +835,18 @@ class DashboardWebController extends Controller
                     'team_name' => $inv->team?->name ?? 'Tim Kolaborasi',
                     'team_members_count' => $inv->team?->members?->count() ?? 1,
                     'team_capacity' => $inv->team?->capacity ?? 4,
-                    'is_competition' => (bool) $competition,
+                    'is_competition' => $isCompetition,
+                    'competition_name' => $competition?->name,
+                    'competition_slug' => $competition?->slug,
                     'project_id' => $project?->id,
-                    'project_title' => $competition ? "Kompetisi: {$competition->name}" : ($project?->title ?? 'Proyek Kampus'),
-                    'project_slug' => $competition ? $competition->slug : $project?->slug,
-                    'target_url' => $competition ? "/competitions/{$competition->slug}" : ($project ? "/projects/{$project->slug}" : null),
+                    'project_title' => $isCompetition ? "Kompetisi: {$competition?->name}" : ($project?->title ?? 'Proyek Kampus'),
+                    'project_slug' => $isCompetition ? $slug : $project?->slug,
+                    'target_url' => $isCompetition ? ($slug ? "/competitions/{$slug}" : "/competitions") : ($project ? "/projects/{$project->slug}" : null),
+                    'workspace_url' => $isCompetition
+                        ? ($slug ? "/competition-workspace/{$slug}" : "/competitions")
+                        : ($project ? "/projects/{$project->slug}" : "/workspace/{$inv->team_id}"),
+                    'accept_url' => $isCompetition ? "/competition-invitations/{$inv->id}/accept" : "/invitations/{$inv->id}/accept",
+                    'decline_url' => $isCompetition ? "/competition-invitations/{$inv->id}/decline" : "/invitations/{$inv->id}/decline",
                     'class_label' => $project?->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : ($competition ? "Kompetisi {$competition->level}" : null),
                     'inviter_name' => $inv->inviter?->name ?? 'Ketua Tim',
                     'role_name' => $inv->role?->name ?? $inv->role_name ?? 'Anggota Tim',
@@ -861,6 +945,7 @@ class DashboardWebController extends Controller
             ],
             'stats' => $stats,
             'myTeams' => $myTeams,
+            'myCompetitionTeams' => $myCompetitionTeams,
             'myTasks' => $myTasks,
             'teammates' => $realTeammates,
             'monthlyActivity' => $monthlyActivity,

@@ -118,6 +118,7 @@ interface Props {
         pending_proposals_count?: number;
     };
     myTeams?: any[];
+    myCompetitionTeams?: any[];
     myTasks?: any[];
     teammates?: any[];
     monthlyActivity?: Array<{
@@ -149,6 +150,7 @@ export default function Dashboard({
     user = {} as any,
     stats = {} as any,
     myTeams = [],
+    myCompetitionTeams = [],
     myTasks = [],
     teammates = [],
     monthlyActivity = [],
@@ -286,12 +288,14 @@ export default function Dashboard({
         );
     };
 
-    // Handler Mahasiswa: Terima Undangan Kolaborasi
+    // Handler Mahasiswa: Terima Undangan Kolaborasi (Mendukung Proyek & Kompetisi)
     const handleAcceptInvitation = (inv: any) => {
-        if (!confirm(`Terima undangan kolaborasi dari tim "${inv.team_name}" (${inv.project_title})?`)) return;
+        const typeLabel = inv.is_competition ? 'tim kompetisi' : 'tim proyek';
+        if (!confirm(`Terima undangan kolaborasi dari ${typeLabel} "${inv.team_name}" (${inv.project_title})?`)) return;
         setProcessingInviteId(inv.id);
+        const url = inv.accept_url || (inv.is_competition ? `/competition-invitations/${inv.id}/accept` : `/invitations/${inv.id}/accept`);
         router.post(
-            `/invitations/${inv.id}/accept`,
+            url,
             {},
             {
                 preserveScroll: true,
@@ -305,8 +309,9 @@ export default function Dashboard({
         e.preventDefault();
         if (!declineModalInvite) return;
         setProcessingInviteId(declineModalInvite.id);
+        const url = declineModalInvite.decline_url || (declineModalInvite.is_competition ? `/competition-invitations/${declineModalInvite.id}/decline` : `/invitations/${declineModalInvite.id}/decline`);
         router.post(
-            `/invitations/${declineModalInvite.id}/decline`,
+            url,
             { declined_reason: declineReason.trim() || 'Memilih opsi kolaborasi lain.' },
             {
                 preserveScroll: true,
@@ -2542,6 +2547,115 @@ export default function Dashboard({
                         )}
                     </div>
 
+                    {/* Panel 2a: Tim Kompetisi & Lomba Aktif (Dedicated Competition Hub - Strictly Separated) */}
+                    <div className="bg-white rounded-xl border border-amber-200/80 p-4 sm:p-5 shadow-2xs">
+                        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                    <Trophy className="w-4 h-4 text-amber-500" />
+                                    <span>Tim Kompetisi & Lomba Anda</span>
+                                    {myCompetitionTeams && myCompetitionTeams.length > 0 && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                            {myCompetitionTeams.length} Terdaftar
+                                        </span>
+                                    )}
+                                </h2>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                    Tim lomba nasional & kampus, persiapan karya, dan berkas kompetisi
+                                </p>
+                            </div>
+                            <Link
+                                href="/competitions"
+                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
+                            >
+                                <span>Hub Kompetisi</span>
+                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                            </Link>
+                        </div>
+
+                        {myCompetitionTeams && myCompetitionTeams.length > 0 ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                {myCompetitionTeams.map((cTeam: any) => (
+                                    <div
+                                        key={cTeam.id}
+                                        className="p-4 rounded-xl border border-amber-200/70 bg-gradient-to-br from-white via-amber-50/20 to-white hover:border-amber-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group/item"
+                                    >
+                                        <div>
+                                            <div className="flex items-center justify-between gap-2 mb-2">
+                                                <span className="text-[11px] font-bold text-amber-700 bg-amber-100/80 px-2 py-0.5 rounded-md border border-amber-200">
+                                                    Kompetisi {cTeam.competition?.level || 'Nasional'}
+                                                </span>
+                                                <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                                                    {cTeam.stage_label}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-sm font-bold text-slate-900 group-hover/item:text-blue-600 transition">
+                                                {cTeam.name}
+                                            </h3>
+                                            {cTeam.competition?.name && (
+                                                <p className="text-xs text-slate-600 mt-0.5 line-clamp-1">
+                                                    {cTeam.competition.name}
+                                                </p>
+                                            )}
+                                            <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500">
+                                                <span className="font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/80">
+                                                    Peran: {cTeam.role_name}
+                                                </span>
+                                                {cTeam.is_leader && (
+                                                    <span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded text-[10px] border border-emerald-200">
+                                                        Ketua Tim
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-2 border-t border-slate-100 space-y-2">
+                                            {/* Readiness Score Progress */}
+                                            <div className="flex items-center justify-between text-[11px]">
+                                                <span className="text-slate-500">Kesiapan Berkas & Tugas:</span>
+                                                <span className="font-bold text-slate-900">{cTeam.progress_percent}%</span>
+                                            </div>
+                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                                <div
+                                                    className="bg-gradient-to-r from-amber-500 to-emerald-500 h-1.5 rounded-full transition-all duration-300"
+                                                    style={{ width: `${cTeam.progress_percent}%` }}
+                                                />
+                                            </div>
+
+                                            <div className="pt-1 flex items-center justify-between text-xs">
+                                                <span className="text-[11px] text-slate-500">
+                                                    {cTeam.members_count || 1} Anggota Terdaftar
+                                                </span>
+                                                <Link
+                                                    href={cTeam.workspace_url}
+                                                    className="font-bold text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                                                >
+                                                    <span>Buka Workspace Lomba</span>
+                                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/item:translate-x-0.5" />
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                                <Trophy className="w-8 h-8 text-amber-300 mx-auto mb-2" />
+                                <p className="font-semibold text-slate-700">Belum Mengikuti Tim Kompetisi</p>
+                                <p className="text-[11px] text-slate-500 mt-0.5 max-w-sm mx-auto">
+                                    Jelajahi kompetisi nasional & kampus untuk membentuk tim riset atau lomba inovasi.
+                                </p>
+                                <Link
+                                    href="/competitions"
+                                    className="mt-3 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs transition shadow-2xs"
+                                >
+                                    <Trophy className="w-3.5 h-3.5" />
+                                    <span>Jelajahi Hub Kompetisi</span>
+                                </Link>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Panel 2: Proyek Kelas & Living Proposal */}
                     <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
@@ -2682,19 +2796,49 @@ export default function Dashboard({
                                 {receivedInvitations.map((inv: any) => {
                                     const isPending = inv.status === 'pending';
                                     const isBusy = processingInviteId === inv.id;
+                                    const isComp = Boolean(inv.is_competition);
 
                                     return (
                                         <div
                                             key={inv.id}
-                                            className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                            className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                                                isComp
+                                                    ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/30 via-white to-amber-50/10'
+                                                    : 'border-slate-200/90 bg-slate-50/50'
+                                            }`}
                                         >
                                             <div className="space-y-1 min-w-0">
                                                 <div className="flex flex-wrap items-center gap-2">
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 border shrink-0 ${
+                                                        isComp
+                                                            ? 'bg-amber-100/90 text-amber-800 border-amber-300'
+                                                            : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                    }`}>
+                                                        {isComp ? (
+                                                            <>
+                                                                <Trophy className="w-2.5 h-2.5 text-amber-600" />
+                                                                <span>Tim Kompetisi</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <FolderKanban className="w-2.5 h-2.5 text-blue-600" />
+                                                                <span>Proyek Kampus</span>
+                                                            </>
+                                                        )}
+                                                    </span>
+
                                                     <span className="text-xs font-bold text-slate-900">
                                                         {inv.team_name}
                                                     </span>
                                                     <span className="text-slate-300">•</span>
-                                                    {inv.project_id ? (
+                                                    {isComp ? (
+                                                        <Link
+                                                            href={inv.target_url || `/competitions/${inv.project_slug || ''}`}
+                                                            className="text-xs font-bold text-amber-700 hover:text-amber-800 hover:underline truncate"
+                                                        >
+                                                            {inv.competition_name || inv.project_title}
+                                                        </Link>
+                                                    ) : inv.project_id ? (
                                                         <Link
                                                             href={`/projects/${inv.project_slug || inv.project_id}`}
                                                             className="text-xs font-semibold text-blue-600 hover:underline truncate"
@@ -2716,7 +2860,7 @@ export default function Dashboard({
                                                             : 'bg-blue-50 text-blue-700 border-blue-200'
                                                     }`}>
                                                         {inv.status === 'accepted'
-                                                            ? 'Undangan Diterima'
+                                                            ? 'Resmi Bergabung'
                                                             : inv.status === 'declined'
                                                             ? 'Undangan Ditolak'
                                                             : inv.status === 'expired'
@@ -2728,7 +2872,7 @@ export default function Dashboard({
                                                 <p className="text-[11px] text-slate-600">
                                                     Pengundang: <strong className="text-slate-800">{inv.inviter_name}</strong>
                                                     {' • '}
-                                                    Posisi: <strong className="text-blue-700">{inv.role_name}</strong>
+                                                    Posisi: <strong className={isComp ? 'text-amber-800' : 'text-blue-700'}>{inv.role_name}</strong>
                                                     {' • '}
                                                     Anggota: {inv.team_members_count}/{inv.team_capacity}
                                                     {inv.class_label && ` • ${inv.class_label}`}
@@ -2764,11 +2908,31 @@ export default function Dashboard({
                                                         type="button"
                                                         onClick={() => handleAcceptInvitation(inv)}
                                                         disabled={isBusy}
-                                                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                        className={`px-3.5 py-1.5 rounded-lg text-white text-xs font-bold transition shadow-2xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 ${
+                                                            isComp
+                                                                ? 'bg-amber-500 hover:bg-amber-600'
+                                                                : 'bg-blue-600 hover:bg-blue-700'
+                                                        }`}
                                                     >
                                                         <Check className="w-3.5 h-3.5" />
                                                         <span>{isBusy ? 'Memproses...' : 'Terima'}</span>
                                                     </button>
+                                                </div>
+                                            )}
+
+                                            {inv.status === 'accepted' && (
+                                                <div className="flex items-center gap-2 shrink-0">
+                                                    <Link
+                                                        href={inv.workspace_url || (isComp ? '/competitions' : '/projects')}
+                                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer shadow-2xs ${
+                                                            isComp
+                                                                ? 'bg-amber-500 hover:bg-amber-600 text-white'
+                                                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                        }`}
+                                                    >
+                                                        <span>{isComp ? 'Buka Workspace Lomba' : 'Buka Proyek'}</span>
+                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                    </Link>
                                                 </div>
                                             )}
                                         </div>

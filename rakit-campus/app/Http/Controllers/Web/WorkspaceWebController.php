@@ -23,7 +23,8 @@ class WorkspaceWebController extends Controller
         $user = $request->user();
         $isLecturer = $user->isLecturer();
 
-        $teamsQuery = Team::query();
+        // Strict Separation: Workspace /workspace is strictly for Project Hub
+        $teamsQuery = Team::where('type', '!=', 'competition');
 
         if ($isLecturer) {
             // Lecturers can see their own teams OR teams of classes they teach
@@ -91,6 +92,15 @@ class WorkspaceWebController extends Controller
             'milestones.tasks',
             'posts.author:id,name',
         ])->findOrFail($teamId);
+
+        // Strict Separation: Competition Teams must use dedicated Competition Workspace
+        if ($team->type === \App\Enums\TeamType::Competition || $team->type === 'competition' || (!$team->project && $team->participations->isNotEmpty())) {
+            $participation = $team->participations()->latest()->first();
+            if ($participation) {
+                $slug = $participation->competition?->slug ?: $participation->id;
+                return redirect()->route('competitions.workspace', ['participationId' => $slug]);
+            }
+        }
 
         $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
         $isLecturer = $user->isLecturer() || $isClassLecturer;
