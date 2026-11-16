@@ -38,6 +38,8 @@ use App\Models\Task;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\ApplicationStatusNotification;
+use App\Notifications\ApplicationSubmittedNotification;
 use App\Services\Matchmaking\CompetitionDeliverableService;
 use App\Services\Matchmaking\CompetitionManagementService;
 use App\Services\Matchmaking\CompetitionMatchmakingService;
@@ -2406,7 +2408,7 @@ class CompetitionWebController extends Controller
                 }
             }
 
-            Application::updateOrCreate(
+            $application = Application::updateOrCreate(
                 [
                     'recruitment_id' => $recruitment->id,
                     'user_id' => $user->id,
@@ -2422,6 +2424,11 @@ class CompetitionWebController extends Controller
                     'decision_note' => null,
                 ]
             );
+
+            // Notify team leader via in-app & queued email
+            if ($team->leader && $team->leader->id !== $user->id) {
+                $team->leader->notify(new ApplicationSubmittedNotification($application));
+            }
         });
 
         return back()->with('success', "Lamaran kamu berhasil dikirim ke ketua tim {$team->name}! Ketua tim dapat menghubungi kamu langsung via WhatsApp.");
@@ -2486,6 +2493,12 @@ class CompetitionWebController extends Controller
                     'decided_at' => now(),
                     'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
                 ]);
+            }
+
+            // Notify applicant via in-app & queued email
+            $status = $validated['action'] === 'accept' ? 'accepted' : 'rejected';
+            if ($application->user) {
+                $application->user->notify(new ApplicationStatusNotification($application, $status));
             }
         });
 

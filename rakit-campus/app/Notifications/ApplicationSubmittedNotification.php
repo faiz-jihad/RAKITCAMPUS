@@ -2,11 +2,15 @@
 
 namespace App\Notifications;
 
+use App\Contracts\Notifications\NotificationCounterInterface;
+use App\Contracts\Notifications\NotificationTemplateServiceInterface;
 use App\Models\Application;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class ApplicationSubmittedNotification extends Notification
+class ApplicationSubmittedNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 
@@ -16,7 +20,7 @@ class ApplicationSubmittedNotification extends Notification
 
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
     }
 
     public function toArray(object $notifiable): array
@@ -42,6 +46,10 @@ class ApplicationSubmittedNotification extends Notification
         }
         $details['Keterangan'] = 'Mengajukan diri untuk bergabung ke tim';
 
+        if (isset($notifiable->id)) {
+            app(NotificationCounterInterface::class)->invalidateUnreadCountCache($notifiable->id);
+        }
+
         return [
             'type' => 'application_submitted',
             'notification_type' => 'project_application_submitted',
@@ -61,5 +69,51 @@ class ApplicationSubmittedNotification extends Notification
             'details' => $details,
             'created_at' => now()->toIso8601String(),
         ];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $this->application->loadMissing(['user', 'role', 'recruitment.team.project']);
+        $applicantName = $this->application->user?->name ?? 'Mahasiswa';
+        $team = $this->application->recruitment?->team;
+        $project = $team?->project;
+        $teamName = $team?->name ?? 'Tim Proyek';
+        $projectTitle = $project?->title ?? $teamName;
+        $roleName = $this->application->role?->name;
+
+        $title = "Pengajuan Anggota Baru: {$projectTitle}";
+        $message = "Halo, {$applicantName} baru saja mengirimkan lamaran untuk bergabung dengan tim Anda pada proyek \"{$projectTitle}\"" . ($roleName ? " sebagai {$roleName}." : ".");
+
+        $actionUrl = url($project ? "/projects/{$project->id}?tab=members#applications-section" : '/dashboard');
+        $actionText = 'Tinjau Pengajuan Mahasiswa';
+
+        $details = [
+            'Nama Pelamar' => $applicantName,
+            'Target Proyek' => $projectTitle,
+            'Nama Tim' => $teamName,
+        ];
+        if ($roleName) {
+            $details['Posisi Dilamar'] = $roleName;
+        }
+        $details['Waktu Pengajuan'] = now()->format('d M Y, H:i T');
+
+        $templateService = app(NotificationTemplateServiceInterface::class);
+        $payload = [
+            'title' => $title,
+            'greeting' => 'Halo ' . ($notifiable->name ?? 'Ketua Tim') . ',',
+            'message' => $message,
+            'category_name' => 'Project Hub',
+            'action_url' => $actionUrl,
+            'action_text' => $actionText,
+            'details' => $details,
+        ];
+
+        $html = $templateService->renderHtml($payload);
+        $text = $templateService->renderText($payload);
+
+        return (new MailMessage)
+            ->subject($title)
+            ->view('emails.unified-notification', ['htmlContent' => $html, 'textContent' => $text])
+            ->text('emails.unified-notification-text', ['htmlContent' => $html, 'textContent' => $text]);
     }
 }

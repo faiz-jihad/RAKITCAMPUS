@@ -50,6 +50,40 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
         setRecentNotifications((user?.recent_notifications || []) as RecentNotification[]);
     }, [user?.unread_notifications_count, user?.recent_notifications]);
 
+    // Live background polling & window focus sync for production reliability
+    useEffect(() => {
+        if (!user?.id) return;
+
+        const refreshNotifications = () => {
+            router.reload({
+                only: ['auth'],
+            });
+        };
+
+        // Poll every 45 seconds when window is active
+        const interval = setInterval(() => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                refreshNotifications();
+            }
+        }, 45000);
+
+        // Immediate sync when user focuses back to the tab
+        const handleFocus = () => {
+            if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+                refreshNotifications();
+            }
+        };
+
+        window.addEventListener('focus', handleFocus);
+        document.addEventListener('visibilitychange', handleFocus);
+
+        return () => {
+            clearInterval(interval);
+            window.removeEventListener('focus', handleFocus);
+            document.removeEventListener('visibilitychange', handleFocus);
+        };
+    }, [user?.id]);
+
     const handleMarkAllRead = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
