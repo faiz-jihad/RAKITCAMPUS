@@ -979,109 +979,188 @@ export default function Dashboard({
                     </div>
                 )}
 
-                {/* 2. STATISTIK KPI DOSEN PENGAMPU (4 KPI CARDS GABUNGAN) */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                    {/* KPI 1: Persetujuan Pengajuan Tim */}
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
+                {/* 2. BENTO GRID UTAMA STATISTIK DOSEN PENGAMPU */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
+                    {/* CARD 1: PERSETUJUAN PENGAJUAN TIM (FEATURED / 4 COLS LG) */}
+                    <div className="lg:col-span-4 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                         <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-1">
+                            <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     Persetujuan Tim
                                 </span>
-                                <ShieldCheck className="w-5 h-5 text-amber-600" />
+                                <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                                    <ShieldCheck className="size-4 text-blue-600" />
+                                </span>
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+
+                            <div className="mt-2">
+                                <div className="text-4xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
                                     {pendingTeamApprovals.length}
-                                </span>
-                                <span className="text-xs text-slate-400 font-medium">
-                                    Menunggu Keputusan
-                                </span>
+                                </div>
+                                <div className="text-xs font-semibold text-slate-500 mt-1">
+                                    Menunggu Keputusan Formasi
+                                </div>
+                            </div>
+
+                            <div className="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600 leading-relaxed">
+                                {pendingTeamApprovals.length > 0 ? (
+                                    <>
+                                        Terdapat <strong className="text-slate-900">{pendingTeamApprovals.length} tim mahasiswa</strong> yang telah memenuhi syarat kuota dan siap untuk ditinjau pembentukannya.
+                                    </>
+                                ) : (
+                                    <>
+                                        Seluruh ajuan pembentukan tim mahasiswa telah ditinjau. Belum ada antrean baru.
+                                    </>
+                                )}
                             </div>
                         </div>
-                        <a
-                            href="#persetujuan-tim"
-                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
-                        >
-                            <span>Tinjau ajuan formasi</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                        </a>
+
+                        <div className="mt-5 pt-4 border-t border-slate-100">
+                            <a
+                                href="#persetujuan-tim"
+                                className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
+                            >
+                                <span>Tinjau Ajuan Formasi</span>
+                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                            </a>
+                        </div>
                     </div>
 
-                    {/* KPI 2: Kelas Kuliah Diampu */}
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                        <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Kelas Diampu
-                                </span>
-                                <GraduationCap className="w-5 h-5 text-blue-600" />
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                                    {stats?.taught_classes_count ?? taughtClasses.length}
-                                </span>
-                                <span className="text-xs text-slate-400 font-medium">
-                                    {stats?.total_students_count ?? 0} Mahasiswa
-                                </span>
-                            </div>
-                        </div>
-                        <Link
-                            href="/classes"
-                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
-                        >
-                            <span>Buka manajemen kelas</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                    </div>
+                    {/* RIGHT COLUMN (8 COLS LG): CARD 2 ON TOP (WIDE), CARDS 3 & 4 SIDE BY SIDE */}
+                    <div className="lg:col-span-8 flex flex-col justify-between gap-4 sm:gap-5">
+                        {/* CARD 2: KELAS DIAMPU (WIDE) */}
+                        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex-1 flex flex-col justify-between group/card">
+                            <div>
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                        Kelas Diampu
+                                    </span>
+                                    <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                                        <GraduationCap className="size-4 text-blue-600" />
+                                    </span>
+                                </div>
 
-                    {/* KPI 3: Proyek & Kelompok Bimbingan */}
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                        <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Proyek Bimbingan
-                                </span>
-                                <FolderKanban className="w-5 h-5 text-indigo-600" />
-                            </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                                    {stats?.total_guided_projects_count ?? guidedProjects.length}
-                                </span>
-                                <span className="text-xs text-slate-400 font-medium">
-                                    Tim Proyek
-                                </span>
-                            </div>
-                        </div>
-                        <Link
-                            href="/projects"
-                            className="text-xs font-semibold text-blue-600 hover:underline flex items-center justify-between pt-2 border-t border-slate-100"
-                        >
-                            <span>Tinjau progres proyek</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                    </div>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-1">
+                                    <div>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                                                {stats?.taught_classes_count ?? taughtClasses.length}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-500">
+                                                Kelas Kuliah Aktif
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            Membina <strong className="text-slate-800">{stats?.total_students_count ?? 0} mahasiswa</strong> terdaftar di semester ini.
+                                        </p>
+                                    </div>
 
-                    {/* KPI 4: Living Proposal Menunggu Review */}
-                    <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between gap-3">
-                        <div>
-                            <div className="flex items-center justify-between text-slate-400 mb-1">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Proposal Masuk
-                                </span>
-                                <FileCheck className="w-5 h-5 text-amber-500" />
+                                    {taughtClasses && taughtClasses.length > 0 && (
+                                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 self-start sm:self-auto">
+                                            {taughtClasses.slice(0, 3).map((c: any) => (
+                                                <span
+                                                    key={c.id}
+                                                    className="text-[11px] font-medium bg-slate-50 text-slate-700 px-2.5 py-1 rounded-lg border border-slate-200/80 truncate max-w-[140px]"
+                                                    title={c.name}
+                                                >
+                                                    {c.code || c.name}
+                                                </span>
+                                            ))}
+                                            {taughtClasses.length > 3 && (
+                                                <span className="text-[10px] font-semibold text-slate-400 px-1">
+                                                    +{taughtClasses.length - 3} lagi
+                                                </span>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                            <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                                    {stats?.pending_proposals_count ?? pendingProposals.length}
-                                </span>
-                                <span className="text-xs text-slate-400 font-medium">
-                                    Menunggu Persetujuan
-                                </span>
+
+                            <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-xs text-slate-400">Manajemen silabus, anggota, dan evaluasi</span>
+                                <Link
+                                    href="/classes"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer"
+                                >
+                                    <span>Buka Manajemen Kelas</span>
+                                    <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                </Link>
                             </div>
                         </div>
-                        <div className="text-xs text-slate-500 pt-2 border-t border-slate-100">
-                            Living Proposal mahasiswa kelas
+
+                        {/* BOTTOM ROW: CARDS 3 & 4 (2 EQUAL COLS) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                            {/* CARD 3: PROYEK BIMBINGAN */}
+                            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Proyek Bimbingan
+                                        </span>
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                                            <FolderKanban className="size-4 text-blue-600" />
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                                            {stats?.total_guided_projects_count ?? guidedProjects.length}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-500">
+                                            Tim Proyek
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Proyek capstone dan mandiri dalam supervisi bimbingan Anda.
+                                    </p>
+                                </div>
+
+                                <div className="mt-4 pt-3.5 border-t border-slate-100">
+                                    <Link
+                                        href="/projects"
+                                        className="w-full text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
+                                    >
+                                        <span>Tinjau Progres Proyek</span>
+                                        <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                    </Link>
+                                </div>
+                            </div>
+
+                            {/* CARD 4: PROPOSAL MASUK */}
+                            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                                <div>
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                            Proposal Masuk
+                                        </span>
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
+                                            <FileCheck className="size-4 text-blue-600" />
+                                        </span>
+                                    </div>
+
+                                    <div className="flex items-baseline gap-2">
+                                        <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
+                                            {stats?.pending_proposals_count ?? pendingProposals.length}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-500">
+                                            Menunggu Persetujuan
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Living Proposal mahasiswa kelas menunggu tinjauan dan evaluasi.
+                                    </p>
+                                </div>
+
+                                <div className="mt-4 pt-3.5 border-t border-slate-100">
+                                    <Link
+                                        href="/projects?category=academic"
+                                        className="w-full text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
+                                    >
+                                        <span>Tinjau Living Proposal</span>
+                                        <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                    </Link>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
