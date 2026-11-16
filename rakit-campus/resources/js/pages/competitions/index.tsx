@@ -1286,8 +1286,60 @@ export default function CompetitionIndex({
                                                             {descText}
                                                         </p>
 
+                                                        {/* UI Capacity Person / Formasi Kuota Tim */}
+                                                        <div className="pt-2 border-t border-slate-200/70 space-y-1.5">
+                                                            <div className="flex items-center justify-between text-[11px]">
+                                                                <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                                                                    <Users className="size-3 text-slate-400" />
+                                                                    <span>Kapasitas Personel</span>
+                                                                </span>
+                                                                <div className="flex items-center gap-1 text-[11px]">
+                                                                    <span className="font-bold text-blue-600">{membersCount}</span>
+                                                                    <span className="text-slate-400">/</span>
+                                                                    <span className="font-semibold text-slate-700">{maxCap}</span>
+                                                                    <span className="text-slate-400 text-[10px]">Terisi</span>
+                                                                    {emptySlots > 0 ? (
+                                                                        <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">
+                                                                            Sisa {emptySlots} Slot
+                                                                        </span>
+                                                                    ) : (
+                                                                        <span className="ml-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70">
+                                                                            Penuh
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Visual Person Capacity Slot Badges */}
+                                                            <div className="flex items-center gap-1.5">
+                                                                {Array.from({ length: maxCap }).map((_, idx) => {
+                                                                    const isFilled = idx < membersCount;
+                                                                    const member = memberAvatars[idx];
+                                                                    return (
+                                                                        <div
+                                                                            key={idx}
+                                                                            title={
+                                                                                isFilled
+                                                                                    ? member
+                                                                                        ? `${member.name} (${member.role})`
+                                                                                        : `Personel #${idx + 1} (Terisi)`
+                                                                                    : `Slot Personel #${idx + 1} (Terbuka)`
+                                                                            }
+                                                                            className={`size-7 rounded-lg flex items-center justify-center transition-all ${
+                                                                                isFilled
+                                                                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                                                                    : 'border border-dashed border-slate-300 bg-white/80 text-slate-300 hover:border-slate-400'
+                                                                            }`}
+                                                                        >
+                                                                            <User className="size-3.5 stroke-[2.2]" />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
+                                                        </div>
+
                                                         {/* Avatars Stack & Status Pill */}
-                                                        <div className="flex items-center justify-between gap-2 pt-1">
+                                                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
                                                             {/* Stacked Avatars */}
                                                             <div className="flex items-center -space-x-2 overflow-hidden">
                                                                 {memberAvatars.slice(0, 4).map((m, idx) => {
@@ -1345,14 +1397,14 @@ export default function CompetitionIndex({
                                                                 </span>
                                                             </div>
 
-                                                            {/* Link/Members Pill */}
+                                                            {/* Person Capacity Pill */}
                                                             <div
                                                                 className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                                                title={`${membersCount} dari ${maxCap} kuota anggota terisi`}
+                                                                title={`${membersCount} dari ${maxCap} kuota personel terisi`}
                                                             >
                                                                 <Link2 className="size-3.5 text-slate-400 shrink-0" />
                                                                 <span>
-                                                                    <strong className="text-slate-800 font-bold">{membersCount}</strong> Link
+                                                                    <strong className="text-slate-800 font-bold">{membersCount}/{maxCap}</strong> Person
                                                                 </span>
                                                             </div>
 
