@@ -1,4 +1,3 @@
-import AppFooter from '@/components/app-footer';
 import HubGatewayModal from '@/components/gateway/HubGatewayModal';
 import { NotificationBell } from '@/components/notification-bell';
 import { playNotificationChime, sendBrowserNotification } from '@/lib/push-notifications';
@@ -570,27 +569,10 @@ export default function AppLayout({
                         {renderUserActions()}
                     </div>
                 </div>
-
-                {/* Mobile Subnav Strip: Smooth horizontal scroll, clean hairline border */}
-                <div className="md:hidden border-t border-slate-100 dark:border-slate-800/80 bg-white/95 dark:bg-[#06080F]/95 px-3 py-1.5 flex items-center gap-1 overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition ${
-                                item.active
-                                    ? 'bg-slate-100 text-slate-900 font-bold dark:bg-slate-800 dark:text-white'
-                                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-                            }`}
-                        >
-                            {item.label}
-                        </Link>
-                    ))}
-                </div>
             </header>
 
             {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7">
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-24 md:pb-7">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
                     <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
@@ -617,9 +599,6 @@ export default function AppLayout({
                 {/* Page Content */}
                 <div>{children}</div>
             </main>
-
-            {/* Platform Footer */}
-            <AppFooter />
 
             {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
             <nav
