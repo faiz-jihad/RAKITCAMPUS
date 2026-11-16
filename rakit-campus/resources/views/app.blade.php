@@ -9,8 +9,17 @@
             $component = $page['component'] ?? '';
             $props = $page['props'] ?? [];
             $appName = config('app.name', 'RAKIT Campus');
-            $baseUrl = rtrim(config('app.url', 'https://rakitcampus.my.id'), '/');
-            $currentUrl = url()->current();
+            $baseUrl = 'https://rakitcampus.my.id';
+
+            // Canonical URL: Strictly enforce canonical scheme & production domain (https://rakitcampus.my.id)
+            // Strip any query strings, trailing slashes, or alternate host headers (www, mataceria, 127.0.0.1)
+            $pathInfo = request()->getPathInfo();
+            $canonicalPath = '/' . ltrim($pathInfo, '/');
+            $canonicalUrl = rtrim($baseUrl . $canonicalPath, '/');
+            if ($canonicalPath === '/' || empty($canonicalUrl)) {
+                $canonicalUrl = $baseUrl;
+            }
+            $currentUrl = $canonicalUrl;
 
             // Private components that must NEVER be indexed by search engines
             $privateComponents = [
@@ -204,7 +213,7 @@
             <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
             <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
             <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-            <link rel="canonical" href="{{ $currentUrl }}">
+            <link rel="canonical" href="{{ $canonicalUrl }}" head-key="canonical">
         @endif
 
         <!-- Open Graph / Facebook / WhatsApp -->

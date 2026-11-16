@@ -29,6 +29,16 @@ export default function SeoHead({
     // Strip trailing brand suffix if already present so app.tsx title formatter doesn't duplicate
     const cleanTitle = title.replace(/\s*[-—|]\s*RAKIT\s*Campus.*$/i, '').trim();
 
+    // Strictly normalize canonical URL to https://rakitcampus.my.id without www, trailing slashes, or query params
+    const normalizedCanonical = canonicalUrl
+        ? canonicalUrl
+              .replace(/^http:\/\//, 'https://')
+              .replace('https://www.rakitcampus.my.id', 'https://rakitcampus.my.id')
+              .replace('https://rakitcampus.mataceria.my.id', 'https://rakitcampus.my.id')
+              .split('?')[0]
+              .replace(/\/+$/, '') || 'https://rakitcampus.my.id'
+        : 'https://rakitcampus.my.id';
+
     return (
         <Head title={cleanTitle}>
             <meta name="description" content={description} />
@@ -44,8 +54,8 @@ export default function SeoHead({
                 }
             />
 
-            {/* Canonical Link */}
-            {canonicalUrl ? <link rel="canonical" href={canonicalUrl} /> : null}
+            {/* Canonical Link - strictly deduplicated with head-key */}
+            <link rel="canonical" href={normalizedCanonical} head-key="canonical" />
 
             {/* Open Graph / Facebook */}
             <meta property="og:type" content={ogType} />
@@ -53,7 +63,7 @@ export default function SeoHead({
             <meta property="og:title" content={cleanTitle} />
             <meta property="og:description" content={description} />
             <meta property="og:image" content={ogImage} />
-            {canonicalUrl ? <meta property="og:url" content={canonicalUrl} /> : null}
+            <meta property="og:url" content={normalizedCanonical} head-key="og:url" />
             <meta property="og:locale" content="id_ID" />
 
             {/* Twitter Card */}
@@ -61,7 +71,7 @@ export default function SeoHead({
             <meta name="twitter:title" content={cleanTitle} />
             <meta name="twitter:description" content={description} />
             <meta name="twitter:image" content={ogImage} />
-            {canonicalUrl ? <meta name="twitter:url" content={canonicalUrl} /> : null}
+            <meta name="twitter:url" content={normalizedCanonical} head-key="twitter:url" />
         </Head>
     );
 }
