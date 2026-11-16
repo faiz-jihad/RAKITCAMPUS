@@ -23,11 +23,13 @@ import {
     Cpu,
     ExternalLink,
     FileText,
+    Folder,
     FolderKanban,
     Globe,
     GraduationCap,
     Layers,
     Leaf,
+    Link2,
     MessageSquare,
     Mic,
     Palette,
@@ -1197,120 +1199,198 @@ export default function CompetitionIndex({
                                     const maxCap = comp.max_team_size || 3;
                                     const emptySlots = Math.max(0, maxCap - membersCount);
                                     const formattedDeadline = comp.registration_deadline
-                                        ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
-                                              day: 'numeric',
+                                        ? new Date(comp.registration_deadline).toLocaleDateString('en-US', {
                                               month: 'short',
-                                              year: 'numeric',
+                                              day: 'numeric',
                                           })
-                                        : 'Terbuka';
+                                        : 'Open';
 
-                                    const leaderInitials = team?.leader?.name
-                                        ? team.leader.name.split(/\s+/).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-                                        : 'K';
+                                    // Build member list for stacked avatars
+                                    const memberAvatars: Array<{ name: string; avatar: string | null; role: string }> = [];
+                                    if (team?.leader) {
+                                        memberAvatars.push({
+                                            name: team.leader.name,
+                                            avatar: team.leader.avatar,
+                                            role: 'Ketua Tim',
+                                        });
+                                    }
+                                    if (Array.isArray(team?.members)) {
+                                        team.members.forEach((m: any) => {
+                                            if (m.user_id !== team?.leader?.id && m.name) {
+                                                memberAvatars.push({
+                                                    name: m.name,
+                                                    avatar: m.avatar,
+                                                    role: m.role_name || 'Anggota',
+                                                });
+                                            }
+                                        });
+                                    }
+                                    if (memberAvatars.length === 0) {
+                                        memberAvatars.push({
+                                            name: team?.name || 'Tim',
+                                            avatar: null,
+                                            role: 'Tim',
+                                        });
+                                    }
 
-                                    const teamInitials = (team?.name || 'Tim')
-                                        .split(/\s+/)
-                                        .map((p: string) => p[0])
-                                        .slice(0, 2)
-                                        .join('')
-                                        .toUpperCase();
+                                    const descText =
+                                        team?.recruitment?.description ||
+                                        team?.description ||
+                                        `Mencari rekan tim untuk ${comp.name}. Terbuka peran: ${
+                                            roles.map((r: any) => r.name).join(', ') || 'Anggota Tim'
+                                        }.`;
+
+                                    const avatarPalette = [
+                                        'bg-blue-100 text-blue-700',
+                                        'bg-emerald-100 text-emerald-700',
+                                        'bg-amber-100 text-amber-700',
+                                        'bg-purple-100 text-purple-700',
+                                        'bg-rose-100 text-rose-700',
+                                    ];
 
                                     return (
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="bg-white rounded-2xl p-5 border border-slate-200/90 hover:border-blue-400 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 group"
+                                            className="group relative bg-slate-100/80 hover:bg-slate-100/95 border border-slate-200/80 rounded-[28px] p-3 sm:p-3.5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-300 cursor-pointer flex flex-col justify-between"
                                         >
-                                            <div className="space-y-3">
-                                                {/* Category & Deadline */}
-                                                <div className="flex items-center justify-between text-xs">
-                                                    <span className="px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold uppercase tracking-wider">
-                                                        {comp.category?.replace('_', ' ') || 'KOMPETISI'}
-                                                    </span>
-                                                    <span className="text-slate-400 text-[11px] flex items-center gap-1 font-medium">
-                                                        <Clock className="size-3" />
-                                                        <span>{formattedDeadline}</span>
-                                                    </span>
+                                            {/* Acrylic mounting screw rivets in 4 corners */}
+                                            <span className="absolute top-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
+                                            <span className="absolute top-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
+                                            <span className="absolute bottom-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
+                                            <span className="absolute bottom-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
+
+                                            {/* Inner White Card */}
+                                            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between flex-1">
+                                                {/* Top Sky-Blue Header Tab */}
+                                                <div className="bg-gradient-to-r from-sky-400 via-sky-400 to-sky-500 text-white font-extrabold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 text-center select-none shadow-xs">
+                                                    ON BOARDING
                                                 </div>
 
-                                                {/* Team Title & Target Competition */}
-                                                <div>
-                                                    <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug line-clamp-1">
-                                                        {team.name}
-                                                    </h3>
-                                                    <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">
-                                                        Target: <span className="text-slate-800 font-medium">{comp.name}</span>
-                                                    </p>
-                                                </div>
-
-                                                {/* Roles Needed */}
-                                                {roles.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1.5 pt-0.5">
-                                                        {roles.map((r: any) => (
-                                                            <span
-                                                                key={r.id}
-                                                                className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-200/70"
-                                                            >
-                                                                {r.name}
+                                                {/* Card Content Area */}
+                                                <div className="p-3.5 sm:p-4 space-y-3.5 flex flex-col justify-between flex-1">
+                                                    {/* Dashed Inner Box */}
+                                                    <div className="border border-dashed border-slate-300 rounded-2xl p-3.5 bg-slate-50/40 space-y-2.5">
+                                                        {/* Top: Team Name & Deadline */}
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
+                                                                {team.name}
+                                                            </h3>
+                                                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap shrink-0">
+                                                                {formattedDeadline}
                                                             </span>
-                                                        ))}
-                                                    </div>
-                                                )}
+                                                        </div>
 
-                                                {/* Clean Formation Row: Blue Person Icons */}
-                                                <div className="pt-1.5 border-t border-slate-100">
-                                                    <div className="flex items-center justify-between text-xs mb-2">
-                                                        <span className="text-[11px] text-slate-500 font-medium">Formasi Anggota</span>
-                                                        <span className="text-xs font-semibold text-slate-700">
-                                                            <span className="text-blue-600 font-bold">{membersCount}</span>/{maxCap} Terisi
-                                                        </span>
+                                                        {/* Description */}
+                                                        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                                            {descText}
+                                                        </p>
+
+                                                        {/* Avatars Stack & Status Pill */}
+                                                        <div className="flex items-center justify-between gap-2 pt-1">
+                                                            {/* Stacked Avatars */}
+                                                            <div className="flex items-center -space-x-2 overflow-hidden">
+                                                                {memberAvatars.slice(0, 4).map((m, idx) => {
+                                                                    const initials = m.name
+                                                                        ? m.name.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()
+                                                                        : 'U';
+                                                                    const colorClass = avatarPalette[idx % avatarPalette.length];
+
+                                                                    return m.avatar ? (
+                                                                        <img
+                                                                            key={idx}
+                                                                            src={m.avatar}
+                                                                            alt={m.name}
+                                                                            title={`${m.name} (${m.role})`}
+                                                                            className="size-7 rounded-full object-cover ring-2 ring-white shadow-2xs"
+                                                                        />
+                                                                    ) : (
+                                                                        <div
+                                                                            key={idx}
+                                                                            title={`${m.name} (${m.role})`}
+                                                                            className={`size-7 rounded-full ${colorClass} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs`}
+                                                                        >
+                                                                            {initials}
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                                {emptySlots > 0 && (
+                                                                    <div
+                                                                        className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
+                                                                        title={`${emptySlots} slot terbuka`}
+                                                                    >
+                                                                        +{emptySlots}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            {/* In Progress Status Pill */}
+                                                            <span className="px-3 py-1 rounded-lg bg-[#dcfce7] text-[#16a34a] text-xs font-semibold tracking-wide border border-[#bbf7d0]/60 select-none">
+                                                                In Progress
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div className="flex items-center gap-2">
-                                                        {Array.from({ length: maxCap }).map((_, idx) => {
-                                                            const isFilled = idx < membersCount;
-                                                            return (
-                                                                <div
-                                                                    key={idx}
-                                                                    className={`size-8 rounded-full flex items-center justify-center transition-colors ${
-                                                                        isFilled
-                                                                            ? 'bg-blue-600 text-white shadow-2xs'
-                                                                            : 'border border-dashed border-slate-300 bg-slate-50/60 text-slate-300'
-                                                                    }`}
-                                                                    title={isFilled ? `Anggota #${idx + 1} Terisi` : `Slot #${idx + 1} Kosong`}
-                                                                >
-                                                                    <User className="size-3.5 stroke-[2]" />
-                                                                </div>
-                                                            );
-                                                        })}
+
+                                                    {/* Bottom Row: 3 Pills & Plus Button */}
+                                                    <div className="flex items-center justify-between gap-1.5 pt-0.5">
+                                                        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+                                                            {/* Comment/Roles Pill */}
+                                                            <div
+                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
+                                                                title={`${roles.length} lowongan peran (${roles.map((r: any) => r.name).join(', ') || 'Anggota'})`}
+                                                            >
+                                                                <MessageSquare className="size-3.5 text-slate-400 shrink-0" />
+                                                                <span>
+                                                                    <strong className="text-slate-800 font-bold">{roles.length || 1}</strong> Comment
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Link/Members Pill */}
+                                                            <div
+                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
+                                                                title={`${membersCount} dari ${maxCap} kuota anggota terisi`}
+                                                            >
+                                                                <Link2 className="size-3.5 text-slate-400 shrink-0" />
+                                                                <span>
+                                                                    <strong className="text-slate-800 font-bold">{membersCount}</strong> Link
+                                                                </span>
+                                                            </div>
+
+                                                            {/* Folder/File Pill */}
+                                                            <div
+                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs max-w-[100px] truncate"
+                                                                title={`Kategori: ${comp.category?.replace('_', ' ') || 'Kompetisi'} (Kapasitas: ${maxCap} orang)`}
+                                                            >
+                                                                <Folder className="size-3.5 text-slate-400 shrink-0" />
+                                                                <span className="truncate">
+                                                                    <strong className="text-slate-800 font-bold">{maxCap}</strong> File
+                                                                </span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Action Button: Plus or Joined Check */}
+                                                        {part.is_member || part.is_leader ? (
+                                                            <div
+                                                                className="size-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs"
+                                                                title="Anda sudah tergabung dalam tim ini"
+                                                            >
+                                                                <CheckCircle2 className="size-4" />
+                                                            </div>
+                                                        ) : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    openApplyModal(part);
+                                                                }}
+                                                                className="size-8 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/90 hover:border-blue-400 text-slate-700 hover:text-blue-600 flex items-center justify-center shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
+                                                                title="Ajukan diri bergabung ke tim ini"
+                                                            >
+                                                                <Plus className="size-4 stroke-[2.5]" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
-                                            </div>
-
-                                            {/* Bottom Leader & Action */}
-                                            <div className="border-t border-slate-100 pt-3 flex items-center justify-between gap-3 text-xs">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <div className="size-6 rounded-full bg-blue-50 text-blue-700 font-bold text-[10px] flex items-center justify-center shrink-0">
-                                                        {leaderInitials}
-                                                    </div>
-                                                    <span className="font-medium text-slate-700 text-xs truncate">
-                                                        {team?.leader?.name || 'Ketua Tim'}
-                                                    </span>
-                                                </div>
-
-                                                {part.is_member || part.is_leader ? (
-                                                    <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md text-[11px] border border-emerald-200">
-                                                        <CheckCircle2 className="size-3 text-emerald-600" />
-                                                        <span>Anda Sudah di Tim Ini</span>
-                                                    </span>
-                                                ) : (
-                                                    <button
-                                                        type="button"
-                                                        className="inline-flex items-center gap-1 font-semibold text-blue-600 group-hover:text-blue-700 transition"
-                                                    >
-                                                        <span>Ajukan Diri</span>
-                                                        <ArrowUpRight className="size-3.5" />
-                                                    </button>
-                                                )}
                                             </div>
                                         </div>
                                     );
