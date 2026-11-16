@@ -18,4 +18,13 @@ export default defineConfig({
     esbuild: {
         jsx: 'automatic',
     },
+    build: {
+        rollupOptions: {
+            output: {
+                chunkFileNames: 'assets/[name]-v2-[hash].js',
+                entryFileNames: 'assets/[name]-v2-[hash].js',
+                assetFileNames: 'assets/[name]-v2-[hash].[ext]',
+            },
+        },
+    },
 });
