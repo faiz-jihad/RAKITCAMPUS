@@ -937,17 +937,9 @@ export default function Dashboard({
                 {/* 1. HEADER ROW DOSEN */}
                 <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
                     <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80">
-                                Portal Dosen Pengampu & Pembimbing
-                            </span>
-                        </div>
                         <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                             Selamat Datang, {user?.name}
                         </h1>
-                        <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                            Kelola ruang kelas, persetujuan pengajuan tim, bimbing proyek & persiapan lomba, tinjau proposal, serta simulasi tim mahasiswa.
-                        </p>
                     </div>
 
                     <div className="flex items-center gap-2.5 shrink-0">
