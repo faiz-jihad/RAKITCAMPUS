@@ -1,6 +1,14 @@
 export function getCompetitionCover(comp: any): string {
-    if (comp?.cover_image && typeof comp.cover_image === 'string' && comp.cover_image.trim() !== '') {
-        return comp.cover_image;
+    const rawCover = comp?.cover_image || comp?.cover_image_url;
+    if (
+        rawCover &&
+        typeof rawCover === 'string' &&
+        rawCover.trim() !== '' &&
+        rawCover !== '0' &&
+        rawCover !== 'null' &&
+        rawCover !== 'undefined'
+    ) {
+        return rawCover;
     }
 
     const name = (comp?.name || '').toLowerCase();

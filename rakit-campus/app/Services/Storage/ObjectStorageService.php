@@ -69,22 +69,38 @@ class ObjectStorageService
 
         $fullPath = $directory ? "{$directory}/{$filename}" : $filename;
 
-        // Stream file directly to object storage (memory efficient for large files)
+        $stored = false;
         try {
-            $stream = fopen($file->getRealPath(), 'r+');
-            $stored = Storage::disk($diskName)->put($fullPath, $stream, $options);
-            if (is_resource($stream)) {
-                fclose($stream);
+            $stream = fopen($file->getRealPath(), 'rb');
+            if ($stream) {
+                $stored = Storage::disk($diskName)->put($fullPath, $stream, $options);
+                if (is_resource($stream)) {
+                    fclose($stream);
+                }
             }
 
             if (!$stored) {
-                // Fallback to storeAs
-                $fullPath = $file->storeAs($directory, $filename, $diskName);
+                $storedPath = $file->storeAs($directory, $filename, $diskName);
+                if ($storedPath && is_string($storedPath)) {
+                    $fullPath = $storedPath;
+                    $stored = true;
+                }
             }
         } catch (\Throwable $e) {
-            Log::error("Object storage upload failed on disk [{$diskName}], falling back to [public]: " . $e->getMessage());
-            $diskName = 'public';
-            $fullPath = $file->storeAs($directory, $filename, 'public');
+            Log::warning("Object storage upload failed on disk [{$diskName}], falling back to [public]: " . $e->getMessage());
+            $stored = false;
+        }
+
+        // If storing on primary object disk failed, always safely fallback to public disk
+        if (!$stored) {
+            try {
+                $diskName = 'public';
+                $storedPath = $file->storeAs($directory, $filename, 'public');
+                $fullPath = ($storedPath && is_string($storedPath)) ? $storedPath : "{$directory}/{$filename}";
+            } catch (\Throwable $e) {
+                Log::error("Public storage fallback failed: " . $e->getMessage());
+                $fullPath = "{$directory}/{$filename}";
+            }
         }
 
         $url = self::url($fullPath, $diskName);
@@ -119,7 +135,7 @@ class ObjectStorageService
      */
     public static function url(?string $path, ?string $diskName = null): ?string
     {
-        if (empty($path)) {
+        if (empty($path) || $path === '0' || $path === 'null') {
             return null;
         }
 

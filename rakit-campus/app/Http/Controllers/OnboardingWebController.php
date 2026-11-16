@@ -308,8 +308,8 @@ class OnboardingWebController extends Controller
             );
         }
 
-        return redirect()->route('projects.index')
-            ->with('success', 'Biodata berhasil dilengkapi! Selamat mencari dan berkolaborasi di Project Hub.');
+        return redirect('/dashboard?select_hub=1')
+            ->with('success', 'Biodata berhasil dilengkapi! Silakan pilih ruang kerja tujuan kamu: Proyek Hub atau Lomba Hub.');
     }
 
     /**
@@ -322,6 +322,6 @@ class OnboardingWebController extends Controller
         if ($profile) {
             $profile->update(['is_onboarded' => true]);
         }
-        return redirect()->route('projects.index');
+        return redirect('/dashboard?select_hub=1');
     }
 }

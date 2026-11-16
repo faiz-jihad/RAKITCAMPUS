@@ -82,6 +82,18 @@ services:
     networks:
       - rakit_network
 
+  minio:
+    image: chrislusf/seaweedfs:latest
+    container_name: rakit_campus_minio
+    restart: unless-stopped
+    command: server -s3 -s3.port=9000 -dir=/data
+    volumes:
+      - rakit_minio_data:/data
+    ports:
+      - "9000:9000"
+    networks:
+      - rakit_network
+
   web:
     image: nginx:alpine
     container_name: rakit_campus_web
@@ -125,4 +137,6 @@ volumes:
   rakit_db_data:
     driver: local
   rakit_redis_data:
+    driver: local
+  rakit_minio_data:
     driver: local
