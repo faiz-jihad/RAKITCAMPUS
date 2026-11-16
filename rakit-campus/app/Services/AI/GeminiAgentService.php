@@ -119,14 +119,16 @@ class GeminiAgentService
 
         $systemPrompt = "Anda adalah Lead Technical Mentor & Project Orchestrator untuk tim mahasiswa peserta kompetisi (PKM, Gemastik, Hackathon, KTI, Business Plan) tingkat nasional dan global. 
 Tugas Anda adalah merumuskan rencana aksi konkret (Kanban tasks) yang tajam, terstruktur, realistis, dan berorientasi juara.
+WAJIB DAN PRIORITAS TERTINGGI:
+Sesuaikan setiap tugas secara spesifik dan mendalam dengan INSTRUKSI KHUSUS / FOKUS PROYEK yang diberikan pengguna. Jangan pernah memberikan tugas umum/generik atau template standar jika pengguna memberikan topik/arahan spesifik. Setiap judul dan deskripsi tugas harus secara eksplisit menyebutkan topik, teknologi, metodologi, fitur, atau kebutuhan deliverable yang diminta pengguna.
 Output WAJIB berupa JSON murni dengan format:
 {
-  \"summary\": \"Ringkasan strategi persiapan 1-2 kalimat\",
-  \"recommended_roles\": [\"Peran 1\", \"Peran 2\"],
+  \"summary\": \"Ringkasan strategi persiapan 1-2 kalimat yang secara spesifik menyebut fokus tim\",
+  \"recommended_roles\": [\"Peran 1\", \"Peran 2\", \"Peran 3\"],
   \"tasks\": [
     {
-      \"title\": \"Judul tugas pendek dan spesifik\",
-      \"description\": \"Deskripsi detail apa yang harus diselesaikan dan kriteria selesai\",
+      \"title\": \"Judul tugas pendek dan spesifik sesuai instruksi pengguna\",
+      \"description\": \"Deskripsi detail apa yang harus diselesaikan dan kriteria selesai berdasarkan fokus proyek\",
       \"priority\": \"urgent|high|medium|low\",
       \"stage\": \"todo|in_progress|in_review|completed\",
       \"estimated_days\": 3,
@@ -143,9 +145,12 @@ Tahap Tim Saat Ini: {$stage}
 Berkas Wajib: {$requiredDocs}
 Jumlah Anggota Saat Ini: {$teamSize}
 Tugas Yang Sudah Ada: " . ($existingTaskTitles ?: 'Belum ada tugas') . "
-Fokus / Gagasan Tim: " . ($additionalFocus ?: 'Optimalkan karya terbaik sesuai panduan resmi lomba untuk lolos ke babak final.') . "
 
-Buatkan antara 6 sampai 8 tugas Kanban terpenting yang harus dikerjakan tim saat ini agar siap menang.";
+INSTRUKSI KHUSUS / FOKUS PEKERJAAN DARI PENGGUNA:
+" . ($additionalFocus ?: 'Optimalkan karya terbaik sesuai panduan resmi lomba untuk lolos ke babak final.') . "
+
+PERINGATAN:
+Pastikan 6 sampai 8 tugas Kanban yang dihasilkan benar-benar merefleksikan instruksi khusus di atas, baik pada judul, deskripsi, maupun peran PIC yang direkomendasikan.";
 
         $rawResponse = self::call($systemPrompt, $userPrompt);
 
@@ -235,6 +240,11 @@ Buatkan antara 6 sampai 8 tugas Kanban terpenting yang harus dikerjakan tim saat
         ?string $additionalFocus = null,
         ?string $categoryTrack = null
     ): array {
+        $focusTrimmed = trim((string) $additionalFocus);
+        if (!empty($focusTrimmed)) {
+            return self::buildDynamicCustomTasks($participation, $focusTrimmed, $categoryTrack);
+        }
+
         $comp = $participation->competition;
         $compName = strtolower($comp?->name ?? '');
         $categoryStr = strtolower($comp?->category instanceof \BackedEnum ? $comp->category->value : (string) ($comp?->category ?? ''));
@@ -589,6 +599,136 @@ Buatkan antara 6 sampai 8 tugas Kanban terpenting yang harus dikerjakan tim saat
                     'stage' => 'todo',
                     'estimated_days' => 1,
                     'recommended_role' => 'Semua Anggota',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Dynamically synthesize high-quality contextual Kanban tasks based on user's custom instructions.
+     */
+    protected static function buildDynamicCustomTasks(
+        CompetitionParticipation $participation,
+        string $focus,
+        ?string $categoryTrack = null
+    ): array {
+        $comp = $participation->competition;
+        $compName = $comp?->name ?? 'Kompetisi Mahasiswa';
+        $track = $categoryTrack ?: ($participation->category_track ?: ($comp?->category instanceof \BackedEnum ? $comp->category->value : (string) ($comp?->category ?? 'Inovasi')));
+        $lower = strtolower($focus);
+        $shortFocus = \Illuminate\Support\Str::limit($focus, 65, '...');
+
+        // Detect domain & roles
+        if (str_contains($lower, 'smart contract') || str_contains($lower, 'blockchain') || str_contains($lower, 'web3') || str_contains($lower, 'crypto') || str_contains($lower, 'token')) {
+            $roles = ['Smart Contract Engineer', 'Fullstack Web3 Developer', 'Security Auditor & Tester', 'Ketua Tim'];
+            $devTask = 'Pengembangan Smart Contract & Modul Interaksi Web3';
+            $devDesc = "Kembangkan kode kontrak pintar, implementasikan mekanisme keamanan, dan integrasikan wallet connect untuk: {$focus}.";
+            $testTask = 'Audit Keamanan Smart Contract & Pengujian Unit Test';
+            $testDesc = "Lakukan automated test suite, fuzzing, dan audit simulasi vulnerability pada modul: {$shortFocus}.";
+            $rolePIC = 'Smart Contract Engineer';
+        } elseif (str_contains($lower, 'video') || str_contains($lower, 'animasi') || str_contains($lower, 'film') || str_contains($lower, 'sinematik') || str_contains($lower, 'visual')) {
+            $roles = ['Konseptor & Scriptwriter', 'Video Editor / Animator', 'Desainer Grafis & Audio', 'Ketua Tim'];
+            $devTask = 'Produksi Aset Visual, Animasi & Rekaman Footage Utama';
+            $devDesc = "Rakit visual scene-by-scene, animasi grafis, dan footage pendukung yang merefleksikan gagasan: {$focus}.";
+            $testTask = 'Editing Audio-Visual, Motion Graphic, & Color Grading';
+            $testDesc = "Lakukan kompilasi timeline video, mixing narasi berartikulasi jelas, soundscape, dan subtitle untuk topik: {$shortFocus}.";
+            $rolePIC = 'Video Editor / Animator';
+        } elseif (str_contains($lower, 'iot') || str_contains($lower, 'robot') || str_contains($lower, 'sensor') || str_contains($lower, 'hardware') || str_contains($lower, 'perangkat keras') || str_contains($lower, 'arduino') || str_contains($lower, 'esp32')) {
+            $roles = ['Embedded Systems Engineer', 'Hardware Architect', 'Cloud IoT & Mobile Specialist', 'Ketua Tim'];
+            $devTask = 'Perakitan Hardware, Integrasi Sensor & Firmware Programming';
+            $devDesc = "Rakit modul mikrokontroler, kalibrasi sensor fisik, dan implementasikan protokol komunikasi data untuk: {$focus}.";
+            $testTask = 'Pengujian Lapangan, Kalibrasi Sensor & Analisis Latensi';
+            $testDesc = "Uji ketahanan alat secara continuous run, evaluasi konsumsi daya, dan pastikan pengiriman data stabil pada prototype: {$shortFocus}.";
+            $rolePIC = 'Embedded Systems Engineer';
+        } elseif (str_contains($lower, 'riset') || str_contains($lower, 'ekstrak') || str_contains($lower, 'uji') || str_contains($lower, 'senyawa') || str_contains($lower, 'laboratorium') || str_contains($lower, 'karya ilmiah') || str_contains($lower, 'penelitian')) {
+            $roles = ['Peneliti Utama', 'Laboran & Data Analyst', 'Dokumentasi & Administrasi Ilmiah', 'Ketua Tim'];
+            $devTask = 'Eksperimen Laboratorium & Pengumpulan Data Empiris';
+            $devDesc = "Laksanakan prosedur uji, preparasi sampel, dan catat parameter data hasil observasi sesuai metodologi penelitian: {$focus}.";
+            $testTask = 'Analisis Statistik, Pengolahan Data & Validasi Hasil Uji';
+            $testDesc = "Olah data eksperimen dengan perangkat lunak statistik, bandingkan dengan literatur pembanding, dan rumuskan temuan novelty riset: {$shortFocus}.";
+            $rolePIC = 'Laboran & Data Analyst';
+        } elseif (str_contains($lower, 'aplikasi') || str_contains($lower, 'mobile') || str_contains($lower, 'web') || str_contains($lower, 'software') || str_contains($lower, 'flutter') || str_contains($lower, 'system') || str_contains($lower, 'sistem') || str_contains($lower, 'ai') || str_contains($lower, 'machine learning')) {
+            $roles = ['Lead Developer', 'UI/UX Specialist', 'Backend/Cloud Engineer', 'Ketua Tim'];
+            $devTask = 'Pengembangan Fitur Inti & Integrasi Sistem Solusi';
+            $devDesc = "Tuliskan kode program, implementasikan arsitektur database/API, dan bangun logika sistem untuk: {$focus}.";
+            $testTask = 'Pengujian Kualitas Software (QA), Usability & Uji Beban';
+            $testDesc = "Lakukan functional testing, verifikasi alur user experience tanpa bug, dan optimasi performa modul: {$shortFocus}.";
+            $rolePIC = 'Lead Developer';
+        } elseif (str_contains($lower, 'bisnis') || str_contains($lower, 'umkm') || str_contains($lower, 'pasar') || str_contains($lower, 'startup') || str_contains($lower, 'produk') || str_contains($lower, 'keuangan') || str_contains($lower, 'pemasaran')) {
+            $roles = ['Business Strategist / CEO', 'Product & Brand Designer', 'Finance & Operation Lead', 'Ketua Tim'];
+            $devTask = 'Pembuatan Prototipe Produk & Strategi Go-To-Market';
+            $devDesc = "Susun identitas produk, sample fungsional, kemasan, dan saluran distribusi pemasaran untuk: {$focus}.";
+            $testTask = 'Validasi Pasar Sasaran & Proyeksi Finansial (BEP/NPV)';
+            $testDesc = "Uji respon calon konsumen potensial, hitung proyeksi arus kas, margin keuntungan, dan titik impas usaha untuk: {$shortFocus}.";
+            $rolePIC = 'Business Strategist / CEO';
+        } else {
+            $roles = ['Ketua Tim / Konseptor', 'Spesialis Teknis & Deliverable', 'Dokumentasi & Presentasi', 'Anggota Tim'];
+            $devTask = "Eksekusi Teknis & Pembuatan Solusi Utama ({$shortFocus})";
+            $devDesc = "Realisasikan purwarupa atau karya utama sesuai arahan instruksi spesifik: {$focus}.";
+            $testTask = "Validasi Kinerja Karya & Uji Coba Ketercapaian Target";
+            $testDesc = "Evaluasi hasil karya terhadap kriteria penilaian juri dan kebutuhan pengguna sasaran untuk: {$shortFocus}.";
+            $rolePIC = 'Spesialis Teknis & Deliverable';
+        }
+
+        return [
+            'summary' => "Rencana aksi terarah berfokus pada: {$focus} untuk memaksimalkan peluang lolos dan berprestasi pada {$compName}.",
+            'recommended_roles' => $roles,
+            'tasks' => [
+                [
+                    'title' => "Perumusan Gagasan & Spesifikasi Solusi: {$shortFocus}",
+                    'description' => "Bedah latar belakang masalah, identifikasi data pendukung, dan rumuskan batasan spesifikasi solusi yang tajam untuk fokus: {$focus}.",
+                    'priority' => 'urgent',
+                    'stage' => 'todo',
+                    'estimated_days' => 2,
+                    'recommended_role' => $roles[0] ?? 'Ketua Tim',
+                ],
+                [
+                    'title' => "Perancangan Blueprint / Desain / Metodologi Solusi",
+                    'description' => "Susun rancangan detail konsep, alur kerja sistem, diagram alir/storyboard, dan kebutuhan resource untuk merealisasikan: {$shortFocus}.",
+                    'priority' => 'high',
+                    'stage' => 'todo',
+                    'estimated_days' => 3,
+                    'recommended_role' => $roles[1] ?? 'Spesialis Teknis',
+                ],
+                [
+                    'title' => $devTask,
+                    'description' => $devDesc,
+                    'priority' => 'urgent',
+                    'stage' => 'todo',
+                    'estimated_days' => 6,
+                    'recommended_role' => $rolePIC,
+                ],
+                [
+                    'title' => $testTask,
+                    'description' => $testDesc,
+                    'priority' => 'high',
+                    'stage' => 'todo',
+                    'estimated_days' => 3,
+                    'recommended_role' => $roles[2] ?? 'Quality Assurance / Tester',
+                ],
+                [
+                    'title' => "Penyusunan Living Proposal & Berkas Resmi {$track}",
+                    'description' => "Dokumentasikan seluruh deskripsi solusi, keunggulan karya, justifikasi anggaran, dan profil tim sesuai template resmi {$compName}.",
+                    'priority' => 'urgent',
+                    'stage' => 'todo',
+                    'estimated_days' => 4,
+                    'recommended_role' => 'Ketua Tim & Administrasi',
+                ],
+                [
+                    'title' => "Bimbingan Bersama Dosen Pendamping & Validasi Substansi",
+                    'description' => "Konsultasikan kemajuan karya dan proposal dengan dosen pembimbing untuk memperoleh review akademis serta pengesahan berkas.",
+                    'priority' => 'urgent',
+                    'stage' => 'todo',
+                    'estimated_days' => 2,
+                    'recommended_role' => 'Ketua Tim & Dosen Pembimbing',
+                ],
+                [
+                    'title' => "Finalisasi Pitch Deck / Video Demo & Submit ke Portal Resmi",
+                    'description' => "Sempurnakan materi presentasi, rekam video penjelasan/demo karya singkat berorientasi dewan juri, periksa syarat berkas, lalu submit sebelum tenggat.",
+                    'priority' => 'urgent',
+                    'stage' => 'todo',
+                    'estimated_days' => 1,
+                    'recommended_role' => 'Semua Anggota Tim',
                 ],
             ],
         ];

@@ -80,6 +80,9 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
 
     // Dedicated Competition Preparation Workspace
     Route::get('/competitions/{slug}/workspace', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace.slug');
+    Route::get('/competitions/workspace/{participationId}', function ($participationId) {
+        return redirect()->route('competitions.workspace', ['participationId' => $participationId]);
+    });
     Route::get('/competition-workspace', [CompetitionWebController::class, 'workspaceIndex'])->name('competitions.workspace.index');
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');
@@ -176,6 +179,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
 
     // Portfolio
     Route::get('/portfolio', [PortfolioWebController::class, 'index'])->name('portfolio.index');
+    Route::post('/portfolio/invite-collaborator', [PortfolioWebController::class, 'inviteCollaborator'])->name('portfolio.invite-collaborator');
 
     // Academic Classes (Kelas Kuliah & Bimbingan Dosen)
     Route::get('/classes', [AcademicClassWebController::class, 'index'])->name('classes.index');

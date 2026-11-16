@@ -82,7 +82,7 @@ class CompetitionParticipation extends Model
      */
     public function calculatePreparationProgress(): int
     {
-        $team = $this->team;
+        $team = $this->relationLoaded('team') ? $this->team : null;
         $taskScore = 0;
         if ($team) {
             if ($team->relationLoaded('tasks')) {
@@ -92,6 +92,10 @@ class CompetitionParticipation extends Model
                 $totalTasks = Task::where('team_id', $team->id)->count();
                 $completedTasks = Task::where('team_id', $team->id)->where('status', 'completed')->count();
             }
+            $taskScore = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+        } elseif ($this->team_id) {
+            $totalTasks = Task::where('team_id', $this->team_id)->count();
+            $completedTasks = Task::where('team_id', $this->team_id)->where('status', 'completed')->count();
             $taskScore = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
         }
 

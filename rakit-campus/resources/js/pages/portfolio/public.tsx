@@ -1,5 +1,5 @@
 import SeoHead from '@/components/seo/SeoHead';
-import { Link } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import {
     Award,
     Briefcase,
@@ -26,6 +26,7 @@ import {
     Trophy,
     UserCheck,
     Users,
+    X,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -89,10 +90,33 @@ interface Props {
         url?: string;
         description?: string;
     }>;
+    myLeadingTeams?: Array<{
+        id: number;
+        name: string;
+        type: string;
+        context_title: string;
+        participation_id?: number;
+    }>;
+    isOwner?: boolean;
 }
 
-export default function PortfolioPublic({ profile, achievements = [], items = [] }: Props) {
+export default function PortfolioPublic({
+    profile,
+    achievements = [],
+    items = [],
+    myLeadingTeams = [],
+    isOwner = false,
+}: Props) {
+    const page = usePage();
+    const currentUser = (page.props as any)?.auth?.user;
     const [copied, setCopied] = useState(false);
+    const [isCollabModalOpen, setIsCollabModalOpen] = useState(false);
+    const [selectedTeamId, setSelectedTeamId] = useState<string>(myLeadingTeams.length > 0 ? String(myLeadingTeams[0].id) : '');
+    const [roleName, setRoleName] = useState('Anggota Tim');
+    const [collabMessage, setCollabMessage] = useState('');
+    const [isSubmittingCollab, setIsSubmittingCollab] = useState(false);
+    const [collabFeedback, setCollabFeedback] = useState<string | null>(null);
+
     const userName = profile?.user?.name || 'Mahasiswa';
     const headline = profile?.headline || 'Mahasiswa & Inovator Kampus • Terbuka untuk Kolaborasi Tim';
     const canonicalUrl = `https://rakitcampus.my.id/p/${encodeURIComponent(profile.slug)}`;
@@ -103,6 +127,34 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
+    };
+
+    const handleSendCollab = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!roleName.trim()) return;
+
+        setIsSubmittingCollab(true);
+        router.post(
+            '/portfolio/invite-collaborator',
+            {
+                student_id: profile.user.id,
+                team_id: selectedTeamId ? Number(selectedTeamId) : null,
+                role_name: roleName.trim(),
+                message: collabMessage.trim() || null,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    setIsCollabModalOpen(false);
+                    setCollabMessage('');
+                    setCollabFeedback(`Ajakan kolaborasi berhasil dikirim kepada ${userName} melalui notifikasi internal!`);
+                    setTimeout(() => setCollabFeedback(null), 6000);
+                },
+                onFinish: () => {
+                    setIsSubmittingCollab(false);
+                },
+            }
+        );
     };
 
     return (
@@ -190,13 +242,22 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
 
                                     {/* Action Buttons */}
                                     <div className="flex items-center gap-2 flex-wrap">
-                                        <a
-                                            href={`mailto:${profile.user?.email || 'support@rakitcampus.my.id'}`}
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs"
-                                        >
-                                            <Send className="size-3.5" />
-                                            <span>Ajak Kolaborasi</span>
-                                        </a>
+                                        {!isOwner && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    if (!currentUser) {
+                                                        router.visit('/login');
+                                                        return;
+                                                    }
+                                                    setIsCollabModalOpen(true);
+                                                }}
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
+                                            >
+                                                <Send className="size-3.5" />
+                                                <span>Ajak Kolaborasi</span>
+                                            </button>
+                                        )}
 
                                         <button
                                             type="button"
@@ -232,6 +293,13 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
                                         )}
                                     </div>
                                 </div>
+
+                                {collabFeedback && (
+                                    <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2 animate-in fade-in duration-200">
+                                        <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
+                                        <span>{collabFeedback}</span>
+                                    </div>
+                                )}
 
                                 {/* Identity Text */}
                                 <div className="space-y-1.5">
@@ -502,6 +570,117 @@ export default function PortfolioPublic({ profile, achievements = [], items = []
                     — Platform Kolaborasi & Matchmaking Mahasiswa Indonesia.
                 </p>
             </footer>
+
+            {/* Modal Ajak Kolaborasi Internal */}
+            {isCollabModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-9 rounded-xl bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center shadow-2xs">
+                                    <Send className="size-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900">Ajak Kolaborasi</h3>
+                                    <p className="text-xs text-slate-500">Undang {userName} ke tim Anda via notifikasi aplikasi</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => !isSubmittingCollab && setIsCollabModalOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendCollab} className="space-y-4 text-xs">
+                            {myLeadingTeams.length > 0 ? (
+                                <div>
+                                    <label className="block font-bold text-slate-700 mb-1">
+                                        Pilih Tim Anda
+                                    </label>
+                                    <select
+                                        value={selectedTeamId}
+                                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+                                    >
+                                        <option value="">Ajakan Kolaborasi Bebas (Belum Ada Tim)</option>
+                                        {myLeadingTeams.map((team) => (
+                                            <option key={team.id} value={team.id}>
+                                                {team.name} ({team.context_title})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            ) : (
+                                <div className="p-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs">
+                                    Ajakan kolaborasi akan dikirimkan langsung ke notifikasi internal akun <strong>{userName}</strong>.
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block font-bold text-slate-700 mb-1">
+                                    Peran / Spesialisasi yang Ditawarkan <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={roleName}
+                                    onChange={(e) => setRoleName(e.target.value)}
+                                    placeholder="Contoh: Frontend Developer, UI/UX Designer, Researcher"
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                />
+                                <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                                    <span className="text-[10px] text-slate-400">Pilihan cepat:</span>
+                                    {['UI/UX Designer', 'Frontend Dev', 'Backend Dev', 'Researcher', 'Video Editor', 'Hustler'].map((r) => (
+                                        <button
+                                            key={r}
+                                            type="button"
+                                            onClick={() => setRoleName(r)}
+                                            className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-medium text-slate-600 cursor-pointer transition"
+                                        >
+                                            {r}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block font-bold text-slate-700 mb-1">
+                                    Pesan Khusus <span className="text-slate-400 font-normal">(Opsional)</span>
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={collabMessage}
+                                    onChange={(e) => setCollabMessage(e.target.value)}
+                                    placeholder="Ceritakan proyek atau kompetisi yang ingin Anda ikuti bersama..."
+                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    disabled={isSubmittingCollab}
+                                    onClick={() => setIsCollabModalOpen(false)}
+                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isSubmittingCollab || !roleName.trim()}
+                                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    <Send className="size-3.5" />
+                                    <span>{isSubmittingCollab ? 'Mengirim...' : 'Kirim Undangan'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

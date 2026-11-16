@@ -122,6 +122,10 @@ class CompetitionWebController extends Controller
             });
         }
 
+        if ($request->filled('organizer')) {
+            $query->where('organizer', $request->input('organizer'));
+        }
+
         if ($request->filled('search')) {
             $search = '%' . $request->input('search') . '%';
             $query->where(function ($q) use ($search) {
@@ -531,6 +535,15 @@ class CompetitionWebController extends Controller
             ->pluck('count', 'category')
             ->all();
 
+        // Distinct organizers list
+        $organizers = Competition::visibleTo($user)
+            ->whereNotNull('organizer')
+            ->where('organizer', '!=', '')
+            ->distinct()
+            ->orderBy('organizer')
+            ->pluck('organizer')
+            ->values();
+
         // Calculate statistics for header cards
         $stats = [
             'total' => Competition::visibleTo($user)->count(),
@@ -589,8 +602,9 @@ class CompetitionWebController extends Controller
             'recommendedCompetitions' => $recommendedCompetitions,
             'categoryCounts' => $categoryCounts,
             'currentUserInfo' => $currentUserInfo,
-            'filters' => (object) $request->only(['search', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
+            'filters' => (object) $request->only(['search', 'organizer', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
             'categories' => CompetitionCategory::values(),
+            'organizers' => $organizers,
             'statuses' => CompetitionStatus::values(),
             'levels' => ['local', 'regional', 'national', 'international'],
             'stats' => $stats,
