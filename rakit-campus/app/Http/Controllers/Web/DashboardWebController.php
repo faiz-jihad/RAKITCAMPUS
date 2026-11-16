@@ -736,6 +736,7 @@ class DashboardWebController extends Controller
             ->with([
                 'team.project:id,title,slug,category,academic_class_id',
                 'team.project.academicClass:id,name,code',
+                'team.participations.competition:id,name,slug,category,level',
                 'team.members' => fn ($m) => $m->where('status', 'active'),
                 'inviter:id,name,email',
                 'role:id,name',
@@ -747,21 +748,24 @@ class DashboardWebController extends Controller
             ->map(function (Invitation $inv) {
                 $statusValue = $inv->status instanceof InvitationStatus ? $inv->status->value : (string) $inv->status;
                 $project = $inv->team?->project;
+                $competition = $inv->team?->participations?->first()?->competition;
                 $isExpired = $inv->isExpired();
 
                 return [
                     'id' => $inv->id,
                     'status' => $isExpired && $statusValue === 'pending' ? 'expired' : $statusValue,
                     'team_id' => $inv->team_id,
-                    'team_name' => $inv->team?->name ?? 'Tim Proyek',
+                    'team_name' => $inv->team?->name ?? 'Tim Kolaborasi',
                     'team_members_count' => $inv->team?->members?->count() ?? 1,
                     'team_capacity' => $inv->team?->capacity ?? 4,
+                    'is_competition' => (bool) $competition,
                     'project_id' => $project?->id,
-                    'project_title' => $project?->title ?? 'Proyek Kelas',
-                    'project_slug' => $project?->slug,
-                    'class_label' => $project?->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : null,
+                    'project_title' => $competition ? "Kompetisi: {$competition->name}" : ($project?->title ?? 'Proyek Kampus'),
+                    'project_slug' => $competition ? $competition->slug : $project?->slug,
+                    'target_url' => $competition ? "/competitions/{$competition->slug}" : ($project ? "/projects/{$project->slug}" : null),
+                    'class_label' => $project?->academicClass ? "{$project->academicClass->name} ({$project->academicClass->code})" : ($competition ? "Kompetisi {$competition->level}" : null),
                     'inviter_name' => $inv->inviter?->name ?? 'Ketua Tim',
-                    'role_name' => $inv->role?->name ?? $inv->role_name ?? 'Kolaborator Proyek',
+                    'role_name' => $inv->role?->name ?? $inv->role_name ?? 'Anggota Tim',
                     'message' => $inv->message,
                     'declined_reason' => $inv->declined_reason,
                     'expires_at' => $inv->expires_at?->diffForHumans(),

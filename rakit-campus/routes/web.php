@@ -69,6 +69,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/competition-allocations/{allocationId}/reject', [CompetitionWebController::class, 'rejectAllocation'])->name('competitions.allocations.reject');
     Route::post('/competition-invitations/{invitationId}/accept', [CompetitionWebController::class, 'acceptInvitation'])->name('competitions.invitations.accept');
     Route::post('/competition-invitations/{invitationId}/decline', [CompetitionWebController::class, 'declineInvitation'])->name('competitions.invitations.decline');
+    Route::post('/competition-invitations/{invitationId}/cancel', [CompetitionWebController::class, 'cancelInvitation'])->name('competitions.invitations.cancel');
 
     // Team Formation & Management
     Route::patch('/competitions/teams/{teamId}/rename', [CompetitionWebController::class, 'renameTeam'])->name('competitions.teams.rename');

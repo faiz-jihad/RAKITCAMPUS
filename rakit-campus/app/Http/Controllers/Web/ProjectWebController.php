@@ -1359,7 +1359,31 @@ class ProjectWebController extends Controller
     public function acceptInvitation(Request $request, int $invitationId)
     {
         $user = $request->user();
-        $invitation = Invitation::with('team.project')->findOrFail($invitationId);
+        $invitation = Invitation::with(['team.project', 'team.participations.competition'])->findOrFail($invitationId);
+
+        // Fallback for competition teams
+        if ($invitation->team && !$invitation->team->project && $invitation->team->participations->isNotEmpty()) {
+            try {
+                $member = app(\App\Services\Matchmaking\CompetitionTeamFormationService::class)->acceptInvitation($invitation, $user);
+                $msg = "Selamat! Anda resmi bergabung dengan tim kompetisi {$invitation->team?->name}.";
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg, 'member_id' => $member->id])
+                    : back()->with('success', $msg);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                if ($request->wantsJson()) {
+                    return response()->json([
+                        'message' => collect($e->errors())->flatten()->first() ?? 'Undangan tidak dapat diterima.',
+                        'errors' => $e->errors(),
+                    ], 422);
+                }
+                return back()->withErrors($e->errors());
+            } catch (\Exception $e) {
+                if ($request->wantsJson()) {
+                    return response()->json(['message' => $e->getMessage()], 422);
+                }
+                return back()->with('error', $e->getMessage());
+            }
+        }
 
         try {
             $member = $this->invitationService->acceptInvitation($invitation, $user);
@@ -1389,7 +1413,7 @@ class ProjectWebController extends Controller
     public function declineInvitation(Request $request, int $invitationId)
     {
         $user = $request->user();
-        $invitation = Invitation::findOrFail($invitationId);
+        $invitation = Invitation::with(['team.project', 'team.participations.competition'])->findOrFail($invitationId);
 
         $validated = $request->validate([
             'reason' => ['nullable', 'string', 'max:255'],
@@ -1397,6 +1421,19 @@ class ProjectWebController extends Controller
         ]);
 
         $reason = $validated['reason'] ?? $validated['declined_reason'] ?? null;
+
+        // Fallback for competition teams
+        if ($invitation->team && !$invitation->team->project && $invitation->team->participations->isNotEmpty()) {
+            try {
+                app(\App\Services\Matchmaking\CompetitionTeamFormationService::class)->declineInvitation($invitation, $user, $reason);
+                $msg = 'Undangan bergabung ke tim kompetisi telah ditolak.';
+                return $request->wantsJson()
+                    ? response()->json(['message' => $msg])
+                    : back()->with('info', $msg);
+            } catch (\Exception $e) {
+                return back()->with('error', $e->getMessage());
+            }
+        }
 
         try {
             $this->invitationService->declineInvitation($invitation, $user, $reason);

@@ -86,12 +86,16 @@ interface Props {
     githubRepo?: any;
     githubData?: any;
     canManageGitHub?: boolean;
+    availableStudents?: any[];
+    sentInvitations?: any[];
 }
 
 export default function CompetitionWorkspace({
     participation,
     readinessScore,
     recommendedCandidates = [],
+    availableStudents = [],
+    sentInvitations = [],
     availableLecturers = [],
     selectionStages,
     teamAllocations = [],
@@ -127,6 +131,8 @@ export default function CompetitionWorkspace({
     // Modals
     const [stageModalOpen, setStageModalOpen] = useState(false);
     const [inviteModalOpen, setInviteModalOpen] = useState(false);
+    const [exploreModalOpen, setExploreModalOpen] = useState(false);
+    const [candidateSearchQuery, setCandidateSearchQuery] = useState('');
     const [selectedCandidate, setSelectedCandidate] = useState<any>(null);
     const [candidateRoleName, setCandidateRoleName] = useState('Anggota Tim');
     const [inviteMessage, setInviteMessage] = useState('');
@@ -267,14 +273,27 @@ export default function CompetitionWorkspace({
         }
     };
 
+    const openInviteModalForCandidate = (cand: any) => {
+        setSelectedCandidate(cand);
+        if (recruitmentRoles && recruitmentRoles.length > 0) {
+            setCandidateRoleName(recruitmentRoles[0].name);
+        } else {
+            setCandidateRoleName('Anggota Tim');
+        }
+        const candidateName = cand.user?.name || cand.name || 'Rekan';
+        setInviteMessage(`Halo ${candidateName}, mari bergabung dengan tim ${participation.team?.name || ''} untuk kompetisi ${participation.competition?.name || ''}!`);
+        setInviteModalOpen(true);
+    };
+
     const handleInviteCandidate = (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedCandidate) return;
 
+        const studentId = selectedCandidate.user?.id || selectedCandidate.id;
         router.post(
             route('competitions.invitations.send', participation.id),
             {
-                student_id: selectedCandidate.user.id,
+                student_id: studentId,
                 role_name: candidateRoleName,
                 message: inviteMessage,
             },
@@ -283,8 +302,18 @@ export default function CompetitionWorkspace({
                     setInviteModalOpen(false);
                     setSelectedCandidate(null);
                     setInviteMessage('');
+                    setExploreModalOpen(false);
                 },
             }
+        );
+    };
+
+    const handleCancelInvitation = (invitationId: number) => {
+        if (!confirm('Apakah Anda yakin ingin membatalkan undangan ini?')) return;
+        router.post(
+            route('competitions.invitations.cancel', invitationId),
+            {},
+            { preserveScroll: true }
         );
     };
 
@@ -1507,6 +1536,36 @@ export default function CompetitionWorkspace({
                 {/* 6) TAB CONTENT: APPLICANTS & MINSATU RECRUITMENT */}
                 {activeTab === 'applicants' && (
                     <div className="space-y-6">
+                        {/* Recruitment Header Bar */}
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white p-5 sm:p-6 rounded-2xl border border-blue-200/80 shadow-2xs">
+                            <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-md border border-blue-200">
+                                        Perekrutan Anggota Tim
+                                    </span>
+                                    <span className="text-xs text-slate-400">•</span>
+                                    <span className="text-xs font-semibold text-slate-500">MinSatu Matchmaking</span>
+                                </div>
+                                <h2 className="text-base sm:text-lg font-black text-slate-900">
+                                    Rekrut Rekan & Kelola Pelamar Tim
+                                </h2>
+                                <p className="text-xs text-slate-600 mt-0.5 leading-relaxed max-w-2xl">
+                                    Ketua tim dapat mengundang mahasiswa secara langsung dengan persetujuan mereka, membuka lowongan posisi, atau meninjau berkas pelamar yang masuk.
+                                </p>
+                            </div>
+
+                            {isLeader && !participation.is_formation_locked && (
+                                <button
+                                    type="button"
+                                    onClick={() => setExploreModalOpen(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
+                                >
+                                    <UserPlus className="size-4" />
+                                    <span>+ Rekrut / Undang Mahasiswa</span>
+                                </button>
+                            )}
+                        </div>
+
                         {/* Open Roles Section */}
                         <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
@@ -1650,6 +1709,140 @@ export default function CompetitionWorkspace({
                                             <span className="text-xs font-semibold">Tambah Posisi Lain</span>
                                         </button>
                                     )}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Sent Invitations Section (Recruiting with Approval) */}
+                        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                        <Send className="size-4 text-blue-600 shrink-0" />
+                                        <span>Undangan Terkirim ({sentInvitations.length})</span>
+                                    </h3>
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                        Mahasiswa yang Anda undang secara langsung. Keanggotaan resmi berlaku setelah disetujui mahasiswa.
+                                    </p>
+                                </div>
+
+                                {isLeader && !participation.is_formation_locked && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setExploreModalOpen(true)}
+                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-bold transition cursor-pointer self-start sm:self-auto shrink-0 shadow-2xs"
+                                    >
+                                        <UserPlus className="size-3.5" />
+                                        <span>+ Cari & Rekrut Mahasiswa</span>
+                                    </button>
+                                )}
+                            </div>
+
+                            {sentInvitations.length === 0 ? (
+                                <div className="text-center py-8 px-4 bg-slate-50/70 rounded-xl border border-dashed border-slate-200">
+                                    <UserCheck className="size-8 text-slate-400 mx-auto mb-2 opacity-60" />
+                                    <p className="text-xs font-bold text-slate-700">Belum Ada Undangan yang Dikirimkan</p>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 max-w-md mx-auto">
+                                        Anda dapat mencari mahasiswa di kampus Anda dan mengirimkan tawaran posisi langsung dengan persetujuan mereka.
+                                    </p>
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setExploreModalOpen(true)}
+                                            className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs"
+                                        >
+                                            <UserPlus className="size-3.5" />
+                                            <span>Cari & Rekrut Mahasiswa Kampus</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {sentInvitations.map((inv: any) => (
+                                        <div
+                                            key={inv.id}
+                                            className="p-4 rounded-xl border border-slate-200/90 bg-white hover:border-slate-300 shadow-2xs transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                        >
+                                            <div className="flex items-start gap-3 min-w-0">
+                                                <div className="size-10 rounded-xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs overflow-hidden">
+                                                    {inv.invitee?.avatar ? (
+                                                        <img src={inv.invitee.avatar} alt={inv.invitee?.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        inv.invitee?.name?.charAt(0).toUpperCase() || 'M'
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-xs font-bold text-slate-900 truncate">
+                                                            {inv.invitee?.name || 'Mahasiswa'}
+                                                        </span>
+                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0">
+                                                            Posisi: {inv.role_name}
+                                                        </span>
+                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                            inv.status === 'accepted'
+                                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                                                : inv.status === 'declined'
+                                                                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                                                : inv.status === 'cancelled'
+                                                                ? 'bg-slate-100 text-slate-600'
+                                                                : 'bg-amber-50 text-amber-800 border border-amber-200'
+                                                        }`}>
+                                                            {inv.status === 'accepted'
+                                                                ? '✅ Resmi Bergabung'
+                                                                : inv.status === 'declined'
+                                                                ? '❌ Ditolak'
+                                                                : inv.status === 'cancelled'
+                                                                ? 'Dibatalkan'
+                                                                : '⏳ Menunggu Persetujuan'}
+                                                        </span>
+                                                    </div>
+
+                                                    <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                                        {inv.invitee?.study_program || 'Mahasiswa'} {inv.invitee?.semester ? `• Semester ${inv.invitee.semester}` : ''}
+                                                        {inv.invitee?.campus_name ? ` • ${inv.invitee.campus_name}` : ''}
+                                                    </p>
+
+                                                    {inv.invitee?.skills && inv.invitee.skills.length > 0 && (
+                                                        <div className="flex items-center gap-1 flex-wrap mt-1.5">
+                                                            {inv.invitee.skills.slice(0, 3).map((sk: string, i: number) => (
+                                                                <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                                    {sk}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {inv.message && (
+                                                        <p className="text-[11px] text-slate-600 italic mt-1.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">
+                                                            "{inv.message}"
+                                                        </p>
+                                                    )}
+
+                                                    {inv.declined_reason && (
+                                                        <p className="text-[11px] text-rose-600 mt-1">
+                                                            Alasan ditolak: "{inv.declined_reason}"
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                                <span className="text-[10px] text-slate-400 mr-1">
+                                                    {inv.created_at || 'Baru saja'}
+                                                </span>
+                                                {isLeader && inv.status === 'pending' && !participation.is_formation_locked && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleCancelInvitation(inv.id)}
+                                                        className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-xs font-semibold transition cursor-pointer"
+                                                    >
+                                                        Batalkan
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
@@ -2869,67 +3062,289 @@ export default function CompetitionWorkspace({
                 </div>
             )}
 
-            {/* MODAL 2: SEND INVITATION */}
+            {/* MODAL 2: SEND INVITATION (RECRUITING WITH APPROVAL) */}
             {inviteModalOpen && selectedCandidate && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <h3 className="text-base font-bold text-slate-900">Undang Calon Anggota</h3>
+                            <div className="flex items-center gap-2">
+                                <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <Send className="size-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900">Undang Rekan ke Tim</h3>
+                                    <p className="text-[11px] text-slate-400">Perekrutan resmi dengan persetujuan mahasiswa</p>
+                                </div>
+                            </div>
                             <button type="button" onClick={() => setInviteModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleInviteCandidate} className="mt-4 space-y-3.5">
+                        <form onSubmit={handleInviteCandidate} className="mt-4 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Nama Mahasiswa</label>
-                                <input
-                                    type="text"
-                                    disabled
-                                    value={selectedCandidate.user.name}
-                                    className="w-full px-3 py-2 bg-slate-100 border border-slate-200 rounded-lg text-xs text-slate-700 font-semibold"
-                                />
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Calon Anggota</label>
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                        {(selectedCandidate.user?.name || selectedCandidate.name || 'M').charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-900 truncate">
+                                            {selectedCandidate.user?.name || selectedCandidate.name}
+                                        </p>
+                                        <p className="text-[11px] text-slate-500 truncate">
+                                            {selectedCandidate.user?.study_program || selectedCandidate.study_program || 'Mahasiswa'}
+                                            {(selectedCandidate.user?.semester || selectedCandidate.semester) ? ` • Sem ${selectedCandidate.user?.semester || selectedCandidate.semester}` : ''}
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Peran yang Ditawarkan</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Peran / Posisi yang Ditawarkan <span className="text-blue-600">*</span>
+                                </label>
+
+                                {recruitmentRoles && recruitmentRoles.length > 0 && (
+                                    <div className="mb-2">
+                                        <span className="text-[10px] text-slate-400 font-semibold block mb-1">Pilih dari posisi terbuka:</span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {recruitmentRoles.map((r: any) => (
+                                                <button
+                                                    type="button"
+                                                    key={r.id}
+                                                    onClick={() => setCandidateRoleName(r.name)}
+                                                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition cursor-pointer border ${
+                                                        candidateRoleName === r.name
+                                                            ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                                                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                                                    }`}
+                                                >
+                                                    {r.name}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <input
                                     type="text"
                                     required
                                     value={candidateRoleName}
                                     onChange={(e) => setCandidateRoleName(e.target.value)}
-                                    placeholder="Contoh: UI/UX Designer, Frontend Developer"
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
+                                    placeholder="Contoh: UI/UX Designer, Frontend Developer, AI Engineer"
+                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">Pesan Undangan</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Pesan Undangan (Opsional)
+                                </label>
                                 <textarea
                                     rows={3}
                                     value={inviteMessage}
                                     onChange={(e) => setInviteMessage(e.target.value)}
-                                    placeholder="Halo, kami mengundang Anda bergabung dengan tim untuk kompetisi ini..."
-                                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900"
+                                    placeholder="Tuliskan alasan mengajak bergabung atau fokus tugas yang disiapkan..."
+                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
                                 />
+                            </div>
+
+                            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
+                                <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
+                                <span>
+                                    Mahasiswa akan menerima notifikasi undangan di aplikasi dan email mereka. Keanggotaan resmi berlaku setelah mahasiswa menyetujui undangan ini.
+                                </span>
                             </div>
 
                             <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
                                 <button
                                     type="button"
                                     onClick={() => setInviteModalOpen(false)}
-                                    className="px-3.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold"
+                                    className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                 >
-                                    Kirim Undangan
+                                    Kirim Undangan Rekrutmen
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* MODAL: EXPLORE & RECRUIT CAMPUS CANDIDATES */}
+            {exploreModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+                    <div className="w-full max-w-2xl p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white flex flex-col gap-4">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <div className="size-8 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center shadow-xs">
+                                    <UserPlus className="size-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900">Eksplor & Rekrut Rekan Kampus</h3>
+                                    <p className="text-[11px] text-slate-400">Undang mahasiswa untuk mengisi peran yang dibutuhkan di tim kompetisi</p>
+                                </div>
+                            </div>
+                            <button type="button" onClick={() => setExploreModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="relative">
+                            <Search className="size-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Cari nama mahasiswa, program studi, atau keahlian (contoh: UI/UX, React, AI)..."
+                                value={candidateSearchQuery}
+                                onChange={(e) => setCandidateSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 focus:bg-white"
+                            />
+                        </div>
+
+                        {/* Candidate Lists */}
+                        <div className="space-y-4 max-h-[55vh] overflow-y-auto pr-1">
+                            {/* Section A: Matchmaking Recommendations */}
+                            {recommendedCandidates.length > 0 && !candidateSearchQuery && (
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1.5">
+                                            <Sparkles className="size-3.5 text-blue-600" />
+                                            <span>Rekomendasi Terbaik (Matchmaking)</span>
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">Berdasarkan kecocokan skill</span>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                                        {recommendedCandidates.map((cand: any) => (
+                                            <div
+                                                key={cand.user.id}
+                                                className="p-3.5 rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50/40 to-white flex flex-col justify-between gap-2.5 shadow-2xs hover:border-blue-300 transition"
+                                            >
+                                                <div>
+                                                    <div className="flex items-start justify-between gap-2">
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-xs font-bold text-slate-900 truncate">{cand.user.name}</p>
+                                                            <p className="text-[11px] text-slate-500 truncate">
+                                                                {cand.user.study_program || 'Mahasiswa'} {cand.user.semester ? `• Sem ${cand.user.semester}` : ''}
+                                                            </p>
+                                                        </div>
+                                                        <span className="text-[10px] font-black px-2 py-0.5 rounded-md bg-blue-600 text-white shrink-0 shadow-2xs">
+                                                            {cand.final_score}% Cocok
+                                                        </span>
+                                                    </div>
+
+                                                    {cand.user.skills && cand.user.skills.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {cand.user.skills.slice(0, 3).map((sk: any, i: number) => (
+                                                                <span key={i} className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
+                                                                    {typeof sk === 'string' ? sk : sk.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openInviteModalForCandidate(cand)}
+                                                    className="w-full py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs text-center"
+                                                >
+                                                    Undang ke Tim
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Section B: All Campus Students */}
+                            <div className="space-y-2">
+                                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider block">
+                                    Mahasiswa Tersedia di Kampus
+                                </span>
+
+                                {(() => {
+                                    const pool = availableStudents && availableStudents.length > 0
+                                        ? availableStudents
+                                        : recommendedCandidates.map((r: any) => r.user);
+
+                                    const filtered = pool.filter((s: any) => {
+                                        if (!candidateSearchQuery.trim()) return true;
+                                        const q = candidateSearchQuery.toLowerCase();
+                                        const nameMatch = (s.name || '').toLowerCase().includes(q);
+                                        const prodiMatch = (s.study_program || '').toLowerCase().includes(q);
+                                        const skillsMatch = Array.isArray(s.skills) && s.skills.some((sk: any) => (typeof sk === 'string' ? sk : sk.name || '').toLowerCase().includes(q));
+                                        return nameMatch || prodiMatch || skillsMatch;
+                                    });
+
+                                    if (filtered.length === 0) {
+                                        return (
+                                            <div className="p-6 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                                                <p className="text-xs font-bold text-slate-700">Tidak ada mahasiswa yang cocok</p>
+                                                <p className="text-[11px] text-slate-400 mt-0.5">Coba ubah kata kunci pencarian nama atau keahlian.</p>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div className="space-y-2">
+                                            {filtered.map((s: any) => (
+                                                <div
+                                                    key={s.id}
+                                                    className="p-3.5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition"
+                                                >
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                                            {(s.name || 'M').charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-bold text-slate-900 truncate">{s.name}</p>
+                                                            <p className="text-[11px] text-slate-500 truncate">
+                                                                {s.study_program || 'Mahasiswa'} {s.semester ? `• Semester ${s.semester}` : ''}
+                                                            </p>
+                                                            {s.skills && s.skills.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1 mt-1">
+                                                                    {s.skills.slice(0, 3).map((sk: any, i: number) => (
+                                                                        <span key={i} className="text-[9px] font-medium px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                                                            {typeof sk === 'string' ? sk : sk.name}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openInviteModalForCandidate(s)}
+                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs shrink-0 self-end sm:self-center"
+                                                    >
+                                                        Undang ke Tim
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-end">
+                            <button
+                                type="button"
+                                onClick={() => setExploreModalOpen(false)}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50"
+                            >
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

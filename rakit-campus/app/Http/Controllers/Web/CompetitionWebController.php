@@ -1224,7 +1224,9 @@ class CompetitionWebController extends Controller
             'team.recruitment.applications.user.profile.experiences',
             'team.recruitment.applications.user.profile.campus',
             'team.recruitment.applications.role',
-            'team.invitations.invitee:id,name,email',
+            'team.invitations.invitee.profile.skills',
+            'team.invitations.invitee.profile.campus',
+            'team.invitations.inviter:id,name',
             'mentor',
             'mentors.user',
             'documents.round',
@@ -1371,10 +1373,65 @@ class CompetitionWebController extends Controller
         }
         $canManageGitHub = $team && ($isLeader || $isAdmin);
 
+        // Available students in the same campus to recruit/invite
+        $campusId = $participation->competition?->campus_id ?? $user->campusId();
+        $teamMemberIds = $team ? $team->members()->pluck('user_id')->toArray() : [];
+
+        $availableStudents = User::whereHas('memberships', function ($q) use ($campusId) {
+            $q->where('role', \App\Enums\CampusRole::Student->value)
+              ->where('status', \App\Enums\MembershipStatus::Active->value);
+            if ($campusId) {
+                $q->where('campus_id', $campusId);
+            }
+        })
+        ->whereNotIn('id', $teamMemberIds)
+        ->with(['profile.skills', 'profile.campus'])
+        ->take(40)
+        ->get()
+        ->map(function ($s) {
+            return [
+                'id' => $s->id,
+                'name' => $s->name,
+                'email' => $s->email,
+                'avatar' => $s->avatar,
+                'study_program' => $s->profile?->study_program ?? 'Mahasiswa',
+                'semester' => $s->profile?->semester,
+                'campus_name' => $s->profile?->campus?->name,
+                'skills' => $s->profile?->skills?->pluck('name')->toArray() ?? [],
+            ];
+        });
+
+        // Sent invitations by this team (for tracking and cancellation)
+        $sentInvitations = $team
+            ? $team->invitations()->with(['invitee.profile.skills', 'invitee.profile.campus', 'inviter:id,name'])->latest()->get()->map(function ($inv) {
+                return [
+                    'id' => $inv->id,
+                    'status' => $inv->status instanceof \App\Enums\InvitationStatus ? $inv->status->value : (string) $inv->status,
+                    'role_name' => $inv->role_name,
+                    'message' => $inv->message,
+                    'declined_reason' => $inv->declined_reason,
+                    'created_at' => $inv->created_at?->diffForHumans(),
+                    'created_at_date' => $inv->created_at?->toFormattedDateString(),
+                    'invitee' => [
+                        'id' => $inv->invitee?->id,
+                        'name' => $inv->invitee?->name,
+                        'email' => $inv->invitee?->email,
+                        'avatar' => $inv->invitee?->avatar,
+                        'study_program' => $inv->invitee?->profile?->study_program ?? 'Mahasiswa',
+                        'semester' => $inv->invitee?->profile?->semester,
+                        'campus_name' => $inv->invitee?->profile?->campus?->name,
+                        'skills' => $inv->invitee?->profile?->skills?->pluck('name')->toArray() ?? [],
+                    ],
+                ];
+            })
+            : collect();
+
         return Inertia::render('competitions/workspace', [
             'participation' => $participation,
             'readinessScore' => $readinessScore,
             'recommendedCandidates' => $recommendedCandidates,
+            'availableStudents' => $availableStudents,
+            'sentInvitations' => $sentInvitations,
             'availableLecturers' => $availableLecturers,
             'selectionStages' => $selectionStages,
             'teamAllocations' => $teamAllocations,
@@ -2179,6 +2236,24 @@ class CompetitionWebController extends Controller
         $this->teamFormationService->declineInvitation($invitation, $user, $request->input('reason'));
 
         return back()->with('success', 'Undangan bergabung ke tim berhasil ditolak.');
+    }
+
+    public function cancelInvitation(Request $request, int $invitationId): RedirectResponse
+    {
+        $user = $request->user();
+        $invitation = Invitation::with('team')->findOrFail($invitationId);
+
+        if (!$invitation->team || (!$invitation->team->isLeader($user) && !$user->isPlatformAdmin())) {
+            abort(403, 'Hanya ketua tim yang dapat membatalkan undangan.');
+        }
+
+        if ($invitation->status !== \App\Enums\InvitationStatus::Pending) {
+            return back()->with('error', 'Hanya undangan berstatus pending yang dapat dibatalkan.');
+        }
+
+        $invitation->update(['status' => \App\Enums\InvitationStatus::Cancelled]);
+
+        return back()->with('success', 'Undangan bergabung ke tim berhasil dibatalkan.');
     }
 
     public function allocateStudent(Request $request, string|int $id): RedirectResponse
