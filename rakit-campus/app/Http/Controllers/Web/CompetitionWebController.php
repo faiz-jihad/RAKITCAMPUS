@@ -1501,7 +1501,7 @@ class CompetitionWebController extends Controller
             }
         }
 
-        $competition = Competition::where('slug', $slug)->first();
+        $competition = Competition::withTrashed()->where('slug', $slug)->first();
         if ($competition) {
             $user = auth()->user();
             $query = CompetitionParticipation::with($relations)->where('competition_id', $competition->id);
