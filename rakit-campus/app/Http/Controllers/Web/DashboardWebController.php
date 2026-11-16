@@ -1053,7 +1053,7 @@ class DashboardWebController extends Controller
                 'participations.competition.sources',
                 'participations.competition.campus:id,name',
                 'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar']),
-                'tasks:id,team_id,status,title,due_date',
+                'tasks:id,team_id,status,title,due_on',
             ])->latest()->get()->map(function ($team) use ($user) {
                 $participation = $team->participations->first();
                 $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);

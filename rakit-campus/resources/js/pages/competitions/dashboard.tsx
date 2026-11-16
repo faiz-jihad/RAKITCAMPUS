@@ -486,7 +486,7 @@ export default function CompetitionDashboard({
 
                             <div className="divide-y divide-slate-100">
                                 {myTasks.slice(0, 5).map((task: any, idx: number) => {
-                                    const dueDate = task.due_date ? new Date(task.due_date) : null;
+                                    const dueDate = task.due_on ? new Date(task.due_on) : (task.due_date ? new Date(task.due_date) : null);
                                     const isUrgent = dueDate && dueDate < new Date(Date.now() + 3 * 86400000);
 
                                     return (
