@@ -67,7 +67,7 @@ export default function AppLayout({
     );
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
-    // Persistent & route-aware active hub state (defaults to 'competition' to protect user flow)
+    // Persistent & route-aware active hub state
     const [activeHub, setActiveHub] = useState<'competition' | 'project'>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
@@ -76,12 +76,14 @@ export default function AppLayout({
             if (hubParam === 'project') return 'project';
 
             const pathname = window.location.pathname;
-            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace') || pathname.startsWith('/admin/competitions')) {
                 return 'competition';
             }
             if (
+                pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
+                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
                 return 'project';
@@ -96,11 +98,11 @@ export default function AppLayout({
                 // ignore
             }
         }
-        return 'competition';
+        return 'project';
     });
     const isCompetitionHub = activeHub === 'competition';
 
-    // Synchronize hub state and prevent accidental jumping to project hub
+    // Synchronize hub state consistently without unexpected auto-redirects
     useEffect(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
@@ -113,23 +115,15 @@ export default function AppLayout({
                 detectedHub = 'competition';
             } else if (hubParam === 'project') {
                 detectedHub = 'project';
-            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace') || pathname.startsWith('/admin/competitions')) {
                 detectedHub = 'competition';
             } else if (
+                pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
+                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
-                detectedHub = 'project';
-            } else if (pathname === '/dashboard') {
-                if (!isAdmin) {
-                    const saved = localStorage.getItem('rakit_active_hub');
-                    // If student was in competition hub, prevent sudden jump to project dashboard from system redirects
-                    if (saved === 'competition' && !params.has('hub')) {
-                        router.get('/competitions');
-                        return;
-                    }
-                }
                 detectedHub = 'project';
             }
 
@@ -405,7 +399,7 @@ export default function AppLayout({
                 <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
                     {/* Brand Logo & Hub Switcher */}
                     <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                        <Link href="/dashboard" className="flex items-center gap-2 group shrink-0">
+                        <Link href={isCompetitionHub ? '/competitions' : '/dashboard'} className="flex items-center gap-2 group shrink-0">
                             <img
                                 src="/images/rakit-mark.png"
                                 alt="RAKIT"

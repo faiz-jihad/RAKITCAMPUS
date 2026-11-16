@@ -31,6 +31,7 @@ import {
     Layers,
     Leaf,
     Link2,
+    MapPin,
     MessageSquare,
     Mic,
     Palette,
@@ -38,6 +39,7 @@ import {
     Search,
     ShieldCheck,
     Sparkles,
+    Star,
     Terminal,
     TrendingUp,
     Trophy,
@@ -882,7 +884,7 @@ export default function CompetitionIndex({
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4.5">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5.5">
                                 {catalogCompetitions.map((comp) => {
                                     const isSaved = bookmarkedIds.includes(comp.id);
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
@@ -901,120 +903,128 @@ export default function CompetitionIndex({
                                         ? Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
                                         : null;
 
+                                    const teamLabel = comp.min_team_size && comp.max_team_size
+                                        ? comp.min_team_size === comp.max_team_size
+                                            ? comp.min_team_size === 1
+                                                ? 'Individu'
+                                                : `${comp.min_team_size} Orang`
+                                            : `${comp.min_team_size}-${comp.max_team_size} Orang`
+                                        : '1 Tim';
+
+                                    const topPillText = comp.prize_info
+                                        ? comp.prize_info
+                                        : isClosed
+                                            ? 'Pendaftaran Tutup'
+                                            : daysLeft !== null
+                                                ? (daysLeft === 0 ? 'Tutup Hari Ini' : `${daysLeft} Hari Lagi`)
+                                                : 'Pendaftaran Buka';
+
                                     return (
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
-                                            className={`bg-white rounded-2xl sm:rounded-3xl overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full group ${
+                                            className={`relative aspect-[3/4.4] sm:aspect-[3/4.25] w-full rounded-[28px] sm:rounded-[32px] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none ${
                                                 isClosed
-                                                    ? 'border-slate-200/60 opacity-75 bg-slate-50/60'
-                                                    : 'border-slate-200/90 shadow-2xs hover:shadow-xl hover:-translate-y-1 hover:border-blue-500/70'
+                                                    ? 'border-white/10 opacity-80'
+                                                    : 'border-white/15 shadow-md hover:shadow-2xl hover:-translate-y-1.5'
                                             }`}
                                         >
-                                            {/* Cover Image Poster — 4:5 Instagram Portrait Aspect Ratio */}
-                                            <div className="relative aspect-[4/5] w-full overflow-hidden bg-slate-950 shrink-0">
-                                                <img
-                                                    src={getCompetitionCover(comp)}
-                                                    alt={comp.name}
-                                                    className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out ${
-                                                        isClosed ? 'grayscale-30' : ''
-                                                    }`}
-                                                />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-black/25 pointer-events-none" />
+                                            {/* Full-bleed Cover Background Poster */}
+                                            <img
+                                                src={getCompetitionCover(comp)}
+                                                alt={comp.name}
+                                                className={`absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105 ${
+                                                    isClosed ? 'grayscale-35' : ''
+                                                }`}
+                                            />
 
-                                                {/* Category & Level Badges on Image */}
-                                                <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 flex items-center gap-1 sm:gap-1.5 flex-wrap max-w-[80%] z-10">
-                                                    <span className="px-2 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg bg-blue-600/95 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-extrabold uppercase tracking-wider shadow-xs">
-                                                        {comp.category?.replace('_', ' ') || 'UMUM'}
-                                                    </span>
-                                                    {comp.level && (
-                                                        <span className="px-1.5 sm:px-2 py-0.5 rounded-md sm:rounded-lg bg-black/40 backdrop-blur-md text-white/95 text-[9px] sm:text-[10px] font-semibold uppercase border border-white/10">
-                                                            {comp.level}
-                                                        </span>
-                                                    )}
+                                            {/* Soft Top Vignette for Floating Controls */}
+                                            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none" />
+
+                                            {/* Deep Frosted Dark Gradient Overlay for Bottom Content */}
+                                            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent pointer-events-none" />
+
+                                            {/* Top Floating Controls: Price/Status Pill & Circular Bookmark */}
+                                            <div className="relative z-10 p-3.5 sm:p-4 flex items-center justify-between gap-2">
+                                                <div className="px-3.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-bold tracking-tight shadow-md max-w-[72%] truncate">
+                                                    {topPillText}
                                                 </div>
 
-                                                {/* Bookmark Button */}
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                    className={`absolute top-2 right-2 sm:top-2.5 sm:right-2.5 size-7 sm:size-8 rounded-full backdrop-blur-md flex items-center justify-center transition cursor-pointer shadow-xs z-10 ${
+                                                    className={`size-9 sm:size-10 rounded-full backdrop-blur-md flex items-center justify-center transition cursor-pointer shadow-md shrink-0 ${
                                                         isSaved
-                                                            ? 'bg-rose-500 text-white'
-                                                            : 'bg-black/35 hover:bg-black/60 text-white border border-white/10'
+                                                            ? 'bg-rose-500 text-white shadow-rose-500/30'
+                                                            : 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
                                                     }`}
-                                                    title={isSaved ? 'Hapus Simpanan' : 'Simpan'}
+                                                    title={isSaved ? 'Hapus Simpanan' : 'Simpan Lomba'}
                                                 >
-                                                    <Bookmark className={`size-3 sm:size-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                    <Bookmark className={`size-4 sm:size-4.5 ${isSaved ? 'fill-current' : ''}`} />
                                                 </button>
+                                            </div>
 
-                                                {/* Bottom Banner Status Pill on Cover */}
-                                                <div className="absolute bottom-2 left-2 right-2 sm:bottom-2.5 sm:left-2.5 sm:right-2.5 flex items-center justify-between gap-1.5 z-10">
-                                                    {isClosed ? (
-                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-slate-900/90 text-slate-300 backdrop-blur-md border border-white/10">
-                                                            Pendaftaran Ditutup
-                                                        </span>
-                                                    ) : daysLeft !== null ? (
-                                                        <span
-                                                            className={`text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md backdrop-blur-md shadow-xs ${
-                                                                daysLeft <= 3
-                                                                    ? 'bg-rose-600/95 text-white'
-                                                                    : daysLeft <= 14
-                                                                        ? 'bg-amber-500/95 text-white'
-                                                                        : 'bg-slate-900/80 text-white border border-white/10'
-                                                            }`}
-                                                        >
-                                                            {daysLeft === 0 ? 'Tutup hari ini' : `${daysLeft} hari lagi`}
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-md bg-blue-600/90 text-white backdrop-blur-md">
-                                                            Buka
-                                                        </span>
-                                                    )}
-
-                                                    <span className="text-[9px] sm:text-[10px] font-medium text-white/90 bg-black/40 backdrop-blur-md px-1.5 sm:px-2 py-0.5 rounded-md border border-white/10 truncate">
-                                                        {comp.format || 'Online'}
-                                                    </span>
+                                            {/* Middle Floating Carousel Pagination Dots */}
+                                            <div className="relative z-10 flex justify-center -mb-2">
+                                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-md border border-white/10 shadow-xs">
+                                                    <span className="w-4 h-1.5 rounded-full bg-white"></span>
+                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
+                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
+                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
+                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
                                                 </div>
                                             </div>
 
-                                            {/* Body */}
-                                            <div className="p-3 sm:p-4 flex-1 flex flex-col justify-between gap-2.5 sm:gap-3">
-                                                <div>
-                                                    <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider line-clamp-1">
-                                                        <Award className="size-3 sm:size-3.5 text-blue-600 shrink-0" />
-                                                        <span className="truncate">{comp.organizer}</span>
-                                                    </div>
-
-                                                    <h3 className="text-xs sm:text-sm font-extrabold text-slate-900 group-hover:text-blue-600 transition leading-snug line-clamp-2 mt-1">
+                                            {/* Bottom Info Section */}
+                                            <div className="relative z-10 p-4 sm:p-5 pt-0 flex flex-col gap-2.5 sm:gap-3">
+                                                {/* Title & Level Rating */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight line-clamp-1 group-hover:text-blue-200 transition-colors">
                                                         {comp.name}
                                                     </h3>
+                                                    <div className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm font-bold shrink-0 ml-1">
+                                                        <Star className="size-3.5 sm:size-4 fill-amber-400 text-amber-400" />
+                                                        <span className="text-white/95">{comp.level || 'Nasional'}</span>
+                                                    </div>
+                                                </div>
 
-                                                    {comp.description && (
-                                                        <p className="line-clamp-2 text-[11px] sm:text-xs text-slate-500 mt-1 leading-relaxed hidden sm:block">
-                                                            {comp.description}
-                                                        </p>
+                                                {/* Organizer with MapPin */}
+                                                <div className="flex items-center gap-1.5 text-xs sm:text-[13px] text-white/80 line-clamp-1 -mt-1">
+                                                    <MapPin className="size-3.5 sm:size-4 text-white/70 shrink-0" />
+                                                    <span className="truncate">{comp.organizer || 'Penyelenggara Terverifikasi'}</span>
+                                                    {comp.format && (
+                                                        <span className="text-white/50 text-[11px] shrink-0">• {comp.format}</span>
                                                     )}
                                                 </div>
 
-                                                {/* Structured Bottom Info & CTA */}
-                                                <div className="pt-2 sm:pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs mt-auto">
-                                                    <div className="flex items-center gap-1 sm:gap-1.5 text-slate-500 truncate">
-                                                        <Clock className="size-3 sm:size-3.5 text-slate-400 shrink-0" />
-                                                        <span className={`text-[10px] sm:text-[11px] font-semibold truncate ${
-                                                            isClosed ? 'text-slate-400' : 'text-slate-700'
-                                                        }`}>
-                                                            {isClosed ? 'Pendaftaran Selesai' : formattedDeadline}
-                                                        </span>
+                                                {/* 3 Specs Row */}
+                                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2.5 border-t border-white/10 text-[11px] sm:text-xs text-white/85">
+                                                    <div className="flex items-center gap-1.5 truncate" title={`Ukuran Tim: ${teamLabel}`}>
+                                                        <Users className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                        <span className="truncate">{teamLabel}</span>
                                                     </div>
-
-                                                    <span className={`inline-flex items-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs font-bold transition-transform shrink-0 ${
-                                                        isClosed ? 'text-slate-400' : 'text-blue-600 group-hover:translate-x-0.5'
-                                                    }`}>
-                                                        <span>Detail</span>
-                                                        <ArrowUpRight className="size-3 sm:size-3.5" />
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 truncate" title={`Kategori: ${comp.category?.replace('_', ' ') || 'Umum'}`}>
+                                                        <Trophy className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                        <span className="truncate capitalize">{comp.category?.replace('_', ' ') || 'Umum'}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 truncate" title={`Deadline: ${formattedDeadline}`}>
+                                                        <Calendar className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                        <span className="truncate">{isClosed ? 'Selesai' : formattedDeadline}</span>
+                                                    </div>
                                                 </div>
+
+                                                {/* Crisp White Pill CTA Button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        router.get(`/competitions/${comp.slug || comp.id}`);
+                                                    }}
+                                                    className="w-full py-2.5 sm:py-3 px-4 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-200 cursor-pointer active:scale-[0.99] group/btn"
+                                                >
+                                                    <FileText className="size-4 text-slate-900 group-hover/btn:text-blue-600 transition-colors" />
+                                                    <span>Detail Lomba</span>
+                                                </button>
                                             </div>
                                         </div>
                                     );
