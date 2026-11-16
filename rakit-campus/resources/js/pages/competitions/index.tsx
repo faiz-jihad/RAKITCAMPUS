@@ -1435,16 +1435,45 @@ export default function CompetitionIndex({
                 {/* ========================================================= */}
                 {activeTab === 'categories' && (
                     <div className="space-y-6">
-                        <div className="pb-3 border-b border-slate-200/80">
-                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                Kategori Kompetisi
-                            </h2>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200/80">
+                            <div>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTab('explore')}
+                                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition mb-1 cursor-pointer"
+                                >
+                                    <ArrowLeft className="w-3.5 h-3.5" />
+                                    Kembali ke Eksplor Lomba
+                                </button>
+                                <h2 className="text-xl font-bold tracking-tight text-slate-900">
+                                    Kategori Kompetisi
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Pilih bidang peminatan untuk menemukan perlombaan yang relevan dengan keahlianmu.
+                                </p>
+                            </div>
+                            <span className="self-start sm:self-auto text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                                {coreCategoryList.length} Bidang
+                            </span>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4.5">
                             {coreCategoryList.map((cat) => {
                                 const IconComponent = cat.icon;
                                 const count = categoryCounts[cat.key] || 0;
+                                const colorConfig: Record<string, { bg: string; text: string; border: string }> = {
+                                    technology: { bg: 'bg-blue-50/80', text: 'text-blue-600', border: 'border-blue-100' },
+                                    business_plan: { bg: 'bg-emerald-50/80', text: 'text-emerald-600', border: 'border-emerald-100' },
+                                    research: { bg: 'bg-purple-50/80', text: 'text-purple-600', border: 'border-purple-100' },
+                                    innovation: { bg: 'bg-amber-50/80', text: 'text-amber-600', border: 'border-amber-100' },
+                                    ui_ux: { bg: 'bg-rose-50/80', text: 'text-rose-600', border: 'border-rose-100' },
+                                    programming: { bg: 'bg-indigo-50/80', text: 'text-indigo-600', border: 'border-indigo-100' },
+                                    hackathon: { bg: 'bg-orange-50/80', text: 'text-orange-600', border: 'border-orange-100' },
+                                    entrepreneurship: { bg: 'bg-teal-50/80', text: 'text-teal-600', border: 'border-teal-100' },
+                                    scientific_writing: { bg: 'bg-violet-50/80', text: 'text-violet-600', border: 'border-violet-100' },
+                                    other: { bg: 'bg-green-50/80', text: 'text-green-600', border: 'border-green-100' },
+                                };
+                                const cStyle = colorConfig[cat.key] || colorConfig.technology;
 
                                 return (
                                     <div
@@ -1454,29 +1483,31 @@ export default function CompetitionIndex({
                                             setActiveTab('explore');
                                             router.get('/competitions', { tab: 'explore', category: cat.key });
                                         }}
-                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-500 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between group"
+                                        className="group relative bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-0.5 transition-all duration-200 cursor-pointer flex flex-col justify-between"
                                     >
                                         <div>
-                                            <div className="flex items-center justify-between mb-3">
-                                                <div className="w-9 h-9 rounded-xl bg-slate-100 group-hover:bg-blue-50 group-hover:text-blue-600 text-slate-700 flex items-center justify-center transition">
-                                                    <IconComponent className="w-5 h-5 stroke-[1.75]" />
+                                            <div className="flex items-center justify-between gap-2 mb-3.5">
+                                                <div className={`w-10 h-10 rounded-xl ${cStyle.bg} ${cStyle.text} ${cStyle.border} border flex items-center justify-center transition-all duration-200 group-hover:scale-105`}>
+                                                    <IconComponent className="w-5 h-5 stroke-[1.8]" />
                                                 </div>
-                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/60 text-slate-600 text-xs font-semibold group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-100 transition-colors">
+                                                    <span className={`w-1.5 h-1.5 rounded-full ${count > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
                                                     {count} lomba
                                                 </span>
                                             </div>
 
-                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
+                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
                                                 {cat.name}
                                             </h3>
 
-                                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                                            <p className="text-xs text-slate-500 mt-1.5 leading-relaxed line-clamp-2">
                                                 {cat.desc}
                                             </p>
                                         </div>
 
-                                        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600">
-                                            <span>Lihat ↗</span>
+                                        <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">
+                                            <span>Jelajahi kompetisi</span>
+                                            <ArrowUpRight className="w-4 h-4 stroke-[2] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </div>
                                     </div>
                                 );
