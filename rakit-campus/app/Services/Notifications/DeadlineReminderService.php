@@ -148,7 +148,7 @@ class DeadlineReminderService
                     title: "Pengingat Deadline Deliverable: {$doc->name}",
                     message: "Berkas deliverable '{$doc->name}' untuk kompetisi {$compName} harus diunggah {$timeRemaining}.",
                     priority: 'high',
-                    actionUrl: url("/competitions/workspace/{$participation->id}"),
+                    actionUrl: url("/competition-workspace/{$participation->id}"),
                     actionText: 'Buka Workspace Kompetisi',
                     entityType: 'competition_document',
                     entityId: $doc->id,

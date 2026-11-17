@@ -507,7 +507,13 @@ class NotificationService implements NotificationServiceInterface
     public function sendCompetitionInvitation(User $invitee, Team $team, Competition $competition, string $role, ?User $inviter = null): void
     {
         $inviterName = $inviter ? $inviter->name : 'Ketua Tim';
+        $part = $team->participations()
+    ->where('competition_id', $competition->id)
+    ->first();
 
+$targetWorkspaceUrl = $part
+    ? route('competitions.workspace', ['participationId' => $part->id])
+    : route('competitions.workspace.slug', ['slug' => $competition->slug]);
         $this->notify(
             recipients: $invitee,
             notificationType: 'competition_invitation_sent',
@@ -516,7 +522,7 @@ class NotificationService implements NotificationServiceInterface
             message: "{$inviterName} mengundang Anda bergabung ke tim '{$team->name}' untuk mengikuti kompetisi {$competition->name} sebagai {$role}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competition-workspace/{$competition->slug}"),
+                'action_url' => $targetWorkspaceUrl,
                 'action_text' => 'Tinjau & Tanggapi di Workspace Lomba',
                 'entity_type' => 'team',
                 'entity_id' => $team->id,
@@ -574,7 +580,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Tim Anda pada kompetisi {$compName} telah berlanjut ke tahap: {$stageLabel}." . ($notes ? " Catatan: {$notes}" : ""),
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competitions/workspace/{$participation->id}"),
+                'action_url' => url("/competition-workspace/{$participation->id}"),
                 'action_text' => 'Buka Workspace Kompetisi',
                 'entity_type' => 'competition_participation',
                 'entity_id' => $participation->id,
@@ -606,7 +612,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Hasil kompetisi {$compName} telah diumumkan. Capaian tim: {$result->achievement_title}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competitions/workspace/{$participation->id}"),
+                'action_url' => url("/competition-workspace/{$participation->id}"),
                 'action_text' => 'Buka Hasil & Sertifikat',
                 'entity_type' => 'competition_result',
                 'entity_id' => $result->id,

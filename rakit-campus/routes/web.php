@@ -82,6 +82,9 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
 
     // Dedicated Competition Preparation Workspace
     Route::get('/competitions/{slug}/workspace', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace.slug');
+    Route::get('/competitions/workspace/{participationId}', function ($participationId) {
+        return redirect()->route('competitions.workspace', ['participationId' => $participationId]);
+    });
     Route::get('/competition-workspace', [CompetitionWebController::class, 'workspaceIndex'])->name('competitions.workspace.index');
     Route::get('/competition-workspace/{participationId}', [CompetitionWebController::class, 'workspace'])->name('competitions.workspace');
     Route::post('/competition-workspace/{participationId}/stage', [CompetitionWebController::class, 'updateStage'])->name('competitions.stage.update');
@@ -118,6 +121,22 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/projects/{id}/activate-team', [ProjectWebController::class, 'activateTeam'])->name('projects.activate-team');
     Route::post('/projects/{id}/submit-final', [ProjectWebController::class, 'submitFinal'])->name('projects.submit-final');
     Route::post('/projects/{id}/evaluate', [ProjectWebController::class, 'evaluate'])->name('projects.evaluate');
+
+    // Team Discussion (Forum & Announcements)
+    Route::post('/projects/{id}/posts', [ProjectWebController::class, 'storePost'])->name('projects.posts.store');
+    Route::patch('/projects/{id}/posts/{postId}', [ProjectWebController::class, 'updatePost'])->name('projects.posts.update');
+    Route::delete('/projects/{id}/posts/{postId}', [ProjectWebController::class, 'destroyPost'])->name('projects.posts.destroy');
+    Route::post('/projects/{id}/posts/{postId}/replies', [ProjectWebController::class, 'storeReply'])->name('projects.posts.replies.store');
+    Route::patch('/projects/{id}/posts/{postId}/pin', [ProjectWebController::class, 'togglePinPost'])->name('projects.posts.pin');
+
+    // Leader Project Management & CRUD
+    Route::put('/projects/{id}', [ProjectWebController::class, 'update'])->name('projects.update');
+    Route::delete('/projects/{id}', [ProjectWebController::class, 'destroy'])->name('projects.destroy');
+
+    // Leader Member Management
+    Route::post('/projects/{id}/members', [ProjectWebController::class, 'addMember'])->name('projects.members.store');
+    Route::patch('/projects/{id}/members/{memberId}', [ProjectWebController::class, 'updateMemberRole'])->name('projects.members.update');
+    Route::delete('/projects/{id}/members/{memberId}', [ProjectWebController::class, 'removeMember'])->name('projects.members.destroy');
 
     // Project Team Requirements & Formation Lifecycle
     Route::post('/projects/{id}/requirements', [ProjectWebController::class, 'updateRequirements'])->name('projects.requirements.update');
@@ -162,6 +181,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
 
     // Portfolio
     Route::get('/portfolio', [PortfolioWebController::class, 'index'])->name('portfolio.index');
+    Route::post('/portfolio/invite-collaborator', [PortfolioWebController::class, 'inviteCollaborator'])->name('portfolio.invite-collaborator');
 
     // Academic Classes (Kelas Kuliah & Bimbingan Dosen)
     Route::get('/classes', [AcademicClassWebController::class, 'index'])->name('classes.index');

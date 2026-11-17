@@ -4,6 +4,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertCircle,
+    AlertTriangle,
     Archive,
     ArrowLeft,
     ArrowRight,
@@ -15,6 +16,7 @@ import {
     Clock,
     Compass,
     Download,
+    Edit3,
     ExternalLink,
     FileText,
     FolderKanban,
@@ -25,21 +27,25 @@ import {
     Info,
     Layers,
     Lock,
+    Bell,
     MessageSquare,
     PieChart,
     Plus,
     Send,
+    Settings,
     ShieldCheck,
     Sparkles,
     Target,
     Trash2,
     Upload,
     UserCheck,
+    UserMinus,
+    UserPlus,
     Users,
     X,
     XCircle,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import SemesterTimeline from './components/SemesterTimeline';
 import ProjectRoadmapTimeline from './components/ProjectRoadmapTimeline';
 import LivingProposalTab from './components/LivingProposalTab';
@@ -51,6 +57,7 @@ import MatchmakingTab from './components/MatchmakingTab';
 import TeamBalanceTab from './components/TeamBalanceTab';
 import InvitationsTab from './components/InvitationsTab';
 import TeamFormationTab from './components/TeamFormationTab';
+import DiscussionForum from './components/DiscussionForum';
 import ProjectJigsawBoard from '@/components/project-jigsaw-board';
 
 interface Props {
@@ -131,7 +138,7 @@ export default function ProjectShow({
     const flash = page.props?.flash;
     const academicClass = project.academic_class || project.academicClass;
     const isAcademic = Boolean(project.academic_class_id || academicClass?.id || project.category === 'academic');
-    const academicOnlyTabs = ['proposal', 'versions', 'uts', 'uas', 'lecturer_review'];
+    const academicOnlyTabs = ['uts', 'uas', 'lecturer_review'];
     const initialTabParam = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
@@ -215,6 +222,219 @@ export default function ProjectShow({
         role: string;
     } | null>(null);
     const [showActivateTeamModal, setShowActivateTeamModal] = useState(false);
+    const [showSubmitFormationModal, setShowSubmitFormationModal] = useState(false);
+    const [submittingFormation, setSubmittingFormation] = useState(false);
+
+    // Project Management (Leader CRUD) States
+    const [showEditProjectModal, setShowEditProjectModal] = useState(false);
+    const [editProjectTab, setEditProjectTab] = useState<'info' | 'timeline' | 'proposal' | 'danger'>('info');
+    const [savingProject, setSavingProject] = useState(false);
+    const [projectForm, setProjectForm] = useState({
+        title: project.title || '',
+        team_name: project.team?.name || '',
+        category: project.category || 'capstone',
+        difficulty: project.difficulty || 'intermediate',
+        visibility: project.visibility || 'public',
+        status: project.status || 'recruiting',
+        progress: project.progress ?? 0,
+        short_description: project.short_description || '',
+        description: project.description || '',
+        starts_on: project.starts_on ? String(project.starts_on).substring(0, 10) : '',
+        target_completion_on: project.target_completion_on ? String(project.target_completion_on).substring(0, 10) : '',
+        recruitment_deadline: project.recruitment_deadline ? String(project.recruitment_deadline).substring(0, 10) : '',
+        expected_weekly_hours: project.expected_weekly_hours ?? 10,
+        min_team_size: project.min_team_size ?? 2,
+        max_team_size: project.max_team_size ?? 4,
+        repository_url: project.repository_url || '',
+        demo_url: project.demo_url || '',
+        problem_statement: project.problem_statement || '',
+        objectives: project.objectives || '',
+        proposed_solution: project.proposed_solution || '',
+        tech_stack_input: Array.isArray(project.tech_stack)
+            ? project.tech_stack.join(', ')
+            : (project.tech_stack || ''),
+    });
+
+    useEffect(() => {
+        setProjectForm({
+            title: project.title || '',
+            team_name: project.team?.name || '',
+            category: project.category || 'capstone',
+            difficulty: project.difficulty || 'intermediate',
+            visibility: project.visibility || 'public',
+            status: project.status || 'recruiting',
+            progress: project.progress ?? 0,
+            short_description: project.short_description || '',
+            description: project.description || '',
+            starts_on: project.starts_on ? String(project.starts_on).substring(0, 10) : '',
+            target_completion_on: project.target_completion_on ? String(project.target_completion_on).substring(0, 10) : '',
+            recruitment_deadline: project.recruitment_deadline ? String(project.recruitment_deadline).substring(0, 10) : '',
+            expected_weekly_hours: project.expected_weekly_hours ?? 10,
+            min_team_size: project.min_team_size ?? 2,
+            max_team_size: project.max_team_size ?? 4,
+            repository_url: project.repository_url || '',
+            demo_url: project.demo_url || '',
+            problem_statement: project.problem_statement || '',
+            objectives: project.objectives || '',
+            proposed_solution: project.proposed_solution || '',
+            tech_stack_input: Array.isArray(project.tech_stack)
+                ? project.tech_stack.join(', ')
+                : (project.tech_stack || ''),
+        });
+    }, [project]);
+
+    // Disband Project States
+    const [showDisbandModal, setShowDisbandModal] = useState(false);
+    const [disbandConfirmation, setDisbandConfirmation] = useState('');
+    const [disbanding, setDisbanding] = useState(false);
+
+    // Member Management States
+    const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+    const [addMemberUserId, setAddMemberUserId] = useState<string>('');
+    const [addMemberRole, setAddMemberRole] = useState<string>('Anggota Tim');
+    const [addingMember, setAddingMember] = useState(false);
+
+    const [editingMember, setEditingMember] = useState<any | null>(null);
+    const [newMemberRole, setNewMemberRole] = useState<string>('');
+    const [savingMemberRole, setSavingMemberRole] = useState(false);
+
+    const [removingMember, setRemovingMember] = useState<any | null>(null);
+    const [removingMemberLoading, setRemovingMemberLoading] = useState(false);
+
+    const [teamMembers, setTeamMembers] = useState<any[]>(project.team?.members || []);
+
+    useEffect(() => {
+        setTeamMembers(project.team?.members || []);
+    }, [project.team?.members]);
+
+    const handleSaveProject = (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingProject(true);
+
+        const techArray = projectForm.tech_stack_input
+            ? projectForm.tech_stack_input.split(',').map((s: string) => s.trim()).filter(Boolean)
+            : [];
+
+        router.put(`/projects/${project.id || project.slug}`, {
+            ...projectForm,
+            tech_stack: techArray,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSavingProject(false);
+                setShowEditProjectModal(false);
+                showToast('Informasi dan pengaturan proyek berhasil disimpan!', 'success');
+            },
+            onError: (errors: any) => {
+                setSavingProject(false);
+                const firstMsg = typeof errors === 'object' && errors ? (Object.values(errors).flat()[0] as string) : null;
+                showToast(firstMsg || 'Gagal menyimpan pembaruan proyek.', 'error');
+            },
+        });
+    };
+
+    const handleDisbandProject = () => {
+        if (disbandConfirmation !== project.title && disbandConfirmation.toUpperCase() !== 'BUBARKAN') {
+            showToast('Konfirmasi tidak cocok. Ketikkan nama proyek atau "BUBARKAN" untuk konfirmasi.', 'error');
+            return;
+        }
+
+        setDisbanding(true);
+        router.delete(`/projects/${project.id || project.slug}`, {
+            onSuccess: () => {
+                setDisbanding(false);
+                setShowDisbandModal(false);
+                setShowEditProjectModal(false);
+            },
+            onError: (errors: any) => {
+                setDisbanding(false);
+                const firstMsg = typeof errors === 'object' && errors ? (Object.values(errors).flat()[0] as string) : null;
+                showToast(firstMsg || 'Gagal membubarkan proyek.', 'error');
+            },
+        });
+    };
+
+    const handleAddMember = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!addMemberUserId) {
+            showToast('Silakan pilih mahasiswa terlebih dahulu.', 'error');
+            return;
+        }
+
+        setAddingMember(true);
+        router.post(`/projects/${project.id || project.slug}/members`, {
+            user_id: addMemberUserId,
+            role_name: addMemberRole,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setAddingMember(false);
+                setShowAddMemberModal(false);
+                setAddMemberUserId('');
+                setAddMemberRole('Anggota Tim');
+                showToast('Anggota berhasil ditambahkan ke tim proyek!', 'success');
+            },
+            onError: (errors: any) => {
+                setAddingMember(false);
+                const firstMsg = typeof errors === 'object' && errors ? (Object.values(errors).flat()[0] as string) : null;
+                showToast(firstMsg || 'Gagal menambahkan anggota.', 'error');
+            },
+        });
+    };
+
+    const handleUpdateMemberRole = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingMember || !newMemberRole.trim()) return;
+
+        const targetId = editingMember.id;
+        const role = newMemberRole.trim();
+        setSavingMemberRole(true);
+
+        // Optimistically update member role locally
+        setTeamMembers((prev: any[]) => prev.map((m: any) => m.id === targetId ? { ...m, role_name: role } : m));
+
+        router.patch(`/projects/${project.id || project.slug}/members/${targetId}`, {
+            role_name: role,
+        }, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setSavingMemberRole(false);
+                setEditingMember(null);
+                showToast('Peran anggota berhasil diperbarui!', 'success');
+            },
+            onError: (errors: any) => {
+                setTeamMembers(project.team?.members || []);
+                setSavingMemberRole(false);
+                const firstMsg = typeof errors === 'object' && errors ? (Object.values(errors).flat()[0] as string) : null;
+                showToast(firstMsg || 'Gagal memperbarui peran anggota.', 'error');
+            },
+        });
+    };
+
+    const handleRemoveMember = () => {
+        if (!removingMember) return;
+
+        const targetId = removingMember.id;
+        setRemovingMemberLoading(true);
+
+        // Optimistically remove member locally
+        setTeamMembers((prev: any[]) => prev.filter((m: any) => m.id !== targetId));
+
+        router.delete(`/projects/${project.id || project.slug}/members/${targetId}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setRemovingMemberLoading(false);
+                setRemovingMember(null);
+                showToast('Anggota berhasil dikeluarkan dari tim.', 'success');
+            },
+            onError: (errors: any) => {
+                setTeamMembers(project.team?.members || []);
+                setRemovingMemberLoading(false);
+                const firstMsg = typeof errors === 'object' && errors ? (Object.values(errors).flat()[0] as string) : null;
+                showToast(firstMsg || 'Gagal mengeluarkan anggota.', 'error');
+            },
+        });
+    };
 
     useEffect(() => {
         if (flash?.success) {
@@ -386,6 +606,40 @@ export default function ProjectShow({
         }
     };
 
+    const handleSubmitFormation = () => {
+        if (activeMembersCount < maxQuota) {
+            showToast(
+                `Pengajuan ke dosen pengampu mewajibkan kuota anggota tim penuh (${activeMembersCount}/${maxQuota} orang).`,
+                'error',
+                'Silakan terima pelamar atau rekrut anggota tim terlebih dahulu.'
+            );
+            setActiveTab('members');
+            window.setTimeout(() => {
+                document.getElementById('applications-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+            return;
+        }
+        setShowSubmitFormationModal(true);
+    };
+
+    const confirmSubmitFormation = () => {
+        setSubmittingFormation(true);
+        router.post(`/projects/${project.id}/formation/submit`, {}, {
+            preserveScroll: true,
+            onSuccess: () => {
+                setShowSubmitFormationModal(false);
+                showToast('Susunan tim proyek berhasil diajukan untuk dievaluasi oleh Dosen Pengampu!', 'success');
+            },
+            onError: (errors: any) => {
+                const firstMsg = (typeof errors === 'object' && errors ? Object.values(errors).flat()[0] : null) as string;
+                showToast(firstMsg || 'Gagal mengajukan formasi tim ke dosen.', 'error');
+            },
+            onFinish: () => {
+                setSubmittingFormation(false);
+            },
+        });
+    };
+
     const handleToggleRecruitment = async (targetStatus?: 'open' | 'closed') => {
         setTogglingRecruitment(true);
         try {
@@ -454,8 +708,7 @@ export default function ProjectShow({
         ...(uasSubmission?.documents || []),
     ];
 
-    const teamMembers = project.team?.members || [];
-    const activeMembersCount = teamMembers.filter((m: any) => !m.status || m.status === 'active').length;
+    const activeMembersCount = teamMembers.filter((m: any) => !m.status || m.status === 'active' || m.status === 'completed').length;
     const minQuota = project.min_team_size || 2;
     const maxQuota = academicClass?.target_team_size
         ? Math.min(project.max_team_size || academicClass.target_team_size, academicClass.target_team_size)
@@ -556,6 +809,8 @@ export default function ProjectShow({
             icon: UserCheck,
             badge: project.formation_status === 'workspace_activated' ? 'Aktif' : (project.formation_status ? project.formation_status.replace('_', ' ') : 'Draft'),
         },
+        { id: 'proposal', label: 'Living Proposal', icon: FileText },
+        { id: 'versions', label: `Versi (${livingProposal?.versions?.length || 1})`, icon: GitBranch },
         { id: 'tasks', label: `Tasks & Kanban (${(kanban.todo?.length || 0) + (kanban.in_progress?.length || 0) + (kanban.in_review?.length || 0) + (kanban.completed?.length || 0)})`, icon: FolderKanban },
         { id: 'milestones', label: `Milestones & Target (${milestones.length})`, icon: Clock },
         { id: 'progress', label: `Progress (${implementationProgress}%)`, icon: Sparkles },
@@ -605,6 +860,18 @@ export default function ProjectShow({
                                     <FolderKanban className="size-3.5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
                                     <span>Workspace Tim</span>
                                 </Link>
+                            )}
+
+                            {(isLeader || canEdit) && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditProjectModal(true)}
+                                    className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
+                                    title="Kelola informasi, progres, dan pengaturan proyek"
+                                >
+                                    <Settings className="size-3.5 text-indigo-600 transition-transform duration-200 group-hover:rotate-45" />
+                                    <span>Kelola Proyek</span>
+                                </button>
                             )}
 
                             <button
@@ -851,7 +1118,7 @@ export default function ProjectShow({
                                             ) : project.formation_status === 'formation_review' ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setActiveTab('formation')}
+                                                    onClick={() => showToast(`Susunan tim sedang dievaluasi oleh Dosen Pengampu (${academicClass?.lecturer?.name || 'Dosen'}). Mohon menunggu keputusan persetujuan.`, 'info')}
                                                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition cursor-pointer"
                                                 >
                                                     <Clock className="size-4" />
@@ -860,17 +1127,17 @@ export default function ProjectShow({
                                             ) : project.formation_status === 'formation_rejected' ? (
                                                 <button
                                                     type="button"
-                                                    onClick={() => setActiveTab('formation')}
+                                                    onClick={handleSubmitFormation}
                                                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-bold transition cursor-pointer"
                                                 >
                                                     <AlertCircle className="size-4" />
-                                                    <span>Pengajuan Tim Ditolak • Tinjau</span>
+                                                    <span>Pengajuan Tim Ditolak • Ajukan Ulang</span>
                                                 </button>
-                                            ) : academicClass ? (
+                                             ) : academicClass ? (
                                                 activeMembersCount < maxQuota ? (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setActiveTab('formation')}
+                                                        onClick={handleSubmitFormation}
                                                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
                                                     >
                                                         <Users className="size-4 text-blue-600" />
@@ -879,14 +1146,14 @@ export default function ProjectShow({
                                                 ) : (
                                                     <button
                                                         type="button"
-                                                        onClick={() => setActiveTab('formation')}
-                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                        onClick={handleSubmitFormation}
+                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                                     >
                                                         <Send className="size-4" />
                                                         <span>Ajukan ke Dosen (Kuota Penuh)</span>
                                                     </button>
                                                 )
-                                            ) : (
+                                             ) : (
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('formation')}
@@ -1287,37 +1554,39 @@ export default function ProjectShow({
                                         </div>
                                     </div>
 
-                                    {/* Dosen Pembimbing Strip */}
-                                    <div className="mt-4 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                                        <div className="flex items-center gap-3">
-                                            <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
-                                                <GraduationCap className="size-4" />
+                                    {/* Dosen Pembimbing Strip (Academic Only) */}
+                                    {isAcademic && (
+                                        <div className="mt-4 pt-1 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                                                    <GraduationCap className="size-4" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosen Pembimbing Akademik</span>
+                                                    <span className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+                                                        {academicClass?.lecturer?.name || project.lecturer?.name || 'Budi Santoso, M.Kom.'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosen Pembimbing Akademik</span>
-                                                <span className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
-                                                    {academicClass?.lecturer?.name || project.lecturer?.name || 'Budi Santoso, M.Kom.'}
-                                                </span>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-3">
-                                            {guidances.length > 0 ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('lecturer_review')}
-                                                    className="group px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 hover:border-blue-300 active:scale-[0.98] text-blue-700 border border-blue-200 text-xs font-bold transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
-                                                >
-                                                    <span>{guidances.length} Catatan Bimbingan</span>
-                                                    <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs font-medium text-slate-500">
-                                                    Status Bimbingan: <strong className="text-slate-900 font-bold">Siap Konsultasi</strong>
-                                                </span>
-                                            )}
+                                            <div className="flex items-center gap-3">
+                                                {guidances.length > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveTab('lecturer_review')}
+                                                        className="group px-3.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 hover:border-blue-300 active:scale-[0.98] text-blue-700 border border-blue-200 text-xs font-bold transition-all duration-200 flex items-center gap-2.5 cursor-pointer"
+                                                    >
+                                                        <span>{guidances.length} Catatan Bimbingan</span>
+                                                        <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-xs font-medium text-slate-500">
+                                                        Status Bimbingan: <strong className="text-slate-900 font-bold">Siap Konsultasi</strong>
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* 2. BENTO DUAL: TUJUAN PROYEK & SOLUSI INOVATIF */}
@@ -1613,7 +1882,7 @@ export default function ProjectShow({
                         />
                     )}
 
-                    {activeTab === 'proposal' && isAcademic && (
+                    {activeTab === 'proposal' && (
                         <LivingProposalTab
                             project={project}
                             livingProposal={livingProposal}
@@ -1623,7 +1892,7 @@ export default function ProjectShow({
                         />
                     )}
 
-                    {activeTab === 'versions' && isAcademic && (
+                    {activeTab === 'versions' && (
                         <ProposalVersionsTab
                             project={project}
                             livingProposal={livingProposal}
@@ -1862,28 +2131,72 @@ export default function ProjectShow({
                         <div className="flex flex-col gap-6" id="recruitment-section">
                             {/* Members Grid */}
                             <div className="glass-card rounded-2xl p-6 shadow-xs">
-                                <h3 className="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
-                                    <Users className="size-5 text-blue-600" />
-                                    <span>Anggota Kelompok Proyek Capstone ({teamMembers.length} Orang)</span>
-                                </h3>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
+                                    <div>
+                                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                            <Users className="size-5 text-blue-600" />
+                                            <span>Anggota Tim Proyek ({teamMembers.length} Orang)</span>
+                                        </h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            Kapasitas aktif: {activeMembersCount} dari maksimal {maxQuota} anggota
+                                        </p>
+                                    </div>
+                                    {isLeader && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowAddMemberModal(true)}
+                                            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white transition cursor-pointer shadow-xs"
+                                        >
+                                            <UserPlus className="size-3.5" />
+                                            <span>Tambah Anggota Langsung</span>
+                                        </button>
+                                    )}
+                                </div>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                     {teamMembers.map((m: any) => (
-                                        <div key={m.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs font-bold text-slate-900">{m.user?.name}</span>
-                                                {m.permission === 'leader' ? (
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                                                        Ketua Tim
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[10px] text-slate-500 font-semibold">
-                                                        Anggota
-                                                    </span>
-                                                )}
+                                        <div key={m.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between gap-3 shadow-2xs hover:border-slate-300 transition">
+                                            <div className="flex flex-col gap-1.5">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-xs font-bold text-slate-900 truncate pr-2">{m.user?.name}</span>
+                                                    {m.permission === 'leader' || m.user_id === project.leader_id ? (
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800 shrink-0">
+                                                            Ketua Tim
+                                                        </span>
+                                                    ) : (
+                                                        <span className="text-[10px] text-slate-500 font-semibold px-2 py-0.5 rounded bg-slate-200/60 shrink-0">
+                                                            Anggota
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <span className="text-[11px] text-blue-600 font-semibold">{m.role_name || 'Kolaborator Proyek'}</span>
+                                                <span className="text-[11px] text-slate-400 truncate">{m.user?.email}</span>
                                             </div>
-                                            <span className="text-[11px] text-blue-600 font-semibold">{m.role_name || 'Fullstack Developer'}</span>
-                                            <span className="text-[11px] text-slate-400">{m.user?.email}</span>
+
+                                            {/* Leader Actions on Team Members */}
+                                            {isLeader && m.permission !== 'leader' && m.user_id !== project.leader_id && (
+                                                <div className="flex items-center gap-2 pt-2.5 border-t border-slate-200/80">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setEditingMember(m);
+                                                            setNewMemberRole(m.role_name || '');
+                                                        }}
+                                                        className="flex-1 inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-semibold text-slate-700 transition cursor-pointer shadow-2xs"
+                                                    >
+                                                        <Edit3 className="size-3 text-slate-500" />
+                                                        <span>Edit Peran</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setRemovingMember(m)}
+                                                        className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-200 text-[11px] font-semibold text-rose-700 transition cursor-pointer shadow-2xs"
+                                                    >
+                                                        <UserMinus className="size-3 text-rose-600" />
+                                                        <span>Keluarkan</span>
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
@@ -2131,29 +2444,15 @@ export default function ProjectShow({
                     )}
 
                     {activeTab === 'discussion' && (
-                        <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col gap-4">
-                            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <MessageSquare className="size-5 text-blue-600" />
-                                <span>Forum Diskusi & Pengumuman Internal Kelompok</span>
-                            </h3>
-
-                            {discussions.length === 0 ? (
-                                <div className="p-8 text-center text-xs text-slate-400">
-                                    Belum ada utas diskusi aktif. Tim dapat memanfaatkan fitur diskusi untuk berkoordinasi.
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3">
-                                    {discussions.map((d: any) => (
-                                        <div key={d.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex flex-col gap-1">
-                                            <div className="flex items-center justify-between text-xs">
-                                                <span className="font-bold text-slate-900">{d.author?.name}</span>
-                                                <span className="text-slate-400">{d.created_at ? new Date(d.created_at).toLocaleDateString() : ''}</span>
-                                            </div>
-                                            <p className="text-xs text-slate-700 mt-1 leading-relaxed">{d.body}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                        <div id="discussion-section">
+                            <DiscussionForum
+                                projectId={project.id ?? project.slug}
+                                discussions={discussions}
+                                currentUserId={user?.id}
+                                isLeader={isLeader}
+                                isMember={isMember || isLeader}
+                                isLecturer={isLecturerUser}
+                            />
                         </div>
                     )}
 
@@ -2518,10 +2817,10 @@ export default function ProjectShow({
                                 type="button"
                                 onClick={() => {
                                     setAcceptedModalData(null);
-                                    setActiveTab('discussions');
+                                    setActiveTab('discussion');
                                     window.setTimeout(() => {
-                                        document.getElementById('discussions-tab')?.scrollIntoView({ behavior: 'smooth' });
-                                    }, 100);
+                                        document.getElementById('discussion-section')?.scrollIntoView({ behavior: 'smooth' });
+                                    }, 150);
                                 }}
                                 className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-2 cursor-pointer"
                             >
@@ -2534,6 +2833,88 @@ export default function ProjectShow({
                                 className="w-full sm:w-auto py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
                             >
                                 Selesai
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Konfirmasi Ajukan Formasi Tim ke Dosen */}
+            {showSubmitFormationModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowSubmitFormationModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-5">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <Send className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Ajukan Formasi Tim ke Dosen
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Kirim susunan tim untuk evaluasi dan persetujuan dosen pengampu.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Detail Info Card */}
+                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5 mb-4 text-xs">
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-500 font-medium">Proyek</span>
+                                <span className="font-bold text-slate-900 text-right">{project.title}</span>
+                            </div>
+                            {academicClass && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500 font-medium">Kelas</span>
+                                    <span className="font-semibold text-slate-800">{academicClass.name} ({academicClass.code})</span>
+                                </div>
+                            )}
+                            {academicClass?.lecturer && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-500 font-medium">Dosen Pengampu</span>
+                                    <span className="font-bold text-blue-600">{academicClass.lecturer.name}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-500 font-medium">Jumlah Anggota</span>
+                                <span className="font-bold text-slate-900">
+                                    {activeMembersCount} / {maxQuota} Orang <span className="text-emerald-600 font-semibold">(Kuota Terpenuhi)</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-[11px] text-blue-800 leading-relaxed flex items-start gap-2.5 mb-5">
+                            <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
+                            <span>
+                                Setelah diajukan, status proyek berpindah ke tahap <strong>Evaluasi Dosen</strong>. Formasi anggota akan dikunci sementara hingga dosen memberikan keputusan persetujuan.
+                            </span>
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowSubmitFormationModal(false)}
+                                disabled={submittingFormation}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={confirmSubmitFormation}
+                                disabled={submittingFormation}
+                                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <Send className="size-3.5" />
+                                <span>{submittingFormation ? 'Mengajukan...' : 'Ya, Ajukan ke Dosen'}</span>
                             </button>
                         </div>
                     </div>
@@ -2579,6 +2960,750 @@ export default function ProjectShow({
                                 className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                             >
                                 <span>{lifecycleProcessing ? 'Mengaktifkan...' : 'Aktifkan Sekarang'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Kelola & Edit Proyek (Leader CRUD) */}
+            {showEditProjectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-100 relative max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                        {/* Header */}
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 flex items-center justify-center">
+                                    <Settings className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                        Kelola & Pengaturan Proyek
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Kelola rincian proyek, linimasa progres, living proposal, serta pengaturan tim.
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowEditProjectModal(false)}
+                                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        {/* Navigation Tabs */}
+                        <div className="px-6 pt-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0 bg-slate-50/50">
+                            <button
+                                type="button"
+                                onClick={() => setEditProjectTab('info')}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                    editProjectTab === 'info'
+                                        ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+                                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
+                                }`}
+                            >
+                                Informasi Utama
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditProjectTab('timeline')}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                    editProjectTab === 'timeline'
+                                        ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+                                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
+                                }`}
+                            >
+                                Status, Progres & Linimasa
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditProjectTab('proposal')}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                    editProjectTab === 'proposal'
+                                        ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
+                                        : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
+                                }`}
+                            >
+                                Living Proposal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setEditProjectTab('danger')}
+                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                    editProjectTab === 'danger'
+                                        ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs'
+                                        : 'text-rose-600 border-transparent hover:text-rose-800 hover:bg-rose-50/50'
+                                }`}
+                            >
+                                Zona Berbahaya
+                            </button>
+                        </div>
+
+                        {/* Modal Body */}
+                        <form onSubmit={handleSaveProject} className="flex-1 overflow-y-auto p-6 space-y-4">
+                            {editProjectTab === 'info' && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Judul Proyek <span className="text-rose-500">*</span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={projectForm.title}
+                                                onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
+                                                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="Contoh: AgriTani IoT Platform"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Nama Tim Proyek
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={projectForm.team_name}
+                                                onChange={(e) => setProjectForm({ ...projectForm, team_name: e.target.value })}
+                                                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="Contoh: Tim Inovasi AgriTani"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Kategori
+                                            </label>
+                                            <select
+                                                value={projectForm.category}
+                                                onChange={(e) => setProjectForm({ ...projectForm, category: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            >
+                                                <option value="capstone">Capstone Project</option>
+                                                <option value="academic">Tugas Akhir / Skripsi</option>
+                                                <option value="independent">Proyek Mandiri</option>
+                                                <option value="competition">Kompetisi</option>
+                                                <option value="research">Riset & Penelitian</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Tingkat Kesulitan
+                                            </label>
+                                            <select
+                                                value={projectForm.difficulty}
+                                                onChange={(e) => setProjectForm({ ...projectForm, difficulty: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            >
+                                                <option value="beginner">Pemula (Beginner)</option>
+                                                <option value="intermediate">Menengah (Intermediate)</option>
+                                                <option value="advanced">Lanjutan (Advanced)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Visibilitas
+                                            </label>
+                                            <select
+                                                value={projectForm.visibility}
+                                                onChange={(e) => setProjectForm({ ...projectForm, visibility: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            >
+                                                <option value="public">Publik (Semua Kampus)</option>
+                                                <option value="campus">Internal Kampus</option>
+                                                <option value="class">Khusus Kelas</option>
+                                                <option value="private">Privat (Hanya Tim)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Ringkasan Singkat (Short Description)
+                                        </label>
+                                        <textarea
+                                            rows={2}
+                                            value={projectForm.short_description}
+                                            onChange={(e) => setProjectForm({ ...projectForm, short_description: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Ringkasan 1-2 kalimat tentang proyek..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Deskripsi Lengkap
+                                        </label>
+                                        <textarea
+                                            rows={4}
+                                            value={projectForm.description}
+                                            onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Jelaskan gambaran umum, latar belakang, dan cakupan sistem..."
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Teknologi & Tech Stack (Pisahkan dengan tanda koma)
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={projectForm.tech_stack_input}
+                                            onChange={(e) => setProjectForm({ ...projectForm, tech_stack_input: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Contoh: Laravel, React, Tailwind CSS, PostgreSQL, Docker"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {editProjectTab === 'timeline' && (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Status Keberlangsungan Proyek
+                                            </label>
+                                            <select
+                                                value={projectForm.status}
+                                                onChange={(e) => {
+                                                    const newStatus = e.target.value;
+                                                    setProjectForm({
+                                                        ...projectForm,
+                                                        status: newStatus,
+                                                        progress: newStatus === 'completed' ? 100 : projectForm.progress,
+                                                    });
+                                                }}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            >
+                                                <option value="recruiting">Rekrutmen Terbuka (Recruiting)</option>
+                                                <option value="in_progress">Sedang Berjalan (In Progress)</option>
+                                                <option value="completed">Selesai (Completed)</option>
+                                                <option value="archived">Diarsipkan (Archived)</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <div className="flex justify-between items-center mb-1.5">
+                                                <label className="text-xs font-bold text-slate-700">
+                                                    Progres Pengerjaan Proyek
+                                                </label>
+                                                <span className="text-xs font-black text-blue-600 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200">
+                                                    {projectForm.progress}%
+                                                </span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                step="5"
+                                                value={projectForm.progress}
+                                                onChange={(e) => setProjectForm({ ...projectForm, progress: parseInt(e.target.value) || 0 })}
+                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Tanggal Mulai
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={projectForm.starts_on}
+                                                onChange={(e) => setProjectForm({ ...projectForm, starts_on: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Target Penyelesaian
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={projectForm.target_completion_on}
+                                                onChange={(e) => setProjectForm({ ...projectForm, target_completion_on: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Batas Akhir Rekrutmen
+                                            </label>
+                                            <input
+                                                type="date"
+                                                value={projectForm.recruitment_deadline}
+                                                onChange={(e) => setProjectForm({ ...projectForm, recruitment_deadline: e.target.value })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Jam Kerja / Minggu
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="60"
+                                                value={projectForm.expected_weekly_hours}
+                                                onChange={(e) => setProjectForm({ ...projectForm, expected_weekly_hours: parseInt(e.target.value) || 10 })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Kuota Min. Anggota
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="15"
+                                                value={projectForm.min_team_size}
+                                                onChange={(e) => setProjectForm({ ...projectForm, min_team_size: parseInt(e.target.value) || 2 })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                Kuota Maks. Anggota
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="20"
+                                                value={projectForm.max_team_size}
+                                                onChange={(e) => setProjectForm({ ...projectForm, max_team_size: parseInt(e.target.value) || 4 })}
+                                                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                URL Repositori GitHub / GitLab
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={projectForm.repository_url}
+                                                onChange={(e) => setProjectForm({ ...projectForm, repository_url: e.target.value })}
+                                                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="https://github.com/username/project"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                                URL Demo / Showcase
+                                            </label>
+                                            <input
+                                                type="url"
+                                                value={projectForm.demo_url}
+                                                onChange={(e) => setProjectForm({ ...projectForm, demo_url: e.target.value })}
+                                                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                                placeholder="https://demo-project.example.com"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {editProjectTab === 'proposal' && (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Rumusan Masalah (Problem Statement)
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={projectForm.problem_statement}
+                                            onChange={(e) => setProjectForm({ ...projectForm, problem_statement: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Deskripsikan masalah riil yang dihadapi oleh stakeholder/pengguna..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Tujuan Proyek (Objectives)
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={projectForm.objectives}
+                                            onChange={(e) => setProjectForm({ ...projectForm, objectives: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Uraikan target capaian dan fungsi utama sistem yang akan dibangun..."
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                            Solusi yang Diajukan (Proposed Solution)
+                                        </label>
+                                        <textarea
+                                            rows={3}
+                                            value={projectForm.proposed_solution}
+                                            onChange={(e) => setProjectForm({ ...projectForm, proposed_solution: e.target.value })}
+                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                            placeholder="Jelaskan arsitektur teknis atau kebaruan solusi yang ditawarkan..."
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            {editProjectTab === 'danger' && (
+                                <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <AlertTriangle className="size-6 text-rose-600 shrink-0 mt-0.5" />
+                                        <div>
+                                            <h4 className="text-sm font-bold text-rose-950">
+                                                Zona Berbahaya: Pembubaran Proyek
+                                            </h4>
+                                            <p className="text-xs text-rose-800 mt-1 leading-relaxed">
+                                                Membubarkan proyek adalah aksi destruktif permanen. Seluruh pendaftaran anggota, undangan, berkas proposal, dan catatan tugas di workspace tim akan dihapus atau dinonaktifkan.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-3 border-t border-rose-200 flex justify-end">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowDisbandModal(true)}
+                                            className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                        >
+                                            <Trash2 className="size-3.5" />
+                                            <span>Bubarkan & Hapus Proyek Ini</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            {editProjectTab !== 'danger' && (
+                                <div className="flex items-center justify-end gap-2 pt-4 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEditProjectModal(false)}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={savingProject}
+                                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                    >
+                                        <Check className="size-3.5" />
+                                        <span>{savingProject ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                                    </button>
+                                </div>
+                            )}
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Konfirmasi Pembubaran Proyek (Danger Zone Confirmation) */}
+            {showDisbandModal && (
+                <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-rose-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowDisbandModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-4">
+                            <div className="size-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0">
+                                <AlertTriangle className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Bubarkan Proyek?
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Tindakan ini permanen dan tidak dapat dibatalkan.
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                            Seluruh riwayat pengerjaan proyek <strong className="text-slate-900">"{project.title}"</strong>, tim terkait, dan lamaran anggota akan dibatalkan/dihapus dari sistem.
+                        </p>
+
+                        <div className="mb-4">
+                            <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                Ketik <span className="text-rose-600">BUBARKAN</span> untuk konfirmasi:
+                            </label>
+                            <input
+                                type="text"
+                                value={disbandConfirmation}
+                                onChange={(e) => setDisbandConfirmation(e.target.value)}
+                                placeholder="BUBARKAN"
+                                className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-mono"
+                            />
+                        </div>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setShowDisbandModal(false)}
+                                disabled={disbanding}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDisbandProject}
+                                disabled={disbanding || (disbandConfirmation !== project.title && disbandConfirmation.toUpperCase() !== 'BUBARKAN')}
+                                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <Trash2 className="size-3.5" />
+                                <span>{disbanding ? 'Membubarkan...' : 'Ya, Bubarkan Proyek'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Tambah Anggota Langsung (Leader Member Management) */}
+            {showAddMemberModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setShowAddMemberModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-5">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <UserPlus className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Tambah Anggota Tim Langsung
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Pilih mahasiswa untuk bergabung sebagai anggota tim proyek Anda.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleAddMember} className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    Pilih Mahasiswa <span className="text-rose-500">*</span>
+                                </label>
+                                <select
+                                    required
+                                    value={addMemberUserId}
+                                    onChange={(e) => setAddMemberUserId(e.target.value)}
+                                    className="w-full px-3.5 py-2.5 text-xs rounded-xl border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                >
+                                    <option value="">-- Pilih Mahasiswa Tersedia --</option>
+                                    {(classStudents || [])
+                                        .filter((cs: any) => !cs.is_member && cs.id !== project.leader_id)
+                                        .map((cs: any) => (
+                                            <option key={cs.id} value={cs.id} disabled={isAcademic && cs.has_active_project}>
+                                                {cs.name} {cs.student_number ? `(${cs.student_number})` : `(${cs.email})`}
+                                                {isAcademic && cs.has_active_project ? ' â€” [Sudah Ada Proyek]' : ' â€” [Tersedia]'}
+                                            </option>
+                                        ))}
+                                </select>
+                                <p className="text-[11px] text-slate-500 mt-1">
+                                    Menampilkan mahasiswa yang belum tergabung dalam proyek aktif di kelas ini.
+                                </p>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    Peran / Spesialisasi dalam Tim
+                                </label>
+                                <input
+                                    type="text"
+                                    value={addMemberRole}
+                                    onChange={(e) => setAddMemberRole(e.target.value)}
+                                    placeholder="Contoh: Frontend Developer, UI/UX Designer"
+                                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {['Frontend Developer', 'Backend Engineer', 'UI/UX Designer', 'Mobile Developer', 'QA Tester'].map((rolePreset) => (
+                                        <button
+                                            type="button"
+                                            key={rolePreset}
+                                            onClick={() => setAddMemberRole(rolePreset)}
+                                            className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition cursor-pointer"
+                                        >
+                                            + {rolePreset}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddMemberModal(false)}
+                                    disabled={addingMember}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={addingMember || !addMemberUserId}
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    <UserPlus className="size-3.5" />
+                                    <span>{addingMember ? 'Menambahkan...' : 'Tambah ke Tim'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Edit Peran Anggota (Leader Member Management) */}
+            {editingMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setEditingMember(null)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-4">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <Edit3 className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Edit Peran Anggota
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Perbarui spesialisasi atau tugas anggota tim.
+                                </p>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleUpdateMemberRole} className="space-y-4">
+                            <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
+                                <span className="text-slate-500 block">Mahasiswa:</span>
+                                <strong className="text-slate-900 text-sm">{editingMember.user?.name}</strong>
+                                <span className="text-slate-500 block text-[11px] mt-0.5">{editingMember.user?.email}</span>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                                    Nama Peran Baru <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={newMemberRole}
+                                    onChange={(e) => setNewMemberRole(e.target.value)}
+                                    placeholder="Contoh: Fullstack Engineer, Data Analyst"
+                                    className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                />
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {['Frontend Developer', 'Backend Engineer', 'Fullstack Developer', 'UI/UX Designer', 'Mobile Developer', 'DevOps & QA'].map((preset) => (
+                                        <button
+                                            type="button"
+                                            key={preset}
+                                            onClick={() => setNewMemberRole(preset)}
+                                            className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition cursor-pointer"
+                                        >
+                                            {preset}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingMember(null)}
+                                    disabled={savingMemberRole}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={savingMemberRole || !newMemberRole.trim()}
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    <Check className="size-3.5" />
+                                    <span>{savingMemberRole ? 'Menyimpan...' : 'Simpan Peran'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Konfirmasi Keluarkan Anggota (Leader Member Management) */}
+            {removingMember && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl border border-rose-100 relative animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setRemovingMember(null)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+
+                        <div className="flex items-center gap-3.5 mb-4">
+                            <div className="size-11 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0">
+                                <UserMinus className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Keluarkan Anggota?
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Cabut keanggotaan mahasiswa dari tim proyek ini.
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-slate-600 leading-relaxed mb-4">
+                            Apakah Anda yakin ingin mengeluarkan <strong className="text-slate-900">{removingMember.user?.name}</strong> ({removingMember.role_name || 'Anggota'}) dari tim proyek ini? Mahasiswa akan menerima pemberitahuan dan status keanggotaannya akan dibatalkan.
+                        </p>
+
+                        <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                                type="button"
+                                onClick={() => setRemovingMember(null)}
+                                disabled={removingMemberLoading}
+                                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleRemoveMember}
+                                disabled={removingMemberLoading}
+                                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                <UserMinus className="size-3.5" />
+                                <span>{removingMemberLoading ? 'Mengeluarkan...' : 'Ya, Keluarkan'}</span>
                             </button>
                         </div>
                     </div>

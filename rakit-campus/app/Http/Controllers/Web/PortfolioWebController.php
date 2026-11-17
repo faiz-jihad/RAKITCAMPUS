@@ -86,10 +86,129 @@ class PortfolioWebController extends Controller
             ->latest()
             ->get();
 
+        $myLeadingTeams = [];
+        if ($viewer) {
+            $myLeadingTeams = \App\Models\Team::where('leader_id', $viewer->id)
+                ->with([
+                    'competitionParticipation.competition:id,name,slug,level,category',
+                    'project:id,title,slug',
+                    'members:id,team_id,user_id',
+                ])
+                ->get()
+                ->map(function ($t) use ($profile) {
+                    $isMember = $t->members->contains('user_id', $profile->user_id);
+                    $comp = $t->competitionParticipation?->competition;
+                    $proj = $t->project;
+                    return [
+                        'id' => $t->id,
+                        'name' => $t->name,
+                        'type' => $comp ? 'competition' : ($proj ? 'project' : 'general'),
+                        'context_title' => $comp?->name ?? ($proj?->title ?? 'Tim Kolaborasi'),
+                        'participation_id' => $t->competitionParticipation?->id,
+                        'is_candidate_member' => $isMember,
+                        'is_formation_locked' => (bool) ($t->competitionParticipation?->is_formation_locked ?? false),
+                    ];
+                })
+                ->filter(fn ($t) => !$t['is_candidate_member'] && !$t['is_formation_locked'])
+                ->values();
+        }
+
         return Inertia::render('portfolio/public', [
             'profile' => $profile,
             'achievements' => $achievements,
             'items' => $items,
+            'myLeadingTeams' => $myLeadingTeams,
+            'isOwner' => $isOwner,
         ]);
+    }
+
+    /**
+     * Send in-app collaboration invitation or team invitation to a portfolio member.
+     */
+    public function inviteCollaborator(Request $request)
+    {
+        $viewer = $request->user();
+        if (!$viewer) {
+            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk mengajak kolaborasi.');
+        }
+
+        $validated = $request->validate([
+            'student_id' => ['required', 'exists:users,id'],
+            'team_id' => ['nullable', 'exists:teams,id'],
+            'role_name' => ['required', 'string', 'max:100'],
+            'message' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $candidate = \App\Models\User::findOrFail($validated['student_id']);
+        if ($candidate->id === $viewer->id) {
+            return back()->with('error', 'Anda tidak dapat mengundang diri sendiri.');
+        }
+
+        $teamId = $validated['team_id'] ?? null;
+        $roleName = trim($validated['role_name']);
+        $message = trim($validated['message'] ?? '');
+
+        if ($teamId) {
+            $team = \App\Models\Team::with(['competitionParticipation.competition', 'project'])->findOrFail($teamId);
+            if (!$team->isLeader($viewer)) {
+                return back()->with('error', 'Hanya ketua tim yang berwenang mengirimkan undangan tim.');
+            }
+
+            if ($team->hasMember($candidate)) {
+                return back()->with('error', "{$candidate->name} sudah bergabung dalam tim ini.");
+            }
+
+            if ($team->competitionParticipation) {
+                $participation = $team->competitionParticipation;
+                if ($participation->is_formation_locked) {
+                    return back()->with('error', 'Susunan tim kompetisi ini telah dikunci.');
+                }
+
+                $teamFormationService = app(\App\Services\Matchmaking\CompetitionTeamFormationService::class);
+                $teamFormationService->sendInvitation(
+                    $participation,
+                    $viewer,
+                    $candidate,
+                    $roleName,
+                    $message ?: null
+                );
+            } else {
+                $invitationService = app(\App\Services\Matchmaking\InvitationService::class);
+                $invitationService->sendInvitation(
+                    $team,
+                    $viewer,
+                    $candidate,
+                    $roleName,
+                    $message ?: 'Mengajak Anda berkolaborasi dalam tim proyek kami.'
+                );
+            }
+
+            return back()->with('success', "Undangan resmi bergabung ke tim '{$team->name}' telah berhasil dikirim kepada {$candidate->name}!");
+        }
+
+        // Direct in-app collaboration notification
+        $notificationService = app(\App\Services\Notifications\NotificationService::class);
+        $viewerSlug = $viewer->profile?->slug;
+        $actionUrl = $viewerSlug ? url("/portfolio/{$viewerSlug}") : url("/dashboard");
+
+        $notificationService->notify(
+            recipients: $candidate,
+            notificationType: 'collaboration_request',
+            category: \App\Services\Notifications\NotificationPreferenceService::CATEGORY_COMPETITION_HUB,
+            title: "Ajakan Kolaborasi dari {$viewer->name}",
+            message: "{$viewer->name} tertarik dengan portofolio Anda dan ingin mengajak kolaborasi untuk peran {$roleName}." . ($message ? " Pesan: \"{$message}\"" : ""),
+            options: [
+                'priority' => 'high',
+                'action_url' => $actionUrl,
+                'action_text' => 'Lihat Profil Pengundang',
+                'details' => [
+                    'Pengundang' => $viewer->name,
+                    'Peran yang Ditawarkan' => $roleName,
+                    'Pesan Khusus' => $message ?: 'Mari berkolaborasi bersama.',
+                ],
+            ]
+        );
+
+        return back()->with('success', "Ajakan kolaborasi berhasil dikirim kepada {$candidate->name} melalui notifikasi internal aplikasi.");
     }
 }
