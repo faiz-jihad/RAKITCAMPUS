@@ -17,9 +17,13 @@ class SystemFeedback extends Model
         'name',
         'email',
         'category',
+        'feedback_type',
+        'urgency',
+        'page_url',
         'message',
         'rating',
         'status',
+        'admin_notes',
         'ip_address',
         'user_agent',
     ];

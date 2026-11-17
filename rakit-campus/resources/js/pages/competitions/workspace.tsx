@@ -966,121 +966,141 @@ export default function CompetitionWorkspace({
                     ];
 
                     return (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-                            {/* ======================================================== */}
-                            {/* PRIMARY WORKSTREAM (8 COLS) */}
-                            {/* ======================================================== */}
-                            <div className="lg:col-span-8 space-y-6">
-
-                                {/* CARD 1: PROJECT SPEC & EXECUTIVE BRIEF */}
-                                <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-5">
-                                    <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
-                                        {/* Competition Poster Thumbnail */}
-                                        <div className="relative w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs shrink-0">
-                                            <img
-                                                src={getCompetitionCover(participation.competition)}
-                                                alt={participation.competition?.name || 'Cover'}
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <span className="absolute bottom-1 left-1 right-1 text-[8px] font-black uppercase tracking-wider text-white text-center truncate px-1 py-0.5 rounded bg-black/60">
-                                                {participation.competition?.level || 'NASIONAL'}
-                                            </span>
-                                        </div>
-
-                                        <div className="flex-1 min-w-0 space-y-2.5">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                                    {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}
-                                                </span>
-
-                                                <button
-                                                    type="button"
-                                                    onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
-                                                    className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition ${
-                                                        (isLeader || isMentor || isAdmin)
-                                                            ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer'
-                                                            : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
-                                                    }`}
-                                                    title="Klik untuk mengubah tahap seleksi"
-                                                >
-                                                    <span className="size-1.5 rounded-full bg-blue-600" />
-                                                    <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
-                                                    {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600 shrink-0" />}
-                                                </button>
-
-                                                {participation.category_track && (
-                                                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200 truncate max-w-[240px]">
-                                                        Jalur: {participation.category_track}
-                                                    </span>
-                                                )}
-
-                                                {participation.is_formation_locked && (
-                                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                                                        <Lock className="size-2.5" />
-                                                        <span>Formasi Terkunci</span>
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div>
-                                                <div className="flex items-center gap-2.5 flex-wrap">
-                                                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                                                        {participation.team?.name || 'Tim Mahasiswa'}
-                                                    </h2>
-                                                    {isLeader && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setNewTeamName(participation.team?.name || '');
-                                                                setRenameModalOpen(true);
-                                                            }}
-                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-slate-200 hover:border-blue-400 bg-white hover:bg-blue-50 text-[11px] font-semibold text-slate-600 hover:text-blue-600 transition shadow-2xs cursor-pointer"
-                                                            title="Ubah Nama Tim"
-                                                        >
-                                                            <PenLine className="size-2.5" />
-                                                            <span>Ubah Nama</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                                                    Berpartisipasi pada <strong className="text-slate-800 font-semibold">{participation.competition?.name}</strong>
-                                                    {participation.competition?.organizer ? ` • Diselenggarakan oleh ${participation.competition.organizer}` : ''}
-                                                </p>
-                                            </div>
-                                        </div>
+                        <div className="space-y-6">
+                            {/* KPI PULSE STRIP */}
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
+                                    <div className="flex items-center justify-between text-slate-500 mb-1">
+                                        <span className="text-[11px] font-semibold">Kesiapan Tim</span>
+                                        <Award className="size-3.5 text-blue-600" />
                                     </div>
-
-                                    {/* Operational Health Strip */}
-                                    <div className="pt-4 border-t border-slate-100 space-y-3">
-                                        <div className="flex items-center justify-between text-xs">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">Kesiapan Tim & Berkas Seleksi</span>
-                                                <span className="text-[10px] text-slate-400 font-normal">({totalDocs}/6 Berkas • {completedTasks}/{totalTasks} Tugas)</span>
-                                            </div>
-                                            <span className="font-bold text-blue-600 font-mono text-sm">{readinessScore}% Siap</span>
-                                        </div>
-                                        <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                                style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-3 gap-2 text-center pt-1">
-                                            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
-                                                <span className="block text-xs font-bold text-slate-900">{completedTasks} / {totalTasks}</span>
-                                                <span className="block text-[10px] text-slate-500">Tugas Diselesaikan</span>
-                                            </div>
-                                            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
-                                                <span className="block text-xs font-bold text-slate-900">{totalDocs} / 6</span>
-                                                <span className="block text-[10px] text-slate-500">Berkas Wajib Siap</span>
-                                            </div>
-                                            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100">
-                                                <span className="block text-xs font-bold text-slate-900">{membersCount} / {capacity}</span>
-                                                <span className="block text-[10px] text-slate-500">Anggota Terisi</span>
-                                            </div>
-                                        </div>
+                                    <div className="text-xl sm:text-2xl font-black text-slate-900 font-mono">
+                                        {readinessScore}%
+                                    </div>
+                                    <div className="w-full h-1.5 bg-slate-100 rounded-full mt-2 overflow-hidden">
+                                        <div
+                                            className="h-full bg-blue-600 rounded-full"
+                                            style={{ width: `${Math.min(100, Math.max(0, readinessScore))}%` }}
+                                        />
                                     </div>
                                 </div>
+
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
+                                    <div className="flex items-center justify-between text-slate-500 mb-1">
+                                        <span className="text-[11px] font-semibold">Tugas Selesai</span>
+                                        <FolderKanban className="size-3.5 text-emerald-600" />
+                                    </div>
+                                    <div className="text-xl sm:text-2xl font-black text-slate-900">
+                                        {completedTasks} <span className="text-xs font-medium text-slate-400">/ {totalTasks}</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                                        {taskPercentage}% dari sprint aktif
+                                    </p>
+                                </div>
+
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
+                                    <div className="flex items-center justify-between text-slate-500 mb-1">
+                                        <span className="text-[11px] font-semibold">Berkas Wajib</span>
+                                        <FileText className="size-3.5 text-purple-600" />
+                                    </div>
+                                    <div className="text-xl sm:text-2xl font-black text-slate-900">
+                                        {totalDocs} <span className="text-xs font-medium text-slate-400">/ 6</span>
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2 font-medium">
+                                        Artefak seleksi juri
+                                    </p>
+                                </div>
+
+                                <div className="bg-white rounded-xl p-4 border border-slate-200/90 shadow-2xs">
+                                    <div className="flex items-center justify-between text-slate-500 mb-1">
+                                        <span className="text-[11px] font-semibold">Sisa Waktu</span>
+                                        <Clock className="size-3.5 text-amber-600" />
+                                    </div>
+                                    <div className={`text-xl sm:text-2xl font-black ${
+                                        daysLeft !== null && daysLeft <= 7 ? 'text-rose-600' : 'text-slate-900'
+                                    }`}>
+                                        {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini!') : '-'}
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 mt-2 font-medium truncate">
+                                        {deadlineDate || 'Belum ada batas akhir'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                                {/* ======================================================== */}
+                                {/* PRIMARY WORKSTREAM (8 COLS) */}
+                                {/* ======================================================== */}
+                                <div className="lg:col-span-8 space-y-6">
+
+                                    {/* CARD 1: PROJECT SPEC & EXECUTIVE BRIEF */}
+                                    <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs p-5 sm:p-6 space-y-4">
+                                        <div className="flex flex-col sm:flex-row gap-4 sm:gap-5 items-start">
+                                            {/* Competition Poster Thumbnail */}
+                                            <div className="relative w-20 sm:w-24 aspect-[3/4] rounded-lg overflow-hidden bg-slate-900 border border-slate-200 shadow-2xs shrink-0">
+                                                <img
+                                                    src={getCompetitionCover(participation.competition)}
+                                                    alt={participation.competition?.name || 'Cover'}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <span className="absolute bottom-1 left-1 right-1 text-[8px] font-black uppercase tracking-wider text-white text-center truncate px-1 py-0.5 rounded bg-black/60">
+                                                    {participation.competition?.level || 'NASIONAL'}
+                                                </span>
+                                            </div>
+
+                                            <div className="flex-1 min-w-0 space-y-2">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                        {participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}
+                                                    </span>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
+                                                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md flex items-center gap-1.5 transition ${
+                                                            (isLeader || isMentor || isAdmin)
+                                                                ? 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 cursor-pointer'
+                                                                : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
+                                                        }`}
+                                                        title="Klik untuk mengubah tahap seleksi"
+                                                    >
+                                                        <span className="size-1.5 rounded-full bg-blue-600" />
+                                                        <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
+                                                        {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600 shrink-0" />}
+                                                    </button>
+
+                                                    {participation.category_track && (
+                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200 truncate max-w-[240px]">
+                                                            Jalur: {participation.category_track}
+                                                        </span>
+                                                    )}
+
+                                                    {participation.is_formation_locked && (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
+                                                            <Lock className="size-2.5" />
+                                                            <span>Formasi Terkunci</span>
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <h2 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                                                        {participation.competition?.name}
+                                                    </h2>
+                                                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                                                        {participation.competition?.organizer ? `Diselenggarakan oleh ${participation.competition.organizer}` : 'Kompetisi Mahasiswa'}
+                                                        {participation.competition?.location ? ` • ${participation.competition.location}` : ''}
+                                                    </p>
+                                                </div>
+
+                                                {participation.competition?.description && (
+                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed pt-1">
+                                                        {participation.competition.description}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
 
                                 {/* CARD 2: ACTIVE TASKS STREAM (SPRINT PULSE) */}
                                 <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
@@ -1609,8 +1629,9 @@ export default function CompetitionWorkspace({
                                 )}
                             </div>
                         </div>
-                    );
-                })()}
+                    </div>
+                );
+            })()}
 
                 {/* 6) TAB CONTENT: APPLICANTS & MINSATU RECRUITMENT */}
                 {activeTab === 'applicants' && (

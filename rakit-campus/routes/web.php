@@ -27,6 +27,7 @@ Route::get('/', function () {
     return Inertia::render('welcome');
 })->name('home');
 
+Route::get('/feedback', [FeedbackWebController::class, 'index'])->name('feedback.index');
 Route::post('/feedback', [FeedbackWebController::class, 'store'])->name('feedback.store');
 
 Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitemap');

@@ -90,10 +90,14 @@ class AdminFeedbackWebController extends Controller
                 'email' => $fb->email ?: ($fb->user?->email ?? '-'),
                 'category' => $fb->category,
                 'category_label' => $categoryLabels[$fb->category] ?? ucfirst($fb->category),
+                'feedback_type' => $fb->feedback_type ?: ($fb->category === 'kendala_bug' ? 'bug_report' : 'suggestion'),
+                'urgency' => $fb->urgency ?: 'medium',
+                'page_url' => $fb->page_url,
                 'message' => $fb->message,
                 'rating' => $fb->rating,
                 'status' => $fb->status,
                 'status_label' => $statusLabels[$fb->status] ?? ucfirst($fb->status),
+                'admin_notes' => $fb->admin_notes,
                 'ip_address' => $fb->ip_address,
                 'user_agent' => $fb->user_agent,
                 'created_at' => $fb->created_at?->translatedFormat('d M Y, H:i'),
@@ -131,12 +135,15 @@ class AdminFeedbackWebController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', 'string', 'in:pending,reviewed,resolved,dismissed'],
+            'admin_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $feedback = SystemFeedback::findOrFail($id);
-        $feedback->update([
-            'status' => $validated['status'],
-        ]);
+        $updateData = ['status' => $validated['status']];
+        if (array_key_exists('admin_notes', $validated)) {
+            $updateData['admin_notes'] = $validated['admin_notes'];
+        }
+        $feedback->update($updateData);
 
         return back()->with('success', 'Status masukan berhasil diperbarui.');
     }

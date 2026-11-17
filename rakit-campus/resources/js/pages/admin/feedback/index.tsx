@@ -8,6 +8,7 @@ import {
     CheckCircle2,
     Clock,
     Eye,
+    ExternalLink,
     Filter,
     HelpCircle,
     Inbox,
@@ -39,6 +40,10 @@ interface FeedbackItem {
     email: string;
     category: string;
     category_label: string;
+    feedback_type?: 'suggestion' | 'bug_report';
+    urgency?: 'low' | 'medium' | 'high' | 'critical';
+    page_url?: string | null;
+    admin_notes?: string | null;
     message: string;
     rating: number | null;
     status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
@@ -108,11 +113,18 @@ export default function AdminFeedbackIndex({ feedbacks, statistics, filters }: P
         applyFilter(selectedStatus, selectedCategory, searchQuery);
     };
 
-    const handleUpdateStatus = (id: number, status: 'pending' | 'reviewed' | 'resolved' | 'dismissed') => {
+    const handleUpdateStatus = (id: number, status: 'pending' | 'reviewed' | 'resolved' | 'dismissed', notes?: string) => {
+        let adminNotes = notes;
+        if (status === 'resolved' && adminNotes === undefined) {
+            const promptNote = window.prompt('Tambahkan tanggapan tim untuk pengguna (Opsional):');
+            if (promptNote !== null && promptNote.trim().length > 0) {
+                adminNotes = promptNote.trim();
+            }
+        }
         setUpdatingId(id);
         router.patch(
             `/admin/feedback/${id}/status`,
-            { status },
+            { status, ...(adminNotes !== undefined ? { admin_notes: adminNotes } : {}) },
             {
                 preserveScroll: true,
                 onFinish: () => setUpdatingId(null),
@@ -416,7 +428,28 @@ export default function AdminFeedbackIndex({ feedbacks, statistics, filters }: P
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                                            {/* Type Badge */}
+                                            {item.feedback_type === 'bug_report' && (
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 border border-rose-300 text-rose-700">
+                                                    <Bug className="size-3" />
+                                                    <span>BUG</span>
+                                                </span>
+                                            )}
+
+                                            {/* Urgency Badge */}
+                                            {item.urgency && item.feedback_type === 'bug_report' && (
+                                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                                                    item.urgency === 'high' || item.urgency === 'critical'
+                                                        ? 'bg-rose-100 text-rose-800 border-rose-300'
+                                                        : item.urgency === 'low'
+                                                        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                                                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                                                }`}>
+                                                    <span>{item.urgency === 'high' || item.urgency === 'critical' ? '🔴 Kritis' : item.urgency === 'low' ? '🟢 Ringan' : '🟡 Sedang'}</span>
+                                                </span>
+                                            )}
+
                                             {/* Category Badge */}
                                             <span
                                                 className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${catBadge.className}`}
@@ -446,6 +479,28 @@ export default function AdminFeedbackIndex({ feedbacks, statistics, filters }: P
                                     <div className="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/60 text-xs sm:text-[13px] text-slate-800 leading-relaxed whitespace-pre-wrap font-normal">
                                         "{item.message}"
                                     </div>
+
+                                    {/* Related Page URL */}
+                                    {item.page_url && (
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-600 font-mono bg-slate-100/80 px-3 py-1.5 rounded-lg border border-slate-200">
+                                            <ExternalLink className="size-3 text-slate-400 shrink-0" />
+                                            <span className="font-semibold text-slate-700">Tautan:</span>
+                                            <a href={item.page_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                                                {item.page_url}
+                                            </a>
+                                        </div>
+                                    )}
+
+                                    {/* Admin Response Note */}
+                                    {item.admin_notes && (
+                                        <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-slate-700 space-y-1">
+                                            <div className="flex items-center gap-1 font-bold text-blue-800 text-[11px]">
+                                                <ShieldCheck className="size-3.5" />
+                                                <span>Tanggapan Admin / Tim Pengembang:</span>
+                                            </div>
+                                            <p className="text-slate-800">{item.admin_notes}</p>
+                                        </div>
+                                    )}
 
                                     {/* Technical Drawer (IP & User Agent) */}
                                     {isMetaExpanded && (
