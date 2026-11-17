@@ -34,6 +34,7 @@ import {
     LayoutGrid,
     Linkedin,
     List,
+    Loader2,
     Lock,
     Mail,
     PenLine,
@@ -119,12 +120,17 @@ export default function CompetitionWorkspace({
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
-            if (params.get('tab') === 'github' || window.location.hash === '#github') {
-                return 'github';
+            const tab = params.get('tab');
+            if (tab && ['overview', 'applicants', 'kanban', 'github', 'documents', 'history'].includes(tab)) {
+                return tab as any;
             }
+            if (window.location.hash === '#github') return 'github';
+            if (window.location.hash === '#applicants') return 'applicants';
         }
         return 'overview';
     });
+
+    const [processingAppId, setProcessingAppId] = useState<number | null>(null);
 
     // MinSatu Roles & Applicants State
     const [newRoleName, setNewRoleName] = useState('');
@@ -315,6 +321,8 @@ export default function CompetitionWorkspace({
         }
         const candidateName = cand.user?.name || cand.name || 'Rekan';
         setInviteMessage(`Halo ${candidateName}, mari bergabung dengan tim ${participation.team?.name || ''} untuk kompetisi ${participation.competition?.name || ''}!`);
+        // Tutup modal eksplorasi agar tidak bertumpuk
+        setExploreModalOpen(false);
         setInviteModalOpen(true);
     };
 
@@ -386,9 +394,20 @@ export default function CompetitionWorkspace({
                 : 'Tolak lamaran mahasiswa ini?';
 
         if (confirm(confirmMsg)) {
+            setProcessingAppId(appId);
             router.post(
                 `/competitions/teams/${participation.id}/applications/${appId}/respond`,
-                { action }
+                { action },
+                {
+                    preserveScroll: true,
+                    preserveState: true,
+                    onSuccess: () => {
+                        setActiveTab('applicants');
+                    },
+                    onFinish: () => {
+                        setProcessingAppId(null);
+                    },
+                }
             );
         }
     };
@@ -2094,17 +2113,26 @@ export default function CompetitionWorkspace({
                                                             <>
                                                                 <button
                                                                     type="button"
+                                                                    disabled={processingAppId !== null}
                                                                     onClick={() => handleRespondApplication(app.id, 'reject')}
-                                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer"
+                                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                                 >
                                                                     Tolak
                                                                 </button>
                                                                 <button
                                                                     type="button"
+                                                                    disabled={processingAppId !== null}
                                                                     onClick={() => handleRespondApplication(app.id, 'accept')}
-                                                                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                                                                    className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                                                 >
-                                                                    Terima Masuk Tim
+                                                                    {processingAppId === app.id ? (
+                                                                        <>
+                                                                            <Loader2 className="size-3.5 animate-spin" />
+                                                                            <span>Memproses...</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span>Terima Masuk Tim</span>
+                                                                    )}
                                                                 </button>
                                                             </>
                                                         )}
@@ -3176,7 +3204,7 @@ export default function CompetitionWorkspace({
                                     <p className="text-[11px] text-slate-400">Perekrutan resmi dengan persetujuan mahasiswa</p>
                                 </div>
                             </div>
-                            <button type="button" onClick={() => setInviteModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+                            <button type="button" onClick={() => { setInviteModalOpen(false); setSelectedCandidate(null); }} className="text-slate-400 hover:text-slate-600">
                                 <X className="size-4" />
                             </button>
                         </div>
@@ -3258,20 +3286,35 @@ export default function CompetitionWorkspace({
                                 </span>
                             </div>
 
-                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                 <button
                                     type="button"
-                                    onClick={() => setInviteModalOpen(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    onClick={() => {
+                                        setInviteModalOpen(false);
+                                        setExploreModalOpen(true);
+                                    }}
+                                    className="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-slate-50 transition cursor-pointer flex items-center gap-1.5 border border-slate-200"
                                 >
-                                    Batal
+                                    <span>← Kembali ke Cari Mahasiswa</span>
                                 </button>
-                                <button
-                                    type="submit"
-                                    className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                                >
-                                    Kirim Undangan Rekrutmen
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setInviteModalOpen(false);
+                                            setSelectedCandidate(null);
+                                        }}
+                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                    >
+                                        Kirim Undangan Rekrutmen
+                                    </button>
+                                </div>
                             </div>
                         </form>
                     </div>
@@ -4251,23 +4294,32 @@ export default function CompetitionWorkspace({
                                         <>
                                             <button
                                                 type="button"
+                                                disabled={processingAppId !== null}
                                                 onClick={() => {
                                                     handleRespondApplication(app.id, 'reject');
                                                     setSelectedApplicantModal(null);
                                                 }}
-                                                className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer"
+                                                className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 Tolak Lamaran
                                             </button>
                                             <button
                                                 type="button"
+                                                disabled={processingAppId !== null}
                                                 onClick={() => {
                                                     handleRespondApplication(app.id, 'accept');
                                                     setSelectedApplicantModal(null);
                                                 }}
-                                                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs"
+                                                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                             >
-                                                Terima Masuk Tim
+                                                {processingAppId === app.id ? (
+                                                    <>
+                                                        <Loader2 className="size-3.5 animate-spin" />
+                                                        <span>Memproses...</span>
+                                                    </>
+                                                ) : (
+                                                    <span>Terima Masuk Tim</span>
+                                                )}
                                             </button>
                                         </>
                                     )}

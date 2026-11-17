@@ -77,14 +77,18 @@ export default function AppLayout({
             if (hubParam === 'project') return 'project';
 
             const pathname = window.location.pathname;
-            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace') || pathname.startsWith('/admin/competitions')) {
+            if (
+                pathname.startsWith('/competitions') ||
+                pathname.startsWith('/competition-workspace') ||
+                pathname.startsWith('/admin/competitions') ||
+                pathname.startsWith('/matching')
+            ) {
                 return 'competition';
             }
             if (
                 pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
-                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
                 return 'project';
@@ -116,13 +120,17 @@ export default function AppLayout({
                 detectedHub = 'competition';
             } else if (hubParam === 'project') {
                 detectedHub = 'project';
-            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace') || pathname.startsWith('/admin/competitions')) {
+            } else if (
+                pathname.startsWith('/competitions') ||
+                pathname.startsWith('/competition-workspace') ||
+                pathname.startsWith('/admin/competitions') ||
+                pathname.startsWith('/matching')
+            ) {
                 detectedHub = 'competition';
             } else if (
                 pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
-                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
                 detectedHub = 'project';

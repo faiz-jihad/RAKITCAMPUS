@@ -588,10 +588,20 @@ class CompetitionWebController extends Controller
             ->orderBy('name', 'asc')
             ->get(['id', 'name', 'slug', 'organizer', 'category', 'level', 'max_team_size', 'registration_deadline', 'status']);
 
+        // Radar Rekrutmen candidates for Cari Tim in Competition Hub
+        $radarCandidates = $activeParticipation
+            ? $this->matchmakingService->getRecommendedCandidates($activeParticipation, $user, 24)
+            : $this->matchmakingService->getGeneralTalentRadar($user, 24);
+
+        if ($radarCandidates->isEmpty()) {
+            $radarCandidates = $this->matchmakingService->getGeneralTalentRadar($user, 24);
+        }
+
         return Inertia::render('competitions/index', [
             'competitions' => $competitions,
             'openCompetitionOptions' => $openCompetitionOptions,
             'openRecruitingTeams' => $openRecruitingTeams,
+            'radarCandidates' => $radarCandidates,
             'totalNeededSlots' => $totalNeededSlots,
             'myApplications' => $myApplications,
             'myTeams' => $myTeams,
@@ -604,7 +614,7 @@ class CompetitionWebController extends Controller
             'recommendedCompetitions' => $recommendedCompetitions,
             'categoryCounts' => $categoryCounts,
             'currentUserInfo' => $currentUserInfo,
-            'filters' => (object) $request->only(['search', 'organizer', 'category', 'status', 'level', 'tab', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
+            'filters' => (object) $request->only(['search', 'organizer', 'category', 'status', 'level', 'tab', 'view', 'team_search', 'team_category', 'team_role', 'type', 'format', 'sort', 'my_lifecycle_status']),
             'categories' => CompetitionCategory::values(),
             'organizers' => $organizers,
             'statuses' => CompetitionStatus::values(),
@@ -2586,65 +2596,55 @@ class CompetitionWebController extends Controller
             'decision_note' => ['nullable', 'string', 'max:500'],
         ]);
 
-        DB::transaction(function () use ($validated, $application, $team, $user) {
-            if ($validated['action'] === 'accept') {
-                $roleName = $application->role?->name ?? 'Anggota Tim';
+        try {
+            DB::transaction(function () use ($validated, $application, $team, $user) {
+                if ($validated['action'] === 'accept') {
+                    $roleName = $application->role?->name ?? 'Anggota Tim';
 
-                $this->membershipService->addMemberToCompetitionTeam(
-                    $team,
-                    $application->user,
-                    $roleName,
-                    $application->recruitment_role_id
-                );
+                    $this->membershipService->addMemberToCompetitionTeam(
+                        $team,
+                        $application->user,
+                        $roleName,
+                        $application->recruitment_role_id
+                    );
 
-                // Automatically remove or decrement the approved recruitment position
-                $recRole = null;
-                if ($application->recruitment_role_id) {
-                    $recRole = RecruitmentRole::find($application->recruitment_role_id);
+                    $application->update([
+                        'status' => ApplicationStatus::Accepted,
+                        'decided_by' => $user->id,
+                        'decided_at' => now(),
+                        'decision_note' => $validated['decision_note'] ?? 'Lamaran diterima oleh ketua tim.',
+                    ]);
+                } else {
+                    $application->update([
+                        'status' => ApplicationStatus::Rejected,
+                        'decided_by' => $user->id,
+                        'decided_at' => now(),
+                        'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
+                    ]);
                 }
-                if (!$recRole && $team->recruitment) {
-                    $recRole = $team->recruitment->roles()->where('name', $roleName)->first();
-                }
 
-                if ($recRole) {
-                    if ($recRole->slots > 1) {
-                        $recRole->decrement('slots');
-                    } else {
-                        $recRole->delete();
+                // Notify applicant via in-app & queued email
+                $status = $validated['action'] === 'accept' ? 'accepted' : 'rejected';
+                if ($application->user) {
+                    try {
+                        $application->user->notify(new ApplicationStatusNotification($application, $status));
+                    } catch (\Throwable $e) {
+                        // Ignore fail
                     }
+                    app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($application->user);
                 }
+            });
 
-                $application->update([
-                    'status' => ApplicationStatus::Accepted,
-                    'decided_by' => $user->id,
-                    'decided_at' => now(),
-                    'decision_note' => $validated['decision_note'] ?? 'Lamaran diterima oleh ketua tim.',
-                ]);
+            if ($validated['action'] === 'accept') {
+                return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim {$team->name}!");
             } else {
-                $application->update([
-                    'status' => ApplicationStatus::Rejected,
-                    'decided_by' => $user->id,
-                    'decided_at' => now(),
-                    'decision_note' => $validated['decision_note'] ?? 'Lamaran ditolak.',
-                ]);
+                return back()->with('success', "Lamaran dari {$application->user->name} telah ditolak.");
             }
-
-            // Notify applicant via in-app & queued email
-            $status = $validated['action'] === 'accept' ? 'accepted' : 'rejected';
-            if ($application->user) {
-                try {
-                    $application->user->notify(new ApplicationStatusNotification($application, $status));
-                } catch (\Throwable $e) {
-                    // Ignore fail
-                }
-                app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($application->user);
-            }
-        });
-
-        if ($validated['action'] === 'accept') {
-            return back()->with('success', "Mahasiswa {$application->user->name} resmi bergabung dengan tim {$team->name}!");
-        } else {
-            return back()->with('success', "Lamaran dari {$application->user->name} telah ditolak.");
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errorMessage = collect($e->errors())->flatten()->first() ?? 'Tidak dapat memproses pelamar tim.';
+            return back()->withErrors($e->errors())->with('error', $errorMessage);
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal memproses pelamar: ' . $e->getMessage());
         }
     }
 

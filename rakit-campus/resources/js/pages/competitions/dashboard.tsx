@@ -469,7 +469,7 @@ export default function CompetitionDashboard({
                                         <span>Pilih & Ikuti Kompetisi</span>
                                     </Link>
                                     <Link
-                                        href="/matching"
+                                        href="/competitions?tab=teams&view=radar"
                                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                                     >
                                         <Users className="size-3.5 text-slate-400" />
@@ -568,7 +568,7 @@ export default function CompetitionDashboard({
                             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                                 <span className="text-[11px] text-slate-400">Matchmaking Talenta</span>
                                 <Link
-                                    href="/matching"
+                                    href="/competitions?tab=teams&view=radar"
                                     className="font-bold text-amber-800 hover:underline flex items-center gap-1"
                                 >
                                     <span>Buka Radar Rekrutmen</span>
