@@ -36,6 +36,7 @@ class ProposalService
                     'timeline_plan' => $data['timeline_plan'] ?? $currentVersion->timeline_plan,
                     'budget_estimate' => $data['budget_estimate'] ?? $currentVersion->budget_estimate,
                     'tech_stack' => isset($data['tech_stack']) ? (is_array($data['tech_stack']) ? $data['tech_stack'] : explode(',', (string) $data['tech_stack'])) : $currentVersion->tech_stack,
+                    'custom_sections' => array_key_exists('custom_sections', $data) ? $data['custom_sections'] : $currentVersion->custom_sections,
                     'change_summary' => $data['change_summary'] ?? $currentVersion->change_summary,
                 ]);
 
@@ -109,6 +110,7 @@ class ProposalService
                 'timeline_plan' => $data['timeline_plan'] ?? $currentVersion?->timeline_plan,
                 'budget_estimate' => $data['budget_estimate'] ?? $currentVersion?->budget_estimate,
                 'tech_stack' => isset($data['tech_stack']) ? (is_array($data['tech_stack']) ? $data['tech_stack'] : explode(',', (string) $data['tech_stack'])) : $currentVersion?->tech_stack,
+                'custom_sections' => array_key_exists('custom_sections', $data) ? $data['custom_sections'] : $currentVersion?->custom_sections,
                 'change_summary' => $data['change_summary'] ?? "Revisi proposal versi {$nextVersionNumber} berdasarkan perkembangan implementasi proyek.",
                 'status' => 'draft',
                 'created_by' => $user->id,
@@ -224,6 +226,27 @@ class ProposalService
                 'version_a' => $valA,
                 'version_b' => $valB,
                 'is_changed' => $isChanged,
+            ];
+        }
+
+        $secA = $vA->custom_sections ?? [];
+        $secB = $vB->custom_sections ?? [];
+        if (! empty($secA) || ! empty($secB)) {
+            $formatSections = function ($sections) {
+                if (! is_array($sections)) return '';
+                return implode("\n\n", array_map(function ($s) {
+                    $lbl = $s['label'] ?? 'Bagian';
+                    $cnt = $s['content'] ?? '';
+                    return "[{$lbl}]:\n{$cnt}";
+                }, $sections));
+            };
+            $textA = $formatSections($secA);
+            $textB = $formatSections($secB);
+            $diffs['custom_sections'] = [
+                'label' => 'Bagian & Field Tambahan (Kustom)',
+                'version_a' => $textA,
+                'version_b' => $textB,
+                'is_changed' => trim($textA) !== trim($textB),
             ];
         }
 

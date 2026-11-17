@@ -17,7 +17,8 @@ class NotificationTemplateService implements NotificationTemplateServiceInterfac
         $rawMessage = $payload['message'] ?? '';
         $message = nl2br(htmlspecialchars($rawMessage, ENT_QUOTES, 'UTF-8'));
         $previewText = htmlspecialchars(mb_strimwidth(strip_tags($rawMessage), 0, 110, '...'), ENT_QUOTES, 'UTF-8');
-        $actionUrl = $payload['action_url'] ?? null;
+        $rawActionUrl = $payload['action_url'] ?? null;
+        $actionUrl = $rawActionUrl ? (str_starts_with($rawActionUrl, 'http') ? $rawActionUrl : url($rawActionUrl)) : null;
         $actionText = htmlspecialchars($payload['action_text'] ?? 'Buka RAKIT Campus', ENT_QUOTES, 'UTF-8');
         $category = htmlspecialchars($payload['category_name'] ?? 'Notifikasi', ENT_QUOTES, 'UTF-8');
         $recipientEmail = !empty($payload['recipient_email']) ? htmlspecialchars((string) $payload['recipient_email'], ENT_QUOTES, 'UTF-8') : null;
@@ -181,7 +182,8 @@ HTML;
         $title = $payload['title'] ?? 'Notifikasi RAKIT Campus';
         $greeting = $payload['greeting'] ?? 'Halo Rekan Mahasiswa,';
         $message = $payload['message'] ?? '';
-        $actionUrl = $payload['action_url'] ?? '';
+        $rawActionUrl = $payload['action_url'] ?? '';
+        $actionUrl = $rawActionUrl ? (str_starts_with($rawActionUrl, 'http') ? $rawActionUrl : url($rawActionUrl)) : '';
         $details = $payload['details'] ?? [];
         $appName = config('app.name', 'RAKIT Campus');
 

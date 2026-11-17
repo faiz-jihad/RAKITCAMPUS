@@ -1433,7 +1433,7 @@ export default function CompetitionIndex({
                                     if (team?.leader) {
                                         memberAvatars.push({
                                             name: team.leader.name,
-                                            avatar: team.leader.avatar,
+                                            avatar: team.leader.avatar || null,
                                             role: 'Ketua Tim',
                                         });
                                     }
@@ -2324,11 +2324,11 @@ export default function CompetitionIndex({
                                                 const team = part.team;
                                                 const status = part.lifecycle_status;
 
-                                                const tasksCount = part.tasks_count ?? team?.tasks_count ?? 0;
-                                                const completedTasksCount = part.completed_tasks_count ?? team?.completed_tasks_count ?? 0;
+                                                const tasksCount = part.tasks_count ?? (team as any)?.tasks_count ?? 0;
+                                                const completedTasksCount = part.completed_tasks_count ?? (team as any)?.completed_tasks_count ?? 0;
                                                 const progressPercent =
                                                     part.progress_percent ??
-                                                    team?.progress_percent ??
+                                                    (team as any)?.progress_percent ??
                                                     (tasksCount > 0
                                                         ? Math.round((completedTasksCount / tasksCount) * 100)
                                                         : (status === 'completed' ? 100 : (status === 'in_progress' ? 50 : (status === 'registered' ? 25 : 0))));

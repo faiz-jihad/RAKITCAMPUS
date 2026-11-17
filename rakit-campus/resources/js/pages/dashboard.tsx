@@ -211,43 +211,43 @@ export default function Dashboard({
             case 'formation_review':
                 return {
                     label: 'Menunggu Persetujuan Dosen',
-                    className: 'text-amber-700 bg-amber-50',
+                    className: 'text-amber-700 bg-amber-50 border-amber-200/80',
                     dotColor: 'bg-amber-500',
                 };
             case 'lecturer_approved':
                 return {
                     label: 'Disetujui Dosen',
-                    className: 'text-blue-700 bg-blue-50',
-                    dotColor: 'bg-blue-600',
+                    className: 'text-emerald-700 bg-emerald-50 border-emerald-200/80',
+                    dotColor: 'bg-emerald-600',
                 };
             case 'workspace_activated':
                 return {
                     label: 'Workspace Aktif',
-                    className: 'text-blue-700 bg-blue-50',
+                    className: 'text-blue-700 bg-blue-50 border-blue-200/80',
                     dotColor: 'bg-blue-600',
                 };
             case 'team_locked':
                 return {
                     label: 'Formasi Terkunci',
-                    className: 'text-slate-700 bg-slate-100',
+                    className: 'text-slate-700 bg-slate-100 border-slate-200',
                     dotColor: 'bg-slate-600',
                 };
             case 'formation_rejected':
                 return {
                     label: 'Ditolak',
-                    className: 'text-rose-700 bg-rose-50',
+                    className: 'text-rose-700 bg-rose-50 border-rose-200/80',
                     dotColor: 'bg-rose-500',
                 };
             case 'matchmaking_open':
                 return {
                     label: 'Matchmaking Terbuka',
-                    className: 'text-blue-700 bg-blue-50',
+                    className: 'text-blue-700 bg-blue-50 border-blue-200/80',
                     dotColor: 'bg-blue-600',
                 };
             default:
                 return {
                     label: 'Tahap Pembentukan',
-                    className: 'text-slate-600 bg-slate-100',
+                    className: 'text-slate-600 bg-slate-100 border-slate-200',
                     dotColor: 'bg-slate-400',
                 };
         }
@@ -332,6 +332,12 @@ export default function Dashboard({
     // Handler Dosen: Catat Arahan Bimbingan Cepat
     const handleSendGuidance = (e: React.FormEvent) => {
         e.preventDefault();
+        const classId = selectedProjectForGuidance?.class_id || selectedProjectForGuidance?.academic_class_id;
+        if (!classId) {
+            alert('Proyek ini tidak terdaftar dalam kelas akademik yang aktif.');
+            return;
+        }
+
         if (!selectedProjectForGuidance || !guidanceTitle.trim() || !guidanceContent.trim()) {
             alert('Mohon isi judul dan catatan arahan bimbingan.');
             return;
@@ -339,7 +345,7 @@ export default function Dashboard({
 
         setSubmittingGuidance(true);
         router.post(
-            `/classes/${selectedProjectForGuidance.class_id}/guidance`,
+            `/classes/${classId}/guidance`,
             {
                 project_id: selectedProjectForGuidance.id,
                 title: guidanceTitle.trim(),
@@ -347,10 +353,16 @@ export default function Dashboard({
                 type: guidanceType,
             },
             {
+                preserveScroll: true,
                 onSuccess: () => {
                     setSelectedProjectForGuidance(null);
                     setGuidanceTitle('');
                     setGuidanceContent('');
+                    setGuidanceType('feedback');
+                },
+                onError: (errors) => {
+                    const firstError = Object.values(errors)[0] as string;
+                    alert(firstError || 'Gagal mengirim catatan arahan bimbingan.');
                 },
                 onFinish: () => setSubmittingGuidance(false),
             }
@@ -448,7 +460,7 @@ export default function Dashboard({
                             <span>Saran & Masukan</span>
                             {(adminStats?.pending_feedback ?? 0) > 0 && (
                                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800">
-                                    {adminStats.pending_feedback}
+                                    {adminStats?.pending_feedback}
                                 </span>
                             )}
                         </Link>
@@ -607,7 +619,7 @@ export default function Dashboard({
                             </div>
                             <div className="text-[10px] font-bold mt-1">
                                 {(adminStats?.pending_feedback ?? 0) > 0 ? (
-                                    <span className="text-amber-600 font-semibold">{adminStats.pending_feedback} Belum Ditinjau</span>
+                                    <span className="text-amber-600 font-semibold">{adminStats?.pending_feedback} Belum Ditinjau</span>
                                 ) : (
                                     <span className="text-slate-400">Semua Ditinjau</span>
                                 )}
@@ -1069,27 +1081,27 @@ export default function Dashboard({
         return (
             <AppLayout activeTab="dashboard" title="Dashboard Dosen Pengampu — RakitCampus">
                 {/* 1. HEADER ROW DOSEN */}
-                <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
+                <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
                     <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
                             Selamat Datang, {user?.name}
                         </h1>
                     </div>
 
-                    <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5 w-full sm:w-auto">
                         <Link
                             href="/classes"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer"
+                            className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer"
                         >
-                            <GraduationCap className="w-4 h-4" />
-                            <span>Kelola Ruang Kelas</span>
+                            <GraduationCap className="w-4 h-4 shrink-0" />
+                            <span className="truncate">Kelola Ruang Kelas</span>
                         </Link>
                         <Link
                             href="/projects"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200/90 text-xs sm:text-sm font-semibold shadow-2xs transition cursor-pointer"
+                            className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-95 text-slate-700 border border-slate-200/90 text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer"
                         >
-                            <FolderKanban className="w-4 h-4 text-slate-400" />
-                            <span>Eksplorasi Proyek</span>
+                            <FolderKanban className="w-4 h-4 text-slate-400 shrink-0" />
+                            <span className="truncate">Eksplorasi Proyek</span>
                         </Link>
                     </div>
                 </section>
@@ -1166,7 +1178,7 @@ export default function Dashboard({
 
                             <div className="mt-2 text-left">
                                 <div className="flex items-center justify-between text-xs">
-                                    <span className="font-bold text-slate-900">
+                                    <span className={`font-bold ${totalApprovalsPending > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
                                         {totalApprovalsPending > 0 ? `${totalApprovalsPending} Tim Menunggu Keputusan` : 'Semua Formasi Disetujui'}
                                     </span>
                                     <span className="text-[11px] text-slate-400 font-medium">
@@ -1206,8 +1218,8 @@ export default function Dashboard({
                                     </span>
                                 </div>
 
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-1">
-                                    <div>
+                                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mt-1">
+                                    <div className="flex-1 min-w-0">
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-extrabold text-slate-900 tracking-tight">
                                                 {stats?.taught_classes_count ?? taughtClasses.length}
@@ -1232,7 +1244,7 @@ export default function Dashboard({
                                     </div>
 
                                     {taughtClasses && taughtClasses.length > 0 && (
-                                        <div className="flex flex-col gap-2 w-full md:w-64 shrink-0">
+                                        <div className="flex flex-col gap-2 w-full lg:w-72 shrink-0">
                                             {taughtClasses.slice(0, 2).map((cls: any) => (
                                                 <Link
                                                     key={cls.id}
@@ -1249,7 +1261,7 @@ export default function Dashboard({
                                                             </span>
                                                         </div>
                                                         <span className="text-[11px] text-slate-400 block mt-0.5">
-                                                            {cls.students_count || 0} Mahasiswa • {cls.projects_count || 0} Kelompok
+                                                            {cls.students_count || 0} Mahasiswa <span className="text-slate-300 mx-1">|</span> {cls.projects_count || 0} Kelompok
                                                         </span>
                                                     </div>
                                                     <ArrowRight className="size-3 text-slate-400 group-hover/cls:text-blue-600 group-hover/cls:translate-x-0.5 transition-all shrink-0" />
@@ -1260,11 +1272,11 @@ export default function Dashboard({
                                 </div>
                             </div>
 
-                            <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between">
+                            <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                                 <span className="text-xs text-slate-400">Total {stats?.taught_classes_count ?? taughtClasses.length} ruang kelas aktif semester ini</span>
                                 <Link
                                     href="/classes"
-                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer"
+                                    className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer self-start sm:self-auto"
                                 >
                                     <span>Buka Manajemen Kelas</span>
                                     <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -1310,11 +1322,16 @@ export default function Dashboard({
                                     </div>
 
                                     <div className="flex flex-wrap items-center gap-1.5 mt-3">
-                                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-50 px-2 py-0.5 rounded border border-slate-100">
+                                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${
+                                            readyProjectsCount > 0
+                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
+                                                : 'text-slate-600 bg-slate-50 border-slate-100'
+                                        }`}>
                                             {readyProjectsCount} Siap Evaluasi / Lomba
                                         </span>
-                                        <span className="text-[10px] font-medium text-slate-400">
-                                            • {stats?.completed_tasks_count ?? 0} Tugas Selesai
+                                        <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                                            <span className="text-slate-300">|</span>
+                                            <span>{stats?.completed_tasks_count ?? 0} Tugas Selesai</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1354,12 +1371,12 @@ export default function Dashboard({
                                     {/* Status Box & Badges */}
                                     <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
                                         <div className="flex items-center gap-2">
-                                            <div className={`size-2 rounded-full ${pendingProposalsCount > 0 ? 'bg-blue-600 animate-pulse' : 'bg-emerald-500'}`} />
+                                            <div className={`size-2 rounded-full ${pendingProposalsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
                                             <span className="font-semibold text-slate-700 text-[11px]">
                                                 {pendingProposalsCount > 0 ? `${pendingProposalsCount} Perlu Ditinjau` : 'Semua Proposal Selesai'}
                                             </span>
                                         </div>
-                                        <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/70">
                                             {approvedProposalsCount} Disetujui
                                         </span>
                                     </div>
@@ -1392,28 +1409,27 @@ export default function Dashboard({
                         <div id="persetujuan-tim" className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                        <ShieldCheck className="w-5 h-5 text-amber-600" />
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
+                                            <ShieldCheck className="w-4 h-4 text-blue-600" />
+                                        </span>
                                         <span>Persetujuan Pengajuan Tim & Pembimbing</span>
                                         {pendingTeamApprovals.length > 0 && (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/80">
                                                 {pendingTeamApprovals.length} Baru
                                             </span>
                                         )}
                                     </h2>
-                                    <p className="text-xs text-slate-400 mt-0.5">
-                                        Tinjau komposisi tim yang diajukan mahasiswa pada kelas yang Anda ampu sebelum Workspace diaktifkan.
-                                    </p>
                                 </div>
 
-                                <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-[11px] font-semibold self-start">
+                                <div className="inline-flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-[11px] font-semibold self-start sm:self-auto w-full sm:w-auto justify-between sm:justify-start">
                                     <button
                                         type="button"
                                         onClick={() => setApprovalTab('pending')}
-                                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                        className={`flex-1 sm:flex-initial text-center px-3 py-1 rounded-md transition-all duration-150 cursor-pointer ${
                                             approvalTab === 'pending'
-                                                ? 'bg-white text-slate-900 shadow-2xs'
-                                                : 'text-slate-500 hover:text-slate-800'
+                                                ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                                         }`}
                                     >
                                         Menunggu ({pendingTeamApprovals.length})
@@ -1421,10 +1437,10 @@ export default function Dashboard({
                                     <button
                                         type="button"
                                         onClick={() => setApprovalTab('history')}
-                                        className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
+                                        className={`flex-1 sm:flex-initial text-center px-3 py-1 rounded-md transition-all duration-150 cursor-pointer ${
                                             approvalTab === 'history'
-                                                ? 'bg-white text-slate-900 shadow-2xs'
-                                                : 'text-slate-500 hover:text-slate-800'
+                                                ? 'bg-white text-blue-700 shadow-2xs font-bold'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                                         }`}
                                     >
                                         Riwayat ({teamApprovalHistory.length})
@@ -1462,22 +1478,27 @@ export default function Dashboard({
                                                             )}
                                                         </div>
                                                         <h3 className="text-sm font-bold text-slate-900">
-                                                            {item.team_name} — <span className="text-blue-700">{item.title}</span>
+                                                            {item.team_name} — <span className="text-blue-600 font-semibold">{item.title}</span>
                                                         </h3>
                                                         <p className="text-xs text-slate-500 mt-0.5">
                                                             Ketua Tim: <strong className="text-slate-700">{item.leader_name || 'Mahasiswa'}</strong>
-                                                            {' • '}
+                                                            <span className="text-slate-300 mx-1.5">|</span>
                                                             Anggota: <strong className="text-slate-700">{item.members_count} / {item.max_team_size}</strong> (min. {item.min_team_size})
-                                                            {item.class_name && ` • ${item.class_name}`}
+                                                            {item.class_name && (
+                                                                <>
+                                                                    <span className="text-slate-300 mx-1.5">|</span>
+                                                                    <span>{item.class_name}</span>
+                                                                </>
+                                                            )}
                                                         </p>
                                                     </div>
 
                                                     <Link
                                                         href={`/projects/${item.slug || item.id}?tab=formation`}
-                                                        className="text-xs font-semibold text-blue-600 hover:text-blue-700 shrink-0 inline-flex items-center gap-1"
+                                                        className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors shrink-0 inline-flex items-center gap-1"
                                                     >
                                                         <span>Detail Tim</span>
-                                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                                        <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:-translate-y-0.5 group-hover/link:translate-x-0.5" />
                                                     </Link>
                                                 </div>
 
@@ -1487,13 +1508,13 @@ export default function Dashboard({
                                                         {item.members.map((m: any) => (
                                                             <span
                                                                 key={m.id || m.user_id}
-                                                                className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700"
+                                                                className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 shadow-2xs"
                                                             >
                                                                 <span className="font-semibold text-slate-900">{m.name}</span>
-                                                                <span className="text-slate-400">•</span>
+                                                                <span className="text-slate-300">|</span>
                                                                 <span className="text-blue-700 font-medium">{m.role_name}</span>
                                                                 {m.is_leader && (
-                                                                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-blue-50 text-blue-700">
+                                                                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
                                                                         Ketua
                                                                     </span>
                                                                 )}
@@ -1510,7 +1531,7 @@ export default function Dashboard({
                                                 )}
 
                                                 {isPending && (
-                                                    <div className="pt-2 border-t border-slate-200/70 flex flex-wrap items-center justify-end gap-2">
+                                                    <div className="pt-2 border-t border-slate-200/70 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
                                                         <button
                                                             type="button"
                                                             onClick={() => {
@@ -1518,7 +1539,7 @@ export default function Dashboard({
                                                                 setRejectReason('');
                                                             }}
                                                             disabled={isBusy}
-                                                            className="px-3.5 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                                            className="w-full sm:w-auto justify-center px-3.5 py-1.5 rounded-lg bg-white hover:bg-rose-50 hover:border-rose-300 text-rose-700 border border-rose-200 text-xs font-bold transition-all duration-150 active:scale-95 inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-2xs"
                                                         >
                                                             <XCircle className="w-3.5 h-3.5" />
                                                             <span>Tolak dengan Catatan</span>
@@ -1527,7 +1548,7 @@ export default function Dashboard({
                                                             type="button"
                                                             onClick={() => handleApproveTeam(item)}
                                                             disabled={isBusy}
-                                                            className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-2xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                                            className="w-full sm:w-auto justify-center px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs hover:shadow-xs inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                                                         >
                                                             <CheckCircle2 className="w-3.5 h-3.5" />
                                                             <span>{isBusy ? 'Memproses...' : 'Setujui Tim & Jadi Pembimbing'}</span>
@@ -1555,22 +1576,21 @@ export default function Dashboard({
 
                         {/* PILAR 1: MEMBIMBING PROYEK & PERSIAPAN LOMBA */}
                         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
-                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-2.5">
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                        <Trophy className="w-4 h-4 text-blue-600" />
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 sm:gap-2.5">
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                            <Trophy className="w-4 h-4 text-blue-600" />
+                                        </span>
                                         <span>Membimbing Proyek & Persiapan Lomba</span>
                                     </h2>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Pantau progres tim mahasiswa, beri arahan bimbingan berkala, dan siapkan tim unggulan untuk kompetisi kampus.
-                                    </p>
                                 </div>
                                 <Link
                                     href="/projects"
-                                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                                    className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1 self-start sm:self-auto shrink-0 whitespace-nowrap"
                                 >
                                     <span>Lihat Semua Proyek</span>
-                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                 </Link>
                             </div>
 
@@ -1579,19 +1599,19 @@ export default function Dashboard({
                                     {guidedProjects.map((proj: any) => (
                                         <div
                                             key={proj.id}
-                                            className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                                            className="p-3.5 sm:p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4"
                                         >
                                             <div className="min-w-0 flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                                                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/70 shrink-0">
                                                         {proj.class_code || 'KELAS'}
                                                     </span>
-                                                    <span className="text-xs text-slate-500 truncate">
+                                                    <span className="text-xs text-slate-500 truncate max-w-[200px] sm:max-w-xs">
                                                         {proj.class_name}
                                                     </span>
                                                     {proj.is_competition_ready && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 flex items-center gap-1">
-                                                            <Trophy className="w-2.5 h-2.5" />
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 flex items-center gap-1 shrink-0">
+                                                            <Trophy className="w-2.5 h-2.5 text-emerald-600" />
                                                             <span>Potensi Lomba</span>
                                                         </span>
                                                     )}
@@ -1599,45 +1619,48 @@ export default function Dashboard({
                                                 <h3 className="text-sm font-bold text-slate-900 truncate">
                                                     {proj.title}
                                                 </h3>
-                                                <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
-                                                    <span>Ketua: <strong>{proj.leader_name || 'Mahasiswa'}</strong></span>
-                                                    <span>•</span>
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1.5 text-xs text-slate-500">
+                                                    <span>Ketua: <strong className="text-slate-700 font-semibold">{proj.leader_name || 'Mahasiswa'}</strong></span>
+                                                    <span className="text-slate-300">•</span>
                                                     <span>{proj.members_count || 1} Anggota</span>
-                                                    <span>•</span>
+                                                    <span className="text-slate-300">•</span>
                                                     <span>{proj.done_tasks}/{proj.total_tasks} Tugas Selesai</span>
-                                                    <span>•</span>
+                                                    <span className="text-slate-300">•</span>
                                                     <span className="font-semibold text-slate-700">Proposal: {(proj.proposal_status || 'draft').toUpperCase()}</span>
                                                 </div>
                                             </div>
 
-                                            <div className="flex sm:flex-col items-center sm:items-end justify-between gap-2.5 shrink-0">
-                                                <div className="text-right">
-                                                    <span className="text-xs font-bold text-slate-800">
-                                                        {proj.progress}%
-                                                    </span>
-                                                    <div className="w-28 bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
-                                                        <div
-                                                            className="bg-blue-600 h-full rounded-full transition-all duration-300"
-                                                            style={{ width: `${proj.progress}%` }}
-                                                        />
+                                            <div className="pt-3 border-t border-slate-200/60 flex flex-col sm:flex-col sm:items-end justify-center gap-3 shrink-0 w-full sm:w-auto sm:pt-0 sm:border-t-0">
+                                                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                                                    <span className="text-xs font-semibold text-slate-500 sm:hidden">Progres:</span>
+                                                    <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1">
+                                                        <span className="text-xs font-bold text-slate-900 font-mono">
+                                                            {proj.progress}%
+                                                        </span>
+                                                        <div className="w-28 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                                                            <div
+                                                                className="bg-blue-600 h-full rounded-full transition-all duration-300"
+                                                                style={{ width: `${proj.progress}%` }}
+                                                            />
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2">
+                                                <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto">
                                                     <button
                                                         type="button"
                                                         onClick={() => setSelectedProjectForGuidance(proj)}
-                                                        className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 border border-blue-200 text-[11px] font-bold text-blue-700 transition cursor-pointer flex items-center gap-1"
+                                                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100/90 hover:border-blue-300 border border-blue-200 text-xs sm:text-[11px] font-bold text-blue-700 transition-all duration-150 active:scale-95 cursor-pointer shadow-2xs whitespace-nowrap"
                                                     >
-                                                        <MessageSquare className="w-3 h-3" />
+                                                        <MessageSquare className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                                                         <span>Beri Arahan</span>
                                                     </button>
                                                     <Link
                                                         href={`/projects/${proj.slug || proj.id}`}
-                                                        className="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-bold transition flex items-center gap-1"
+                                                        className="group/btn w-full sm:w-auto inline-flex items-center justify-center gap-1 px-3 py-2 sm:py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-[11px] font-bold transition-all duration-150 active:scale-95 shadow-2xs hover:shadow-xs cursor-pointer whitespace-nowrap"
                                                     >
                                                         <span>Detail</span>
-                                                        <ArrowRight className="w-3 h-3" />
+                                                        <ArrowRight className="w-3 h-3 transition-transform duration-150 group-hover/btn:translate-x-0.5 shrink-0" />
                                                     </Link>
                                                 </div>
                                             </div>
@@ -1659,17 +1682,16 @@ export default function Dashboard({
 
                         {/* PILAR 2: MENINJAU SERTA MENYETUJUI PROPOSAL (LIVING PROPOSAL) */}
                         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
-                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-2">
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                        <FileCheck className="w-4 h-4 text-emerald-600" />
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                            <FileCheck className="w-4 h-4 text-blue-600" />
+                                        </span>
                                         <span>Meninjau serta Menyetujui Proposal (Living Proposal)</span>
                                     </h2>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Verifikasi proposal rancangan proyek mahasiswa sebelum pengerjaan sprint dimulai.
-                                    </p>
                                 </div>
-                                <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-100 self-start sm:self-auto">
                                     {pendingProposals.length} Menunggu
                                 </span>
                             </div>
@@ -1679,28 +1701,28 @@ export default function Dashboard({
                                     {pendingProposals.map((prop: any) => (
                                         <div
                                             key={prop.id}
-                                            className="p-3.5 rounded-xl border border-amber-200/70 bg-amber-50/30 flex items-center justify-between gap-3"
+                                            className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-slate-50 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                         >
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/70 text-amber-900 uppercase">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/70 uppercase">
                                                         Revisi V{prop.proposal_version}
                                                     </span>
-                                                    <span className="text-xs font-bold text-slate-800 truncate">
+                                                    <span className="text-xs font-bold text-slate-900 truncate">
                                                         {prop.title}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-slate-500 truncate">
-                                                    Diajukan oleh: {prop.leader_name} • Kelas {prop.class_name}
+                                                    Diajukan oleh: <strong className="text-slate-700">{prop.leader_name}</strong> <span className="text-slate-300 mx-1">|</span> Kelas {prop.class_name || '-'}
                                                 </p>
                                             </div>
 
                                             <Link
                                                 href={`/projects/${prop.slug || prop.id}`}
-                                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs"
+                                                className="group/btn px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition-all duration-150 shrink-0 flex items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs cursor-pointer w-full sm:w-auto"
                                             >
                                                 <span>Tinjau & Setujui</span>
-                                                <ArrowRight className="w-3.5 h-3.5" />
+                                                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/btn:translate-x-0.5" />
                                             </Link>
                                         </div>
                                     ))}
@@ -1715,19 +1737,18 @@ export default function Dashboard({
 
                         {/* PILAR 4: EVALUASI & SNAPSHOT IMUTABEL (UTS & UAS) - ALUR 4 */}
                         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
-                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-2">
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                        <Award className="w-4 h-4 text-purple-600" />
+                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                            <Award className="w-4 h-4 text-blue-600" />
+                                        </span>
                                         <span>Evaluasi & Snapshot Imutabel (UTS & UAS)</span>
                                     </h2>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Penilaian rubrik berkala UTS/UAS dan penguncian snapshot proposal & progres yang tidak tertimpa revisi.
-                                    </p>
                                 </div>
-                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full self-start sm:self-auto ${
                                     pendingEvaluations.length > 0
-                                        ? 'bg-purple-100 text-purple-800'
+                                        ? 'bg-blue-50 text-blue-700 border border-blue-100'
                                         : 'bg-slate-100 text-slate-600'
                                 }`}>
                                     {pendingEvaluations.length} Menunggu Penilaian
@@ -1739,19 +1760,19 @@ export default function Dashboard({
                                     {pendingEvaluations.map((ev: any) => (
                                         <div
                                             key={ev.id}
-                                            className="p-3.5 rounded-xl border border-purple-200/80 bg-purple-50/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                            className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                                         >
-                                            <div className="min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2 mb-1">
                                                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
                                                         ev.period_type === 'uas'
-                                                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                                            : 'bg-blue-100 text-blue-800 border border-blue-200'
+                                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/80'
+                                                            : 'bg-blue-50 text-blue-700 border border-blue-200/80'
                                                     }`}>
                                                         {ev.period_name || ev.period_type.toUpperCase()}
                                                     </span>
-                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-700">
-                                                        Snapshot V{ev.version_number} • Progress {ev.progress_percentage}%
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                                                        Snapshot V{ev.version_number} <span className="text-slate-400 font-normal">|</span> Progress {ev.progress_percentage}%
                                                     </span>
                                                     {ev.class_code && (
                                                         <span className="text-[10px] font-mono text-slate-400">
@@ -1760,35 +1781,35 @@ export default function Dashboard({
                                                     )}
                                                 </div>
                                                 <h3 className="text-sm font-bold text-slate-900 truncate">
-                                                    {ev.team_name} — <span className="text-purple-700">{ev.project_title}</span>
+                                                    {ev.team_name} — <span className="text-blue-600 font-semibold">{ev.project_title}</span>
                                                 </h3>
                                                 <p className="text-xs text-slate-500 mt-0.5 truncate">
-                                                    Pengumpul: {ev.submitter_name} • Diserahkan {ev.submitted_at}
+                                                    Pengumpul: <strong className="text-slate-700">{ev.submitter_name}</strong> <span className="text-slate-300 mx-1">|</span> Diserahkan {ev.submitted_at}
                                                 </p>
                                             </div>
 
                                             <Link
                                                 href={`/projects/${ev.project_slug || ev.project_id}?tab=${ev.period_type || 'uts'}`}
-                                                className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition shrink-0 flex items-center gap-1.5 shadow-xs"
+                                                className="group/btn px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition-all duration-150 shrink-0 flex items-center justify-center gap-1.5 shadow-2xs hover:shadow-xs w-full sm:w-auto cursor-pointer"
                                             >
                                                 <span>Beri Nilai & Review Rubrik</span>
-                                                <ArrowRight className="w-3.5 h-3.5" />
+                                                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/btn:translate-x-0.5" />
                                             </Link>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-500 flex items-center justify-between gap-3">
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                     <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-purple-600 shrink-0" />
+                                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                                         <span>Semua evaluasi UTS/UAS telah dinilai. Saat mahasiswa menyerahkan berkas laporan, sistem otomatis mengunci snapshot imutabel di sini.</span>
                                     </div>
                                     <Link
                                         href="/projects"
-                                        className="text-xs font-bold text-purple-600 hover:underline shrink-0 inline-flex items-center gap-1"
+                                        className="group/link text-xs font-bold text-blue-600 hover:text-blue-700 transition-colors shrink-0 inline-flex items-center gap-1 self-start sm:self-auto"
                                     >
                                         <span>Lihat Proyek</span>
-                                        <ArrowRight className="w-3.5 h-3.5" />
+                                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                     </Link>
                                 </div>
                             )}
@@ -1796,22 +1817,21 @@ export default function Dashboard({
 
                         {/* PILAR 3: RUANG KELAS & SIMULASI PEMBAGIAN TIM OTOMATIS */}
                         <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-6 shadow-2xs">
-                            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-2.5">
                                 <div>
-                                    <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                        <Shuffle className="w-4 h-4 text-indigo-600" />
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2 sm:gap-2.5">
+                                        <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center shrink-0">
+                                            <Shuffle className="w-4 h-4 text-blue-600" />
+                                        </span>
                                         <span>Ruang Kelas & Simulasi Pembagian Tim Cerdas</span>
                                     </h2>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Kelola kelas kuliah dan jalankan simulasi distribusi mahasiswa yang belum memiliki kelompok agar merata tanpa ketimpangan.
-                                    </p>
                                 </div>
                                 <Link
                                     href="/classes"
-                                    className="text-xs font-semibold text-blue-600 hover:underline flex items-center gap-1"
+                                    className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors inline-flex items-center gap-1 self-start sm:self-auto shrink-0 whitespace-nowrap"
                                 >
                                     <span>Kelola Semua Kelas</span>
-                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                 </Link>
                             </div>
 
@@ -1828,29 +1848,29 @@ export default function Dashboard({
                                             >
                                                 <div>
                                                     <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono">
                                                             Kode: {cls.join_code || cls.code}
                                                         </span>
                                                         <span className="text-xs text-slate-400">
-                                                            Semester {cls.semester} • {cls.academic_year || '2026/2027'}
+                                                            Semester {cls.semester} <span className="text-slate-300 mx-1">|</span> {cls.academic_year || '2026/2027'}
                                                         </span>
                                                     </div>
                                                     <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
                                                         {cls.name}
                                                     </h3>
                                                     <p className="text-xs text-slate-500 mt-1">
-                                                        {cls.students_count || 0} Mahasiswa Terdaftar • {cls.projects_count || 0} Kelompok
+                                                        {cls.students_count || 0} Mahasiswa Terdaftar <span className="text-slate-300 mx-1">|</span> {cls.projects_count || 0} Kelompok
                                                     </p>
                                                 </div>
 
                                                 {/* Action Bar Simulasi Tim */}
-                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs">
+                                                <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
                                                     {hasUnassigned ? (
                                                         <button
                                                             type="button"
                                                             disabled={isThisSimulating}
                                                             onClick={() => handleRunAutoGrouping(cls.id, cls.name)}
-                                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[11px] shadow-xs transition disabled:opacity-50 cursor-pointer"
+                                                            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-[11px] shadow-2xs hover:shadow-xs transition-all duration-150 disabled:opacity-50 cursor-pointer w-full sm:w-auto"
                                                             title="Otomatis bagi sisa mahasiswa ke kelompok berimbang"
                                                         >
                                                             <Zap className="w-3.5 h-3.5" />
@@ -1867,10 +1887,10 @@ export default function Dashboard({
 
                                                     <Link
                                                         href={`/classes/${cls.code || cls.id}`}
-                                                        className="font-bold text-blue-600 flex items-center gap-1 hover:underline"
+                                                        className="group/link font-bold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1 cursor-pointer self-end sm:self-auto"
                                                     >
                                                         <span>Ruang Kelas</span>
-                                                        <ArrowRight className="w-3.5 h-3.5" />
+                                                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                                     </Link>
                                                 </div>
                                             </div>
@@ -1908,14 +1928,14 @@ export default function Dashboard({
                                 </h2>
                                 <Link
                                     href="/settings/profile"
-                                    className="text-xs font-semibold text-blue-600 hover:underline"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                                 >
                                     Pengaturan Profil
                                 </Link>
                             </div>
 
                             <div className="flex items-center gap-3.5 py-2">
-                                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-600 text-white font-extrabold text-sm flex items-center justify-center shrink-0 shadow-sm">
                                     {initials || 'DS'}
                                 </div>
                                 <div className="min-w-0">
@@ -1937,7 +1957,7 @@ export default function Dashboard({
                                 </div>
                                 <div>
                                     <span className="text-[10px] text-slate-400 block font-medium">Status</span>
-                                    <span className="font-semibold text-emerald-600">
+                                    <span className="font-bold text-blue-700">
                                         Dosen Pengampu
                                     </span>
                                 </div>
@@ -1993,51 +2013,61 @@ export default function Dashboard({
                             </h2>
 
                             <div className="space-y-2.5 text-xs">
-                                <div className="p-2.5 rounded-xl bg-blue-50/50 border border-blue-100 flex items-start gap-2">
-                                    <Trophy className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                                <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-200 transition flex items-start gap-2.5">
+                                    <span className="p-1 rounded-md bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                        <Trophy className="w-3.5 h-3.5 text-blue-600" />
+                                    </span>
                                     <div>
-                                        <p className="font-bold text-blue-900">1. Bimbingan & Lomba</p>
-                                        <p className="text-blue-700/80 text-[11px] mt-0.5">
+                                        <p className="font-bold text-slate-900">1. Bimbingan & Lomba</p>
+                                        <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                                             Arahkan proyek kelas mahasiswa yang berpotensi ke ajang perlombaan.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="p-2.5 rounded-xl bg-emerald-50/50 border border-emerald-100 flex items-start gap-2">
-                                    <FileCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-200 transition flex items-start gap-2.5">
+                                    <span className="p-1 rounded-md bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                        <FileCheck className="w-3.5 h-3.5 text-blue-600" />
+                                    </span>
                                     <div>
-                                        <p className="font-bold text-emerald-900">2. Review Living Proposal</p>
-                                        <p className="text-emerald-700/80 text-[11px] mt-0.5">
+                                        <p className="font-bold text-slate-900">2. Review Living Proposal</p>
+                                        <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                                             Tinjau serta setujui rancangan proyek proposal ketua kelompok.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="p-2.5 rounded-xl bg-amber-50/50 border border-amber-100 flex items-start gap-2">
-                                    <Activity className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-200 transition flex items-start gap-2.5">
+                                    <span className="p-1 rounded-md bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                        <Activity className="w-3.5 h-3.5 text-blue-600" />
+                                    </span>
                                     <div>
-                                        <p className="font-bold text-amber-900">3. Pantau Progres & Arahan</p>
-                                        <p className="text-amber-700/80 text-[11px] mt-0.5">
+                                        <p className="font-bold text-slate-900">3. Pantau Progres & Arahan</p>
+                                        <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                                             Cek task selesai dan beri feedback langsung ke tim mahasiswa.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="p-2.5 rounded-xl bg-purple-50/50 border border-purple-100 flex items-start gap-2">
-                                    <Award className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                                <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-200 transition flex items-start gap-2.5">
+                                    <span className="p-1 rounded-md bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                        <Award className="w-3.5 h-3.5 text-blue-600" />
+                                    </span>
                                     <div>
-                                        <p className="font-bold text-purple-900">4. Evaluasi & Nilai</p>
-                                        <p className="text-purple-700/80 text-[11px] mt-0.5">
+                                        <p className="font-bold text-slate-900">4. Evaluasi & Nilai</p>
+                                        <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                                             Penilaian berkala UTS/UAS dan rubrik capaian luaran.
                                         </p>
                                     </div>
                                 </div>
 
-                                <div className="p-2.5 rounded-xl bg-indigo-50/50 border border-indigo-100 flex items-start gap-2">
-                                    <Zap className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+                                <div className="p-2.5 rounded-xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-200 transition flex items-start gap-2.5">
+                                    <span className="p-1 rounded-md bg-blue-50 text-blue-600 shrink-0 mt-0.5">
+                                        <Zap className="w-3.5 h-3.5 text-blue-600" />
+                                    </span>
                                     <div>
-                                        <p className="font-bold text-indigo-900">5. Simulasi Tim Otomatis</p>
-                                        <p className="text-indigo-700/80 text-[11px] mt-0.5">
+                                        <p className="font-bold text-slate-900">5. Simulasi Tim Otomatis</p>
+                                        <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
                                             Distribusikan sisa mahasiswa tanpa kelompok secara adil & seimbang.
                                         </p>
                                     </div>
@@ -2062,7 +2092,7 @@ export default function Dashboard({
                                                 {act.actor?.name || 'Mahasiswa'}
                                             </p>
                                             <p className="text-[11px] text-slate-500 mt-0.5">
-                                                {(act.action || 'aktivitas').replace('_', ' ')} • {act.team?.name || 'Tim'}
+                                                {(act.action || 'aktivitas').replace('_', ' ')} <span className="text-slate-300 mx-1">|</span> {act.team?.name || 'Tim'}
                                             </p>
                                         </div>
                                     ))}
@@ -2075,7 +2105,7 @@ export default function Dashboard({
                 {/* MODAL TOLAK PENGAJUAN TIM (DOSEN) */}
                 {rejectModalProject && (
                     <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+                        <div className="bg-white rounded-2xl max-w-md w-full p-5 sm:p-6 shadow-2xl border border-slate-200">
                             <div className="flex items-start justify-between gap-3 mb-3">
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
@@ -2088,7 +2118,7 @@ export default function Dashboard({
                                 <button
                                     type="button"
                                     onClick={() => setRejectModalProject(null)}
-                                    className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer"
+                                    className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 cursor-pointer transition"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
@@ -2105,21 +2135,21 @@ export default function Dashboard({
                                         value={rejectReason}
                                         onChange={(e) => setRejectReason(e.target.value)}
                                         placeholder="Jelaskan alasan penolakan, penyesuaian komposisi anggota yang dibutuhkan, atau saran topik..."
-                                        className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                                        className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 leading-relaxed"
                                     />
                                 </div>
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-2 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => setRejectModalProject(null)}
-                                        className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                        className="w-full sm:w-auto text-center px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 transition cursor-pointer"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={processingProjectId === rejectModalProject.id}
-                                        className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer"
+                                        className="w-full sm:w-auto text-center px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 active:scale-95 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-2xs"
                                     >
                                         {processingProjectId === rejectModalProject.id ? 'Menyimpan...' : 'Konfirmasi Tolak'}
                                     </button>
@@ -2132,7 +2162,7 @@ export default function Dashboard({
                 {/* MODAL INPUT CATATAN ARAHAN BIMBINGAN (DOSEN) */}
                 {selectedProjectForGuidance && (
                     <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-                        <div className="bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+                        <div className="bg-white rounded-2xl max-w-lg w-full p-4 sm:p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 max-h-[92vh] overflow-y-auto">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                                 <div>
                                     <h3 className="text-base font-bold text-slate-900">
@@ -2145,7 +2175,7 @@ export default function Dashboard({
                                 <button
                                     type="button"
                                     onClick={() => setSelectedProjectForGuidance(null)}
-                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                                 >
                                     <X className="w-4 h-4" />
                                 </button>
@@ -2166,7 +2196,7 @@ export default function Dashboard({
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div>
                                         <label className="block text-xs font-semibold text-slate-700 mb-1">
                                             Jenis Arahan
@@ -2174,7 +2204,7 @@ export default function Dashboard({
                                         <select
                                             value={guidanceType}
                                             onChange={(e) => setGuidanceType(e.target.value)}
-                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs"
+                                            className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-800 text-xs focus:outline-none focus:border-blue-600"
                                         >
                                             <option value="feedback">Feedback Progres</option>
                                             <option value="revision">Catatan Revisi Proposal</option>
@@ -2209,18 +2239,18 @@ export default function Dashboard({
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                                <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
                                     <button
                                         type="button"
                                         onClick={() => setSelectedProjectForGuidance(null)}
-                                        className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+                                        className="w-full sm:w-auto text-center px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 active:scale-95 transition cursor-pointer"
                                     >
                                         Batal
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={submittingGuidance}
-                                        className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                                        className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
                                     >
                                         <Send className="w-3.5 h-3.5" />
                                         <span>{submittingGuidance ? 'Menyimpan...' : 'Kirim Catatan Arahan'}</span>
@@ -2555,7 +2585,7 @@ export default function Dashboard({
                             <div className="mt-4 pt-3 border-t border-slate-100">
                                 <Link
                                     href="/settings/profile"
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline transition flex items-center justify-between group cursor-pointer"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-between group cursor-pointer"
                                 >
                                     <span>Kelola Profil</span>
                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
@@ -2610,7 +2640,7 @@ export default function Dashboard({
                             <div className="mt-4 pt-3 border-t border-slate-100">
                                 <Link
                                     href="/projects?status=recruiting"
-                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline transition flex items-center justify-between group cursor-pointer"
+                                    className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-between group cursor-pointer"
                                 >
                                     <span>Eksplorasi Proyek</span>
                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
@@ -2635,10 +2665,10 @@ export default function Dashboard({
                             </div>
                             <Link
                                 href="/workspace"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1"
+                                className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
                                 <span>Buka Workspace Tim</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
+                                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                             </Link>
                         </div>
 
@@ -2697,10 +2727,10 @@ export default function Dashboard({
                             </h2>
                             <Link
                                 href="/projects"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
+                                className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
                                 <span>Semua Proyek</span>
-                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
 
@@ -2756,14 +2786,14 @@ export default function Dashboard({
                                                     <div className="flex items-center gap-2">
                                                         <Link
                                                             href={`/projects/${team.project.slug || team.project.id}?tab=uts`}
-                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                                                         >
                                                             Snapshot UTS
                                                         </Link>
-                                                        <span className="text-slate-300">·</span>
+                                                        <span className="text-slate-300">|</span>
                                                         <Link
                                                             href={`/projects/${team.project.slug || team.project.id}?tab=uas`}
-                                                            className="text-xs font-semibold text-slate-600 hover:text-blue-600 hover:underline"
+                                                            className="text-xs font-semibold text-slate-600 hover:text-blue-600 transition-colors"
                                                         >
                                                             Snapshot UAS
                                                         </Link>
@@ -2773,14 +2803,14 @@ export default function Dashboard({
 
                                             <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                                                 <span className="text-[11px] text-slate-500">
-                                                    {team.members_count || 1} Anggota · Progres {team.progress_percent ?? 0}%
+                                                    {team.members_count || 1} Anggota <span className="text-slate-300 mx-1">|</span> Progres {team.progress_percent ?? 0}%
                                                 </span>
                                                 <Link
                                                     href={team.project ? `/projects/${team.project.slug || team.project.id}` : `/workspace/${team.id}`}
-                                                    className="font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline"
+                                                    className="group/link font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                                                 >
                                                     <span>Buka Detail</span>
-                                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/item:translate-x-0.5" />
+                                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
                                                 </Link>
                                             </div>
                                         </div>
@@ -2874,7 +2904,7 @@ export default function Dashboard({
                                                     ) : inv.project_id ? (
                                                         <Link
                                                             href={`/projects/${inv.project_slug || inv.project_id}`}
-                                                            className="text-xs font-semibold text-blue-600 hover:underline truncate"
+                                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors truncate"
                                                         >
                                                             {inv.project_title}
                                                         </Link>
@@ -2932,7 +2962,7 @@ export default function Dashboard({
                                                             setDeclineReason('');
                                                         }}
                                                         disabled={isBusy}
-                                                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-slate-200 hover:border-rose-200 text-xs font-bold transition inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                                        className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-slate-200 hover:border-rose-200 text-xs font-bold transition-all duration-150 active:scale-95 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
                                                     >
                                                         <X className="w-3.5 h-3.5" />
                                                         <span>Tolak</span>
@@ -2941,11 +2971,7 @@ export default function Dashboard({
                                                         type="button"
                                                         onClick={() => handleAcceptInvitation(inv)}
                                                         disabled={isBusy}
-                                                        className={`px-3.5 py-1.5 rounded-lg text-white text-xs font-bold transition shadow-2xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 ${
-                                                            isComp
-                                                                ? 'bg-amber-500 hover:bg-amber-600'
-                                                                : 'bg-blue-600 hover:bg-blue-700'
-                                                        }`}
+                                                        className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs hover:shadow-xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                                     >
                                                         <Check className="w-3.5 h-3.5" />
                                                         <span>{isBusy ? 'Memproses...' : 'Terima'}</span>
@@ -2983,10 +3009,10 @@ export default function Dashboard({
                             </h2>
                             <Link
                                 href="/projects?status=recruiting"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1 group"
+                                className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
                                 <span>Eksplorasi Semua</span>
-                                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                                <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform duration-150" />
                             </Link>
                         </div>
 
@@ -3029,7 +3055,7 @@ export default function Dashboard({
                                             <span className="text-[11px] text-slate-500 truncate">
                                                 {proj.leader?.name || 'Ketua Tim'} · {proj.members_count ?? 1}/{proj.max_team_size ?? 4} Anggota
                                             </span>
-                                            <span className="font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 shrink-0 group-hover:underline">
+                                            <span className="font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 shrink-0 transition-colors">
                                                 <span>Detail</span>
                                                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                             </span>
@@ -3040,9 +3066,9 @@ export default function Dashboard({
                         ) : (
                             <div className="py-6 text-center text-xs text-slate-400">
                                 <p className="font-semibold text-slate-700">Belum ada proyek yang membuka rekrutmen saat ini</p>
-                                <Link href="/projects?status=recruiting" className="text-blue-600 font-semibold hover:underline mt-1 inline-flex items-center gap-1">
+                                <Link href="/projects?status=recruiting" className="group/link text-blue-600 font-semibold hover:text-blue-700 transition-colors mt-1 inline-flex items-center gap-1">
                                     <span>Lihat daftar proyek di Project Hub</span>
-                                    <ArrowRight className="w-3.5 h-3.5" />
+                                    <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                 </Link>
                             </div>
                         )}
@@ -3059,7 +3085,7 @@ export default function Dashboard({
                             </h2>
                             <Link
                                 href="/settings/profile"
-                                className="text-xs font-semibold text-blue-600 hover:underline"
+                                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                             >
                                 Edit Profil
                             </Link>

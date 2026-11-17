@@ -12,6 +12,7 @@ import {
     Award,
     Battery,
     Bug,
+    Building2,
     Calendar,
     Check,
     CheckCircle2,
@@ -19,7 +20,10 @@ import {
     Clock,
     FolderKanban,
     Globe,
+    GraduationCap,
     Kanban,
+    Laptop,
+    LayoutDashboard,
     Lightbulb,
     Lock,
     MessageSquare,
@@ -33,6 +37,7 @@ import {
     Search,
     Share2,
     ShieldCheck,
+    Smartphone,
     Sparkles,
     Square,
     Star,
@@ -257,10 +262,20 @@ export default function Welcome() {
     const [introStage, setIntroStage] = useState<0 | 1 | 2 | 3>(0);
     const [textRevealed, setTextRevealed] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [rakitFontSize, setRakitFontSize] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const w = window.innerWidth;
+            if (w < 480) return '95px';
+            if (w < 640) return '110px';
+            if (w < 1024) return '185px';
+        }
+        return '360px';
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [featuresDropdownOpen, setFeaturesDropdownOpen] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
     const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(true);
+    const [mobileShowcaseTab, setMobileShowcaseTab] = useState<'laptop' | 'phone'>('laptop');
     const [isNavVisible, setIsNavVisible] = useState(true);
     const [isScrolledPastTop, setIsScrolledPastTop] = useState(false);
     const lastScrollYRef = useRef(0);
@@ -508,11 +523,12 @@ export default function Welcome() {
                 rakitOverlayRef.current &&
                 realSection2Ref.current
             ) {
+                const isSmallScreen = window.innerWidth < 640;
                 const tl2 = gsap.timeline({
                     scrollTrigger: {
                         trigger: section2PinContainerRef.current,
                         start: 'top top',
-                        end: '+=150%',
+                        end: isSmallScreen ? '+=80%' : '+=150%',
                         pin: true,
                         scrub: 0.35,
                         anticipatePin: 1,
@@ -547,7 +563,7 @@ export default function Welcome() {
                 tl2.to(
                     rakitOverlayRef.current,
                     {
-                        scale: 5.0,
+                        scale: isSmallScreen ? 14.0 : 5.0,
                         transformOrigin: '50% 50%',
                         ease: 'power1.inOut',
                         duration: 0.8,
@@ -1681,7 +1697,17 @@ export default function Welcome() {
         window.addEventListener('pagehide', handleBeforeUnload);
 
         const checkMobile = () => {
-            setIsMobile(window.innerWidth < 640);
+            const w = window.innerWidth;
+            setIsMobile(w < 640);
+            if (w < 480) {
+                setRakitFontSize('95px');
+            } else if (w < 640) {
+                setRakitFontSize('110px');
+            } else if (w < 1024) {
+                setRakitFontSize('185px');
+            } else {
+                setRakitFontSize('360px');
+            }
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -2405,8 +2431,8 @@ export default function Welcome() {
                                     className="font-serif uppercase font-normal select-none"
                                     style={{
                                         fontFamily: 'var(--font-serif)',
-                                        fontSize: isMobile ? '210px' : '360px',
-                                        letterSpacing: '0.04em',
+                                        fontSize: rakitFontSize,
+                                        letterSpacing: isMobile ? '0.02em' : '0.04em',
                                     }}
                                 >
                                     RAKIT
@@ -2436,8 +2462,8 @@ export default function Welcome() {
                             className="font-serif uppercase font-normal select-none pointer-events-none"
                             style={{
                                 fontFamily: 'var(--font-serif)',
-                                fontSize: isMobile ? '210px' : '360px',
-                                letterSpacing: '0.04em',
+                                fontSize: rakitFontSize,
+                                letterSpacing: isMobile ? '0.02em' : '0.04em',
                             }}
                         >
                             RAKIT
@@ -2449,7 +2475,7 @@ export default function Welcome() {
                 <section
                     ref={realSection2Ref}
                     id="overview"
-                    className="relative z-10 w-full h-screen h-[100dvh] max-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6"
+                    className="relative z-10 w-full min-h-screen min-h-[100dvh] bg-white text-neutral-900 flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 py-12 sm:py-0"
                 >
                     {/* Subtle Dot Matrix & Ethereal Mesh Background */}
                     <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
@@ -2461,9 +2487,9 @@ export default function Welcome() {
                         ref={section2HeaderContentRef}
                         className="max-w-4xl lg:max-w-5xl mx-auto px-4 relative z-10 text-center w-full will-change-transform"
                     >
-                        <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.15] sm:leading-[1.12]">
-                            Simplify Project Collaboration <br />
-                            <span className="text-blue-600">
+                        <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.2] sm:leading-[1.12]">
+                            Simplify Project Collaboration <br className="hidden sm:inline" />
+                            <span className="text-blue-600 block sm:inline">
                                 Boost Campus Achievements
                             </span>
                         </h2>
@@ -2503,6 +2529,34 @@ export default function Welcome() {
                 <div ref={showcaseGlowRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[550px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.10)_0%,rgba(147,197,253,0.06)_50%,transparent_72%)] pointer-events-none will-change-[opacity]" />
 
                 <div className="relative max-w-6xl xl:max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+                    {/* Device Switcher on Mobile Screens */}
+                    <div className="flex sm:hidden items-center justify-center p-1 bg-neutral-100 rounded-full max-w-[260px] mx-auto mb-5 border border-neutral-200/80 shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setMobileShowcaseTab('laptop')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                mobileShowcaseTab === 'laptop'
+                                    ? 'bg-white text-neutral-900 shadow-2xs'
+                                    : 'text-neutral-500 hover:text-neutral-900'
+                            }`}
+                        >
+                            <Laptop className="size-3.5 text-blue-600" />
+                            <span>Laptop</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileShowcaseTab('phone')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                mobileShowcaseTab === 'phone'
+                                    ? 'bg-white text-neutral-900 shadow-2xs'
+                                    : 'text-neutral-500 hover:text-neutral-900'
+                            }`}
+                        >
+                            <Smartphone className="size-3.5 text-blue-600" />
+                            <span>Smartphone</span>
+                        </button>
+                    </div>
+
                     {/* Dual-Device 3D Showcase: Realistic 3D Laptop with Google Chrome Desktop + Realistic 3D Handphone with Google Chrome Mobile */}
                     <div
                         ref={section2MockupRef}
@@ -2514,7 +2568,12 @@ export default function Welcome() {
                     >
 
                         {/* 1. Realistic 3D Laptop (Chassis, Chrome Desktop Browser & Dashboard) */}
-                        <div ref={laptopShowcaseRef} className="w-full relative mx-auto transform-gpu will-change-transform [backface-visibility:hidden]">
+                        <div
+                            ref={laptopShowcaseRef}
+                            className={`w-full relative mx-auto transform-gpu will-change-transform [backface-visibility:hidden] ${
+                                mobileShowcaseTab === 'laptop' ? 'block' : 'hidden sm:block'
+                            }`}
+                        >
                             <div
                                 ref={laptopCardRef}
                                 className="relative mx-auto w-full max-w-5xl lg:max-w-[1000px] xl:max-w-[1040px] will-change-transform transform-gpu select-none"
@@ -2952,11 +3011,15 @@ export default function Welcome() {
                         {/* 2. Realistic 3D Smartphone (iPhone 16 Pro Flagship) with Google Chrome Mobile */}
                         <div
                             ref={phoneShowcaseRef}
-                            className="absolute bottom-2 xs:bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-1 xs:right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
+                            className={`z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden] ${
+                                mobileShowcaseTab === 'phone'
+                                    ? 'relative mx-auto flex justify-center py-2 sm:py-0'
+                                    : 'hidden sm:block'
+                            } sm:absolute sm:bottom-6 md:bottom-8 lg:bottom-10 sm:right-4 md:right-6 lg:right-8`}
                         >
                             <div
                                 ref={phoneCardRef}
-                                className="w-[145px] xs:w-[175px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[300px] xs:h-[360px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
+                                className="w-[200px] xs:w-[220px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[410px] xs:h-[450px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[28px] xs:rounded-[32px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
                                 style={{
                                     transform: 'perspective(1800px) rotateX(1.5deg) rotateY(0deg) translateZ(20px)',
                                     boxShadow: '-18px 25px 60px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3)',

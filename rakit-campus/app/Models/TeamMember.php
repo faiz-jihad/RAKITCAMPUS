@@ -12,7 +12,7 @@ class TeamMember extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('status', 'active');
+        return $query->whereIn('status', ['active', 'completed']);
     }
 
     protected function casts(): array

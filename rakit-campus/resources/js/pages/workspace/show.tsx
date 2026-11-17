@@ -1,6 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertCircle,
     ArrowLeft,
@@ -172,6 +172,26 @@ export default function WorkspaceShow({
     const [sprintStartsOn, setSprintStartsOn] = useState('');
     const [sprintSubmitting, setSprintSubmitting] = useState(false);
 
+    const formatDueDate = (dateStr?: string | null) => {
+        if (!dateStr) return null;
+        try {
+            const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+            const parts = clean.split('-');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parseInt(parts[2], 10);
+                const d = new Date(year, month, day);
+                return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            }
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        } catch {
+            return dateStr;
+        }
+    };
+
     const openAddSprint = () => {
         setSprintToEdit(null);
         setSprintTitle('');
@@ -187,8 +207,8 @@ export default function WorkspaceShow({
         setSprintTitle(m.title || '');
         setSprintDescription(m.description || '');
         setSprintStatus(m.status?.toLowerCase().replace(' ', '_') || 'planned');
-        setSprintDueOn(m.due_on || '');
-        setSprintStartsOn(m.starts_on || '');
+        setSprintDueOn(m.due_on ? m.due_on.split('T')[0] : '');
+        setSprintStartsOn(m.starts_on ? m.starts_on.split('T')[0] : '');
         setSprintModalOpen(true);
     };
 
@@ -655,17 +675,17 @@ export default function WorkspaceShow({
     };
 
     const columns = [
-        { key: 'todo', label: 'To Do', colorDot: 'bg-slate-400', badgeColor: 'bg-white text-slate-600 border border-slate-200/80' },
-        { key: 'in_progress', label: 'In Process', colorDot: 'bg-blue-600', badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200/80' },
-        { key: 'in_review', label: 'In Review', colorDot: 'bg-amber-500', badgeColor: 'bg-amber-50 text-amber-700 border border-amber-200/80' },
-        { key: 'completed', label: 'Completed', colorDot: 'bg-emerald-600', badgeColor: 'bg-emerald-50 text-emerald-700 border border-emerald-200/80' },
+        { key: 'todo', label: 'Belum Dikerjakan (To-Do)', colorDot: 'bg-slate-400', badgeColor: 'bg-slate-100 text-slate-700 border border-slate-200' },
+        { key: 'in_progress', label: 'Sedang Dikerjakan (In Progress)', colorDot: 'bg-blue-600', badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200' },
+        { key: 'in_review', label: 'Ulasan & QA (In Review)', colorDot: 'bg-blue-400', badgeColor: 'bg-blue-50/70 text-blue-800 border border-blue-200/60' },
+        { key: 'completed', label: 'Selesai (Done)', colorDot: 'bg-slate-900', badgeColor: 'bg-blue-600 text-white' },
     ];
 
     const priorityBadge: Record<string, { label: string; cls: string; dot: string }> = {
-        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border-rose-200/80', dot: 'bg-rose-500' },
-        high: { label: 'High', cls: 'bg-amber-50 text-amber-700 border-amber-200/80', dot: 'bg-amber-500' },
-        medium: { label: 'Medium', cls: 'bg-blue-50 text-blue-700 border-blue-200/80', dot: 'bg-blue-600' },
-        low: { label: 'Low', cls: 'bg-slate-50 text-slate-600 border-slate-200/80', dot: 'bg-slate-400' },
+        urgent: { label: 'Urgent', cls: 'bg-slate-900 text-white border-slate-900', dot: 'bg-white' },
+        high: { label: 'Tinggi', cls: 'bg-blue-100 text-blue-800 border-blue-300', dot: 'bg-blue-600' },
+        medium: { label: 'Menengah', cls: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
+        low: { label: 'Rendah', cls: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
     };
 
     const filterTasks = (list: any[]) => {
@@ -1124,9 +1144,9 @@ export default function WorkspaceShow({
 
                                         <div className="mt-4 pt-3 border-t border-slate-100">
                                             <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                                                <span className="flex items-center gap-1">
+                                                <span className="flex items-center gap-1" title={m.due_on ? `Tenggat: ${m.due_on.split('T')[0]}` : undefined}>
                                                     <Clock className="size-3 text-slate-400" />
-                                                    <span>{m.due_on || 'Tenggat Waktu'}</span>
+                                                    <span>{formatDueDate(m.due_on) || 'Tenggat Waktu'}</span>
                                                 </span>
                                                 <span className="font-bold text-slate-800">
                                                     {m.completed_tasks_count || 0}/{m.tasks_count || 0} Selesai
@@ -1202,35 +1222,23 @@ export default function WorkspaceShow({
                                         onDragOver={(e) => handleDragOver(e, col.key)}
                                         onDragLeave={(e) => handleDragLeave(e, col.key)}
                                         onDrop={(e) => handleDrop(e, col.key)}
-                                        className={`rounded-xl p-3 flex flex-col gap-2.5 min-h-[160px] sm:min-h-[480px] transition-all duration-150 ${
+                                        className={`rounded-2xl p-3 flex flex-col gap-2.5 min-h-[160px] sm:min-h-[480px] transition-all duration-150 ${
                                             isDragTarget
                                                 ? 'bg-blue-50/90 border-2 border-dashed border-blue-400 ring-2 ring-blue-500/20'
-                                                : 'bg-slate-50/80 border border-slate-200/80 shadow-2xs'
+                                                : 'bg-[#F1F2F4] border border-slate-200/80 shadow-2xs'
                                         }`}
                                     >
                                         {/* Column Header */}
                                         <div className="flex items-center justify-between px-1.5 py-1">
                                             <div className="flex items-center gap-2">
                                                 <span className={`size-2 rounded-full ${col.colorDot}`} />
-                                                <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                                                <h4 className="text-xs font-bold text-slate-800 tracking-tight">
                                                     {col.label}
-                                                </h3>
+                                                </h4>
                                             </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${col.badgeColor}`}>
-                                                    {tasks.length}
-                                                </span>
-                                                <button
-                                                    onClick={() => {
-                                                        setInlineAddingCol(col.key);
-                                                        setInlineTitle('');
-                                                    }}
-                                                    className="p-1 rounded-md text-slate-400 hover:text-blue-600 hover:bg-slate-200/60 transition cursor-pointer"
-                                                    title={`Tambah kartu ke ${col.label}`}
-                                                >
-                                                    <Plus className="size-3.5" />
-                                                </button>
-                                            </div>
+                                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${col.badgeColor}`}>
+                                                {tasks.length}
+                                            </span>
                                         </div>
 
                                         {/* Cards Stack */}
@@ -1269,9 +1277,8 @@ export default function WorkspaceShow({
                                                         {/* Priority Chip & Actions */}
                                                         <div className="flex items-center justify-between gap-2">
                                                             <span
-                                                                className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.cls}`}
+                                                                className={`inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.cls}`}
                                                             >
-                                                                <span className={`size-1.5 rounded-full ${priority.dot}`} />
                                                                 <span>{priority.label}</span>
                                                             </span>
 
@@ -1297,10 +1304,10 @@ export default function WorkspaceShow({
                                                                     }}
                                                                     className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer"
                                                                 >
-                                                                    <option value="todo">To Do</option>
-                                                                    <option value="in_progress">In Process</option>
-                                                                    <option value="in_review">In Review</option>
-                                                                    <option value="completed">Completed</option>
+                                                                    <option value="todo">Belum Dikerjakan (To-Do)</option>
+                                                                    <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
+                                                                    <option value="in_review">Ulasan & QA (In Review)</option>
+                                                                    <option value="completed">Selesai (Done)</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1407,8 +1414,9 @@ export default function WorkspaceShow({
                                     return (
                                         <div key={col.key} className="flex flex-col gap-2">
                                             <div className="flex items-center gap-2 py-1.5 border-b border-slate-100">
+                                                <span className={`size-2 rounded-full ${col.colorDot}`} />
                                                 <span className="text-xs font-bold text-slate-900">{col.label}</span>
-                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${col.badgeColor}`}>
+                                                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${col.badgeColor}`}>
                                                     {tasks.length}
                                                 </span>
                                             </div>
@@ -1444,10 +1452,10 @@ export default function WorkspaceShow({
                                                             onChange={(e) => handleMoveStatus(task, e.target.value)}
                                                             className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer"
                                                         >
-                                                            <option value="todo">To Do</option>
-                                                            <option value="in_progress">In Process</option>
-                                                            <option value="in_review">In Review</option>
-                                                            <option value="completed">Completed</option>
+                                                            <option value="todo">Belum Dikerjakan (To-Do)</option>
+                                                            <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
+                                                            <option value="in_review">Ulasan & QA (In Review)</option>
+                                                            <option value="completed">Selesai (Done)</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1518,10 +1526,10 @@ export default function WorkspaceShow({
                                             onChange={(e) => setTaskPriority(e.target.value)}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                         >
-                                            <option value="urgent">Urgent</option>
-                                            <option value="high">High</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="low">Low</option>
+                                            <option value="urgent">Mendesak (Urgent)</option>
+                                            <option value="high">Tinggi (High)</option>
+                                            <option value="medium">Menengah (Medium)</option>
+                                            <option value="low">Rendah (Low)</option>
                                         </select>
                                     </div>
 
@@ -1534,10 +1542,10 @@ export default function WorkspaceShow({
                                             onChange={(e) => setTargetColumn(e.target.value)}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
                                         >
-                                            <option value="todo">To Do</option>
-                                            <option value="in_progress">In Process</option>
-                                            <option value="in_review">In Review</option>
-                                            <option value="completed">Completed</option>
+                                            <option value="todo">Belum Dikerjakan (To-Do)</option>
+                                            <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
+                                            <option value="in_review">Ulasan & QA (In Review)</option>
+                                            <option value="completed">Selesai (Done)</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1653,10 +1661,10 @@ export default function WorkspaceShow({
                                             onChange={(e) => setTaskToEdit({ ...taskToEdit, priority: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                         >
-                                            <option value="urgent">Urgent</option>
-                                            <option value="high">High</option>
-                                            <option value="medium">Medium</option>
-                                            <option value="low">Low</option>
+                                            <option value="urgent">Mendesak (Urgent)</option>
+                                            <option value="high">Tinggi (High)</option>
+                                            <option value="medium">Menengah (Medium)</option>
+                                            <option value="low">Rendah (Low)</option>
                                         </select>
                                     </div>
 
@@ -1669,10 +1677,10 @@ export default function WorkspaceShow({
                                             onChange={(e) => setTaskToEdit({ ...taskToEdit, status: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                                         >
-                                            <option value="todo">To Do</option>
-                                            <option value="in_progress">In Process</option>
-                                            <option value="in_review">In Review</option>
-                                            <option value="completed">Completed</option>
+                                            <option value="todo">Belum Dikerjakan (To-Do)</option>
+                                            <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
+                                            <option value="in_review">Ulasan & QA (In Review)</option>
+                                            <option value="completed">Selesai (Done)</option>
                                         </select>
                                     </div>
                                 </div>

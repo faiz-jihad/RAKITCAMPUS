@@ -44,6 +44,11 @@ class LeaderboardWebController extends Controller
             $subType = 'students';
         }
 
+        // Auto-bootstrap leaderboard ledger if empty
+        if (LeaderboardPointRule::where('is_active', true)->count() === 0 || PointTransaction::count() === 0) {
+            LeaderboardSeedService::run(true);
+        }
+
         // Fetch leaderboard data based on active hub & sub-type
         $leaderboardData = match ($hub) {
             'project' => LeaderboardRankingService::getProjectLeaderboard($subType, $period, $user, 100),

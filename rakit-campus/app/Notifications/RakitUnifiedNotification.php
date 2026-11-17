@@ -7,28 +7,41 @@ use App\Contracts\Notifications\NotificationLogServiceInterface;
 use App\Contracts\Notifications\NotificationPreferenceServiceInterface;
 use App\Contracts\Notifications\NotificationTemplateServiceInterface;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Str;
 
-class RakitUnifiedNotification extends Notification implements ShouldQueue
+class RakitUnifiedNotification extends Notification implements ShouldQueue, ShouldBroadcastNow
 {
     use Queueable;
 
     public function __construct(
-        public string $notificationType,
-        public string $category,
-        public string $title,
-        public string $message,
+        public string $notificationType = 'general_notification',
+        public string $category = 'project_hub',
+        public string $title = 'Notifikasi Baru',
+        public string $message = '',
         public string $priority = 'medium',
         public ?string $actionUrl = null,
         public ?string $actionText = 'Lihat Detail',
         public ?string $entityType = null,
         public string|int|null $entityId = null,
         public array $details = [],
-        public ?string $idempotencyKey = null
+        public ?string $idempotencyKey = null,
+        // Optional alias parameters to prevent PHP 8 named argument mismatches
+        ?string $type = null,
+        ?string $body = null,
+        ?string $icon = null,
+        public ?array $channels = null
     ) {
+        if ($type !== null) {
+            $this->notificationType = $type;
+        }
+        if ($body !== null) {
+            $this->message = $body;
+        }
         $this->idempotencyKey = $idempotencyKey ?: 'notif_' . Str::uuid();
     }
 
@@ -37,6 +50,10 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
+        if (!empty($this->channels)) {
+            return $this->channels;
+        }
+
         $preferenceService = app(NotificationPreferenceServiceInterface::class);
         $logService = app(NotificationLogServiceInterface::class);
 
@@ -49,6 +66,7 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
 
         if ($preferenceService->shouldSendInApp($notifiable, $this->category)) {
             $channels[] = 'database';
+            $channels[] = 'broadcast';
         }
 
         if ($preferenceService->shouldSendEmail($notifiable, $this->category, $this->priority)) {
@@ -56,6 +74,35 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue
         }
 
         return $channels;
+    }
+
+    /**
+     * Alias for toDatabase to support standard Laravel array notification channel
+     */
+    public function toArray(object $notifiable): array
+    {
+        return $this->toDatabase($notifiable);
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'id' => (string) Str::uuid(),
+            'notification_type' => $this->notificationType,
+            'category' => $this->category,
+            'priority' => $this->priority,
+            'title' => $this->title,
+            'message' => $this->message,
+            'action_url' => $this->actionUrl,
+            'action_text' => $this->actionText,
+            'entity_type' => $this->entityType,
+            'entity_id' => $this->entityId,
+            'details' => $this->details,
+            'created_at' => now()->toIso8601String(),
+        ]);
     }
 
     /**

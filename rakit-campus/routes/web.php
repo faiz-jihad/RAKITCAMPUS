@@ -39,13 +39,29 @@ Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashbo
 Route::get('/competitions/dashboard', [DashboardWebController::class, 'competitionDashboard'])->name('competitions.dashboard')->middleware('throttle:dashboard');
 Route::get('/projects/dashboard', [DashboardWebController::class, 'index'])->name('projects.dashboard')->middleware('throttle:dashboard');
 Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
-Route::get('/projects/{slug}', [ProjectWebController::class, 'show'])->name('projects.show')->where('slug', '^(?!create|dashboard$).*$');
+Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
+Route::get('/projects/{id}/workspace', function ($id, \Illuminate\Http\Request $request) {
+    $project = \App\Models\Project::where(function ($q) use ($id) {
+        if (is_numeric($id)) {
+            $q->where('id', (int) $id)->orWhere('slug', $id);
+        } else {
+            $q->where('slug', $id);
+        }
+    })->firstOrFail();
+
+    $tab = $request->query('tab', 'proposal');
+    return redirect('/projects/' . ($project->slug ?: $project->id) . '?tab=' . $tab);
+})->name('projects.workspace');
+Route::get('/projects/{slug}', [ProjectWebController::class, 'show'])->name('projects.show')->where('slug', '^(?!(create|leaderboard)$)[^/]+$');
+
 Route::get('/competitions', [CompetitionWebController::class, 'index'])->name('competitions.index');
-Route::get('/competitions/{slug}', [CompetitionWebController::class, 'show'])->name('competitions.show')->where('slug', '^(?!create|dashboard$).*$');
+Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
+Route::get('/competitions/workspace/{participationId}', function ($participationId) {
+    return redirect('/competition-workspace/' . $participationId);
+});
+Route::get('/competitions/{slug}', [CompetitionWebController::class, 'show'])->name('competitions.show')->where('slug', '^(?!(create|leaderboard)$)[^/]+$');
 Route::get('/matching', [MatchingWebController::class, 'index'])->name('matching.index')->middleware('throttle:matchmaking');
 Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('leaderboard.index');
-Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
-Route::get('/competitions/leaderboard', [LeaderboardWebController::class, 'competitionIndex'])->name('competitions.leaderboard');
 
 // Legal & Compliance Pages
 Route::inertia('/terms', 'terms/index')->name('terms');
@@ -162,6 +178,7 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     // UTS & UAS Assessment Periods & Immutable Snapshots
     Route::post('/projects/{id}/assessments/{periodId}/submit', [AssessmentWebController::class, 'submit'])->name('projects.assessments.submit');
     Route::post('/submissions/{id}/review', [AssessmentWebController::class, 'review'])->name('submissions.review');
+    Route::post('/projects/{id}/discussions', [ProjectWebController::class, 'storeDiscussion'])->name('projects.discussions.store');
 
     // Team Workspace
     Route::get('/workspace', [WorkspaceWebController::class, 'index'])->name('workspace.index');

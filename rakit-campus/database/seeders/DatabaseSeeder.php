@@ -24,5 +24,6 @@ class DatabaseSeeder extends Seeder
         }
 
         \App\Services\Matchmaking\DemoProjectAligner::align();
+        \App\Services\Leaderboard\LeaderboardSeedService::run(true);
     }
 }

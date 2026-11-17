@@ -46,6 +46,7 @@ import {
     ShieldCheck,
     Sparkles,
     Trash2,
+    Trophy,
     Upload,
     UserCheck,
     UserMinus,

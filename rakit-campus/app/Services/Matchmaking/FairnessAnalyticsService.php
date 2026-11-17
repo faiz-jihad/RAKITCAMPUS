@@ -19,7 +19,7 @@ class FairnessAnalyticsService
         $enrolledStudents = $class->students()
             ->with([
                 'profile.skills',
-                'teamMemberships' => fn ($q) => $q->where('status', 'active'),
+                'teamMemberships' => fn ($q) => $q->whereIn('status', ['active', 'completed']),
             ])
             ->wherePivot('status', 'enrolled')
             ->get();
@@ -32,7 +32,7 @@ class FairnessAnalyticsService
 
         foreach ($enrolledStudents as $student) {
             $hasActiveProject = $student->teamMemberships->contains(function ($m) {
-                return $m->status === 'active';
+                return in_array($m->status, ['active', 'completed'], true);
             });
 
             if ($hasActiveProject) {
@@ -47,7 +47,7 @@ class FairnessAnalyticsService
             ->where('academic_class_id', $class->id)
             ->whereNotIn('status', [ProjectStatus::Archived->value])
             ->with([
-                'team.members' => fn ($q) => $q->where('status', 'active'),
+                'team.members' => fn ($q) => $q->whereIn('status', ['active', 'completed']),
                 'team.recruitment.roles',
                 'skills',
             ])

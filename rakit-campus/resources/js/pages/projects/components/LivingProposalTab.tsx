@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { router } from '@inertiajs/react';
 import {
     AlertCircle,
@@ -12,8 +12,15 @@ import {
     RotateCcw,
     Send,
     Sparkles,
+    Trash2,
     X,
 } from 'lucide-react';
+
+interface CustomSection {
+    id: string;
+    label: string;
+    content: string;
+}
 
 interface Props {
     project: any;
@@ -52,11 +59,56 @@ export default function LivingProposalTab({
     const [techStackInput, setTechStackInput] = useState(
         Array.isArray(currentVersion?.tech_stack) ? currentVersion.tech_stack.join(', ') : ''
     );
+    const [customSections, setCustomSections] = useState<CustomSection[]>(() => {
+        if (Array.isArray(currentVersion?.custom_sections)) {
+            return currentVersion.custom_sections;
+        }
+        return [];
+    });
     const [changeSummary, setChangeSummary] = useState('');
+
+    useEffect(() => {
+        if (Array.isArray(currentVersion?.custom_sections)) {
+            setCustomSections(currentVersion.custom_sections);
+        }
+    }, [currentVersion]);
+
+    const handleAddCustomSection = () => {
+        setCustomSections((prev) => [
+            ...prev,
+            {
+                id: `sec_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+                label: '',
+                content: '',
+            },
+        ]);
+    };
+
+    const handleUpdateCustomSection = (index: number, field: 'label' | 'content', value: string) => {
+        setCustomSections((prev) => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            return next;
+        });
+    };
+
+    const handleRemoveCustomSection = (index: number) => {
+        setCustomSections((prev) => prev.filter((_, i) => i !== index));
+    };
 
     // Lecturer review state
     const [reviewDecision, setReviewDecision] = useState<'approved' | 'revision_requested'>('approved');
     const [reviewNotes, setReviewNotes] = useState('');
+    const [toastMessage, setToastMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+    useEffect(() => {
+        if (toastMessage) {
+            const timer = setTimeout(() => {
+                setToastMessage(null);
+            }, 3500);
+            return () => clearTimeout(timer);
+        }
+    }, [toastMessage]);
 
     const getXsrfToken = () => {
         const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -91,19 +143,20 @@ export default function LivingProposalTab({
                     timeline_plan: timelinePlan,
                     budget_estimate: budgetEstimate,
                     tech_stack: techStackInput.split(',').map((s: string) => s.trim()).filter(Boolean),
+                    custom_sections: customSections.filter((s) => s.label.trim() !== ''),
                     change_summary: changeSummary,
                 }),
             });
             if (res.ok) {
-                alert('Draft living proposal berhasil disimpan!');
                 setIsEditing(false);
-                window.location.reload();
+                setToastMessage({ type: 'success', text: 'Draft living proposal berhasil disimpan!' });
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal menyimpan draft.');
+                setToastMessage({ type: 'error', text: json.message || 'Gagal menyimpan draft.' });
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            setToastMessage({ type: 'error', text: 'Terjadi kesalahan jaringan.' });
         } finally {
             setSubmitting(false);
         }
@@ -128,13 +181,14 @@ export default function LivingProposalTab({
             });
             if (res.ok) {
                 setShowSubmitModal(false);
+                setToastMessage({ type: 'success', text: 'Living proposal berhasil diajukan untuk ditinjau oleh Dosen Pembimbing!' });
                 router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal mengajukan proposal.');
+                setToastMessage({ type: 'error', text: json.message || 'Gagal mengajukan proposal.' });
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            setToastMessage({ type: 'error', text: 'Terjadi kesalahan jaringan.' });
         } finally {
             setSubmitting(false);
         }
@@ -156,15 +210,15 @@ export default function LivingProposalTab({
                 body: JSON.stringify({ change_summary: changeSummary }),
             });
             if (res.ok) {
-                alert('Revisi proposal baru berhasil dibuat! Versi sebelumnya telah diarsipkan secara permanen.');
                 setShowReviseModal(false);
-                window.location.reload();
+                setToastMessage({ type: 'success', text: 'Revisi proposal baru berhasil dibuat!' });
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal membuat revisi proposal.');
+                setToastMessage({ type: 'error', text: json.message || 'Gagal membuat revisi proposal.' });
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            setToastMessage({ type: 'error', text: 'Terjadi kesalahan jaringan.' });
         } finally {
             setSubmitting(false);
         }
@@ -190,15 +244,15 @@ export default function LivingProposalTab({
                 }),
             });
             if (res.ok) {
-                alert('Hasil review living proposal berhasil disimpan dan dikirim ke tim!');
                 setShowReviewModal(false);
-                window.location.reload();
+                setToastMessage({ type: 'success', text: 'Hasil review living proposal berhasil disimpan dan dikirim ke tim!' });
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal menyimpan review proposal.');
+                setToastMessage({ type: 'error', text: json.message || 'Gagal menyimpan review proposal.' });
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            setToastMessage({ type: 'error', text: 'Terjadi kesalahan jaringan.' });
         } finally {
             setSubmitting(false);
         }
@@ -455,6 +509,84 @@ export default function LivingProposalTab({
                         </div>
                     </div>
 
+                    {/* BAGIAN & FIELD TAMBAHAN (KUSTOM) */}
+                    <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                                <h4 className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                    <span>Bagian & Field Tambahan (Kustom)</span>
+                                    {customSections.length > 0 && (
+                                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                                            {customSections.length} Bagian
+                                        </span>
+                                    )}
+                                </h4>
+                                <p className="text-[11px] text-slate-400 mt-0.5">
+                                    Tambahkan field berlabel baru sesuai kebutuhan proposal (contoh: Rencana Anggaran / RAB, Analisis Risiko, Mitra Kerjasama, dll).
+                                </p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={handleAddCustomSection}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100/80 active:bg-blue-100 text-blue-700 border border-blue-200/80 text-xs font-bold transition shadow-2xs self-start cursor-pointer"
+                            >
+                                <Plus className="size-3.5" />
+                                <span>Tambah Label / Field Baru</span>
+                            </button>
+                        </div>
+
+                        {customSections.length > 0 ? (
+                            <div className="flex flex-col gap-3.5 mt-1">
+                                {customSections.map((sec, idx) => (
+                                    <div
+                                        key={sec.id || idx}
+                                        className="p-4 rounded-xl border border-slate-200/80 bg-slate-50/50 flex flex-col gap-2.5 relative group/sec"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex-1">
+                                                <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                    Label / Nama Bagian #{idx + 1}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={sec.label}
+                                                    onChange={(e) => handleUpdateCustomSection(idx, 'label', e.target.value)}
+                                                    placeholder="Contoh: Rencana Anggaran Biaya (RAB), Analisis Risiko, Mitra..."
+                                                    className="w-full text-xs rounded-lg border border-slate-200 bg-white px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-semibold text-slate-900"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveCustomSection(idx)}
+                                                title="Hapus field ini"
+                                                className="p-2 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer self-end mb-0.5"
+                                            >
+                                                <Trash2 className="size-4" />
+                                            </button>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                                                Isi / Deskripsi Bagian
+                                            </label>
+                                            <textarea
+                                                value={sec.content}
+                                                onChange={(e) => handleUpdateCustomSection(idx, 'content', e.target.value)}
+                                                rows={3}
+                                                placeholder="Tuliskan rincian atau keterangan bagian ini..."
+                                                className="w-full text-xs rounded-lg border border-slate-200 bg-white p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-800"
+                                            />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-3.5 rounded-xl border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                                Belum ada field tambahan. Klik tombol <strong className="text-slate-600">Tambah Label / Field Baru</strong> di atas untuk membuat bagian kustom.
+                            </div>
+                        )}
+                    </div>
+
                     <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-slate-100">
                         <button
                             type="button"
@@ -567,6 +699,22 @@ export default function LivingProposalTab({
                             )}
                         </div>
                     </div>
+
+                    {/* Bagian & Field Tambahan (Kustom) */}
+                    {Array.isArray(currentVersion?.custom_sections) && currentVersion.custom_sections.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {currentVersion.custom_sections.map((sec: any, idx: number) => (
+                                <div key={sec.id || idx} className="glass-card rounded-2xl p-6 shadow-xs">
+                                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-2">
+                                        {sec.label}
+                                    </h3>
+                                    <p className="text-xs text-slate-800 leading-relaxed whitespace-pre-line">
+                                        {sec.content || 'Belum diisi.'}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -618,21 +766,39 @@ export default function LivingProposalTab({
 
             {/* Modal: Lecturer Review */}
             {showReviewModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-                    <form onSubmit={handleLecturerReview} className="glass-surface rounded-3xl p-6 max-w-lg w-full shadow-xl">
-                        <h3 className="text-base font-bold text-slate-900 mb-1 flex items-center gap-2">
-                            <GraduationCap className="size-5 text-blue-600" />
-                            <span>Review Living Proposal (Versi {currentVersion?.version_number})</span>
-                        </h3>
-                        <p className="text-xs text-slate-500 mb-4">
-                            Tinjau kelayakan proposal proyek capstone mahasiswa dan berikan arahan teknis.
-                        </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <form onSubmit={handleLecturerReview} className="bg-white rounded-3xl p-6 sm:p-7 max-w-lg w-full shadow-2xl border border-slate-100 relative animate-in zoom-in-95 duration-200">
+                        {/* Close button */}
+                        <button
+                            type="button"
+                            onClick={() => setShowReviewModal(false)}
+                            className="absolute top-5 right-5 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
 
-                        <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-700 mb-1.5">Keputusan Bimbingan</label>
+                        {/* Modal Header without description */}
+                        <div className="flex items-center gap-3.5 mb-6">
+                            <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                <GraduationCap className="size-5" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Review Living Proposal (Versi {currentVersion?.version_number})
+                                </h3>
+                            </div>
+                        </div>
+
+                        {/* Decision Selector */}
+                        <div className="mb-5">
+                            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2.5">
+                                Keputusan Bimbingan
+                            </label>
                             <div className="grid grid-cols-2 gap-3">
-                                <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    reviewDecision === 'approved' ? 'bg-emerald-50 border-emerald-300 text-emerald-800' : 'bg-white border-slate-200 text-slate-700'
+                                <label className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 text-xs font-bold ${
+                                    reviewDecision === 'approved'
+                                        ? 'bg-blue-50/70 border-blue-600 text-blue-900 shadow-2xs'
+                                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50'
                                 }`}>
                                     <input
                                         type="radio"
@@ -642,12 +808,14 @@ export default function LivingProposalTab({
                                         onChange={() => setReviewDecision('approved')}
                                         className="sr-only"
                                     />
-                                    <CheckCircle2 className="size-4 text-emerald-600" />
+                                    <CheckCircle2 className={`size-4.5 shrink-0 ${reviewDecision === 'approved' ? 'text-blue-600' : 'text-slate-400'}`} />
                                     <span>Setujui (Approved)</span>
                                 </label>
 
-                                <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    reviewDecision === 'revision_requested' ? 'bg-amber-50 border-amber-300 text-amber-800' : 'bg-white border-slate-200 text-slate-700'
+                                <label className={`p-3.5 rounded-2xl border-2 transition-all cursor-pointer flex items-center gap-2.5 text-xs font-bold ${
+                                    reviewDecision === 'revision_requested'
+                                        ? 'bg-slate-100 border-slate-900 text-slate-900 shadow-2xs'
+                                        : 'bg-white border-slate-200 hover:border-slate-300 text-slate-700 hover:bg-slate-50'
                                 }`}>
                                     <input
                                         type="radio"
@@ -657,14 +825,15 @@ export default function LivingProposalTab({
                                         onChange={() => setReviewDecision('revision_requested')}
                                         className="sr-only"
                                     />
-                                    <RotateCcw className="size-4 text-amber-600" />
+                                    <RotateCcw className={`size-4.5 shrink-0 ${reviewDecision === 'revision_requested' ? 'text-slate-900' : 'text-slate-400'}`} />
                                     <span>Minta Revisi</span>
                                 </label>
                             </div>
                         </div>
 
-                        <div className="mb-4">
-                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                        {/* Notes Textarea */}
+                        <div className="mb-6">
+                            <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
                                 Catatan Bimbingan & Arahan Dosen
                             </label>
                             <textarea
@@ -673,24 +842,27 @@ export default function LivingProposalTab({
                                 required
                                 rows={4}
                                 placeholder="Tuliskan catatan perbaikan arsitektur, ruang lingkup, atau arahan pengembangan..."
-                                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="w-full text-xs rounded-2xl border border-slate-200 p-3.5 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-800 transition placeholder:text-slate-400 resize-none leading-relaxed"
                             />
                         </div>
 
-                        <div className="flex justify-end gap-2">
+                        {/* Footer Actions */}
+                        <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-slate-100">
                             <button
                                 type="button"
                                 onClick={() => setShowReviewModal(false)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                disabled={submitting}
+                                className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer disabled:opacity-50"
                             >
                                 Batal
                             </button>
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                             >
-                                Simpan & Kirim Evaluasi
+                                <CheckCircle2 className="size-3.5" />
+                                <span>{submitting ? 'Menyimpan...' : 'Simpan & Kirim Evaluasi'}</span>
                             </button>
                         </div>
                     </form>
@@ -738,6 +910,33 @@ export default function LivingProposalTab({
                                 <span>{submitting ? 'Mengajukan...' : 'Ya, Ajukan Sekarang'}</span>
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Non-blocking Toast Notification (Menggantikan Alert Native Pop-up) */}
+            {toastMessage && (
+                <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div
+                        className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold backdrop-blur-md ${
+                            toastMessage.type === 'success'
+                                ? 'bg-slate-900/95 text-white border-slate-700/80'
+                                : 'bg-rose-500/95 text-white border-rose-600'
+                        }`}
+                    >
+                        {toastMessage.type === 'success' ? (
+                            <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                        ) : (
+                            <AlertCircle className="size-4 text-white shrink-0" />
+                        )}
+                        <span>{toastMessage.text}</span>
+                        <button
+                            type="button"
+                            onClick={() => setToastMessage(null)}
+                            className="ml-2 p-1 rounded-md text-slate-400 hover:text-white transition cursor-pointer"
+                        >
+                            <X className="size-3.5" />
+                        </button>
                     </div>
                 </div>
             )}

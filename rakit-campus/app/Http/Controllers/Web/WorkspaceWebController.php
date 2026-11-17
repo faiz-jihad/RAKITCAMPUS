@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web;
 use App\Contracts\Workspace\TaskServiceInterface;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
+use App\Events\TaskMutated;
 use App\Http\Controllers\Controller;
 use App\Models\AcademicClassGuidance;
 use App\Models\ActivityLog;
@@ -284,10 +285,26 @@ class WorkspaceWebController extends Controller
 
         $task = $this->taskService->createTask($team, $request->user(), $validated);
 
+        if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
+            try {
+                \App\Services\Leaderboard\LeaderboardScoringService::recordTaskCompleted($task, $user);
+            } catch (\Throwable $e) {
+                // Silently ignore scoring error
+            }
+        }
+
+        $loadedTask = $task->load(['assignee:id,name', 'milestone:id,title']);
+
+        try {
+            broadcast(new TaskMutated($team->id, 'created', $loadedTask->toArray()))->toOthers();
+        } catch (\Throwable $e) {
+            // Silently fall back if broadcast server is unreachable
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Tugas baru berhasil ditambahkan.',
-                'data' => $task->load(['assignee:id,name', 'milestone:id,title']),
+                'data' => $loadedTask,
             ]);
         }
 
@@ -314,10 +331,26 @@ class WorkspaceWebController extends Controller
 
         $task = $this->taskService->updateTask($task, $validated, $request->user());
 
+        if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
+            try {
+                \App\Services\Leaderboard\LeaderboardScoringService::recordTaskCompleted($task, $user);
+            } catch (\Throwable $e) {
+                // Silently ignore scoring error
+            }
+        }
+
+        $loadedTask = $task->load(['assignee:id,name', 'milestone:id,title']);
+
+        try {
+            broadcast(new TaskMutated($team->id, 'updated', $loadedTask->toArray()))->toOthers();
+        } catch (\Throwable $e) {
+            // Silently fall back if broadcast server is unreachable
+        }
+
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Tugas berhasil diperbarui.',
-                'data' => $task->load(['assignee:id,name', 'milestone:id,title']),
+                'data' => $loadedTask,
             ]);
         }
 
@@ -333,6 +366,20 @@ class WorkspaceWebController extends Controller
         $task = Task::where('team_id', $team->id)->findOrFail($taskId);
 
         $this->taskService->deleteTask($task, $request->user());
+
+        if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
+            try {
+                \App\Services\Leaderboard\LeaderboardScoringService::recordTaskCompleted($task, $user);
+            } catch (\Throwable $e) {
+                // Silently ignore scoring error
+            }
+        }
+
+        try {
+            broadcast(new TaskMutated($team->id, 'deleted', ['id' => $taskId]))->toOthers();
+        } catch (\Throwable $e) {
+            // Silently fall back if broadcast server is unreachable
+        }
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Tugas berhasil dihapus.']);
@@ -502,9 +549,18 @@ class WorkspaceWebController extends Controller
             $lockedMilestone = Milestone::where('id', $milestone->id)->lockForUpdate()->firstOrFail();
             $lockedMilestone->update($validated);
 
-            $tasksCount = $lockedMilestone->tasks()->count();
-            $completedCount = $lockedMilestone->tasks()->where('status', TaskStatus::Completed->value)->count();
-            $progress = $tasksCount > 0 ? (int) round(($completedCount / $tasksCount) * 100) : 0;
+        if ($milestone->status === 'completed') {
+            try {
+                \App\Services\Leaderboard\LeaderboardScoringService::recordMilestoneCompleted($milestone, $user);
+            } catch (\Throwable $e) {
+                // Silently ignore scoring error
+            }
+        }
+
+        // Recalculate milestone progress
+        $tasksCount = $milestone->tasks()->count();
+        $completedCount = $milestone->tasks()->where('status', TaskStatus::Completed->value)->count();
+        $progress = $tasksCount > 0 ? (int) round(($completedCount / $tasksCount) * 100) : 0;
 
             ActivityLog::log(
                 $team->campus_id ?? 1,

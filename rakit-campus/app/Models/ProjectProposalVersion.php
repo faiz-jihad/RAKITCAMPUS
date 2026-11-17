@@ -25,6 +25,7 @@ class ProjectProposalVersion extends Model
         'timeline_plan',
         'budget_estimate',
         'tech_stack',
+        'custom_sections',
         'change_summary',
         'status',
         'created_by',
@@ -40,6 +41,7 @@ class ProjectProposalVersion extends Model
         return [
             'version_number' => 'integer',
             'tech_stack' => 'array',
+            'custom_sections' => 'array',
             'is_locked' => 'boolean',
             'submitted_at' => 'datetime',
             'reviewed_at' => 'datetime',

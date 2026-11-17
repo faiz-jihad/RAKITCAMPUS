@@ -25,6 +25,9 @@ use App\Models\RecruitmentRole;
 use App\Models\Skill;
 use App\Models\Team;
 use App\Models\TeamMember;
+use App\Models\TeamPost;
+use App\Enums\PostKind;
+use App\Notifications\RakitUnifiedNotification;
 use App\Models\User;
 use App\Services\Matchmaking\DemoProjectAligner;
 use App\Services\Matchmaking\EligibilityService;
@@ -69,6 +72,13 @@ class ProjectWebController extends Controller
             ])
             ->latest();
 
+        $scope = $request->input('scope', 'all');
+        if ($scope === 'independent' || $scope === 'mandiri') {
+            $query->whereNull('academic_class_id');
+        } elseif ($scope === 'academic' || $scope === 'akademik') {
+            $query->whereNotNull('academic_class_id');
+        }
+
         if ($request->filled('category')) {
             $query->where('category', $request->input('category'));
         }
@@ -84,6 +94,27 @@ class ProjectWebController extends Controller
                   ->orWhere('short_description', 'like', $search);
             });
         }
+
+        $baseCountsQuery = Project::visibleTo($user);
+        if ($request->filled('category')) {
+            $baseCountsQuery->where('category', $request->input('category'));
+        }
+        if ($request->filled('status')) {
+            $baseCountsQuery->where('status', $request->input('status'));
+        }
+        if ($request->filled('search')) {
+            $search = '%' . $request->input('search') . '%';
+            $baseCountsQuery->where(function ($q) use ($search) {
+                $q->where('title', 'like', $search)
+                  ->orWhere('short_description', 'like', $search);
+            });
+        }
+
+        $counts = [
+            'all' => (clone $baseCountsQuery)->count(),
+            'independent' => (clone $baseCountsQuery)->whereNull('academic_class_id')->count(),
+            'academic' => (clone $baseCountsQuery)->whereNotNull('academic_class_id')->count(),
+        ];
 
         $projects = $query->paginate(12)->withQueryString();
 
@@ -180,7 +211,11 @@ class ProjectWebController extends Controller
 
         return Inertia::render('projects/index', [
             'projects' => $projects,
-            'filters' => $request->only(['search', 'category', 'status']),
+            'filters' => array_merge(
+                $request->only(['search', 'category', 'status']),
+                ['scope' => $scope]
+            ),
+            'counts' => $counts,
             'categories' => ProjectCategory::values(),
             'statuses' => ProjectStatus::values(),
             'userHasActiveProject' => $hasAnyActiveProject,
@@ -379,16 +414,7 @@ class ProjectWebController extends Controller
             : collect();
 
         $posts = $team
-            ? \App\Models\TeamPost::where('team_id', $team->id)
-                ->whereNull('parent_id') // top-level only
-                ->with([
-                    'author:id,name',
-                    'replies' => fn($q) => $q->with('author:id,name')->oldest(),
-                ])
-                ->orderByDesc('pinned')
-                ->latest('created_at')
-                ->take(50)
-                ->get()
+            ? \App\Models\TeamPost::where('team_id', $team->id)->with('author:id,name')->latest('created_at')->take(50)->get()->reverse()->values()
             : collect();
 
         // 7. Academic Guidances & Supervision Notes
@@ -1523,476 +1549,79 @@ class ProjectWebController extends Controller
     }
 
     /**
-     * Update Project details, timeline, and settings (Leader Only)
+     * Post a new message to the project/team internal discussion board.
      */
-    public function update(Request $request, string|int $id)
+    public function storeDiscussion(Request $request, string|int $id)
     {
         $user = $request->user();
-        $project = $this->resolveProject($id, ['team', 'leader', 'academicClass']);
-
-        if (!$user || !($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id))) {
-            abort(403, 'Hanya ketua tim yang berhak mengedit dan mengelola proyek ini.');
-        }
-
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'short_description' => 'nullable|string|max:500',
-            'description' => 'nullable|string',
-            'category' => 'nullable|string|max:50',
-            'difficulty' => 'nullable|string|in:beginner,intermediate,advanced',
-            'problem_statement' => 'nullable|string',
-            'objectives' => 'nullable|string',
-            'proposed_solution' => 'nullable|string',
-            'tech_stack' => 'nullable|array',
-            'tech_stack.*' => 'string|max:50',
-            'visibility' => 'nullable|string|in:public,campus,class,private',
-            'status' => 'nullable|string|in:draft,recruiting,in_progress,completed,archived',
-            'progress' => 'nullable|integer|min:0|max:100',
-            'starts_on' => 'nullable|date',
-            'target_completion_on' => 'nullable|date',
-            'recruitment_deadline' => 'nullable|date',
-            'expected_weekly_hours' => 'nullable|integer|min:1|max:100',
-            'min_team_size' => 'nullable|integer|min:1|max:20',
-            'max_team_size' => 'nullable|integer|min:1|max:20',
-            'repository_url' => 'nullable|url|max:255',
-            'demo_url' => 'nullable|url|max:255',
-            'team_name' => 'nullable|string|max:255',
-        ]);
-
-        // Status transition handling
-        if (isset($validated['status']) && $validated['status'] === 'completed') {
-            if (!$project->completed_at) {
-                $project->completed_at = now();
-            }
-            if (!isset($validated['progress']) || $validated['progress'] < 100) {
-                $validated['progress'] = 100;
-            }
-        } elseif (isset($validated['status']) && $validated['status'] !== 'completed' && $project->status === ProjectStatus::Completed) {
-            $project->completed_at = null;
-        }
-
-        $projectData = collect($validated)->except(['team_name'])->toArray();
-        $project->update($projectData);
-
-        // Synchronize team properties
-        if ($project->team) {
-            $teamUpdates = [];
-            if (!empty($validated['team_name'])) {
-                $teamUpdates['name'] = $validated['team_name'];
-            }
-            if (!empty($validated['max_team_size'])) {
-                $teamUpdates['capacity'] = (int) $validated['max_team_size'];
-            }
-            if (!empty($teamUpdates)) {
-                $project->team->update($teamUpdates);
-            }
-        }
-
-        return redirect()->route('projects.show', $project->slug ?: $project->id)
-            ->with('success', 'Informasi dan pengaturan proyek berhasil diperbarui.');
-    }
-
-    /**
-     * Delete or disband Project (Leader Only)
-     */
-    public function destroy(Request $request, string|int $id)
-    {
-        $user = $request->user();
-        $project = $this->resolveProject($id, ['team.recruitment.roles', 'team.members']);
-
-        if (!$user || !($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id))) {
-            abort(403, 'Hanya ketua tim yang berhak membubarkan atau menghapus proyek ini.');
-        }
-
-        DB::transaction(function () use ($project) {
-            $team = $project->team;
-            if ($team) {
-                // Cancel/delete applications & recruitment roles
-                if ($team->recruitment) {
-                    $team->recruitment->applications()->delete();
-                    $team->recruitment->roles()->delete();
-                    $team->recruitment->delete();
-                }
-                // Cancel invitations
-                $team->invitations()->delete();
-                // Delete team members
-                $team->members()->delete();
-                // Delete team
-                $team->delete();
-            }
-
-            // Cleanup living proposal & submissions if any
-            $project->proposal()?->delete();
-            $project->submissions()->delete();
-
-            // Delete project
-            $project->delete();
-        });
-
-        return redirect()->route('projects.index')
-            ->with('success', 'Proyek berhasil dibubarkan.');
-    }
-
-    /**
-     * Add member directly to project team (Leader Only)
-     */
-    public function addMember(Request $request, string|int $id)
-    {
-        $user = $request->user();
-        $project = $this->resolveProject($id, ['team.members', 'academicClass']);
-
-        if (!$user || !($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id))) {
-            abort(403, 'Hanya ketua tim yang berhak menambahkan anggota.');
-        }
-
-        $validated = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'role_name' => 'nullable|string|max:100',
-        ]);
-
+        $project = $this->resolveProject($id, ['team.members.user', 'academicClass']);
         $team = $project->team;
-        if (!$team) {
-            return back()->with('error', 'Tim proyek tidak ditemukan.');
+
+        if (! $team) {
+            return back()->with('error', 'Kelompok proyek belum terbentuk.');
         }
 
-        $targetUser = User::findOrFail($validated['user_id']);
+        $isMember = $project->isLeader($user) || $team->hasMember($user);
+        $isLecturer = ($project->academicClass && $project->academicClass->isLecturer($user))
+            || $project->primary_supervisor_id === $user->id
+            || $user->isPlatformAdmin();
 
-        // Check if already an active member
-        $existing = $team->members()->where('user_id', $targetUser->id)->where('status', 'active')->first();
-        if ($existing) {
-            return back()->with('error', 'Mahasiswa ini sudah terdaftar sebagai anggota tim proyek.');
+        if (! $isMember && ! $isLecturer) {
+            abort(403, 'Hanya anggota kelompok atau dosen pembimbing yang dapat mengirim pesan diskusi.');
         }
 
-        // Rule 1: One student one active project per academic class
-        if ($project->academic_class_id) {
-            $alreadyActiveInClass = TeamMember::where('user_id', $targetUser->id)
-                ->where('status', 'active')
-                ->whereHas('team.project', function ($q) use ($project) {
-                    $q->where('academic_class_id', $project->academic_class_id)
-                      ->where('id', '!=', $project->id)
-                      ->whereNotIn('status', ['archived', 'completed']);
-                })->exists();
+        $validated = $request->validate([
+            'body' => ['required', 'string', 'max:5000'],
+            'title' => ['nullable', 'string', 'max:255'],
+        ]);
 
-            if ($alreadyActiveInClass) {
-                return back()->with('error', 'Mahasiswa ini sudah tergabung dalam proyek aktif lain di kelas yang sama (Aturan 1 Mahasiswa 1 Proyek Aktif).');
-            }
-        }
+        $post = TeamPost::create([
+            'campus_id' => $project->campus_id,
+            'team_id' => $team->id,
+            'user_id' => $user->id,
+            'kind' => PostKind::Discussion,
+            'title' => $validated['title'] ?? null,
+            'body' => $validated['body'],
+        ]);
 
-        // Capacity check strictly enforcing max limits
-        $activeCount = $team->members()->where('status', 'active')->count();
-        $maxCapacity = (int) ($project->max_team_size ?: ($team->capacity ?: 4));
-        if ($project->academic_class_id) {
-            $classTarget = $project->academicClass?->target_team_size
-                ?? \App\Models\AcademicClass::where('id', $project->academic_class_id)->value('target_team_size');
-            if ($classTarget && (int) $classTarget > 0) {
-                $maxCapacity = min($maxCapacity, (int) $classTarget);
-            }
-        }
-
-        if ($activeCount >= $maxCapacity) {
-            return back()->with('error', "Kapasitas tim sudah penuh ({$activeCount}/{$maxCapacity} anggota).");
-        }
-
-        // Create or reactivate member
-        $member = TeamMember::updateOrCreate(
+        ActivityLog::log(
+            $project->campus_id,
+            $team->id,
+            $user->id,
+            'discussion_posted',
+            $post,
             [
-                'team_id' => $team->id,
-                'user_id' => $targetUser->id,
-            ],
-            [
-                'permission' => TeamPermission::Member->value,
-                'status' => 'active',
-                'role_name' => $validated['role_name'] ?: 'Anggota Tim',
-                'joined_at' => now(),
+                'title' => $validated['title'] ?? null,
+                'author_name' => $user->name,
             ]
         );
 
-        // Auto-close recruitment if team has now reached maximum capacity
-        if (($activeCount + 1) >= $maxCapacity && $team->recruitment) {
-            $team->recruitment->update(['status' => 'closed']);
-            $project->update(['has_open_recruitment' => false]);
-        }
-
-        // Sync pending application if exists
-        if ($team->recruitment) {
-            Application::where('recruitment_id', $team->recruitment->id)
-                ->where('user_id', $targetUser->id)
-                ->whereIn('status', ['pending', 'under_review', 'submitted'])
-                ->update(['status' => 'accepted']);
-        }
-
-        // Send database notification to the added student
-        try {
-            $targetUser->notifications()->create([
-                'id' => Str::uuid()->toString(),
-                'type' => 'App\Notifications\ApplicationStatusNotification',
-                'data' => [
-                    'type' => 'team_member_added',
-                    'notification_type' => 'team_member_added',
-                    'category' => 'project_hub',
-                    'priority' => 'high',
-                    'title' => "Anda Bergabung dengan {$team->name}",
-                    'message' => "Ketua tim telah menambahkan Anda ke proyek '{$project->title}' dengan peran {$member->role_name}.",
-                    'action_url' => "/projects/{$project->slug}",
-                    'action_text' => 'Buka Proyek',
-                    'details' => [
-                        'Tim' => $team->name,
-                        'Peran' => $member->role_name,
-                    ],
-                    'created_at' => now()->toIso8601String(),
-                ],
-            ]);
-            app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($targetUser->id);
-        } catch (\Exception $e) {
-            // Notification failed gracefully
-        }
-
-        return back()->with('success', "Mahasiswa {$targetUser->name} berhasil ditambahkan ke tim.");
-    }
-
-    /**
-     * Update a team member's role (Leader Only)
-     */
-    public function updateMemberRole(Request $request, string|int $id, int $memberId)
-    {
-        $user = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-
-        if (!$user || !($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id))) {
-            abort(403, 'Hanya ketua tim yang berhak mengubah peran anggota.');
-        }
-
-        $validated = $request->validate([
-            'role_name' => 'required|string|max:100',
-        ]);
-
-        $member = TeamMember::where('team_id', $project->team->id)->findOrFail($memberId);
-        $member->update(['role_name' => $validated['role_name']]);
-
-        return back()->with('success', 'Peran anggota berhasil diperbarui.');
-    }
-
-    /**
-     * Remove a member from the team (Leader Only)
-     */
-    public function removeMember(Request $request, string|int $id, int $memberId)
-    {
-        $user = $request->user();
-        $project = $this->resolveProject($id, ['team.members.user', 'team.recruitment']);
-
-        if (!$user || !($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id))) {
-            abort(403, 'Hanya ketua tim yang berhak mengeluarkan anggota.');
-        }
-
-        $member = TeamMember::where('team_id', $project->team->id)->with('user')->findOrFail($memberId);
-
-        if ($member->user_id === $project->leader_id || $member->permission === TeamPermission::Leader) {
-            return back()->with('error', 'Ketua proyek tidak dapat dikeluarkan dari tim.');
-        }
-
-        $memberName = $member->user?->name ?? 'Anggota';
-        $targetUser = $member->user;
-        $targetUserId = $member->user_id;
-
-        $member->delete();
-
-        // Invalidate / revoke application status so auto-heal does not re-add this user
-        if ($project->team?->recruitment) {
-            Application::where('recruitment_id', $project->team->recruitment->id)
-                ->where('user_id', $targetUserId)
-                ->update([
-                    'status' => 'rejected',
-                    'decision_note' => 'Keanggotaan dicabut / dikeluarkan oleh ketua tim.',
-                    'decided_at' => now(),
-                    'decided_by' => $user->id,
-                ]);
-        }
-
-        // Cancel any pending or accepted team invitations for this user
-        \App\Models\Invitation::where('team_id', $project->team->id)
-            ->where('invitee_id', $targetUserId)
-            ->update(['status' => 'cancelled']);
-
-        // Send notification to the removed member
-        if ($targetUser) {
-            try {
-                $targetUser->notifications()->create([
-                    'id' => Str::uuid()->toString(),
-                    'type' => 'App\Notifications\ApplicationStatusNotification',
-                    'data' => [
-                        'title' => "Pemberitahuan Tim Proyek",
-                        'message' => "Anda telah dikeluarkan dari tim proyek '{$project->title}'.",
-                        'action_url' => "/projects",
-                        'type' => 'team_member_removed',
-                        'priority' => 'medium',
-                    ],
-                ]);
-                app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($targetUser->id);
-            } catch (\Exception $e) {
-                // Ignore failure
+        // Notify other team members instantly
+        foreach ($team->members as $member) {
+            if ($member->user && $member->user_id !== $user->id) {
+                try {
+                    $member->user->notifyNow(new RakitUnifiedNotification(
+                        notificationType: 'team_discussion',
+                        category: 'project_hub',
+                        title: "Pesan Baru di Diskusi {$project->title}",
+                        message: "{$user->name}: " . Str::limit($validated['body'], 100),
+                        priority: 'low',
+                        actionUrl: "/projects/{$project->slug}?tab=discussion",
+                        actionText: 'Buka Diskusi',
+                        entityType: 'Project',
+                        entityId: $project->id,
+                        details: [
+                            'Pengirim' => $user->name,
+                            'Proyek' => $project->title,
+                        ],
+                        channels: ['database', 'broadcast'],
+                    ));
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Gagal notifikasi diskusi tim: ' . $e->getMessage());
+                }
             }
         }
 
-        return back()->with('success', "Anggota {$memberName} berhasil dikeluarkan dari tim.");
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    //  TEAM DISCUSSION / FORUM
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Create a new top-level post (discussion or announcement).
-     * - Members & leader can post discussions.
-     * - Only leader (and campus admin) can post announcements.
-     */
-    public function storePost(Request $request, string|int $id)
-    {
-        $user    = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-
-        if (!$project->team) {
-            return back()->with('error', 'Tim belum terbentuk.');
-        }
-
-        $isMember  = $project->team->members()->where('user_id', $user->id)->exists();
-        $isLeader  = $project->isLeader($user);
-        $isAdmin   = $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id);
-
-        if (!$isMember && !$isLeader && !$isAdmin) {
-            abort(403, 'Hanya anggota tim yang dapat memposting diskusi.');
-        }
-
-        $data = $request->validate([
-            'kind'  => 'required|in:discussion,announcement',
-            'title' => 'nullable|string|max:200',
-            'body'  => 'required|string|max:5000',
-        ]);
-
-        // Only leader / admin can post announcements
-        if ($data['kind'] === 'announcement' && !$isLeader && !$isAdmin) {
-            abort(403, 'Hanya ketua tim yang dapat membuat pengumuman.');
-        }
-
-        \App\Models\TeamPost::create([
-            'campus_id' => $project->campus_id,
-            'team_id'   => $project->team->id,
-            'user_id'   => $user->id,
-            'kind'      => $data['kind'],
-            'title'     => $data['title'] ?? null,
-            'body'      => $data['body'],
-            'pinned'    => false,
-        ]);
-
-        return back()->with('success', 'Postingan berhasil dibuat.');
-    }
-
-    /**
-     * Edit an existing top-level post (author or leader/admin only).
-     */
-    public function updatePost(Request $request, string|int $id, int $postId)
-    {
-        $user    = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-        $post    = \App\Models\TeamPost::where('team_id', $project->team?->id)->findOrFail($postId);
-
-        $isAuthor = $post->user_id === $user->id;
-        $isLeader = $project->isLeader($user);
-        $isAdmin  = $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id);
-
-        if (!$isAuthor && !$isLeader && !$isAdmin) {
-            abort(403, 'Anda tidak berhak mengedit postingan ini.');
-        }
-
-        $data = $request->validate([
-            'title' => 'nullable|string|max:200',
-            'body'  => 'required|string|max:5000',
-        ]);
-
-        $post->update([
-            'title' => $data['title'] ?? $post->title,
-            'body'  => $data['body'],
-        ]);
-
-        return back()->with('success', 'Postingan berhasil diperbarui.');
-    }
-
-    /**
-     * Delete a post and all its replies (author or leader/admin only).
-     */
-    public function destroyPost(Request $request, string|int $id, int $postId)
-    {
-        $user    = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-        $post    = \App\Models\TeamPost::where('team_id', $project->team?->id)->findOrFail($postId);
-
-        $isAuthor = $post->user_id === $user->id;
-        $isLeader = $project->isLeader($user);
-        $isAdmin  = $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id);
-
-        if (!$isAuthor && !$isLeader && !$isAdmin) {
-            abort(403, 'Anda tidak berhak menghapus postingan ini.');
-        }
-
-        $post->delete(); // Cascades to replies via FK
-
-        return back()->with('success', 'Postingan berhasil dihapus.');
-    }
-
-    /**
-     * Post a reply to an existing top-level post.
-     */
-    public function storeReply(Request $request, string|int $id, int $postId)
-    {
-        $user    = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-        $parent  = \App\Models\TeamPost::where('team_id', $project->team?->id)
-                       ->whereNull('parent_id')
-                       ->findOrFail($postId);
-
-        $isMember = $project->team->members()->where('user_id', $user->id)->exists();
-        $isLeader = $project->isLeader($user);
-        $isAdmin  = $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id);
-
-        if (!$isMember && !$isLeader && !$isAdmin) {
-            abort(403, 'Hanya anggota tim yang dapat membalas diskusi.');
-        }
-
-        $data = $request->validate([
-            'body' => 'required|string|max:2000',
-        ]);
-
-        \App\Models\TeamPost::create([
-            'campus_id' => $project->campus_id,
-            'team_id'   => $project->team->id,
-            'user_id'   => $user->id,
-            'parent_id' => $parent->id,
-            'kind'      => 'discussion',
-            'title'     => null,
-            'body'      => $data['body'],
-            'pinned'    => false,
-        ]);
-
-        return back()->with('success', 'Balasan berhasil dikirim.');
-    }
-
-    /**
-     * Toggle pin/unpin on a top-level post (leader/admin only).
-     */
-    public function togglePinPost(Request $request, string|int $id, int $postId)
-    {
-        $user    = $request->user();
-        $project = $this->resolveProject($id, ['team']);
-        $post    = \App\Models\TeamPost::where('team_id', $project->team?->id)->findOrFail($postId);
-
-        $isLeader = $project->isLeader($user);
-        $isAdmin  = $user->isPlatformAdmin() || $user->isCampusAdminOf($project->campus_id);
-
-        if (!$isLeader && !$isAdmin) {
-            abort(403, 'Hanya ketua tim yang dapat menyematkan postingan.');
-        }
-
-        $post->update(['pinned' => !$post->pinned]);
-
-        return back()->with('success', $post->pinned ? 'Postingan disematkan.' : 'Sematan dilepas.');
+        return back()->with('success', 'Pesan diskusi berhasil dikirim ke tim.');
     }
 }

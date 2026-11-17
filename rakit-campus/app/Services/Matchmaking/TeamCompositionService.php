@@ -25,9 +25,9 @@ class TeamCompositionService
 
         // Eager load or re-use team members and their profile skills to avoid N+1 queries
         $members = $team->relationLoaded('members')
-            ? $team->members->where('status', 'active')
+            ? $team->members->whereIn('status', ['active', 'completed'])
             : $team->members()
-                ->where('status', 'active')
+                ->whereIn('status', ['active', 'completed'])
                 ->with(['user.profile.skills'])
                 ->get();
 

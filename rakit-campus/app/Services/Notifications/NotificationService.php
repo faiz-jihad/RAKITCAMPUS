@@ -138,7 +138,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Halo {$user->name}, akun Anda berhasil dibuat. Lengkapi profil kompetensi Anda dan mulailah berkolaborasi dalam Project Hub dan Competition Hub.",
             options: [
                 'priority' => 'high',
-                'action_url' => url('/dashboard'),
+                'action_url' => '/dashboard',
                 'action_text' => 'Buka Dashboard RAKIT',
                 'details' => [
                     'Nama' => $user->name,
@@ -160,7 +160,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Aktivitas keamanan terdeteksi pada akun Anda: {$activityName}. Jika Anda tidak merasa melakukan tindakan ini, segera amankan akun Anda.",
             options: [
                 'priority' => 'critical',
-                'action_url' => url('/profile'),
+                'action_url' => '/profile',
                 'action_text' => 'Periksa Keamanan Akun',
                 'details' => array_merge([
                     'Aktivitas' => $activityName,
@@ -180,7 +180,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Status akun Anda telah diperbarui menjadi " . strtoupper($newStatus) . ($reason ? ". Catatan: {$reason}" : "."),
             options: [
                 'priority' => 'critical',
-                'action_url' => url('/login'),
+                'action_url' => '/login',
                 'action_text' => 'Akses Portal RAKIT',
                 'details' => [
                     'Status Baru' => strtoupper($newStatus),
@@ -204,7 +204,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Anda telah terdaftar sebagai mahasiswa dalam kelas {$class->name} ({$class->code}).",
             options: [
                 'priority' => 'medium',
-                'action_url' => url("/classes/{$class->id}"),
+                'action_url' => "/classes/{$class->id}",
                 'action_text' => 'Buka Detail Kelas',
                 'entity_type' => 'academic_class',
                 'entity_id' => $class->id,
@@ -228,7 +228,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Anda telah dikeluarkan dari kelas {$class->name} ({$class->code}). Hubungi dosen pengampu jika terjadi kekeliruan.",
             options: [
                 'priority' => 'high',
-                'action_url' => url('/classes'),
+                'action_url' => '/classes',
                 'action_text' => 'Lihat Daftar Kelas',
                 'entity_type' => 'academic_class',
                 'entity_id' => $class->id,
@@ -246,7 +246,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Anda telah ditugaskan sebagai dosen pengampu untuk kelas {$class->name} ({$class->code}).",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/classes/{$class->id}"),
+                'action_url' => "/classes/{$class->id}",
                 'action_text' => 'Kelola Kelas Kuliah',
                 'entity_type' => 'academic_class',
                 'entity_id' => $class->id,
@@ -271,6 +271,8 @@ class NotificationService implements NotificationServiceInterface
         // Notify supervisors/lecturers
         $supervisors = $this->resolver->resolveProjectSupervisors($project, $submittedBy->id);
 
+        $projectSlug = $project->slug ?: $project->id;
+
         $this->notify(
             recipients: $supervisors,
             notificationType: 'project_proposal_submitted',
@@ -279,7 +281,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Mahasiswa {$submittedBy->name} telah mengumpulkan proposal baru untuk proyek '{$project->title}'. Silakan tinjau dan berikan ulasan.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/projects/{$project->id}/workspace"),
+                'action_url' => "/projects/{$projectSlug}?tab=proposal",
                 'action_text' => 'Tinjau Proposal Proyek',
                 'entity_type' => 'project_proposal',
                 'entity_id' => $proposal->id,
@@ -305,6 +307,8 @@ class NotificationService implements NotificationServiceInterface
             default => ucfirst($status),
         };
 
+        $projectSlug = $project->slug ?: $project->id;
+
         $this->notify(
             recipients: $members,
             notificationType: 'project_proposal_reviewed',
@@ -313,8 +317,8 @@ class NotificationService implements NotificationServiceInterface
             message: "Proposal proyek Anda telah ditinjau dengan hasil: {$statusLabel}." . ($feedback ? " Catatan: {$feedback}" : ""),
             options: [
                 'priority' => 'high',
-                'action_url' => url("/projects/{$project->id}/workspace"),
-                'action_text' => 'Buka Workspace Proyek',
+                'action_url' => "/projects/{$projectSlug}?tab=proposal",
+                'action_text' => 'Buka Proposal Proyek',
                 'entity_type' => 'project_proposal',
                 'entity_id' => $proposal->id,
                 'details' => [
@@ -343,8 +347,8 @@ class NotificationService implements NotificationServiceInterface
             message: "{$inviterName} mengundang Anda bergabung dengan tim '{$team->name}' untuk peran: {$invitation->role_name}.",
             options: [
                 'priority' => 'high',
-                'action_url' => $team->project ? url("/projects/{$team->project->slug}") : url("/workspace/{$team->id}"),
-                'action_text' => 'Tanggapi Undangan Proyek',
+                'action_url' => '/matching',
+                'action_text' => 'Tanggapi Undangan',
                 'entity_type' => 'invitation',
                 'entity_id' => $invitation->id,
                 'details' => [
@@ -376,7 +380,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Kandidat {$invitee->name} telah {$actionText} undangan untuk bergabung dengan tim {$team->name}.",
             options: [
                 'priority' => 'medium',
-                'action_url' => url('/workspace'),
+                'action_url' => '/workspace',
                 'action_text' => 'Periksa Anggota Tim',
                 'entity_type' => 'invitation',
                 'entity_id' => $invitation->id,
@@ -391,6 +395,8 @@ class NotificationService implements NotificationServiceInterface
 
     public function sendLecturerAllocation(User $student, Project $project, string $role): void
     {
+        $projectSlug = $project->slug ?: $project->id;
+
         $this->notify(
             recipients: $student,
             notificationType: 'project_lecturer_allocation',
@@ -399,7 +405,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Dosen pengampu telah mengalokasikan Anda ke dalam proyek '{$project->title}' sebagai {$role}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/projects/{$project->id}/workspace"),
+                'action_url' => "/projects/{$projectSlug}?tab=formation",
                 'action_text' => 'Konfirmasi & Masuk Workspace',
                 'entity_type' => 'project',
                 'entity_id' => $project->id,
@@ -424,7 +430,7 @@ class NotificationService implements NotificationServiceInterface
             message: "{$assignerName} menugaskan tugas '{$task->title}' pada tim {$teamName} kepada Anda.",
             options: [
                 'priority' => 'medium',
-                'action_url' => url('/workspace'),
+                'action_url' => '/workspace',
                 'action_text' => 'Buka Workspace Tugas',
                 'entity_type' => 'task',
                 'entity_id' => $task->id,
@@ -442,6 +448,7 @@ class NotificationService implements NotificationServiceInterface
         if (!$project->team) return;
 
         $members = $this->resolver->resolveTeamMembers($project->team);
+        $projectSlug = $project->slug ?: $project->id;
 
         $this->notify(
             recipients: $members,
@@ -451,7 +458,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Dosen telah merilis hasil penilaian {$periodName} untuk proyek {$project->title}. Nilai perolehan: {$score}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/projects/{$project->id}/workspace"),
+                'action_url' => "/projects/{$projectSlug}?tab=uts",
                 'action_text' => 'Lihat Rekapitulasi Nilai',
                 'entity_type' => 'project',
                 'entity_id' => $project->id,
@@ -490,7 +497,7 @@ class NotificationService implements NotificationServiceInterface
             message: "Kompetisi '{$competition->name}' kategori {$competition->category} telah resmi dibuka. Cari teman tim dan daftarkan tim Anda!",
             options: [
                 'priority' => 'medium',
-                'action_url' => url('/dashboard'),
+                'action_url' => "/competitions/{$competition->id}",
                 'action_text' => 'Lihat Info Kompetisi',
                 'entity_type' => 'competition',
                 'entity_id' => $competition->id,
@@ -522,8 +529,8 @@ $targetWorkspaceUrl = $part
             message: "{$inviterName} mengundang Anda bergabung ke tim '{$team->name}' untuk mengikuti kompetisi {$competition->name} sebagai {$role}.",
             options: [
                 'priority' => 'high',
-                'action_url' => $targetWorkspaceUrl,
-                'action_text' => 'Tinjau & Tanggapi di Workspace Lomba',
+                'action_url' => "/competitions/{$competition->id}",
+                'action_text' => 'Tanggapi Undangan Lomba',
                 'entity_type' => 'team',
                 'entity_id' => $team->id,
                 'details' => [
@@ -551,7 +558,7 @@ $targetWorkspaceUrl = $part
             message: "Kandidat {$invitee->name} telah {$actionText} undangan untuk bergabung dengan tim lomba {$team->name}.",
             options: [
                 'priority' => 'medium',
-                'action_url' => url('/competitions'),
+                'action_url' => '/competitions',
                 'action_text' => 'Periksa Anggota Tim',
                 'entity_type' => 'team',
                 'entity_id' => $team->id,
@@ -580,7 +587,7 @@ $targetWorkspaceUrl = $part
             message: "Tim Anda pada kompetisi {$compName} telah berlanjut ke tahap: {$stageLabel}." . ($notes ? " Catatan: {$notes}" : ""),
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competition-workspace/{$participation->id}"),
+                'action_url' => "/competition-workspace/{$participation->id}",
                 'action_text' => 'Buka Workspace Kompetisi',
                 'entity_type' => 'competition_participation',
                 'entity_id' => $participation->id,
@@ -612,7 +619,7 @@ $targetWorkspaceUrl = $part
             message: "Hasil kompetisi {$compName} telah diumumkan. Capaian tim: {$result->achievement_title}.",
             options: [
                 'priority' => 'high',
-                'action_url' => url("/competition-workspace/{$participation->id}"),
+                'action_url' => "/competition-workspace/{$participation->id}",
                 'action_text' => 'Buka Hasil & Sertifikat',
                 'entity_type' => 'competition_result',
                 'entity_id' => $result->id,
@@ -638,7 +645,7 @@ $targetWorkspaceUrl = $part
             message: "Prestasi Anda '{$achievement->title}' telah divalidasi dan diarsipkan ke dalam portofolio akademik resmi Anda.",
             options: [
                 'priority' => 'high',
-                'action_url' => url('/portfolio'),
+                'action_url' => '/portfolio',
                 'action_text' => 'Lihat Portofolio Saya',
                 'entity_type' => 'achievement',
                 'entity_id' => $achievement->id,
