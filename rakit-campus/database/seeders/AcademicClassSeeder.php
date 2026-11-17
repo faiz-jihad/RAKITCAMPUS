@@ -91,24 +91,34 @@ class AcademicClassSeeder extends Seeder
         $enrolledUsers = collect();
 
         foreach ($studentsData as $idx => $st) {
-            $user = User::firstOrCreate(
-                ['email' => "mhs_{$st['nim']}@polindra.ac.id"],
-                [
-                    'name' => $st['name'],
-                    'password' => Hash::make('password123'),
-                    'email_verified_at' => now(),
-                ]
-            );
+            // Check if a student with this NIM already has a membership in this campus
+            $existingMembership = CampusMembership::where('campus_id', $campus->id)
+                ->where('student_number', $st['nim'])
+                ->with('user')
+                ->first();
 
-            CampusMembership::updateOrCreate(
-                ['campus_id' => $campus->id, 'user_id' => $user->id],
-                [
-                    'role' => CampusRole::Student->value,
-                    'status' => MembershipStatus::Active->value,
-                    'verification_status' => VerificationStatus::Verified->value,
-                    'student_number' => $st['nim'],
-                ]
-            );
+            if ($existingMembership && $existingMembership->user) {
+                $user = $existingMembership->user;
+            } else {
+                $user = User::firstOrCreate(
+                    ['email' => "mhs_{$st['nim']}@polindra.ac.id"],
+                    [
+                        'name' => $st['name'],
+                        'password' => Hash::make('password123'),
+                        'email_verified_at' => now(),
+                    ]
+                );
+
+                CampusMembership::updateOrCreate(
+                    ['campus_id' => $campus->id, 'user_id' => $user->id],
+                    [
+                        'role' => CampusRole::Student->value,
+                        'status' => MembershipStatus::Active->value,
+                        'verification_status' => VerificationStatus::Verified->value,
+                        'student_number' => $st['nim'],
+                    ]
+                );
+            }
 
             $profile = StudentProfile::firstOrCreate(
                 ['user_id' => $user->id],

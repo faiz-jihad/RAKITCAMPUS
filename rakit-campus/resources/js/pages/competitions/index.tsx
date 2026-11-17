@@ -274,8 +274,10 @@ interface Props {
     categories: string[];
     statuses: string[];
     levels: string[];
+    organizers?: string[];
     filters: {
         search?: string;
+        organizer?: string;
         category?: string;
         status?: string;
         level?: string;
@@ -317,6 +319,7 @@ export default function CompetitionIndex({
     categoryCounts = {},
     currentUserInfo = null,
     categories = [],
+    organizers = [],
     filters = {},
 }: Props) {
     const safeFilters = (Array.isArray(filters) || !filters) ? {} : filters;
@@ -339,6 +342,7 @@ export default function CompetitionIndex({
 
     // Filter States for Explore
     const [exploreSearch, setExploreSearch] = useState(safeFilters.search || '');
+    const [exploreOrganizer, setExploreOrganizer] = useState(safeFilters.organizer || '');
     const [exploreCategory, setExploreCategory] = useState(safeFilters.category || '');
     const [exploreLevel, setExploreLevel] = useState(safeFilters.level || '');
     const [exploreFormat, setExploreFormat] = useState(safeFilters.format || '');
@@ -397,6 +401,7 @@ export default function CompetitionIndex({
             {
                 tab: 'explore',
                 search: exploreSearch,
+                organizer: exploreOrganizer,
                 category: exploreCategory,
                 level: exploreLevel,
                 format: exploreFormat,
@@ -404,19 +409,20 @@ export default function CompetitionIndex({
                 status: exploreStatus,
                 sort: exploreSort,
             },
-            { preserveState: true }
+            { preserveState: true, preserveScroll: true }
         );
     };
 
     const handleResetExploreFilter = () => {
         setExploreSearch('');
+        setExploreOrganizer('');
         setExploreCategory('');
         setExploreLevel('');
         setExploreFormat('');
         setExploreType('');
         setExploreStatus('');
         setExploreSort('deadline_asc');
-        router.get('/competitions', { tab: 'explore' });
+        router.get('/competitions', { tab: 'explore' }, { preserveState: true, preserveScroll: true });
     };
 
     const handleTeamFilterSubmit = (e?: React.FormEvent) => {
@@ -429,7 +435,7 @@ export default function CompetitionIndex({
                 team_category: teamCategory,
                 team_role: teamRole,
             },
-            { preserveState: true }
+            { preserveState: true, preserveScroll: true }
         );
     };
 
@@ -437,7 +443,7 @@ export default function CompetitionIndex({
         setTeamSearch('');
         setTeamCategory('');
         setTeamRole('');
-        router.get('/competitions', { tab: 'teams' });
+        router.get('/competitions', { tab: 'teams' }, { preserveState: true, preserveScroll: true });
     };
 
     const openApplyModal = (part: RecruitingTeam) => {
@@ -762,10 +768,55 @@ export default function CompetitionIndex({
 
                             <div className="grid grid-cols-2 sm:grid-cols-3 lg:flex lg:flex-wrap items-center gap-2 w-full lg:w-auto">
                                 <select
+                                    value={exploreOrganizer}
+                                    onChange={(e) => {
+                                        setExploreOrganizer(e.target.value);
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: e.target.value,
+                                                category: exploreCategory,
+                                                level: exploreLevel,
+                                                format: exploreFormat,
+                                                type: exploreType,
+                                                status: exploreStatus,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
+                                    }}
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate max-w-[170px]"
+                                    title="Filter Penyelenggara Kompetisi"
+                                >
+                                    <option value="">Semua Penyelenggara</option>
+                                    {organizers.map((org) => (
+                                        <option key={org} value={org}>
+                                            {org}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
                                     value={exploreCategory}
                                     onChange={(e) => {
                                         setExploreCategory(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: e.target.value, level: exploreLevel, format: exploreFormat }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: e.target.value,
+                                                level: exploreLevel,
+                                                format: exploreFormat,
+                                                type: exploreType,
+                                                status: exploreStatus,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -781,7 +832,21 @@ export default function CompetitionIndex({
                                     value={exploreLevel}
                                     onChange={(e) => {
                                         setExploreLevel(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: e.target.value, format: exploreFormat }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: exploreCategory,
+                                                level: e.target.value,
+                                                format: exploreFormat,
+                                                type: exploreType,
+                                                status: exploreStatus,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -796,7 +861,21 @@ export default function CompetitionIndex({
                                     value={exploreFormat}
                                     onChange={(e) => {
                                         setExploreFormat(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: e.target.value, type: exploreType, status: exploreStatus, sort: exploreSort }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: exploreCategory,
+                                                level: exploreLevel,
+                                                format: e.target.value,
+                                                type: exploreType,
+                                                status: exploreStatus,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -810,7 +889,21 @@ export default function CompetitionIndex({
                                     value={exploreType}
                                     onChange={(e) => {
                                         setExploreType(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: e.target.value, status: exploreStatus, sort: exploreSort }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: exploreCategory,
+                                                level: exploreLevel,
+                                                format: exploreFormat,
+                                                type: e.target.value,
+                                                status: exploreStatus,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -823,7 +916,21 @@ export default function CompetitionIndex({
                                     value={exploreStatus}
                                     onChange={(e) => {
                                         setExploreStatus(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: exploreType, status: e.target.value, sort: exploreSort }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: exploreCategory,
+                                                level: exploreLevel,
+                                                format: exploreFormat,
+                                                type: exploreType,
+                                                status: e.target.value,
+                                                sort: exploreSort,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -837,7 +944,21 @@ export default function CompetitionIndex({
                                     value={exploreSort}
                                     onChange={(e) => {
                                         setExploreSort(e.target.value);
-                                        router.get('/competitions', { tab: 'explore', search: exploreSearch, category: exploreCategory, level: exploreLevel, format: exploreFormat, type: exploreType, status: exploreStatus, sort: e.target.value }, { preserveState: true });
+                                        router.get(
+                                            '/competitions',
+                                            {
+                                                tab: 'explore',
+                                                search: exploreSearch,
+                                                organizer: exploreOrganizer,
+                                                category: exploreCategory,
+                                                level: exploreLevel,
+                                                format: exploreFormat,
+                                                type: exploreType,
+                                                status: exploreStatus,
+                                                sort: e.target.value,
+                                            },
+                                            { preserveState: true, preserveScroll: true }
+                                        );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-blue-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
@@ -846,7 +967,7 @@ export default function CompetitionIndex({
                                     <option value="latest">Terbaru</option>
                                 </select>
 
-                                {(exploreSearch || exploreCategory || exploreLevel || exploreFormat || exploreType || exploreStatus) && (
+                                {(exploreSearch || exploreOrganizer || exploreCategory || exploreLevel || exploreFormat || exploreType || exploreStatus) && (
                                     <button
                                         type="button"
                                         onClick={handleResetExploreFilter}
@@ -1031,6 +1152,43 @@ export default function CompetitionIndex({
                                 })}
                             </div>
                         )}
+
+                        {/* Pagination with preserveScroll */}
+                        {competitions && competitions.last_page > 1 && (
+                            <div className="flex items-center justify-center gap-1.5 pt-6 pb-2">
+                                {Array.from({ length: competitions.last_page }, (_, i) => i + 1).map((page) => (
+                                    <button
+                                        key={page}
+                                        type="button"
+                                        onClick={() => {
+                                            router.get(
+                                                '/competitions',
+                                                {
+                                                    tab: 'explore',
+                                                    page,
+                                                    search: exploreSearch,
+                                                    organizer: exploreOrganizer,
+                                                    category: exploreCategory,
+                                                    level: exploreLevel,
+                                                    format: exploreFormat,
+                                                    type: exploreType,
+                                                    status: exploreStatus,
+                                                    sort: exploreSort,
+                                                },
+                                                { preserveState: true, preserveScroll: true }
+                                            );
+                                        }}
+                                        className={`size-8 rounded-lg text-xs font-bold transition cursor-pointer flex items-center justify-center ${
+                                            competitions.current_page === page
+                                                ? 'bg-blue-600 text-white shadow-xs'
+                                                : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
 
@@ -1074,7 +1232,7 @@ export default function CompetitionIndex({
                                     value={teamCategory}
                                     onChange={(e) => {
                                         setTeamCategory(e.target.value);
-                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: e.target.value, team_role: teamRole }, { preserveState: true });
+                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: e.target.value, team_role: teamRole }, { preserveState: true, preserveScroll: true });
                                     }}
                                     className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >
@@ -1088,7 +1246,7 @@ export default function CompetitionIndex({
                                     value={teamRole}
                                     onChange={(e) => {
                                         setTeamRole(e.target.value);
-                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: teamCategory, team_role: e.target.value }, { preserveState: true });
+                                        router.get('/competitions', { tab: 'teams', team_search: teamSearch, team_category: teamCategory, team_role: e.target.value }, { preserveState: true, preserveScroll: true });
                                     }}
                                     className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >

@@ -727,10 +727,15 @@ class DashboardWebController extends Controller
                 'participations.competition' => fn ($q) => $q->withTrashed(),
                 'participations.competition.sources',
                 'participations.competition.campus:id,name',
+                'participations.team.tasks:id,team_id,status',
+                'participations.documents',
                 'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar']),
                 'tasks:id,team_id,status',
             ])->latest()->get()->map(function ($team) use ($user) {
                 $participation = $team->participations->first();
+                if ($participation && !$participation->relationLoaded('team')) {
+                    $participation->setRelation('team', $team);
+                }
                 $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
                 $totalTasks = $team->tasks->count();
                 $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();
@@ -1051,10 +1056,15 @@ class DashboardWebController extends Controller
                 'participations.competition' => fn ($q) => $q->withTrashed(),
                 'participations.competition.sources',
                 'participations.competition.campus:id,name',
+                'participations.team.tasks:id,team_id,status',
+                'participations.documents',
                 'members' => fn ($m) => $m->where('status', 'active')->with(['user:id,name,email,avatar']),
                 'tasks:id,team_id,status,title,due_on',
             ])->latest()->get()->map(function ($team) use ($user) {
                 $participation = $team->participations->first();
+                if ($participation && !$participation->relationLoaded('team')) {
+                    $participation->setRelation('team', $team);
+                }
                 $competition = $participation?->competition ?? ($participation ? Competition::withTrashed()->find($participation->competition_id) : null);
                 $totalTasks = $team->tasks->count();
                 $doneTasks = $team->tasks->where('status', TaskStatus::Completed)->count();

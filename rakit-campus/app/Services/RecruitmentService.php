@@ -134,10 +134,19 @@ class RecruitmentService
             }
 
             // Strict capacity check
-            $currentMemberCount = TeamMember::where('team_id', $team->id)->count();
-            if ($currentMemberCount >= $team->capacity) {
+            $maxCapacity = (int) ($team->project?->max_team_size ?: ($team->capacity ?: 4));
+            if ($team->project?->academic_class_id) {
+                $classTarget = $team->project->academicClass?->target_team_size
+                    ?? \App\Models\AcademicClass::where('id', $team->project->academic_class_id)->value('target_team_size');
+                if ($classTarget && (int) $classTarget > 0) {
+                    $maxCapacity = min($maxCapacity, (int) $classTarget);
+                }
+            }
+
+            $currentMemberCount = TeamMember::where('team_id', $team->id)->where('status', 'active')->count();
+            if ($currentMemberCount >= $maxCapacity) {
                 throw ValidationException::withMessages([
-                    'capacity' => ["Kapasitas maksimal tim ({$team->capacity} orang) sudah terpenuhi."],
+                    'capacity' => ["Kapasitas maksimal tim ({$maxCapacity} orang) sudah terpenuhi."],
                 ]);
             }
 

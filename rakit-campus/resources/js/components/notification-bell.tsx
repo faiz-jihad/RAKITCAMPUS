@@ -107,7 +107,12 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
     };
 
     const handleOpenNotification = (item: RecentNotification) => {
-        const targetUrl = item.data?.action_url || item.data?.link || '/notifications';
+        let targetUrl = item.data?.action_url || item.data?.link || '/notifications';
+
+        // Normalize legacy competition workspace URLs to prevent 404
+        if (targetUrl.includes('/competitions/workspace/')) {
+            targetUrl = targetUrl.replace('/competitions/workspace/', '/competition-workspace/');
+        }
 
         if (!item.read_at) {
             // Optimistically mark as read
