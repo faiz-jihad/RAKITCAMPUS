@@ -2272,13 +2272,6 @@ export default function Dashboard({
             {/* 1. HEADER ROW */}
             <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/80 flex items-center gap-1.5">
-                            <FolderGit2 className="size-3 text-blue-600" />
-                            <span>Project Hub</span>
-                        </span>
-                        <span className="text-xs text-slate-400">• Ruang Kolaborasi Proyek & Portofolio</span>
-                    </div>
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
                         Dashboard Proyek Mahasiswa
                     </h1>
