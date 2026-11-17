@@ -221,6 +221,20 @@ class EligibilityService
      */
     public function checkCompetitionEligibility(User $student, ?Team $team = null, ?int $competitionId = null): array
     {
+        // Guard: Only mahasiswa (students) may join competitions
+        if ($student->isPlatformAdmin() || $student->isCampusAdmin()) {
+            return [
+                'eligible' => false,
+                'reason'   => "{$student->name} adalah administrator dan tidak dapat diundang ke tim kompetisi.",
+            ];
+        }
+        if ($student->isLecturer()) {
+            return [
+                'eligible' => false,
+                'reason'   => "{$student->name} adalah dosen dan tidak dapat diundang ke tim kompetisi.",
+            ];
+        }
+
         $mode = config('matchmaking.membership_mode', 'flexible');
 
         if ($mode === 'strict') {

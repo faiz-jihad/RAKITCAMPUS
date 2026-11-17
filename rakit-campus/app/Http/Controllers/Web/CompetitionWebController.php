@@ -1645,6 +1645,15 @@ class CompetitionWebController extends Controller
         ]);
 
         $student = User::findOrFail($validated['student_id']);
+
+        // Guard: only mahasiswa may be added to competition teams
+        if ($student->isPlatformAdmin() || $student->isCampusAdmin()) {
+            return back()->with('error', "{$student->name} adalah administrator dan tidak dapat ditambahkan ke tim kompetisi.");
+        }
+        if ($student->isLecturer()) {
+            return back()->with('error', "{$student->name} adalah dosen dan tidak dapat ditambahkan ke tim kompetisi. Hanya mahasiswa yang diperbolehkan.");
+        }
+
         if ($participation->team->hasMember($student)) {
             return back()->with('error', "Mahasiswa {$student->name} sudah bergabung dalam tim ini.");
         }
@@ -2246,6 +2255,14 @@ class CompetitionWebController extends Controller
         ]);
 
         $student = User::findOrFail($validated['student_id']);
+
+        // Guard: only mahasiswa may be invited to competition teams
+        if ($student->isPlatformAdmin() || $student->isCampusAdmin()) {
+            return back()->with('error', "{$student->name} adalah administrator dan tidak dapat diundang ke tim kompetisi.");
+        }
+        if ($student->isLecturer()) {
+            return back()->with('error', "{$student->name} adalah dosen dan tidak dapat diundang ke tim kompetisi. Hanya mahasiswa yang diperbolehkan.");
+        }
 
         $invitation = $this->teamFormationService->sendInvitation(
             $participation,

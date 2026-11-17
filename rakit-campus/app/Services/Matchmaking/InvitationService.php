@@ -50,6 +50,18 @@ class InvitationService
             ]);
         }
 
+        // 1b. Role guard: Invitee MUST be a student (bukan dosen / admin)
+        if ($invitee->isPlatformAdmin() || $invitee->isCampusAdmin()) {
+            throw ValidationException::withMessages([
+                'invitee' => ["{$invitee->name} adalah administrator dan tidak dapat diundang ke tim proyek."],
+            ]);
+        }
+        if ($invitee->isLecturer()) {
+            throw ValidationException::withMessages([
+                'invitee' => ["{$invitee->name} adalah dosen dan tidak dapat diundang ke tim proyek. Hanya mahasiswa yang dapat bergabung."],
+            ]);
+        }
+
         // 2. Strict Class Boundary: Candidate MUST be enrolled in the same class
         if ($project->academic_class_id && ! $this->eligibilityService->isStudentInClass($invitee, $project->academic_class_id)) {
             throw ValidationException::withMessages([

@@ -1392,6 +1392,14 @@ class ProjectWebController extends Controller
         $invitee = User::findOrFail($validated['invitee_id']);
         $role = ! empty($validated['recruitment_role_id']) ? RecruitmentRole::find($validated['recruitment_role_id']) : null;
 
+        // Guard: only mahasiswa (students) may be invited to project teams
+        if ($invitee->isPlatformAdmin() || $invitee->isCampusAdmin()) {
+            return back()->with('error', "{$invitee->name} adalah administrator dan tidak dapat diundang ke tim proyek.");
+        }
+        if ($invitee->isLecturer()) {
+            return back()->with('error', "{$invitee->name} adalah dosen dan tidak dapat diundang ke tim proyek. Hanya mahasiswa yang diperbolehkan.");
+        }
+
         $this->invitationService->sendInvitation($team, $user, $invitee, $role, $validated['message'] ?? null);
 
         return back()->with('success', "Undangan kolaborasi proyek berhasil dikirimkan ke {$invitee->name}!");
