@@ -58,6 +58,8 @@ interface Props {
         completed_projects: number;
         active_competitions: number;
         total_teams: number;
+        total_feedback?: number;
+        pending_feedback?: number;
     };
     pendingVerifications?: Array<{
         id: number;
@@ -139,6 +141,7 @@ interface Props {
     pendingTeamApprovals?: any[];
     teamApprovalHistory?: any[];
     profileCompletion?: { percent: number; missing: string[] };
+    recentFeedbacks?: any[];
 }
 
 export default function Dashboard({
@@ -148,6 +151,7 @@ export default function Dashboard({
     recentProjects = [],
     recentCompetitions = [],
     upcomingCompetitions = [],
+    recentFeedbacks = [],
     user = {} as any,
     stats = {} as any,
     myTeams = [],
@@ -437,6 +441,18 @@ export default function Dashboard({
 
                     <div className="flex flex-wrap items-center gap-2">
                         <Link
+                            href="/admin/feedback"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <MessageSquare className="size-3.5 text-blue-600" />
+                            <span>Saran & Masukan</span>
+                            {(adminStats?.pending_feedback ?? 0) > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800">
+                                    {adminStats.pending_feedback}
+                                </span>
+                            )}
+                        </Link>
+                        <Link
                             href="/admin/competitions"
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
                         >
@@ -480,7 +496,7 @@ export default function Dashboard({
                 )}
 
                 {/* 2. ADMIN KPI STAT CARDS */}
-                <div className="grid grid-cols-2 lg:grid-cols-6 gap-3.5 sm:gap-4 mb-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3.5 sm:gap-4 mb-6">
                     <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col justify-between gap-3">
                         <div className="flex items-center justify-between text-slate-400">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Total Mahasiswa</span>
@@ -574,6 +590,30 @@ export default function Dashboard({
                             </div>
                         </div>
                     </div>
+
+                    <Link
+                        href="/admin/feedback"
+                        className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:border-blue-400 transition flex flex-col justify-between gap-3 group"
+                    >
+                        <div className="flex items-center justify-between text-slate-400">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 group-hover:text-blue-600 transition">
+                                Saran & Masukan
+                            </span>
+                            <MessageSquare className="size-4 text-blue-600 group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight">
+                                {adminStats?.total_feedback ?? 0}
+                            </div>
+                            <div className="text-[10px] font-bold mt-1">
+                                {(adminStats?.pending_feedback ?? 0) > 0 ? (
+                                    <span className="text-amber-600 font-semibold">{adminStats.pending_feedback} Belum Ditinjau</span>
+                                ) : (
+                                    <span className="text-slate-400">Semua Ditinjau</span>
+                                )}
+                            </div>
+                        </div>
+                    </Link>
                 </div>
 
                 {/* 3. MAIN DASHBOARD CONTENT */}
@@ -762,6 +802,83 @@ export default function Dashboard({
                                 </div>
                             ) : (
                                 <p className="text-xs text-slate-400 py-4 text-center">Belum ada kompetisi aktif.</p>
+                            )}
+                        </div>
+
+                        {/* 4. RECENT SYSTEM FEEDBACKS & BUG REPORTS */}
+                        <div className="bg-white rounded-2xl border border-slate-200/90 p-5 sm:p-6 shadow-2xs">
+                            <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                                <div className="flex items-center gap-2">
+                                    <div className="size-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                                        <MessageSquare className="size-4" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-sm font-bold text-slate-900">
+                                            Saran & Laporan Masuk Terbaru
+                                        </h2>
+                                        <p className="text-[11px] text-slate-500">
+                                            Masukan pengguna, saran fitur, dan kendala bug sistem
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href="/admin/feedback"
+                                    className="text-xs font-bold text-blue-600 hover:underline shrink-0"
+                                >
+                                    Kelola Semua →
+                                </Link>
+                            </div>
+
+                            {recentFeedbacks && recentFeedbacks.length > 0 ? (
+                                <div className="space-y-3">
+                                    {recentFeedbacks.map((fb: any) => (
+                                        <div
+                                            key={fb.id}
+                                            className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-blue-300 hover:shadow-xs transition flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                                        {fb.category ? fb.category.replace('_', ' ').toUpperCase() : 'MASUKAN'}
+                                                    </span>
+                                                    {fb.rating && (
+                                                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                            ★ {fb.rating}/5
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[11px] font-semibold text-slate-800">
+                                                        {fb.name}
+                                                    </span>
+                                                    <span className="text-[10px] text-slate-400">
+                                                        • {fb.created_at}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-slate-600 line-clamp-2 italic">
+                                                    "{fb.message}"
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                                    fb.status === 'pending'
+                                                        ? 'bg-amber-100 text-amber-800'
+                                                        : fb.status === 'resolved'
+                                                        ? 'bg-emerald-100 text-emerald-800'
+                                                        : 'bg-blue-100 text-blue-800'
+                                                }`}>
+                                                    {fb.status === 'pending' ? 'Menunggu' : fb.status === 'resolved' ? 'Selesai' : fb.status}
+                                                </span>
+                                                <Link
+                                                    href="/admin/feedback"
+                                                    className="text-xs font-bold text-blue-600 hover:underline"
+                                                >
+                                                    Tanggapi →
+                                                </Link>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-xs text-slate-400 py-4 text-center">Belum ada saran atau laporan yang masuk.</p>
                             )}
                         </div>
                     </div>

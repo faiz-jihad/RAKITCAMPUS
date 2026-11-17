@@ -360,10 +360,26 @@ class DashboardWebController extends Controller
                     'completed_projects' => $completedProjects,
                     'active_competitions' => $activeCompetitions,
                     'total_teams' => $totalTeams,
+                    'total_feedback' => \App\Models\SystemFeedback::count(),
+                    'pending_feedback' => \App\Models\SystemFeedback::where('status', 'pending')->count(),
                 ],
                 'pendingVerifications' => $pendingVerifications,
                 'recentProjects' => $recentProjects,
                 'recentCompetitions' => $recentCompetitions,
+                'recentFeedbacks' => \App\Models\SystemFeedback::with(['user:id,name,email,avatar'])
+                    ->latest()
+                    ->take(6)
+                    ->get()
+                    ->map(fn ($fb) => [
+                        'id' => $fb->id,
+                        'name' => $fb->name ?: ($fb->user?->name ?? 'Anonim'),
+                        'email' => $fb->email ?: ($fb->user?->email ?? '-'),
+                        'category' => $fb->category,
+                        'message' => $fb->message,
+                        'rating' => $fb->rating,
+                        'status' => $fb->status,
+                        'created_at' => $fb->created_at?->diffForHumans() ?? 'Baru saja',
+                    ]),
                 'user' => [
                     'id' => $user->id,
                     'name' => $user->name,

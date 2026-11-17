@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { CheckCircle, FolderKanban, ShieldAlert, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { CheckCircle, FolderKanban, MessageSquare, ShieldAlert, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -13,9 +13,12 @@ interface Props {
         completed_projects: number;
         active_competitions: number;
         total_teams: number;
+        total_feedback?: number;
+        pending_feedback?: number;
     };
     pendingVerifications: any[];
     recentProjects: any[];
+    recentFeedbacks?: any[];
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -23,7 +26,7 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Campus Admin', href: '/admin' },
 ];
 
-export default function AdminIndex({ stats, pendingVerifications: initialPending, recentProjects }: Props) {
+export default function AdminIndex({ stats, pendingVerifications: initialPending, recentProjects, recentFeedbacks = [] }: Props) {
     const [pending, setPending] = useState(initialPending);
 
     const getXsrfToken = () => {
@@ -83,6 +86,18 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
 
                     <div className="flex items-center gap-2.5">
                         <Link
+                            href="/admin/feedback"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <MessageSquare className="size-3.5 text-blue-600" />
+                            <span>Saran & Masukan</span>
+                            {(stats.pending_feedback ?? 0) > 0 && (
+                                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800">
+                                    {stats.pending_feedback}
+                                </span>
+                            )}
+                        </Link>
+                        <Link
                             href="/admin/competitions"
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
                         >
@@ -100,7 +115,7 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                 </div>
 
                 {/* Metrics Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
                         <div className="flex items-center justify-between text-slate-500 mb-2">
                             <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Mahasiswa Terdaftar</span>
@@ -147,6 +162,22 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                             Tim proyek & tim kompetisi
                         </span>
                     </div>
+
+                    <Link
+                        href="/admin/feedback"
+                        className="bg-white border border-slate-200/80 hover:border-blue-400 rounded-2xl p-5 shadow-xs transition group block"
+                    >
+                        <div className="flex items-center justify-between text-slate-500 mb-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 group-hover:text-blue-600 transition">
+                                Saran & Masukan
+                            </span>
+                            <MessageSquare className="size-4 text-blue-600 group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div className="text-2xl font-black text-slate-900">{stats.total_feedback ?? 0}</div>
+                        <span className="text-[11px] text-blue-600 font-semibold block mt-1">
+                            {(stats.pending_feedback ?? 0) > 0 ? `${stats.pending_feedback} belum ditinjau →` : 'Tinjau Masukan →'}
+                        </span>
+                    </Link>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -227,6 +258,80 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                             ))}
                         </div>
                     </div>
+                </div>
+
+                {/* Recent System Feedback Panel */}
+                <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs">
+                    <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                <MessageSquare className="size-4 text-blue-600" />
+                                <span>Saran, Ide & Laporan Kendala Terbaru</span>
+                                {(stats.pending_feedback ?? 0) > 0 && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                        {stats.pending_feedback} Menunggu
+                                    </span>
+                                )}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Aspirasi dan masukan yang dikirim mahasiswa melalui formulir landing page platform.
+                            </p>
+                        </div>
+                        <Link
+                            href="/admin/feedback"
+                            className="text-xs font-bold text-blue-600 hover:underline shrink-0"
+                        >
+                            Buka Semua Masukan →
+                        </Link>
+                    </div>
+
+                    {recentFeedbacks && recentFeedbacks.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                            {recentFeedbacks.map((fb: any) => (
+                                <div
+                                    key={fb.id}
+                                    className="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 hover:bg-white hover:border-blue-300 hover:shadow-xs transition flex flex-col justify-between gap-2.5"
+                                >
+                                    <div>
+                                        <div className="flex items-center justify-between gap-1 mb-1">
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">
+                                                {fb.category.replace('_', ' ').toUpperCase()}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400">{fb.created_at}</span>
+                                        </div>
+                                        <p className="text-xs font-semibold text-slate-800 truncate mt-1">
+                                            {fb.name} <span className="text-slate-400 font-normal">({fb.email})</span>
+                                        </p>
+                                        <p className="text-xs text-slate-600 line-clamp-2 mt-1 italic">
+                                            "{fb.message}"
+                                        </p>
+                                    </div>
+
+                                    <div className="pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs">
+                                        <span className={`text-[10px] font-bold ${
+                                            fb.status === 'pending'
+                                                ? 'text-amber-600'
+                                                : fb.status === 'resolved'
+                                                ? 'text-emerald-600'
+                                                : 'text-blue-600'
+                                        }`}>
+                                            ● {fb.status.toUpperCase()}
+                                        </span>
+                                        <Link
+                                            href="/admin/feedback"
+                                            className="text-[11px] font-bold text-blue-600 hover:underline"
+                                        >
+                                            Detail & Tanggapi →
+                                        </Link>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="py-6 text-center text-xs text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                            Belum ada saran atau laporan masuk saat ini.
+                        </div>
+                    )}
                 </div>
             </div>
         </AppLayout>

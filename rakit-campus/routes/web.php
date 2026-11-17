@@ -5,6 +5,7 @@ use App\Http\Controllers\OnboardingWebController;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
 use App\Http\Controllers\Web\Admin\AdminCompetitionWebController;
+use App\Http\Controllers\Web\Admin\AdminFeedbackWebController;
 use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
 use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
@@ -232,6 +233,11 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         Route::match(['put', 'post'], '/competitions/{id}', [AdminCompetitionWebController::class, 'update'])->name('admin.competitions.update');
         Route::patch('/competitions/{id}/status', [AdminCompetitionWebController::class, 'updateStatus'])->name('admin.competitions.status');
         Route::delete('/competitions/{id}', [AdminCompetitionWebController::class, 'destroy'])->name('admin.competitions.destroy');
+
+        // System Feedback & Suggestions Management
+        Route::get('/feedback', [AdminFeedbackWebController::class, 'index'])->name('admin.feedback.index');
+        Route::patch('/feedback/{id}/status', [AdminFeedbackWebController::class, 'updateStatus'])->name('admin.feedback.status');
+        Route::delete('/feedback/{id}', [AdminFeedbackWebController::class, 'destroy'])->name('admin.feedback.destroy');
     });
 
     // AI Workspace

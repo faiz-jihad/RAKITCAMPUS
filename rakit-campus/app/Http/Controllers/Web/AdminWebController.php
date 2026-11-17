@@ -22,12 +22,19 @@ class AdminWebController extends Controller
     {
         $user = $request->user();
         $membership = $user->activeMembership();
+        $isAdmin = $user->isPlatformAdmin()
+            || $user->isCampusAdmin()
+            || ($membership && (
+                $membership->role === CampusRole::CampusAdmin
+                || $membership->role?->value === 'campus_admin'
+                || (string) $membership->role === 'campus_admin'
+            ));
 
-        if (!$user->isPlatformAdmin() && (!$membership || $membership->role !== CampusRole::CampusAdmin)) {
+        if (!$isAdmin) {
             abort(403, 'Akses terbatas untuk Administrator Kampus.');
         }
 
-        $campusId = $user->isPlatformAdmin() ? null : $membership->campus_id;
+        $campusId = $user->isPlatformAdmin() ? null : $membership?->campus_id;
 
         $studentsQuery = CampusMembership::where('role', CampusRole::Student);
         $projectsQuery = Project::query();
@@ -54,6 +61,8 @@ class AdminWebController extends Controller
             'completed_projects' => (clone $projectsQuery)->where('status', ProjectStatus::Completed->value)->count(),
             'active_competitions' => (clone $competitionsQuery)->whereIn('status', ['open', 'upcoming', 'ongoing'])->count(),
             'total_teams' => (clone $teamsQuery)->count(),
+            'total_feedback' => \App\Models\SystemFeedback::count(),
+            'pending_feedback' => \App\Models\SystemFeedback::where('status', 'pending')->count(),
         ];
 
         $pendingVerifications = (clone $studentsQuery)
@@ -69,10 +78,26 @@ class AdminWebController extends Controller
             ->take(8)
             ->get();
 
+        $recentFeedbacks = \App\Models\SystemFeedback::with(['user:id,name,email,avatar'])
+            ->latest()
+            ->take(6)
+            ->get()
+            ->map(fn ($fb) => [
+                'id' => $fb->id,
+                'name' => $fb->name ?: ($fb->user?->name ?? 'Anonim'),
+                'email' => $fb->email ?: ($fb->user?->email ?? '-'),
+                'category' => $fb->category,
+                'message' => $fb->message,
+                'rating' => $fb->rating,
+                'status' => $fb->status,
+                'created_at' => $fb->created_at?->diffForHumans() ?? 'Baru saja',
+            ]);
+
         return Inertia::render('admin/index', [
             'stats' => $stats,
             'pendingVerifications' => $pendingVerifications,
             'recentProjects' => $recentProjects,
+            'recentFeedbacks' => $recentFeedbacks,
         ]);
     }
 
@@ -80,12 +105,19 @@ class AdminWebController extends Controller
     {
         $user = $request->user();
         $membership = $user->activeMembership();
+        $isAdmin = $user->isPlatformAdmin()
+            || $user->isCampusAdmin()
+            || ($membership && (
+                $membership->role === CampusRole::CampusAdmin
+                || $membership->role?->value === 'campus_admin'
+                || (string) $membership->role === 'campus_admin'
+            ));
 
-        if (!$user->isPlatformAdmin() && (!$membership || $membership->role !== CampusRole::CampusAdmin)) {
+        if (!$isAdmin) {
             abort(403);
         }
 
-        $campusId = $user->isPlatformAdmin() ? null : $membership->campus_id;
+        $campusId = $user->isPlatformAdmin() ? null : $membership?->campus_id;
 
         $query = CampusMembership::with(['user.profile', 'campus:id,name'])
             ->where('role', CampusRole::Student);

@@ -29,6 +29,7 @@ import {
     LayoutDashboard,
     LogOut,
     Mail,
+    MessageSquare,
     PlusCircle,
     Puzzle,
     Settings,
@@ -326,6 +327,42 @@ export default function AppLayout({
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
 
+                        {isAdmin && (
+                            <>
+                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                <DropdownMenuGroup className="space-y-0.5">
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/admin"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition cursor-pointer"
+                                        >
+                                            <ShieldCheck className="size-4 text-rose-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>Panel Administrator</span>
+                                                <span className="text-[9px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded">
+                                                    Admin
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/admin/feedback"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                        >
+                                            <MessageSquare className="size-4 text-amber-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>Saran & Masukan</span>
+                                                <span className="text-[9px] font-bold text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded">
+                                                    Masukan
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </>
+                        )}
+
                         <DropdownMenuSeparator className="my-1 bg-slate-100" />
 
                         <DropdownMenuItem asChild>
@@ -564,6 +601,19 @@ export default function AppLayout({
                                 >
                                     Leaderboard
                                 </Link>
+                                {isAdmin && (
+                                    <Link
+                                        href="/admin"
+                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
+                                            url.startsWith('/admin')
+                                                ? 'bg-rose-600 text-white shadow-sm'
+                                                : 'text-rose-700 hover:text-rose-900 bg-rose-50 border border-rose-200/80 hover:bg-rose-100'
+                                        }`}
+                                    >
+                                        <ShieldCheck className="size-3.5" />
+                                        <span>Panel Admin</span>
+                                    </Link>
+                                )}
                             </nav>
                         )}
                     </div>
@@ -609,7 +659,7 @@ export default function AppLayout({
                 aria-label="Mobile Navigation"
                 className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
             >
-                <div className="grid grid-cols-5 h-16 items-center px-1 max-w-lg mx-auto">
+                <div className={`grid ${isAdmin ? 'grid-cols-6' : 'grid-cols-5'} h-16 items-center px-1 max-w-lg mx-auto`}>
                     {isAdmin ? (
                         <>
                             {/* 1. Dashboard Admin */}
@@ -705,6 +755,25 @@ export default function AppLayout({
                                     }`}
                                 />
                                 <span className="text-[10px] leading-none tracking-tight">Poin</span>
+                            </Link>
+
+                            {/* 6. Saran & Masukan */}
+                            <Link
+                                href="/admin/feedback"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/feedback')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <MessageSquare
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/feedback')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Masukan</span>
                             </Link>
                         </>
                     ) : isCompetitionHub ? (
