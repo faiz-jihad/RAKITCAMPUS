@@ -134,11 +134,6 @@ export function AppSidebar() {
                   icon: Kanban,
               },
               {
-                  title: 'Cari Teman Tim',
-                  url: '/matching',
-                  icon: Sparkles,
-              },
-              {
                   title: 'Portofolio Saya',
                   url: '/portfolio',
                   icon: Award,

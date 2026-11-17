@@ -744,9 +744,16 @@ export default function CompetitionShow({
                                         </div>
                                     </div>
 
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-xl border border-indigo-100">
-                                        Matchmaking
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <Link
+                                            href="/competitions?tab=teams&view=radar"
+                                            className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 px-2.5 py-1 rounded-xl border border-amber-200 transition"
+                                            title="Buka Radar Rekrutmen talenta kampus untuk tim lomba"
+                                        >
+                                            <Sparkles className="size-3 text-amber-500" />
+                                            <span>Radar Rekrutmen</span>
+                                        </Link>
+                                    </div>
                                 </div>
 
                                 {openTeams.length === 0 ? (

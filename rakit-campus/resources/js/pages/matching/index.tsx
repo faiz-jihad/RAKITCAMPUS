@@ -22,6 +22,7 @@ import {
     Sparkles,
     Star,
     Target,
+    Trophy,
     UserCheck,
     Users,
     Zap,
@@ -97,8 +98,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Beranda', href: '/' },
-    { title: 'Cari Teman Tim', href: '/matching' },
+    { title: 'Competition Hub', href: '/competitions' },
+    { title: 'Radar Rekrutmen', href: '/matching' },
 ];
 
 export default function MatchingIndex({
@@ -137,9 +138,9 @@ export default function MatchingIndex({
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <SeoHead
-                title="Smart Matchmaking Tim Mahasiswa & Rekomendasi Partner"
-                description="Temukan partner proyek dan rekan lomba yang tepat dengan algoritma AI Smart Matchmaking berdasarkan keahlian komplementer dan minat akademik."
-                keywords="cari teman tim, matchmaking mahasiswa, partner hackathon, kolaborasi tim, rakit campus"
+                title="Radar Rekrutmen & Smart Matchmaking Tim Kompetisi"
+                description="Temukan rekan tim lomba komplementer yang tepat dengan algoritma Radar Rekrutmen MinSatu berdasarkan keahlian Hacker, Hipster, dan Hustler."
+                keywords="radar rekrutmen, cari teman lomba, matchmaking mahasiswa, partner hackathon, pkm, kolaborasi tim, rakit campus"
                 canonicalUrl="https://rakitcampus.my.id/matching"
             />
 
@@ -149,17 +150,27 @@ export default function MatchingIndex({
 
                     {/* Minimal Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-                        <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                            Cari Rekan Tim Proyek
-                        </h1>
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                                    Radar Rekrutmen MinSatu
+                                </span>
+                            </div>
+                            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                                Radar Rekrutmen Tim Kompetisi
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Temukan rekan komplementer untuk melengkapi formasi tim lomba Anda (Hacker, Hipster, Hustler).
+                            </p>
+                        </div>
 
                         <div className="flex items-center gap-2.5 shrink-0">
                             <Link
-                                href="/projects"
+                                href="/competitions"
                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200/80 text-xs font-semibold shadow-2xs transition"
                             >
-                                <Compass className="size-4 text-blue-600" />
-                                <span>Semua Proyek</span>
+                                <Trophy className="size-4 text-amber-600" />
+                                <span>Eksplor Kompetisi</span>
                             </Link>
                         </div>
                     </div>

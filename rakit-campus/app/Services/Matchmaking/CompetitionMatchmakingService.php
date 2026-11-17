@@ -99,6 +99,66 @@ class CompetitionMatchmakingService
     }
 
     /**
+     * Get ranked competition talent candidates for Radar Rekrutmen in Cari Tim.
+     */
+    public function getGeneralTalentRadar(?User $viewer = null, int $limit = 24): Collection
+    {
+        $viewerCampusId = $viewer?->campusId();
+
+        $query = User::query()
+            ->whereHas('memberships', function ($q) use ($viewerCampusId) {
+                $q->where('role', \App\Enums\CampusRole::Student->value)
+                  ->where('status', \App\Enums\MembershipStatus::Active->value);
+                if ($viewerCampusId) {
+                    $q->where('campus_id', $viewerCampusId);
+                }
+            })
+            ->with(['profile.skills', 'profile.campus'])
+            ->withCount([
+                'achievements',
+                'teamMemberships as completed_projects_count' => fn ($q) => $q->where('status', 'completed'),
+            ]);
+
+        if ($viewer) {
+            $query->where('id', '!=', $viewer->id);
+        }
+
+        $students = $query->take(50)->get();
+
+        return $students->map(function (User $student) {
+            $profile = $student->profile ?? $student->studentProfile;
+            $skills = $profile?->skills?->pluck('name')->toArray() ?? [];
+            $interests = $profile?->interests ?? [];
+            $preferredRoles = $profile?->preferred_roles ?? [];
+
+            // Classify primary talent persona: Hacker, Hipster, or Hustler
+            $persona = 'Hacker';
+            $allTokens = strtolower(implode(' ', array_merge($skills, $interests, $preferredRoles, [$profile?->headline ?? ''])));
+
+            if (preg_match('/(design|ui|ux|figma|creative|visual|animat|illustrat)/i', $allTokens)) {
+                $persona = 'Hipster';
+            } elseif (preg_match('/(business|pitch|market|manag|lead|finance|strateg|public speaking)/i', $allTokens)) {
+                $persona = 'Hustler';
+            } else {
+                $persona = 'Hacker';
+            }
+
+            $skillsCount = count($skills);
+            $finalScore = min(98, 70 + ($skillsCount * 4) + min(16, ($student->achievements_count ?? 0) * 4));
+
+            return [
+                'user' => $student,
+                'persona' => $persona,
+                'final_score' => $finalScore,
+                'matched_skills' => array_slice($skills, 0, 5),
+                'missing_skills' => [],
+                'eligible' => true,
+                'explanation' => "Profil {$persona} dengan {$skillsCount} keahlian terverifikasi untuk tim kompetisi.",
+            ];
+        })->sortByDesc('final_score')->values()->take($limit);
+    }
+
+    /**
      * Evaluate a single student for a competition team.
      */
     public function evaluateStudent(
