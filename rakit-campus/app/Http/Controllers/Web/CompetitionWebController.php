@@ -17,6 +17,7 @@ use App\Enums\TeamPermission;
 use App\Enums\TeamStatus;
 use App\Enums\TeamType;
 use App\Enums\VerificationStatus;
+use App\Contracts\Workspace\TaskServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\Achievement;
 use App\Models\Application;
@@ -71,7 +72,8 @@ class CompetitionWebController extends Controller
         protected CompetitionRoundService $roundService,
         protected CompetitionDeliverableService $deliverableService,
         protected UnifiedMembershipService $unifiedMembershipService,
-        protected EligibilityService $eligibilityService
+        protected EligibilityService $eligibilityService,
+        protected TaskServiceInterface $taskService
     ) {}
 
     public function index(Request $request): Response
@@ -2059,21 +2061,16 @@ class CompetitionWebController extends Controller
             'assignee_id' => ['nullable', 'exists:users,id'],
         ]);
 
-        DB::transaction(function () use ($participation, $user, $validated) {
-            Task::create([
-                'campus_id' => $participation->competition?->campus_id ?? $user->campusId(),
-                'team_id' => $participation->team->id,
-                'created_by' => $user->id,
-                'assignee_id' => $validated['assignee_id'] ?? null,
-                'title' => $validated['title'],
-                'description' => $validated['description'] ?? null,
-                'status' => TaskStatus::Todo,
-                'priority' => $validated['priority'],
-                'due_on' => $validated['due_on'] ?? null,
-            ]);
-        });
+        $task = $this->taskService->createTask($participation->team, $user, [
+            'title' => $validated['title'],
+            'description' => $validated['description'] ?? null,
+            'priority' => $validated['priority'],
+            'due_on' => $validated['due_on'] ?? null,
+            'assignee_id' => $validated['assignee_id'] ?? null,
+            'status' => TaskStatus::Todo->value,
+        ]);
 
-        return back()->with('success', "Tugas '{$validated['title']}' berhasil ditambahkan ke Kanban tim.");
+        return back()->with('success', "Tugas '{$task->title}' berhasil ditambahkan ke Kanban tim.");
     }
 
     public function updateTask(Request $request, int|string $participationId, int $taskId): RedirectResponse
@@ -2098,10 +2095,7 @@ class CompetitionWebController extends Controller
             'status' => ['required', Rule::enum(TaskStatus::class)],
         ]);
 
-        $task->update([
-            'status' => $validated['status'],
-            'completed_at' => $validated['status'] === TaskStatus::Completed->value ? now() : null,
-        ]);
+        $this->taskService->updateTask($task, ['status' => $validated['status']], $user);
 
         return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
@@ -2116,7 +2110,7 @@ class CompetitionWebController extends Controller
         }
 
         $task = Task::where('team_id', $participation->team->id)->findOrFail($taskId);
-        $task->delete();
+        $this->taskService->deleteTask($task, $user);
 
         return back()->with('success', 'Tugas berhasil dihapus dari papan.');
     }

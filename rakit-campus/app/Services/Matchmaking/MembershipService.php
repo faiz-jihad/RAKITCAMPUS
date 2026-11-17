@@ -156,13 +156,16 @@ class MembershipService
             $project = $team->project;
             $applicant = $application->user;
 
+            // Pessimistic lock on Team to prevent concurrent capacity race conditions
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+
             if ($application->status !== ApplicationStatus::Pending) {
                 throw ValidationException::withMessages([
                     'application' => ['Lamaran ini sudah diproses.'],
                 ]);
             }
 
-            $isLeader = $project->isLeader($decidedBy) || $team->isLeader($decidedBy);
+            $isLeader = $project->isLeader($decidedBy) || $lockedTeam->isLeader($decidedBy);
             if (! $isLeader && ! $decidedBy->isPlatformAdmin()) {
                 throw ValidationException::withMessages([
                     'authorization' => ['Hanya ketua kelompok yang dapat memproses lamaran.'],
@@ -197,9 +200,9 @@ class MembershipService
                 }
             }
 
-            // 2. Check team capacity, including the lecturer's class limit
-            $maxCapacity = $this->effectiveTeamCapacity($project, $team);
-            $currentCount = $team->members()->where('status', 'active')->lockForUpdate()->count();
+            // 2. Check team capacity under lock, including the lecturer's class limit
+            $maxCapacity = $this->effectiveTeamCapacity($project, $lockedTeam);
+            $currentCount = $lockedTeam->members()->where('status', 'active')->lockForUpdate()->count();
 
             if ($currentCount >= $maxCapacity) {
                 throw ValidationException::withMessages([

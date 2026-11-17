@@ -2,21 +2,20 @@
 
 namespace App\Http\Controllers\Web;
 
-use App\Enums\CampusRole;
-use App\Enums\MembershipStatus;
+use App\Contracts\Feedback\FeedbackServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\SystemFeedback;
-use App\Models\User;
-use App\Services\Notifications\NotificationPreferenceService;
-use App\Services\Notifications\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class FeedbackWebController extends Controller
 {
+    public function __construct(
+        protected FeedbackServiceInterface $feedbackService
+    ) {}
+
     /**
      * Show the dedicated feedback, suggestion & bug report center.
      */
@@ -103,92 +102,21 @@ class FeedbackWebController extends Controller
             'email.email' => 'Format email tidak valid.',
         ]);
 
-        $user = $request->user();
-
-        $name = $validated['name'] ?? null;
-        $email = $validated['email'] ?? null;
-
-        if ($user) {
-            $name = $name ?: $user->name;
-            $email = $email ?: $user->email;
-        }
-
-        $feedbackType = $validated['feedback_type'] ?? ($validated['category'] === 'kendala_bug' ? 'bug_report' : 'suggestion');
-        $urgency = $validated['urgency'] ?? ($validated['category'] === 'kendala_bug' ? 'high' : 'medium');
-
-        $feedback = SystemFeedback::create([
-            'user_id' => $user?->id,
-            'name' => $name,
-            'email' => $email,
-            'category' => $validated['category'],
-            'feedback_type' => $feedbackType,
-            'urgency' => $urgency,
-            'page_url' => $validated['page_url'] ?? null,
-            'message' => $validated['message'],
-            'rating' => $feedbackType === 'bug_report' ? null : ($validated['rating'] ?? null),
-            'status' => 'pending',
-            'ip_address' => $request->ip(),
-            'user_agent' => substr((string) $request->userAgent(), 0, 500),
-        ]);
+        $feedback = $this->feedbackService->submitFeedback(
+            data: $validated,
+            user: $request->user(),
+            ip: $request->ip(),
+            userAgent: $request->userAgent()
+        );
 
         $ticketCode = sprintf('#TKT-%05d', $feedback->id);
 
-        // Notify admins about new feedback/bug report
-        try {
-            $admins = User::where('status', 'active')
-                ->where(function ($q) {
-                    $q->where('is_platform_admin', true)
-                        ->orWhereHas('memberships', fn ($m) => $m->where('role', CampusRole::CampusAdmin->value)->where('status', MembershipStatus::Active->value));
-                })
-                ->get();
-
-            if ($admins->isNotEmpty()) {
-                $categoryLabels = [
-                    'saran_fitur' => 'Saran Fitur Baru',
-                    'antarmuka_ui' => 'Desain & Tampilan',
-                    'kendala_bug' => 'Laporan Kendala / Bug',
-                    'performa' => 'Kecepatan & Performa',
-                    'lainnya' => 'Masukan Lainnya',
-                ];
-                $catName = $categoryLabels[$validated['category']] ?? 'Saran & Masukan';
-                $sender = $name ?: ($email ?: 'Pengguna Anonim');
-                $ratingText = !empty($validated['rating']) && $feedbackType !== 'bug_report' ? " [Rating: {$validated['rating']}/5]" : '';
-                $typePrefix = $feedbackType === 'bug_report' ? '[BUG REPORT]' : '[SARAN]';
-
-                app(NotificationService::class)->notify(
-                    recipients: $admins,
-                    notificationType: 'system_feedback_received',
-                    category: NotificationPreferenceService::CATEGORY_ACCOUNT_SECURITY,
-                    title: "{$typePrefix} {$catName} ({$ticketCode}){$ratingText}",
-                    message: "{$sender}: \"" . Str::limit($validated['message'], 100) . "\"",
-                    options: [
-                        'priority' => $feedbackType === 'bug_report' ? 'high' : 'medium',
-                        'action_url' => url('/admin/feedback'),
-                        'action_text' => 'Buka Panel Masukan',
-                        'entity_type' => 'system_feedback',
-                        'entity_id' => $feedback->id,
-                    ]
-                );
-            }
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Failed to send admin feedback notification: ' . $e->getMessage());
-        }
-
-        $successMsg = $feedbackType === 'bug_report'
-            ? "Laporan kendala Anda telah diterima dengan nomor tiket {$ticketCode}. Tim teknis segera meninjaunya."
-            : "Terima kasih atas saran Anda ({$ticketCode})! Masukan Anda sangat berharga untuk pengembangan RAKIT Campus.";
+        $successMessage = $feedback->feedback_type === 'bug_report'
+            ? "Laporan kendala Anda telah berhasil dikirim dengan Nomor Tiket {$ticketCode}. Tim pengembang akan segera meninjaunya."
+            : "Terima kasih! Saran & masukan Anda berhasil kami terima dengan Nomor Tiket {$ticketCode}.";
 
         return back()
-            ->with('feedback_ticket', [
-                'id' => $feedback->id,
-                'ticket_code' => $ticketCode,
-                'feedback_type' => $feedbackType,
-                'category' => $feedback->category,
-                'urgency' => $urgency,
-                'message' => $feedback->message,
-                'created_at' => now()->translatedFormat('d M Y, H:i'),
-            ])
-            ->with('feedback_success', $successMsg)
-            ->with('success', $successMsg);
+            ->with('success', $successMessage)
+            ->with('feedback_ticket', $ticketCode);
     }
 }

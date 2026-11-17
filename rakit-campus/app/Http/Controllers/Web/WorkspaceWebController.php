@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Contracts\Workspace\TaskServiceInterface;
 use App\Enums\TaskPriority;
 use App\Enums\TaskStatus;
 use App\Http\Controllers\Controller;
@@ -12,12 +13,16 @@ use App\Models\Task;
 use App\Models\Team;
 use App\Services\ProjectOrchestratorAgent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WorkspaceWebController extends Controller
 {
+    public function __construct(
+        protected TaskServiceInterface $taskService
+    ) {}
     public function index(Request $request): Response
     {
         $user = $request->user();
@@ -274,31 +279,10 @@ class WorkspaceWebController extends Controller
             'assignee_id' => ['nullable', 'exists:users,id'],
             'milestone_id' => ['nullable', 'exists:milestones,id'],
             'status' => ['required', Rule::enum(TaskStatus::class)],
+            'due_on' => ['nullable', 'date'],
         ]);
 
-        $user = $request->user();
-        $campusId = $team->campus_id ?? $team->project?->campus_id ?? $user->campusId() ?? 1;
-        $maxPos = Task::where('team_id', $team->id)->where('status', $validated['status'])->max('position') ?? 0;
-
-        $task = Task::create([
-            'campus_id' => $campusId,
-            'team_id' => $team->id,
-            'created_by' => $user->id,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'priority' => $validated['priority'],
-            'assignee_id' => $validated['assignee_id'] ?? null,
-            'milestone_id' => $validated['milestone_id'] ?? null,
-            'status' => $validated['status'],
-            'position' => $maxPos + 1,
-            'completed_at' => $validated['status'] === TaskStatus::Completed->value ? now() : null,
-        ]);
-
-        // Recalculate project progress
-        $total = Task::where('team_id', $team->id)->count();
-        $done = Task::where('team_id', $team->id)->where('status', TaskStatus::Completed->value)->count();
-        $percent = $total > 0 ? (int) round(($done / $total) * 100) : 0;
-        $team->project?->update(['progress' => $percent]);
+        $task = $this->taskService->createTask($team, $request->user(), $validated);
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -315,7 +299,6 @@ class WorkspaceWebController extends Controller
      */
     public function updateTask(Request $request, int $teamId, int $taskId)
     {
-        $user = $request->user();
         $team = Team::findOrFail($teamId);
         $task = Task::where('team_id', $team->id)->findOrFail($taskId);
 
@@ -329,21 +312,7 @@ class WorkspaceWebController extends Controller
             'due_on' => ['nullable', 'date'],
         ]);
 
-        if (isset($validated['status'])) {
-            if ($validated['status'] === 'completed' && $task->status !== 'completed') {
-                $validated['completed_at'] = now();
-            } elseif ($validated['status'] !== 'completed') {
-                $validated['completed_at'] = null;
-            }
-        }
-
-        $task->update($validated);
-
-        // Recalculate project progress
-        $total = Task::where('team_id', $team->id)->count();
-        $done = Task::where('team_id', $team->id)->where('status', TaskStatus::Completed->value)->count();
-        $percent = $total > 0 ? (int) round(($done / $total) * 100) : 0;
-        $team->project?->update(['progress' => $percent]);
+        $task = $this->taskService->updateTask($task, $validated, $request->user());
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -362,13 +331,8 @@ class WorkspaceWebController extends Controller
     {
         $team = Team::findOrFail($teamId);
         $task = Task::where('team_id', $team->id)->findOrFail($taskId);
-        $task->delete();
 
-        // Recalculate project progress
-        $total = Task::where('team_id', $team->id)->count();
-        $done = Task::where('team_id', $team->id)->where('status', TaskStatus::Completed->value)->count();
-        $percent = $total > 0 ? (int) round(($done / $total) * 100) : 0;
-        $team->project?->update(['progress' => $percent]);
+        $this->taskService->deleteTask($task, $request->user());
 
         if ($request->wantsJson()) {
             return response()->json(['message' => 'Tugas berhasil dihapus.']);
@@ -395,39 +359,45 @@ class WorkspaceWebController extends Controller
             'lecturer_notes' => ['required', 'string'],
         ]);
 
-        $project->update([
-            'lecturer_evaluation' => $validated['lecturer_evaluation'],
-            'lecturer_notes' => $validated['lecturer_notes'],
-        ]);
+        $updatedProject = DB::transaction(function () use ($user, $team, $project, $validated) {
+            $lockedProject = \App\Models\Project::where('id', $project->id)->lockForUpdate()->firstOrFail();
 
-        // If part of an academic class, also create guidance history record
-        if ($project->academic_class_id) {
-            AcademicClassGuidance::create([
-                'academic_class_id' => $project->academic_class_id,
-                'project_id' => $project->id,
-                'lecturer_id' => $user->id,
-                'title' => 'Evaluasi & Nilai Tim Proyek: ' . $team->name,
-                'content' => "Status/Nilai: {$validated['lecturer_evaluation']}\n\nCatatan Arahan & Perbaikan Dosen:\n{$validated['lecturer_notes']}",
-                'type' => 'evaluation',
+            $lockedProject->update([
+                'lecturer_evaluation' => $validated['lecturer_evaluation'],
+                'lecturer_notes' => $validated['lecturer_notes'],
             ]);
-        }
 
-        ActivityLog::log(
-            $team->campus_id,
-            $team->id,
-            $user->id,
-            'lecturer_evaluation_published',
-            $project,
-            [
-                'evaluation' => $validated['lecturer_evaluation'],
-                'notes' => $validated['lecturer_notes'],
-            ]
-        );
+            // If part of an academic class, also create guidance history record
+            if ($lockedProject->academic_class_id) {
+                AcademicClassGuidance::create([
+                    'academic_class_id' => $lockedProject->academic_class_id,
+                    'project_id' => $lockedProject->id,
+                    'lecturer_id' => $user->id,
+                    'title' => 'Evaluasi & Nilai Tim Proyek: ' . $team->name,
+                    'content' => "Status/Nilai: {$validated['lecturer_evaluation']}\n\nCatatan Arahan & Perbaikan Dosen:\n{$validated['lecturer_notes']}",
+                    'type' => 'evaluation',
+                ]);
+            }
+
+            ActivityLog::log(
+                $team->campus_id,
+                $team->id,
+                $user->id,
+                'lecturer_evaluation_published',
+                $lockedProject,
+                [
+                    'evaluation' => $validated['lecturer_evaluation'],
+                    'notes' => $validated['lecturer_notes'],
+                ]
+            );
+
+            return $lockedProject;
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Nilai dan catatan perbaikan berhasil diterbitkan oleh Dosen.',
-                'data' => $project,
+                'data' => $updatedProject,
             ]);
         }
 
@@ -457,27 +427,32 @@ class WorkspaceWebController extends Controller
             'due_on' => ['nullable', 'date'],
         ]);
 
-        $campusId = $team->campus_id ?? $team->project?->campus_id ?? $user->campusId() ?? 1;
+        $milestone = DB::transaction(function () use ($user, $team, $validated) {
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+            $campusId = $lockedTeam->campus_id ?? $lockedTeam->project?->campus_id ?? $user->campusId() ?? 1;
 
-        $milestone = Milestone::create([
-            'campus_id' => $campusId,
-            'team_id' => $team->id,
-            'created_by' => $user->id,
-            'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
-            'status' => $validated['status'],
-            'starts_on' => $validated['starts_on'] ?? null,
-            'due_on' => $validated['due_on'] ?? null,
-        ]);
+            $created = Milestone::create([
+                'campus_id' => $campusId,
+                'team_id' => $lockedTeam->id,
+                'created_by' => $user->id,
+                'title' => $validated['title'],
+                'description' => $validated['description'] ?? null,
+                'status' => $validated['status'],
+                'starts_on' => $validated['starts_on'] ?? null,
+                'due_on' => $validated['due_on'] ?? null,
+            ]);
 
-        ActivityLog::log(
-            $campusId,
-            $team->id,
-            $user->id,
-            'milestone_created',
-            $milestone,
-            ['title' => $milestone->title]
-        );
+            ActivityLog::log(
+                $campusId,
+                $lockedTeam->id,
+                $user->id,
+                'milestone_created',
+                $created,
+                ['title' => $created->title]
+            );
+
+            return $created;
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
@@ -523,40 +498,49 @@ class WorkspaceWebController extends Controller
             'due_on' => ['nullable', 'date'],
         ]);
 
-        $milestone->update($validated);
+        $updatedData = DB::transaction(function () use ($user, $team, $milestone, $validated) {
+            $lockedMilestone = Milestone::where('id', $milestone->id)->lockForUpdate()->firstOrFail();
+            $lockedMilestone->update($validated);
 
-        // Recalculate milestone progress
-        $tasksCount = $milestone->tasks()->count();
-        $completedCount = $milestone->tasks()->where('status', TaskStatus::Completed->value)->count();
-        $progress = $tasksCount > 0 ? (int) round(($completedCount / $tasksCount) * 100) : 0;
+            $tasksCount = $lockedMilestone->tasks()->count();
+            $completedCount = $lockedMilestone->tasks()->where('status', TaskStatus::Completed->value)->count();
+            $progress = $tasksCount > 0 ? (int) round(($completedCount / $tasksCount) * 100) : 0;
 
-        ActivityLog::log(
-            $team->campus_id ?? 1,
-            $team->id,
-            $user->id,
-            'milestone_updated',
-            $milestone,
-            ['title' => $milestone->title, 'status' => $milestone->status]
-        );
+            ActivityLog::log(
+                $team->campus_id ?? 1,
+                $team->id,
+                $user->id,
+                'milestone_updated',
+                $lockedMilestone,
+                ['title' => $lockedMilestone->title, 'status' => $lockedMilestone->status]
+            );
+
+            return [
+                'milestone' => $lockedMilestone,
+                'tasks_count' => $tasksCount,
+                'completed_tasks_count' => $completedCount,
+                'progress' => $progress,
+            ];
+        });
 
         if ($request->wantsJson()) {
             return response()->json([
                 'message' => 'Sprint berhasil diperbarui.',
                 'data' => [
-                    'id' => $milestone->id,
-                    'title' => $milestone->title,
-                    'description' => $milestone->description,
-                    'status' => is_object($milestone->status) ? $milestone->status->value : $milestone->status,
-                    'starts_on' => $milestone->starts_on?->format('d M Y'),
-                    'due_on' => $milestone->due_on?->format('d M Y'),
-                    'tasks_count' => $tasksCount,
-                    'completed_tasks_count' => $completedCount,
-                    'progress' => $progress,
+                    'id' => $updatedData['milestone']->id,
+                    'title' => $updatedData['milestone']->title,
+                    'description' => $updatedData['milestone']->description,
+                    'status' => is_object($updatedData['milestone']->status) ? $updatedData['milestone']->status->value : $updatedData['milestone']->status,
+                    'starts_on' => $updatedData['milestone']->starts_on?->format('d M Y'),
+                    'due_on' => $updatedData['milestone']->due_on?->format('d M Y'),
+                    'tasks_count' => $updatedData['tasks_count'],
+                    'completed_tasks_count' => $updatedData['completed_tasks_count'],
+                    'progress' => $updatedData['progress'],
                 ],
             ]);
         }
 
-        return back()->with('success', "Sprint '{$milestone->title}' berhasil diperbarui.");
+        return back()->with('success', "Sprint '{$updatedData['milestone']->title}' berhasil diperbarui.");
     }
 
     /**
@@ -578,19 +562,23 @@ class WorkspaceWebController extends Controller
 
         $title = $milestone->title;
 
-        // Unlink associated tasks so tasks are preserved on the board without a milestone
-        Task::where('milestone_id', $milestone->id)->update(['milestone_id' => null]);
+        DB::transaction(function () use ($user, $team, $milestone, $title) {
+            $lockedMilestone = Milestone::where('id', $milestone->id)->lockForUpdate()->firstOrFail();
 
-        $milestone->delete();
+            // Unlink associated tasks so tasks are preserved on the board without a milestone
+            Task::where('milestone_id', $lockedMilestone->id)->update(['milestone_id' => null]);
 
-        ActivityLog::log(
-            $team->campus_id ?? 1,
-            $team->id,
-            $user->id,
-            'milestone_deleted',
-            null,
-            ['title' => $title]
-        );
+            $lockedMilestone->delete();
+
+            ActivityLog::log(
+                $team->campus_id ?? 1,
+                $team->id,
+                $user->id,
+                'milestone_deleted',
+                null,
+                ['title' => $title]
+            );
+        });
 
         if ($request->wantsJson()) {
             return response()->json([

@@ -180,10 +180,20 @@ class CompetitionTeamFormationService
         }
 
         return DB::transaction(function () use ($team, $participation, $inviter, $invitee, $roleName, $message) {
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+            $lockedParticipation = CompetitionParticipation::where('id', $participation->id)->lockForUpdate()->firstOrFail();
+
+            if ($lockedParticipation->is_formation_locked) {
+                throw ValidationException::withMessages([
+                    'team' => ['Susunan tim kompetisi ini telah dikunci (formation locked).'],
+                ]);
+            }
+
             // Check existing pending invitation
-            $existing = Invitation::where('team_id', $team->id)
+            $existing = Invitation::where('team_id', $lockedTeam->id)
                 ->where('invitee_id', $invitee->id)
                 ->where('status', InvitationStatus::Pending->value)
+                ->lockForUpdate()
                 ->first();
 
             if ($existing) {
@@ -193,12 +203,12 @@ class CompetitionTeamFormationService
             }
 
             $invitation = Invitation::create([
-                'campus_id' => $team->campus_id,
-                'team_id' => $team->id,
+                'campus_id' => $lockedTeam->campus_id,
+                'team_id' => $lockedTeam->id,
                 'inviter_id' => $inviter->id,
                 'invitee_id' => $invitee->id,
                 'role_name' => $roleName ?: 'Anggota Tim Kompetisi',
-                'message' => $message ?: "Mari berkolaborasi bersama dalam tim kompetisi {$participation->competition->name}.",
+                'message' => $message ?: "Mari berkolaborasi bersama dalam tim kompetisi {$lockedParticipation->competition?->name}.",
                 'status' => InvitationStatus::Pending,
                 'expires_at' => now()->addDays(5),
             ]);
@@ -207,7 +217,7 @@ class CompetitionTeamFormationService
                 'competition_invitation_sent',
                 [
                     'invitation_id' => $invitation->id,
-                    'team_id' => $team->id,
+                    'team_id' => $lockedTeam->id,
                     'invitee_id' => $invitee->id,
                 ],
                 null,
@@ -215,11 +225,11 @@ class CompetitionTeamFormationService
                 $inviter->id
             );
 
-            $competition = $participation->competition ?: \App\Models\Competition::withTrashed()->find($participation->competition_id);
+            $competition = $lockedParticipation->competition ?: \App\Models\Competition::withTrashed()->find($lockedParticipation->competition_id);
             if ($competition) {
                 app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitation(
                     $invitee,
-                    $team,
+                    $lockedTeam,
                     $competition,
                     $roleName,
                     $inviter
@@ -250,7 +260,14 @@ class CompetitionTeamFormationService
             }
 
             $team = $inv->team;
-            $participation = $team?->participations()->latest()->first();
+            if (!$team) {
+                throw ValidationException::withMessages(['team' => ['Data tim tidak ditemukan.']]);
+            }
+
+            // Lock team row with pessimistic lock to prevent overcapacity under high concurrency
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+
+            $participation = $lockedTeam->participations()->latest()->lockForUpdate()->first();
 
             if (!$participation) {
                 throw ValidationException::withMessages(['team' => ['Data partisipasi kompetisi tim ini tidak ditemukan.']]);
@@ -261,7 +278,7 @@ class CompetitionTeamFormationService
             }
 
             // Re-validate flexible membership under lock
-            $check = $this->eligibilityService->checkCompetitionEligibility($invitee, $team, $participation->competition_id);
+            $check = $this->eligibilityService->checkCompetitionEligibility($invitee, $lockedTeam, $participation->competition_id);
             if (!$check['eligible']) {
                 $inv->update([
                     'status' => InvitationStatus::Declined,
@@ -275,7 +292,7 @@ class CompetitionTeamFormationService
             // Create active member
             $member = TeamMember::updateOrCreate(
                 [
-                    'team_id' => $team->id,
+                    'team_id' => $lockedTeam->id,
                     'user_id' => $invitee->id,
                 ],
                 [
@@ -308,7 +325,7 @@ class CompetitionTeamFormationService
                 'competition_invitation_accepted',
                 [
                     'invitation_id' => $inv->id,
-                    'team_id' => $team->id,
+                    'team_id' => $lockedTeam->id,
                     'user_id' => $invitee->id,
                 ],
                 null,
@@ -316,7 +333,7 @@ class CompetitionTeamFormationService
                 $invitee->id
             );
 
-            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitationResponse($team, $invitee, true);
+            app(\App\Services\Notifications\NotificationService::class)->sendCompetitionInvitationResponse($lockedTeam, $invitee, true);
 
             return $member;
         });
@@ -425,8 +442,11 @@ class CompetitionTeamFormationService
                 throw ValidationException::withMessages(['team' => ['Tim tujuan alokasi belum ditentukan oleh dosen.']]);
             }
 
+            // Lock team row with pessimistic lock
+            $lockedTeam = Team::where('id', $alloc->team->id)->lockForUpdate()->firstOrFail();
+
             // Recheck eligibility
-            $check = $this->eligibilityService->checkCompetitionEligibility($student, $alloc->team, $alloc->competition_id);
+            $check = $this->eligibilityService->checkCompetitionEligibility($student, $lockedTeam, $alloc->competition_id);
             if (!$check['eligible']) {
                 $alloc->update(['status' => 'rejected', 'notes' => $check['reason']]);
                 throw ValidationException::withMessages(['student' => [$check['reason']]]);
@@ -434,7 +454,7 @@ class CompetitionTeamFormationService
 
             $member = TeamMember::updateOrCreate(
                 [
-                    'team_id' => $alloc->team->id,
+                    'team_id' => $lockedTeam->id,
                     'user_id' => $student->id,
                 ],
                 [
@@ -455,7 +475,7 @@ class CompetitionTeamFormationService
     }
 
     /**
-     * Lecturer approves proposed team formation.
+     * Lecturer approves proposed team formation atomically.
      */
     public function approveFormation(CompetitionParticipation $participation, User $lecturer, ?string $notes = null): void
     {
@@ -463,35 +483,41 @@ class CompetitionTeamFormationService
             throw ValidationException::withMessages(['auth' => ['Hanya dosen atau pembimbing yang dapat menyetujui formasi tim.']]);
         }
 
-        $participation->update([
-            'is_formation_locked' => true,
-            'formation_status' => TeamStatus::Confirmed->value,
-            'formation_approved_at' => now(),
-            'formation_approved_by' => $lecturer->id,
-            'stage' => $participation->stage === 'recruiting' ? 'team_formation' : $participation->stage,
-        ]);
+        DB::transaction(function () use ($participation, $lecturer, $notes) {
+            $lockedParticipation = CompetitionParticipation::where('id', $participation->id)->lockForUpdate()->firstOrFail();
 
-        if ($participation->team) {
-            $participation->team->update(['status' => TeamStatus::Confirmed->value]);
-        }
+            $targetStage = $lockedParticipation->stage === 'recruiting' ? 'team_formation' : $lockedParticipation->stage;
 
-        CompetitionStatusHistory::create([
-            'participation_id' => $participation->id,
-            'from_stage' => 'recruiting',
-            'to_stage' => $participation->stage,
-            'notes' => $notes ?: 'Susunan tim resmi disetujui oleh dosen pembimbing.',
-            'changed_by' => $lecturer->id,
-        ]);
+            $lockedParticipation->update([
+                'is_formation_locked' => true,
+                'formation_status' => TeamStatus::Confirmed->value,
+                'formation_approved_at' => now(),
+                'formation_approved_by' => $lecturer->id,
+                'stage' => $targetStage,
+            ]);
 
-        MatchingAuditLog::log(
-            'competition_formation_approved',
-            [
-                'participation_id' => $participation->id,
-                'lecturer_id' => $lecturer->id,
-            ],
-            null,
-            null,
-            $lecturer->id
-        );
+            if ($lockedParticipation->team_id) {
+                Team::where('id', $lockedParticipation->team_id)->lockForUpdate()->update(['status' => TeamStatus::Confirmed->value]);
+            }
+
+            CompetitionStatusHistory::create([
+                'participation_id' => $lockedParticipation->id,
+                'from_stage' => 'recruiting',
+                'to_stage' => $targetStage,
+                'notes' => $notes ?: 'Susunan tim resmi disetujui oleh dosen pembimbing.',
+                'changed_by' => $lecturer->id,
+            ]);
+
+            MatchingAuditLog::log(
+                'competition_formation_approved',
+                [
+                    'participation_id' => $lockedParticipation->id,
+                    'lecturer_id' => $lecturer->id,
+                ],
+                null,
+                null,
+                $lecturer->id
+            );
+        });
     }
 }

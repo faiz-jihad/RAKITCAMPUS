@@ -541,15 +541,31 @@ class AcademicClassWebController extends Controller
             return back()->withErrors(['student_identifier' => 'Mahasiswa tersebut sudah terdaftar di kelas ini.']);
         }
 
-        AcademicClassStudent::create([
-            'academic_class_id' => $academicClass->id,
-            'user_id' => $studentUser->id,
-            'student_number' => $studentUser->activeMembership()?->student_number ?? ('NIM-' . $studentUser->id),
-            'status' => 'enrolled',
-            'enrolled_at' => now(),
-        ]);
+        DB::transaction(function () use ($academicClass, $studentUser) {
+            $lockedClass = AcademicClass::where('id', $academicClass->id)->lockForUpdate()->firstOrFail();
 
-        app(\App\Services\Notifications\NotificationService::class)->sendClassEnrollment($studentUser, $academicClass);
+            $existing = AcademicClassStudent::where('academic_class_id', $lockedClass->id)
+                ->where('user_id', $studentUser->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($existing) {
+                if ($existing->status !== 'enrolled') {
+                    $existing->update(['status' => 'enrolled', 'enrolled_at' => now()]);
+                }
+                return;
+            }
+
+            AcademicClassStudent::create([
+                'academic_class_id' => $lockedClass->id,
+                'user_id' => $studentUser->id,
+                'student_number' => $studentUser->activeMembership()?->student_number ?? ('NIM-' . $studentUser->id),
+                'status' => 'enrolled',
+                'enrolled_at' => now(),
+            ]);
+
+            app(\App\Services\Notifications\NotificationService::class)->sendClassEnrollment($studentUser, $lockedClass);
+        });
 
         return back()->with('success', 'Mahasiswa ' . $studentUser->name . ' berhasil ditambahkan ke kelas.');
     }
@@ -562,9 +578,13 @@ class AcademicClassWebController extends Controller
         $this->authorize('manage', $academicClass);
 
         $studentUser = User::find($studentId);
-        AcademicClassStudent::where('academic_class_id', $academicClass->id)
-            ->where('user_id', $studentId)
-            ->delete();
+
+        DB::transaction(function () use ($academicClass, $studentId) {
+            AcademicClassStudent::where('academic_class_id', $academicClass->id)
+                ->where('user_id', $studentId)
+                ->lockForUpdate()
+                ->delete();
+        });
 
         if ($studentUser) {
             app(\App\Services\Notifications\NotificationService::class)->sendClassRemoval($studentUser, $academicClass);

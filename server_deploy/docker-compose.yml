@@ -11,6 +11,7 @@ services:
     volumes:
       - ../rakit-campus:/var/www
       - ./uploads.ini:/usr/local/etc/php/conf.d/docker-php-uploads.ini:ro
+      - ./php-fpm-concurrency.conf:/usr/local/etc/php-fpm.d/zz-concurrency.conf:ro
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -47,6 +48,7 @@ services:
     volumes:
       - ../rakit-campus:/var/www
       - ./uploads.ini:/usr/local/etc/php/conf.d/docker-php-uploads.ini:ro
+      - ./php-fpm-concurrency.conf:/usr/local/etc/php-fpm.d/zz-concurrency.conf:ro
     environment:
       - APP_ENV=production
       - APP_DEBUG=false
@@ -112,7 +114,7 @@ services:
     image: mysql:8.0
     container_name: rakit_campus_db
     restart: unless-stopped
-    command: --default-authentication-plugin=mysql_native_password --innodb-buffer-pool-size=128M
+    command: --default-authentication-plugin=mysql_native_password --innodb-buffer-pool-size=256M --max-connections=350 --wait_timeout=60 --interactive_timeout=60
     environment:
       MYSQL_DATABASE: rakit_campus
       MYSQL_USER: rakit

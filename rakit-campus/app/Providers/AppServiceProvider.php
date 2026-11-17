@@ -15,7 +15,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(
+            \App\Contracts\Feedback\FeedbackServiceInterface::class,
+            \App\Services\Feedback\FeedbackService::class
+        );
+
+        $this->app->singleton(
+            \App\Contracts\Workspace\TaskServiceInterface::class,
+            \App\Services\Workspace\TaskService::class
+        );
     }
 
     /**

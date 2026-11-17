@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web\Admin;
 
+use App\Contracts\Feedback\FeedbackServiceInterface;
 use App\Http\Controllers\Controller;
 use App\Models\SystemFeedback;
 use Illuminate\Http\RedirectResponse;
@@ -11,6 +12,10 @@ use Inertia\Response;
 
 class AdminFeedbackWebController extends Controller
 {
+    public function __construct(
+        protected FeedbackServiceInterface $feedbackService
+    ) {}
+
     private function checkAdminAccess(Request $request): void
     {
         $user = $request->user();
@@ -127,7 +132,7 @@ class AdminFeedbackWebController extends Controller
     }
 
     /**
-     * Update status of a feedback.
+     * Update status of a feedback atomically.
      */
     public function updateStatus(Request $request, int $id): RedirectResponse
     {
@@ -138,25 +143,24 @@ class AdminFeedbackWebController extends Controller
             'admin_notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $feedback = SystemFeedback::findOrFail($id);
-        $updateData = ['status' => $validated['status']];
-        if (array_key_exists('admin_notes', $validated)) {
-            $updateData['admin_notes'] = $validated['admin_notes'];
-        }
-        $feedback->update($updateData);
+        $this->feedbackService->updateStatus(
+            feedback: $id,
+            status: $validated['status'],
+            adminNotes: $validated['admin_notes'] ?? null,
+            admin: $request->user()
+        );
 
         return back()->with('success', 'Status masukan berhasil diperbarui.');
     }
 
     /**
-     * Delete a feedback record.
+     * Delete a feedback record atomically.
      */
     public function destroy(Request $request, int $id): RedirectResponse
     {
         $this->checkAdminAccess($request);
 
-        $feedback = SystemFeedback::findOrFail($id);
-        $feedback->delete();
+        $this->feedbackService->deleteFeedback($id, $request->user());
 
         return back()->with('success', 'Masukan berhasil dihapus.');
     }

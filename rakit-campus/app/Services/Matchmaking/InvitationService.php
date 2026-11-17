@@ -178,6 +178,9 @@ class InvitationService
                 ]);
             }
 
+            // Pessimistic lock on Team to prevent concurrent capacity race conditions
+            $lockedTeam = Team::where('id', $team->id)->lockForUpdate()->firstOrFail();
+
             // 1. Strict Class Boundary Check
             if ($project->academic_class_id && ! $this->eligibilityService->isStudentInClass($student, $project->academic_class_id)) {
                 throw ValidationException::withMessages([
@@ -213,8 +216,8 @@ class InvitationService
             }
 
             // 3. Strict Capacity Check with lock
-            $maxCapacity = $this->effectiveTeamCapacity($project, $team);
-            $currentCount = $team->members()->where('status', 'active')->lockForUpdate()->count();
+            $maxCapacity = $this->effectiveTeamCapacity($project, $lockedTeam);
+            $currentCount = $lockedTeam->members()->where('status', 'active')->lockForUpdate()->count();
 
             if ($currentCount >= $maxCapacity) {
                 throw ValidationException::withMessages([

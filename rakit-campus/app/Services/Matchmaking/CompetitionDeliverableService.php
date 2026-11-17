@@ -9,12 +9,13 @@ use App\Models\MatchingAuditLog;
 use App\Models\User;
 use App\Services\Storage\ObjectStorageService;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class CompetitionDeliverableService
 {
     /**
-     * Upload or submit a deliverable version for a competition team.
+     * Upload or submit a deliverable version for a competition team atomically.
      */
     public function submitDeliverable(
         CompetitionParticipation $participation,
@@ -51,48 +52,52 @@ class CompetitionDeliverableService
             $path = $stored['path'];
         }
 
-        // Auto-increment version for this required document key
-        $reqKey = $data['required_document_key'] ?? 'general_deliverable';
-        $latestVersion = CompetitionDocument::where('participation_id', $participation->id)
-            ->where('required_document_key', $reqKey)
-            ->max('version') ?? 0;
+        return DB::transaction(function () use ($participation, $uploader, $data, $path, $originalName, $fileSize, $mimeType) {
+            $reqKey = $data['required_document_key'] ?? 'general_deliverable';
 
-        $doc = CompetitionDocument::create([
-            'participation_id' => $participation->id,
-            'competition_round_id' => $data['competition_round_id'] ?? null,
-            'uploaded_by' => $uploader->id,
-            'required_document_key' => $reqKey,
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'original_name' => $originalName,
-            'path' => $path,
-            'url' => $data['url'] ?? null,
-            'deadline' => $data['deadline'] ?? null,
-            'submitted_at' => now(),
-            'external_submission_url' => $data['external_submission_url'] ?? null,
-            'file_size' => $fileSize,
-            'mime_type' => $mimeType,
-            'version' => $latestVersion + 1,
-            'status' => DeliverableStatus::Draft->value,
-        ]);
+            // Pessimistic lock on max version to avoid duplicate version conflicts
+            $latestVersion = CompetitionDocument::where('participation_id', $participation->id)
+                ->where('required_document_key', $reqKey)
+                ->lockForUpdate()
+                ->max('version') ?? 0;
 
-        MatchingAuditLog::log(
-            'competition_deliverable_submitted',
-            [
-                'document_id' => $doc->id,
-                'name' => $doc->name,
-                'version' => $doc->version,
-            ],
-            null,
-            null,
-            $uploader->id
-        );
+            $doc = CompetitionDocument::create([
+                'participation_id' => $participation->id,
+                'competition_round_id' => $data['competition_round_id'] ?? null,
+                'uploaded_by' => $uploader->id,
+                'required_document_key' => $reqKey,
+                'name' => $data['name'],
+                'description' => $data['description'] ?? null,
+                'original_name' => $originalName,
+                'path' => $path,
+                'url' => $data['url'] ?? null,
+                'deadline' => $data['deadline'] ?? null,
+                'submitted_at' => now(),
+                'external_submission_url' => $data['external_submission_url'] ?? null,
+                'file_size' => $fileSize,
+                'mime_type' => $mimeType,
+                'version' => $latestVersion + 1,
+                'status' => DeliverableStatus::Draft->value,
+            ]);
 
-        return $doc;
+            MatchingAuditLog::log(
+                'competition_deliverable_submitted',
+                [
+                    'document_id' => $doc->id,
+                    'name' => $doc->name,
+                    'version' => $doc->version,
+                ],
+                null,
+                null,
+                $uploader->id
+            );
+
+            return $doc;
+        });
     }
 
     /**
-     * Review deliverable by mentor or lecturer.
+     * Review deliverable by mentor or lecturer atomically.
      */
     public function reviewDeliverable(
         CompetitionDocument $document,
@@ -100,21 +105,25 @@ class CompetitionDeliverableService
         string $status,
         ?string $feedback = null
     ): void {
-        $document->update([
-            'status' => $status,
-            'feedback' => $feedback,
-        ]);
+        DB::transaction(function () use ($document, $reviewer, $status, $feedback) {
+            $lockedDoc = CompetitionDocument::where('id', $document->id)->lockForUpdate()->firstOrFail();
 
-        MatchingAuditLog::log(
-            'competition_deliverable_reviewed',
-            [
-                'document_id' => $document->id,
+            $lockedDoc->update([
                 'status' => $status,
-                'reviewer_id' => $reviewer->id,
-            ],
-            null,
-            null,
-            $reviewer->id
-        );
+                'feedback' => $feedback,
+            ]);
+
+            MatchingAuditLog::log(
+                'competition_deliverable_reviewed',
+                [
+                    'document_id' => $lockedDoc->id,
+                    'status' => $status,
+                    'reviewer_id' => $reviewer->id,
+                ],
+                null,
+                null,
+                $reviewer->id
+            );
+        });
     }
 }
