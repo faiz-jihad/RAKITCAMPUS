@@ -3951,11 +3951,11 @@ export default function Welcome() {
                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-2">
                                     {feedbackType === 'bug_report' ? (
                                         <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full">
-                                            🚨 Pusat Laporan Kendala Teknis
+                                            Pusat Laporan Kendala Teknis
                                         </span>
                                     ) : (
                                         <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                                            💡 Kotak Aspirasi & Masukan Pengguna
+                                            Kotak Aspirasi & Masukan Pengguna
                                         </span>
                                     )}
                                 </div>
@@ -4041,9 +4041,6 @@ export default function Welcome() {
                                                         }`}
                                                     >
                                                         <div className="text-xs font-bold text-slate-900">
-                                                            {u.id === 'low' && '🟢 '}
-                                                            {u.id === 'medium' && '🟡 '}
-                                                            {u.id === 'high' && '🔴 '}
                                                             {u.label}
                                                         </div>
                                                         <div className="text-[10px] text-slate-500 mt-0.5 truncate">
@@ -4061,10 +4058,10 @@ export default function Welcome() {
                                             </label>
                                             <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                 {[
-                                                    { id: 'saran_fitur', label: '💡 Saran Fitur Baru' },
-                                                    { id: 'antarmuka_ui', label: '🎨 Desain & Tampilan' },
-                                                    { id: 'performa', label: '⚡ Kecepatan & Performa' },
-                                                    { id: 'lainnya', label: '💬 Lainnya' },
+                                                    { id: 'saran_fitur', label: 'Saran Fitur Baru' },
+                                                    { id: 'antarmuka_ui', label: 'Desain & Tampilan' },
+                                                    { id: 'performa', label: 'Kecepatan & Performa' },
+                                                    { id: 'lainnya', label: 'Lainnya' },
                                                 ].map((cat) => (
                                                     <button
                                                         key={cat.id}

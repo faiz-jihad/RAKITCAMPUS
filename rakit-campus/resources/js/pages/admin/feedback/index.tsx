@@ -446,7 +446,7 @@ export default function AdminFeedbackIndex({ feedbacks, statistics, filters }: P
                                                         ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
                                                         : 'bg-amber-50 text-amber-800 border-amber-200'
                                                 }`}>
-                                                    <span>{item.urgency === 'high' || item.urgency === 'critical' ? '🔴 Kritis' : item.urgency === 'low' ? '🟢 Ringan' : '🟡 Sedang'}</span>
+                                                    <span>{item.urgency === 'high' || item.urgency === 'critical' ? 'Kritis' : item.urgency === 'low' ? 'Ringan' : 'Sedang'}</span>
                                                 </span>
                                             )}
 

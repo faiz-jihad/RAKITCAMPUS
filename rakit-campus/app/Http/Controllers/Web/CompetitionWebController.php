@@ -2161,7 +2161,7 @@ class CompetitionWebController extends Controller
                 $track
             );
 
-            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda!");
+            return back()->with('success', "{$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda.");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
         }

@@ -152,8 +152,8 @@ class FeedbackWebController extends Controller
                 ];
                 $catName = $categoryLabels[$validated['category']] ?? 'Saran & Masukan';
                 $sender = $name ?: ($email ?: 'Pengguna Anonim');
-                $ratingText = !empty($validated['rating']) && $feedbackType !== 'bug_report' ? " [★{$validated['rating']}/5]" : '';
-                $typePrefix = $feedbackType === 'bug_report' ? '🚨 [BUG REPORT]' : '💡 [SARAN]';
+                $ratingText = !empty($validated['rating']) && $feedbackType !== 'bug_report' ? " [Rating: {$validated['rating']}/5]" : '';
+                $typePrefix = $feedbackType === 'bug_report' ? '[BUG REPORT]' : '[SARAN]';
 
                 app(NotificationService::class)->notify(
                     recipients: $admins,

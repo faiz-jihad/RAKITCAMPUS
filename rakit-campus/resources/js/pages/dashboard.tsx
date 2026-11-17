@@ -842,8 +842,8 @@ export default function Dashboard({
                                                         {fb.category ? fb.category.replace('_', ' ').toUpperCase() : 'MASUKAN'}
                                                     </span>
                                                     {fb.rating && (
-                                                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
-                                                            ★ {fb.rating}/5
+                                                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                                                            Rating {fb.rating}/5
                                                         </span>
                                                     )}
                                                     <span className="text-[11px] font-semibold text-slate-800">

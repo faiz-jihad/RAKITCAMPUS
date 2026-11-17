@@ -476,7 +476,7 @@ export default function CompetitionWorkspace({
             return;
         }
 
-        let text = `📋 ROADMAP & CHECKLIST TUGAS TIM: ${participation.team?.name || 'Tim'}\n`;
+        let text = `ROADMAP & CHECKLIST TUGAS TIM: ${participation.team?.name || 'Tim'}\n`;
         text += `Kompetisi: ${participation.competition?.name}\n`;
         text += `Jalur: ${participation.category_track || '-'}\n`;
         text += `Total Tugas: ${tasks.length} | Selesai: ${tasks.filter((t: any) => t.status === 'completed').length}\n`;
@@ -491,7 +491,7 @@ export default function CompetitionWorkspace({
 
         cols.forEach(col => {
             const colTasks = tasks.filter((t: any) => t.status === col.key);
-            text += `📌 ${col.label.toUpperCase()} (${colTasks.length}):\n`;
+            text += `${col.label.toUpperCase()} (${colTasks.length}):\n`;
             if (colTasks.length === 0) {
                 text += `  - (Belum ada tugas)\n`;
             } else {
@@ -1022,7 +1022,7 @@ export default function CompetitionWorkspace({
                                         {daysLeft !== null ? (daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini!') : '-'}
                                     </div>
                                     <p className="text-[10px] text-slate-400 mt-2 font-medium truncate">
-                                        {deadlineDate || 'Belum ada batas akhir'}
+                                        {formattedDeadline || 'Belum ada batas akhir'}
                                     </p>
                                 </div>
                             </div>
@@ -1889,12 +1889,12 @@ export default function CompetitionWorkspace({
                                                                 : 'bg-amber-50 text-amber-800 border border-amber-200'
                                                         }`}>
                                                             {inv.status === 'accepted'
-                                                                ? '✅ Resmi Bergabung'
+                                                                ? 'Resmi Bergabung'
                                                                 : inv.status === 'declined'
-                                                                ? '❌ Ditolak'
+                                                                ? 'Ditolak'
                                                                 : inv.status === 'cancelled'
                                                                 ? 'Dibatalkan'
-                                                                : '⏳ Menunggu Persetujuan'}
+                                                                : 'Menunggu Persetujuan'}
                                                         </span>
                                                     </div>
 
@@ -2822,7 +2822,7 @@ export default function CompetitionWorkspace({
                                                                         </span>
                                                                         {folderInfo && (
                                                                             <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
-                                                                                📁 {folderInfo.label}
+                                                                                {folderInfo.label}
                                                                             </span>
                                                                         )}
                                                                     </div>
@@ -2935,7 +2935,7 @@ export default function CompetitionWorkspace({
                                                                     </h5>
                                                                     <div className="flex items-center gap-2 mt-1 text-[11px] text-slate-400">
                                                                         {folderInfo && (
-                                                                            <span className="truncate">📁 {folderInfo.label}</span>
+                                                                            <span className="truncate">{folderInfo.label}</span>
                                                                         )}
                                                                         <span>•</span>
                                                                         <span>{new Date(doc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>

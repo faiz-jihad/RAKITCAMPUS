@@ -436,8 +436,8 @@ export default function CompetitionShow({
                                                 {isRegistrationClosed
                                                     ? 'Pendaftaran Tutup'
                                                     : daysLeft > 0
-                                                    ? `⏳ ${daysLeft} Hari Lagi`
-                                                    : '🔥 Hari Terakhir'}
+                                                    ? `${daysLeft} Hari Lagi`
+                                                    : 'Hari Terakhir'}
                                             </span>
                                         )}
                                     </div>
@@ -670,7 +670,7 @@ export default function CompetitionShow({
                                 </span>
                                 <div className="mt-1">
                                     <span className="text-xs font-bold text-purple-700 bg-purple-100/80 px-2.5 py-0.5 rounded-lg inline-block">
-                                        ✨ Portofolio Terverifikasi
+                                        Portofolio Terverifikasi
                                     </span>
                                 </div>
                             </div>

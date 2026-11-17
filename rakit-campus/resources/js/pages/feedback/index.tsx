@@ -475,10 +475,10 @@ export default function FeedbackIndex({
                                     </label>
                                     <div className="flex flex-wrap gap-2">
                                         {[
-                                            { id: 'saran_fitur', label: '💡 Saran Fitur Baru' },
-                                            { id: 'antarmuka_ui', label: '🎨 Desain & Tampilan' },
-                                            { id: 'performa', label: '⚡ Kecepatan & Performa' },
-                                            { id: 'lainnya', label: '💬 Saran Lainnya' },
+                                            { id: 'saran_fitur', label: 'Saran Fitur Baru' },
+                                            { id: 'antarmuka_ui', label: 'Desain & Tampilan' },
+                                            { id: 'performa', label: 'Kecepatan & Performa' },
+                                            { id: 'lainnya', label: 'Saran Lainnya' },
                                         ].map((cat) => (
                                             <button
                                                 key={cat.id}
@@ -644,7 +644,7 @@ export default function FeedbackIndex({
                                                                 ? 'bg-rose-50 text-rose-700 border-rose-200'
                                                                 : 'bg-blue-50 text-blue-700 border-blue-200'
                                                         }`}>
-                                                            {fb.feedback_type === 'bug_report' ? '🚨 Kendala / Bug' : '💡 Saran Fitur'}
+                                                            {fb.feedback_type === 'bug_report' ? 'Laporan Kendala / Bug' : 'Saran Fitur'}
                                                         </span>
                                                         {fb.urgency && fb.feedback_type === 'bug_report' && (
                                                             <span className="text-[10px] text-slate-500">
