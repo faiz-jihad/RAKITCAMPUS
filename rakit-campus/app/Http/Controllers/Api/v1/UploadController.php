@@ -15,14 +15,30 @@ class UploadController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $type = $request->input('type', 'general');
+
+        // Dynamic MIME validation based on upload category
+        $allowedMimes = match ($type) {
+            'avatar' => 'mimes:jpeg,jpg,png,webp',
+            default => 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,zip,rar,7z,txt,csv,jpg,jpeg,png,webp,mp4,mkv,webm',
+        };
+
         $validated = $request->validate([
-            'file' => ['required', 'file', 'max:71680'], // max 70MB per file
+            'file' => ['required', 'file', 'max:71680', $allowedMimes], // max 70MB per file
             'type' => ['nullable', 'string', 'in:avatar,document,attachment,portfolio,project,general,proposal,deliverable'],
             'team_id' => ['nullable', 'exists:teams,id'],
         ]);
 
         $file = $request->file('file');
-        $type = $validated['type'] ?? 'general';
+        $ext = strtolower($file->getClientOriginalExtension());
+        $dangerousExtensions = ['php', 'phtml', 'phar', 'exe', 'bat', 'sh', 'cmd', 'com', 'js', 'vbs', 'scr', 'html', 'htm', 'svg'];
+
+        if (in_array($ext, $dangerousExtensions, true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Tipe file .{$ext} dilarang demi keamanan sistem.",
+            ], 422);
+        }
 
         if (!empty($validated['team_id'])) {
             ObjectStorageService::checkTeamStorageQuota((int) $validated['team_id'], $file->getSize());
@@ -51,7 +67,22 @@ class UploadController extends Controller
      */
     public function download(Request $request, string $path): StreamedResponse
     {
+        // Reject path traversal and null byte injections
+        if (str_contains($path, '..') || str_contains($path, "\0") || str_contains($path, '\\')) {
+            abort(400, 'Format path berkas tidak valid.');
+        }
+
+        $cleanPath = ltrim($path, '/');
+
+        if (empty($cleanPath)) {
+            abort(400, 'Format path berkas tidak valid.');
+        }
+
         $filename = $request->query('filename');
-        return ObjectStorageService::download($path, $filename);
+        if ($filename) {
+            $filename = basename(str_replace(["\0", '/', '\\'], '', $filename));
+        }
+
+        return ObjectStorageService::download($cleanPath, $filename);
     }
 }

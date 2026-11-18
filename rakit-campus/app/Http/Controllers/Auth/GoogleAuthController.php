@@ -155,6 +155,11 @@ class GoogleAuthController extends Controller
      */
     public function demoGoogleLogin(Request $request): RedirectResponse
     {
+        // Security Gate: Demo login is strictly restricted to local and testing environments
+        if (!app()->environment('local', 'testing')) {
+            abort(404, 'Demo login hanya tersedia pada lingkungan pengembangan lokal.');
+        }
+
         $email = 'google.student@polindra.ac.id';
         $name = 'Google Student Demo';
         $googleId = 'google_demo_1092837465';

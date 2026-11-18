@@ -56,7 +56,12 @@ class GitHubWebhookController extends Controller
             || ($customSecret && $this->appService->verifyWebhookSignature($rawPayload, $signature, $customSecret));
 
         $hasSecret = ! empty(config('github.webhook_secret')) || ! empty($customSecret);
-        if ($hasSecret && ! $isValid) {
+        if (! $hasSecret) {
+            Log::error("GitHub webhook rejected: no webhook secret is configured on system or repository.");
+            return response()->json(['message' => 'Webhook secret is not configured on receiver.'], 500);
+        }
+
+        if (! $isValid) {
             Log::warning("GitHub webhook signature verification failed for event '{$event}' (Delivery: {$deliveryId})");
             return response()->json(['message' => 'Invalid webhook signature.'], 401);
         }
@@ -76,7 +81,7 @@ class GitHubWebhookController extends Controller
             Log::error("Failed to process GitHub webhook: " . $e->getMessage());
             return response()->json([
                 'status' => 'error',
-                'message' => $e->getMessage(),
+                'message' => 'Gagal memproses webhook GitHub.',
             ], 500);
         }
     }

@@ -254,7 +254,14 @@ class WorkspaceWebController extends Controller
     public function orchestrateRoadmap(Request $request, int $teamId)
     {
         $user = $request->user();
-        $team = Team::findOrFail($teamId);
+        $team = Team::with('project.academicClass')->findOrFail($teamId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+
+        if (!$isLecturer && !$team->hasMember($user) && !$user->isCampusAdminOf($team->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya anggota tim atau dosen pembimbing yang dapat mengorkestrasi roadmap.');
+        }
 
         $agent = new ProjectOrchestratorAgent();
         $result = $agent->orchestrateRoadmapAndTasks($team, $user);
@@ -271,7 +278,15 @@ class WorkspaceWebController extends Controller
      */
     public function storeTask(Request $request, int $teamId)
     {
-        $team = Team::findOrFail($teamId);
+        $user = $request->user();
+        $team = Team::with('project.academicClass')->findOrFail($teamId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+
+        if (!$isLecturer && !$team->hasMember($user) && !$user->isCampusAdminOf($team->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya anggota tim atau dosen pembimbing yang dapat menambahkan tugas.');
+        }
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -283,7 +298,7 @@ class WorkspaceWebController extends Controller
             'due_on' => ['nullable', 'date'],
         ]);
 
-        $task = $this->taskService->createTask($team, $request->user(), $validated);
+        $task = $this->taskService->createTask($team, $user, $validated);
 
         if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
             try {
@@ -316,8 +331,16 @@ class WorkspaceWebController extends Controller
      */
     public function updateTask(Request $request, int $teamId, int $taskId)
     {
-        $team = Team::findOrFail($teamId);
+        $user = $request->user();
+        $team = Team::with('project.academicClass')->findOrFail($teamId);
         $task = Task::where('team_id', $team->id)->findOrFail($taskId);
+
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+
+        if (!$isLecturer && !$team->hasMember($user) && !$user->isCampusAdminOf($team->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya anggota tim atau dosen pembimbing yang dapat memperbarui tugas ini.');
+        }
 
         $validated = $request->validate([
             'title' => ['sometimes', 'string', 'max:255'],
@@ -329,7 +352,7 @@ class WorkspaceWebController extends Controller
             'due_on' => ['nullable', 'date'],
         ]);
 
-        $task = $this->taskService->updateTask($task, $validated, $request->user());
+        $task = $this->taskService->updateTask($task, $validated, $user);
 
         if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
             try {
@@ -362,10 +385,20 @@ class WorkspaceWebController extends Controller
      */
     public function deleteTask(Request $request, int $teamId, int $taskId)
     {
-        $team = Team::findOrFail($teamId);
+        $user = $request->user();
+        $team = Team::with('project.academicClass')->findOrFail($teamId);
         $task = Task::where('team_id', $team->id)->findOrFail($taskId);
 
-        $this->taskService->deleteTask($task, $request->user());
+        $isClassLecturer = $team->project?->academicClass && $team->project->academicClass->isLecturer($user);
+        $isLecturer = $user->isLecturer() || $isClassLecturer;
+        $isLeader = $team->isLeader($user);
+        $isCreator = $task->created_by === $user->id;
+
+        if (!$isLecturer && !$isLeader && !$isCreator && !$user->isCampusAdminOf($team->campus_id) && !$user->isPlatformAdmin()) {
+            abort(403, 'Hanya pembuat tugas, ketua tim, atau dosen yang dapat menghapus tugas ini.');
+        }
+
+        $this->taskService->deleteTask($task, $user);
 
         if ($task->status === TaskStatus::Completed || $task->status === 'completed') {
             try {
@@ -399,6 +432,14 @@ class WorkspaceWebController extends Controller
 
         if (! $project) {
             return back()->with('error', 'Tim ini tidak terhubung dengan proyek manapun.');
+        }
+
+        $isClassLecturer = $project->academicClass && $project->academicClass->isLecturer($user);
+        $isSupervisor = $project->primary_supervisor_id === $user->id;
+        $isAdmin = $user->isPlatformAdmin() || $user->isCampusAdminOf($team->campus_id);
+
+        if (! $isClassLecturer && ! $isSupervisor && ! $isAdmin) {
+            abort(403, 'Hanya dosen pembimbing atau pengampu kelas yang berwenang memberikan evaluasi nilai.');
         }
 
         $validated = $request->validate([

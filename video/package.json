@@ -1,0 +1,28 @@
+{
+  "name": "rakit-cinematic-video",
+  "version": "1.0.0",
+  "description": "RAKIT Cinematic Product Demo & Promotional Video powered by Remotion",
+  "scripts": {
+    "start": "remotion preview src/index.ts",
+    "build": "remotion render src/index.ts RakitFlagshipPromo out/rakit-flagship-promo.mp4",
+    "render:flagship": "remotion render src/index.ts RakitFlagshipPromo out/rakit-flagship-promo.mp4 --concurrency=4",
+    "render:short": "remotion render src/index.ts RakitShortPromo out/rakit-short-promo.mp4 --concurrency=4",
+    "render:demo": "remotion render src/index.ts RakitProductDemo out/rakit-product-demo.mp4 --concurrency=4",
+    "render:all": "npm run render:flagship && npm run render:short && npm run render:demo"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.260",
+    "@remotion/media-utils": "^4.0.260",
+    "@remotion/shapes": "^4.0.260",
+    "@remotion/transitions": "^4.0.260",
+    "lucide-react": "^1.16.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "remotion": "^4.0.260"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

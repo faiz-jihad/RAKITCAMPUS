@@ -25,9 +25,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
-    // Public / Guest Auth
-    Route::post('/auth/register', [AuthController::class, 'register']);
-    Route::post('/auth/login', [AuthController::class, 'login']);
+    // Public / Guest Auth (Rate Limited to Prevent Brute-force & Credential Stuffing)
+    Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:6,1');
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 
     // Public Profiles & Portfolios
     Route::get('/students/{identifier}', [ProfileController::class, 'publicProfile']);

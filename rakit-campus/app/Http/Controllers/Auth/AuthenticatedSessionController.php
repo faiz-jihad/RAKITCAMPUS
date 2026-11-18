@@ -35,7 +35,7 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
         $membership = $user?->activeMembership();
-        $isAdmin = $user && ($user->isPlatformAdmin() || $user->isCampusAdmin() || ($membership?->role === \App\Enums\CampusRole::Admin) || ($membership?->role === \App\Enums\CampusRole::CampusAdmin));
+        $isAdmin = $user && ($user->isPlatformAdmin() || $user->isCampusAdmin() || ($membership?->role === \App\Enums\CampusRole::CampusAdmin));
         $isLecturer = $user && ($user->isLecturer() || ($membership?->role === \App\Enums\CampusRole::Lecturer));
 
         if ($isAdmin) {
