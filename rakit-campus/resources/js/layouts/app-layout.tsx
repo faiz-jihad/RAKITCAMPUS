@@ -452,7 +452,7 @@ export default function AppLayout({
     }, [isAdminArea, isLecturer, isCompetitionHub, url]);
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden">
             {title && <Head title={title} />}
 
             {/* BIG HUB GATEWAY MODAL (Only for regular students, never for admin or lecturers) */}
@@ -732,7 +732,7 @@ export default function AppLayout({
             </header>
 
             {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-28 md:pb-7">
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-28 md:pb-7 min-w-0 overflow-x-hidden">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
                     <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">

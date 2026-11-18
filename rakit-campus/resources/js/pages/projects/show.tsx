@@ -895,7 +895,7 @@ export default function ProjectShow({
             <div className="space-y-6">
                 <div className="flex flex-col gap-6">
                     {/* Top navigation row */}
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-1.5 sm:gap-2">
                         <Link
                             href="/projects"
                             className="group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap shrink-0"
@@ -921,11 +921,12 @@ export default function ProjectShow({
                                 <button
                                     type="button"
                                     onClick={() => setShowEditProjectModal(true)}
-                                    className="group inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
+                                    className="group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                                     title="Kelola informasi, progres, dan pengaturan proyek"
                                 >
                                     <Settings className="size-3.5 text-indigo-600 transition-transform duration-200 group-hover:rotate-45" />
-                                    <span>Kelola Proyek</span>
+                                    <span className="hidden sm:inline">Kelola Proyek</span>
+                                    <span className="sm:hidden">Kelola</span>
                                 </button>
                             )}
 
@@ -968,13 +969,13 @@ export default function ProjectShow({
                     )}
 
                     {/* HERO HEADER: Status Indicators & Quick Actions */}
-                    <div className="bg-white rounded-2xl border border-slate-200/80 p-5 sm:p-7 shadow-xs flex flex-col gap-5">
+                    <div className="bg-white rounded-2xl border border-slate-200/80 p-4 sm:p-7 shadow-xs flex flex-col gap-4 sm:gap-5">
                         {/* Row 1: Badges & Recruitment Status / Toggle */}
-                        <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2.5 sm:gap-3">
                             {/* Unified Metadata Strip */}
-                            <div className="flex flex-wrap items-center gap-2.5 text-xs">
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs">
                                 {/* Kategori Proyek: Badge Utama */}
-                                <span className="text-[11px] font-extrabold uppercase tracking-wider px-2.5 py-0.5 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
+                                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider px-2 sm:px-2.5 py-0.5 rounded-md sm:rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80">
                                     {project.category?.replace('_', ' ')}
                                 </span>
 
@@ -982,42 +983,34 @@ export default function ProjectShow({
                                 {academicClass ? (
                                     <Link
                                         href={`/classes/${academicClass.code || academicClass.id}`}
-                                        className="inline-flex items-center gap-1.5 font-semibold text-slate-700 hover:text-blue-600 transition"
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:text-blue-600 hover:bg-blue-50 text-[11px] sm:text-xs font-semibold transition border border-slate-200/60"
                                     >
-                                        <BookOpen className="size-3.5 text-blue-600" />
+                                        <BookOpen className="size-3 text-blue-600" />
                                         <span>{academicClass.name} ({academicClass.code})</span>
                                     </Link>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1.5 font-semibold text-slate-600">
-                                        <UserCheck className="size-3.5 text-slate-500" />
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] sm:text-xs font-semibold border border-slate-200/60">
+                                        <UserCheck className="size-3 text-slate-500" />
                                         <span>Proyek Mandiri</span>
                                     </span>
                                 )}
 
-                                <span className="text-slate-300 font-sans">|</span>
-
                                 {/* Tingkat Kesulitan */}
-                                <span className="text-slate-500 font-medium">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 text-[11px] sm:text-xs font-medium border border-slate-200/50">
                                     Tingkat: <strong className="text-slate-700 font-semibold capitalize">{project.difficulty || 'Intermediate'}</strong>
                                 </span>
 
                                 {/* Status Workspace */}
                                 {(canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') ? (
-                                    <>
-                                        <span className="text-slate-300 font-sans">|</span>
-                                        <span className="inline-flex items-center gap-1.5 font-semibold text-blue-700">
-                                            <FolderKanban className="size-3.5 text-blue-600" />
-                                            <span>Workspace Aktif</span>
-                                        </span>
-                                    </>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] sm:text-xs font-semibold border border-emerald-200/60">
+                                        <FolderKanban className="size-3 text-emerald-600" />
+                                        <span>Workspace Aktif</span>
+                                    </span>
                                 ) : academicClass ? (
-                                    <>
-                                        <span className="text-slate-300 font-sans">|</span>
-                                        <span className="inline-flex items-center gap-1.5 font-semibold text-amber-700">
-                                            <Clock className="size-3.5 text-amber-600" />
-                                            <span>Menunggu Persetujuan Dosen</span>
-                                        </span>
-                                    </>
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[11px] sm:text-xs font-semibold border border-amber-200/60">
+                                        <Clock className="size-3 text-amber-600" />
+                                        <span>Menunggu Dosen</span>
+                                    </span>
                                 ) : null}
                             </div>
 
@@ -1075,18 +1068,14 @@ export default function ProjectShow({
                             )}
                         </div>
 
-                        {/* Row 2: Title, Description, Leader Meta & Action Button */}
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                            <div className="flex-1 max-w-3xl">
-                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
+                        {/* Row 2: Title, Leader Meta & Action Button */}
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+                            <div className="flex-1 min-w-0">
+                                <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight leading-tight">
                                     {project.title}
                                 </h1>
 
-                                <p className="text-xs sm:text-sm text-slate-600 mt-2 leading-relaxed">
-                                    {project.short_description || project.description || 'Tidak ada deskripsi singkat proyek.'}
-                                </p>
-
-                                <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-slate-600">
+                                <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mt-2 text-xs text-slate-600">
                                     <div className="inline-flex items-center gap-1.5">
                                         <span className="size-5 rounded-full bg-slate-900 text-white text-[10px] font-bold flex items-center justify-center">
                                             {project.leader?.name ? project.leader.name.charAt(0).toUpperCase() : 'U'}
@@ -1105,7 +1094,7 @@ export default function ProjectShow({
                             </div>
 
                             {/* Right action block: Strictly differentiated for Dosen vs Mahasiswa */}
-                            <div className="flex flex-col sm:items-end justify-center gap-2.5 shrink-0">
+                            <div className="flex flex-col sm:items-end justify-center gap-2 shrink-0 w-full sm:w-auto">
                                 {isLecturerUser ? (
                                     project.formation_status === 'formation_review' ? (
                                         <div className="flex flex-wrap items-center gap-2">
@@ -1126,7 +1115,7 @@ export default function ProjectShow({
                                             (canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') && project.team?.id ? (
                                                 <Link
                                                     href={`/workspace/${project.team.id}`}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                    className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
                                                 >
                                                     <FolderKanban className="size-4" />
                                                     <span>Buka Workspace Tim</span>
@@ -1135,7 +1124,7 @@ export default function ProjectShow({
                                                 <button
                                                     onClick={handleActivateTeam}
                                                     disabled={lifecycleProcessing}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                                    className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 active:scale-95"
                                                 >
                                                     <UserCheck className="size-4" />
                                                     <span>Konfirmasi Formasi & Buka Workspace</span>
@@ -1144,7 +1133,7 @@ export default function ProjectShow({
                                                 <button
                                                     type="button"
                                                     onClick={() => showToast(`Susunan tim sedang dievaluasi oleh Dosen Pengampu (${academicClass?.lecturer?.name || 'Dosen'}). Mohon menunggu keputusan persetujuan.`, 'info')}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition cursor-pointer"
+                                                    className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition cursor-pointer"
                                                 >
                                                     <Clock className="size-4" />
                                                     <span>Menunggu Persetujuan Dosen</span>
@@ -1153,7 +1142,7 @@ export default function ProjectShow({
                                                 <button
                                                     type="button"
                                                     onClick={handleSubmitFormation}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-bold transition cursor-pointer"
+                                                    className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 text-xs font-bold transition cursor-pointer active:scale-95"
                                                 >
                                                     <AlertCircle className="size-4" />
                                                     <span>Pengajuan Tim Ditolak | Tinjau</span>
@@ -1163,7 +1152,7 @@ export default function ProjectShow({
                                                     <button
                                                         type="button"
                                                         onClick={handleSubmitFormation}
-                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
+                                                        className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer active:scale-95"
                                                     >
                                                         <Users className="size-4 text-blue-600" />
                                                         <span>Kuota Tim ({activeMembersCount}/{maxQuota}) | Lengkapi</span>
@@ -1172,7 +1161,7 @@ export default function ProjectShow({
                                                     <button
                                                         type="button"
                                                         onClick={handleSubmitFormation}
-                                                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                                                        className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                                     >
                                                         <Send className="size-4" />
                                                         <span>Ajukan ke Dosen (Kuota Penuh)</span>
@@ -1182,7 +1171,7 @@ export default function ProjectShow({
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('formation')}
-                                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer"
+                                                    className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition cursor-pointer active:scale-95"
                                                 >
                                                     <Users className="size-4 text-blue-600" />
                                                     <span>Kuota Tim ({activeMembersCount}/{maxQuota}) | Kelola</span>
@@ -1287,7 +1276,7 @@ export default function ProjectShow({
                         </div>
 
                         {/* Row 3: Cohesive Status & Progress Strip (Blue, Slate, White Brand Palette) */}
-                        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 bg-slate-50/70 -mx-5 sm:-mx-7 -mb-5 sm:-mb-7 px-5 sm:px-7 py-4 rounded-b-2xl">
+                        <div className="pt-3.5 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-6 bg-slate-50/80 -mx-4 sm:-mx-7 -mb-4 sm:-mb-7 px-4 sm:px-7 py-3 sm:py-4 rounded-b-2xl">
                             {/* 1. Proposal Status vs Project Phase */}
                             <div className="flex items-center gap-3">
                                 <div className="size-8 rounded-lg bg-white border border-slate-200 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
@@ -3404,32 +3393,6 @@ export default function ProjectShow({
                                                 <option value="private">Privat (Hanya Tim)</option>
                                             </select>
                                         </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                            Ringkasan Singkat (Short Description)
-                                        </label>
-                                        <textarea
-                                            rows={2}
-                                            value={projectForm.short_description}
-                                            onChange={(e) => setProjectForm({ ...projectForm, short_description: e.target.value })}
-                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                            placeholder="Ringkasan 1-2 kalimat tentang proyek..."
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                            Deskripsi Lengkap
-                                        </label>
-                                        <textarea
-                                            rows={4}
-                                            value={projectForm.description}
-                                            onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
-                                            className="w-full px-3.5 py-2 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                            placeholder="Jelaskan gambaran umum, latar belakang, dan cakupan sistem..."
-                                        />
                                     </div>
 
                                     <div>

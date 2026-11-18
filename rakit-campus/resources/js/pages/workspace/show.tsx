@@ -703,124 +703,125 @@ export default function WorkspaceShow({
         <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
             <Head title={`Workspace & Roadmap — ${team.name}`} />
 
-            <div className="pt-4 sm:pt-6 pb-12 flex flex-col gap-6 sm:gap-7">
+            <div className="pt-4 sm:pt-6 pb-12 flex flex-col gap-5 sm:gap-7 max-w-full overflow-x-hidden">
                 {/* INVITATION OFFER BANNER (Direct in-workspace acceptance) */}
                 {myPendingInvitation && (
-                    <div className="p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-500/15 via-blue-50 to-indigo-500/10 border-2 border-blue-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
-                        <div className="flex items-start gap-4">
-                            <div className="size-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                                <Users className="size-6" />
+                    <div className="p-4 sm:p-6 rounded-2xl bg-gradient-to-r from-blue-500/15 via-blue-50 to-indigo-500/10 border-2 border-blue-300 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                            <div className="size-10 sm:size-12 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <Users className="size-5 sm:size-6" />
                             </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900 bg-blue-200/90 px-2.5 py-0.5 rounded-full border border-blue-300">
-                                        Tawaran Bergabung Tim Proyek
+                            <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-900 bg-blue-200/90 px-2 py-0.5 rounded-full border border-blue-300">
+                                        Tawaran Bergabung Tim
                                     </span>
                                     <span className="text-xs text-slate-500">• {myPendingInvitation.created_at || 'Baru saja'}</span>
                                 </div>
-                                <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                                <h3 className="text-sm sm:text-lg font-bold text-slate-900 mt-1 break-words">
                                     Anda diundang bergabung ke tim "{team.name}" sebagai <span className="text-blue-700 font-bold">{myPendingInvitation.role_name}</span>!
                                 </h3>
-                                <p className="text-xs text-slate-600 mt-0.5">
+                                <p className="text-xs text-slate-600 mt-0.5 break-words">
                                     Diundang oleh <strong>{myPendingInvitation.inviter?.name || 'Ketua Tim'}</strong>{project?.title ? ` untuk proyek ${project.title}` : ''}.
                                     {myPendingInvitation.message && <span className="italic block mt-1">"{myPendingInvitation.message}"</span>}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2.5 shrink-0 self-end md:self-center">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 w-full md:w-auto">
                             <button
                                 type="button"
                                 disabled={isAcceptingOffer}
                                 onClick={() => handleAcceptOffer(myPendingInvitation.id)}
-                                className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                                className="flex-1 md:flex-initial justify-center px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs hover:shadow transition flex items-center gap-2 disabled:opacity-50 cursor-pointer active:scale-95"
                             >
                                 <CheckCircle2 className="size-4" />
-                                <span>{isAcceptingOffer ? 'Memproses...' : 'Terima Tawaran & Masuk Tim'}</span>
+                                <span>{isAcceptingOffer ? 'Memproses...' : 'Terima Tawaran'}</span>
                             </button>
                             <button
                                 type="button"
                                 disabled={isDecliningOffer}
                                 onClick={() => handleDeclineOffer(myPendingInvitation.id)}
-                                className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 font-semibold text-xs transition disabled:opacity-50 cursor-pointer"
+                                className="px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 text-slate-700 font-semibold text-xs transition disabled:opacity-50 cursor-pointer active:scale-95"
                             >
-                                {isDecliningOffer ? 'Menolak...' : 'Tolak Tawaran'}
+                                {isDecliningOffer ? 'Menolak...' : 'Tolak'}
                             </button>
                         </div>
                     </div>
                 )}
 
                 {/* Top Row: Back & Team Identity */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-1">
-                        <div className="flex items-center gap-3">
-                            <Link
-                                href="/workspace"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 shadow-2xs transition"
-                            >
-                                <ArrowLeft className="size-3.5" />
-                                <span>Ruang Kerja Tim</span>
-                            </Link>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-1">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <Link
+                            href="/workspace"
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 shadow-2xs transition shrink-0 active:scale-95"
+                        >
+                            <ArrowLeft className="size-3.5" />
+                            <span className="hidden sm:inline">Ruang Kerja Tim</span>
+                            <span className="sm:hidden">Kembali</span>
+                        </Link>
 
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-semibold text-slate-400">/</span>
-                                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                                    {team.name}
-                                </h1>
-                            </div>
-                        </div>
-
-                        {/* Top Action Pills: Capacity, GitHub status, & Add Task */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            {/* Capacity Pill */}
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
-                                <Users className="size-3.5 text-slate-400" />
-                                <span className="font-bold text-slate-900">{team.members?.length || 1}/{team.capacity} Anggota</span>
-                                <span className="text-slate-300">·</span>
-                                <span className={`font-semibold ${isFull ? 'text-blue-600' : 'text-slate-500'}`}>
-                                    {isFull ? 'Penuh' : 'Slot Terbuka'}
-                                </span>
-                            </span>
-
-                            {/* GitHub Status Pill */}
-                            <button
-                                type="button"
-                                onClick={() => setMainTab(mainTab === 'github' ? 'kanban' : 'github')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 hover:border-blue-300 shadow-2xs transition cursor-pointer"
-                                title="Buka Monitoring GitHub"
-                            >
-                                <Github className="size-3.5 text-slate-700" />
-                                {githubRepo ? (
-                                    <>
-                                        <span className="font-mono text-[11px] truncate max-w-[120px] text-slate-800">
-                                            {githubRepo.full_name}
-                                        </span>
-                                        <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
-                                    </>
-                                ) : (
-                                    <span className="text-[11px] font-semibold text-slate-500">
-                                        Monitoring GitHub
-                                    </span>
-                                )}
-                            </button>
-
-                            {/* Add Task Button */}
-                            {mainTab === 'kanban' && (
-                                <button
-                                    onClick={() => {
-                                        setTargetColumn('todo');
-                                        setTaskModalOpen(true);
-                                    }}
-                                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer"
-                                >
-                                    <Plus className="size-4" />
-                                    <span>Tambah Tugas</span>
-                                </button>
-                            )}
+                        <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs font-semibold text-slate-400">/</span>
+                            <h1 className="text-lg sm:text-xl md:text-2xl font-black text-slate-900 tracking-tight truncate">
+                                {team.name}
+                            </h1>
                         </div>
                     </div>
 
-                    {/* Navigation Tabs Bar */}
-                    <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 sm:pb-4 pt-1 gap-3">
+                    {/* Top Action Pills: Capacity, GitHub status, & Add Task */}
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full md:w-auto">
+                        {/* Capacity Pill */}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs bg-white border border-slate-200/90 text-slate-700 shadow-2xs">
+                            <Users className="size-3.5 text-slate-400" />
+                            <span className="font-bold text-slate-900">{team.members?.length || 1}/{team.capacity} <span className="hidden sm:inline">Anggota</span></span>
+                            <span className="text-slate-300">·</span>
+                            <span className={`font-semibold ${isFull ? 'text-blue-600' : 'text-slate-500'}`}>
+                                {isFull ? 'Penuh' : 'Terbuka'}
+                            </span>
+                        </span>
+
+                        {/* GitHub Status Pill */}
+                        <button
+                            type="button"
+                            onClick={() => setMainTab(mainTab === 'github' ? 'kanban' : 'github')}
+                            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-white border border-slate-200/90 text-slate-700 hover:border-blue-300 shadow-2xs transition cursor-pointer active:scale-95"
+                            title="Buka Monitoring GitHub"
+                        >
+                            <Github className="size-3.5 text-slate-700" />
+                            {githubRepo ? (
+                                <>
+                                    <span className="font-mono text-[11px] truncate max-w-[90px] sm:max-w-[120px] text-slate-800">
+                                        {githubRepo.full_name}
+                                    </span>
+                                    <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                                </>
+                            ) : (
+                                <span className="text-[11px] font-semibold text-slate-500">
+                                    GitHub
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Add Task Button */}
+                        {mainTab === 'kanban' && (
+                            <button
+                                onClick={() => {
+                                    setTargetColumn('todo');
+                                    setTaskModalOpen(true);
+                                }}
+                                className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer ml-auto md:ml-0"
+                            >
+                                <Plus className="size-4" />
+                                <span>Tambah Tugas</span>
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Navigation Tabs Bar */}
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-3 sm:pb-4 pt-1 gap-2 sm:gap-3 overflow-x-auto no-scrollbar">
                         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar w-full sm:w-auto">
                             <button
                                 type="button"
@@ -983,31 +984,31 @@ export default function WorkspaceShow({
                     ) : (
                         /* Tampilan untuk Mahasiswa jika sudah ada penilaian dosen */
                         (project?.lecturer_evaluation || project?.lecturer_notes) && (
-                            <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
+                            <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-2xs">
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                                    <div className="flex items-center gap-2.5">
+                                    <div className="flex items-center gap-2.5 min-w-0">
                                         <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
                                             <GraduationCap className="size-4" />
                                         </div>
-                                        <div>
-                                            <h3 className="text-xs font-bold text-slate-900">
+                                        <div className="min-w-0">
+                                            <h3 className="text-xs font-bold text-slate-900 truncate">
                                                 Catatan & Nilai dari Dosen Pengampu
                                             </h3>
-                                            <p className="text-[11px] text-slate-500">
+                                            <p className="text-[11px] text-slate-500 truncate">
                                                 Dosen: {(project.academic_class || project.academicClass)?.lecturer?.name || 'Dosen Pembimbing'}
                                             </p>
                                         </div>
                                     </div>
 
                                     {project.lecturer_evaluation && (
-                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 font-semibold text-xs">
+                                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-200/80 font-semibold text-xs self-start sm:self-auto shrink-0">
                                             <Award className="size-3.5" />
                                             <span>Nilai: {project.lecturer_evaluation}</span>
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="mt-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs text-slate-700 leading-relaxed whitespace-pre-line">
+                                <div className="mt-3 p-3.5 rounded-lg bg-slate-50 border border-slate-200/60 text-xs text-slate-700 leading-relaxed whitespace-pre-line break-words">
                                     <strong className="block text-slate-900 mb-1">Catatan Arahan & Tindak Lanjut:</strong>
                                     {project.lecturer_notes}
                                 </div>
@@ -1017,16 +1018,16 @@ export default function WorkspaceShow({
 
                     {/* Object Storage Quota Widget */}
                     {storageQuota && (
-                        <div className="bg-white rounded-xl border border-slate-200/80 px-4 py-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
+                        <div className="bg-white rounded-xl border border-slate-200/80 p-3.5 sm:px-4 sm:py-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/70 text-blue-600 flex items-center justify-center shrink-0">
                                     <HardDrive className="size-4" />
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 flex-wrap min-w-0">
                                     <h3 className="text-xs font-bold text-slate-900">
                                         Penyimpanan Berkas Tim
                                     </h3>
-                                    <span className="text-xs font-semibold text-slate-500">
+                                    <span className="text-xs font-semibold text-slate-500 whitespace-nowrap">
                                         ({storageQuota.used_mb} / {storageQuota.max_mb} MB)
                                     </span>
                                 </div>
@@ -1048,9 +1049,9 @@ export default function WorkspaceShow({
                     )}
 
                     {/* 2. ROADMAP & JADWAL PENGERJAAN TIM */}
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
-                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-                            <div className="flex items-center gap-3">
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-2xs">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-4 border-b border-slate-100">
+                            <div className="flex items-center gap-2.5 sm:gap-3">
                                 <div className="size-8 rounded-lg bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0">
                                     <Calendar className="size-4" />
                                 </div>
@@ -1059,10 +1060,10 @@ export default function WorkspaceShow({
                                 </h2>
                             </div>
 
-                            <div className="flex items-center gap-2 shrink-0">
+                            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                                 <Link
                                     href={`/ai-workspace?team_id=${team.id}`}
-                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
+                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition active:scale-95 cursor-pointer whitespace-nowrap"
                                 >
                                     <Bot className="size-3.5 text-blue-600" />
                                     <span>AI Workspace</span>
@@ -1070,7 +1071,7 @@ export default function WorkspaceShow({
                                 <button
                                     onClick={openAddSprint}
                                     type="button"
-                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition shrink-0 cursor-pointer"
+                                    className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold shadow-2xs transition active:scale-95 cursor-pointer whitespace-nowrap"
                                 >
                                     <Plus className="size-3.5 text-blue-600" />
                                     <span>Tambah Sprint</span>
@@ -1078,10 +1079,11 @@ export default function WorkspaceShow({
                                 <button
                                     onClick={handleTriggerAiAgent}
                                     disabled={orchestrating}
-                                    className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 shrink-0 cursor-pointer"
+                                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold shadow-2xs transition disabled:opacity-50 active:scale-95 cursor-pointer"
                                 >
                                     <Wand2 className="size-3.5 text-white" />
-                                    <span>{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
+                                    <span className="sm:hidden">{orchestrating ? 'Menyusun...' : 'Bagi Tugas Otomatis'}</span>
+                                    <span className="hidden sm:inline">{orchestrating ? 'Menyusun roadmap...' : 'Bagi Tugas & Roadmap Otomatis'}</span>
                                 </button>
                             </div>
                         </div>
@@ -1097,14 +1099,14 @@ export default function WorkspaceShow({
                                 milestones.map((m: any, idx: number) => (
                                     <div
                                         key={m.id || idx}
-                                        className="group p-4 rounded-xl border border-slate-200/90 bg-white flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-slate-300 transition relative"
+                                        className="group p-4 rounded-xl border border-slate-200/90 bg-white flex flex-col justify-between shadow-2xs hover:shadow-xs hover:border-slate-300 transition relative min-w-0"
                                     >
-                                        <div>
+                                        <div className="min-w-0">
                                             <div className="flex items-center justify-between gap-1 mb-2">
-                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 font-bold">
+                                                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/60 font-bold shrink-0">
                                                     Sprint {idx + 1}
                                                 </span>
-                                                <div className="flex items-center gap-1">
+                                                <div className="flex items-center gap-1 shrink-0">
                                                     <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200/60 text-slate-600 font-semibold capitalize">
                                                         {m.status?.replace('_', ' ') || 'Planned'}
                                                     </span>
@@ -1131,24 +1133,24 @@ export default function WorkspaceShow({
                                                 </div>
                                             </div>
 
-                                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1 leading-snug">
+                                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1 leading-snug break-words">
                                                 {m.title}
                                             </h4>
 
                                             {m.description && (
-                                                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                                <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed break-words">
                                                     {m.description}
                                                 </p>
                                             )}
                                         </div>
 
                                         <div className="mt-4 pt-3 border-t border-slate-100">
-                                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                                                <span className="flex items-center gap-1" title={m.due_on ? `Tenggat: ${m.due_on.split('T')[0]}` : undefined}>
-                                                    <Clock className="size-3 text-slate-400" />
-                                                    <span>{formatDueDate(m.due_on) || 'Tenggat Waktu'}</span>
+                                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1 gap-2">
+                                                <span className="flex items-center gap-1 min-w-0" title={m.due_on ? `Tenggat: ${m.due_on.split('T')[0]}` : undefined}>
+                                                    <Clock className="size-3 text-slate-400 shrink-0" />
+                                                    <span className="truncate">{formatDueDate(m.due_on) || 'Tenggat Waktu'}</span>
                                                 </span>
-                                                <span className="font-bold text-slate-800">
+                                                <span className="font-bold text-slate-800 shrink-0 ml-1">
                                                     {m.completed_tasks_count || 0}/{m.tasks_count || 0} Selesai
                                                 </span>
                                             </div>
@@ -1166,9 +1168,9 @@ export default function WorkspaceShow({
                     </div>
 
                     {/* 3. TASK BOARDS CONTROL BAR */}
-                    <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:px-4 sm:py-3 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-3 sm:px-4 sm:py-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         {/* Left: View Tabs */}
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs self-start">
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs self-start shrink-0">
                             <button
                                 onClick={() => setActiveView('board')}
                                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-semibold text-xs transition cursor-pointer ${
@@ -1194,8 +1196,8 @@ export default function WorkspaceShow({
                         </div>
 
                         {/* Right: Search Filter */}
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
+                        <div className="flex items-center gap-3 w-full sm:w-auto">
+                            <div className="relative flex-1 sm:w-64">
                                 <Search className="size-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                                 <input
                                     type="text"
@@ -1270,25 +1272,25 @@ export default function WorkspaceShow({
                                                         draggable
                                                         onDragStart={(e) => handleDragStart(e, task.id, col.key)}
                                                         onClick={() => handleOpenEditModal(task)}
-                                                        className={`group bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all cursor-pointer relative flex flex-col gap-2 select-none ${
+                                                        className={`group bg-white border border-slate-200/90 rounded-xl p-3.5 shadow-2xs hover:shadow-xs hover:border-slate-300 transition-all cursor-pointer relative flex flex-col gap-2 select-none min-w-0 ${
                                                             isBeingDragged ? 'opacity-40 scale-95 border-blue-400' : ''
                                                         }`}
                                                     >
                                                         {/* Priority Chip & Actions */}
-                                                        <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center justify-between gap-1.5 min-w-0">
                                                             <span
-                                                                className={`inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.cls}`}
+                                                                className={`inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${priority.cls}`}
                                                             >
                                                                 <span>{priority.label}</span>
                                                             </span>
 
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-1 shrink-0">
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleOpenEditModal(task);
                                                                     }}
-                                                                    className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100"
+                                                                    className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100 hidden sm:block"
                                                                     title="Edit Kartu"
                                                                 >
                                                                     <Edit3 className="size-3" />
@@ -1302,12 +1304,12 @@ export default function WorkspaceShow({
                                                                         e.stopPropagation();
                                                                         handleMoveStatus(task, e.target.value);
                                                                     }}
-                                                                    className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer"
+                                                                    className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer max-w-[115px] truncate"
                                                                 >
-                                                                    <option value="todo">Belum Dikerjakan (To-Do)</option>
-                                                                    <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
-                                                                    <option value="in_review">Ulasan & QA (In Review)</option>
-                                                                    <option value="completed">Selesai (Done)</option>
+                                                                    <option value="todo">To-Do</option>
+                                                                    <option value="in_progress">In Progress</option>
+                                                                    <option value="in_review">In Review</option>
+                                                                    <option value="completed">Done</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1319,26 +1321,26 @@ export default function WorkspaceShow({
 
                                                         {/* Task Description */}
                                                         {task.description && (
-                                                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                                                            <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed break-words">
                                                                 {task.description}
                                                             </p>
                                                         )}
 
                                                         {/* Card Footer: Assignee & Milestone Sprint */}
-                                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] mt-1">
-                                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] mt-1 gap-2 min-w-0">
+                                                            <div className="flex items-center gap-1.5 text-slate-600 min-w-0">
                                                                 <div className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
                                                                     {task.assignee?.name
                                                                         ? task.assignee.name.substring(0, 1).toUpperCase()
                                                                         : '?'}
                                                                 </div>
-                                                                <span className="truncate max-w-[90px] text-[10px] font-medium text-slate-700">
+                                                                <span className="truncate max-w-[80px] sm:max-w-[90px] text-[10px] font-medium text-slate-700">
                                                                     {task.assignee?.name?.split(' ')[0] || 'Unassigned'}
                                                                 </span>
                                                             </div>
 
                                                             {task.milestone && (
-                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[100px]">
+                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[85px] sm:max-w-[100px] shrink-0">
                                                                     {task.milestone.title?.split(':')[0] || task.milestone.title}
                                                                 </span>
                                                             )}
@@ -1407,7 +1409,7 @@ export default function WorkspaceShow({
                         </div>
                     ) : (
                         /* List View */
-                        <div className="bg-white border border-slate-200/80 rounded-xl p-5 shadow-2xs">
+                        <div className="bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-2xs">
                             <div className="flex flex-col gap-4">
                                 {columns.map((col) => {
                                     const tasks = filterTasks((kanban as any)[col.key] || []);
@@ -1424,20 +1426,20 @@ export default function WorkspaceShow({
                                             {tasks.map((task: any) => (
                                                 <div
                                                     key={task.id}
-                                                    className="p-3 border border-slate-200/70 rounded-xl flex items-center justify-between gap-3 hover:bg-slate-50 transition"
+                                                    className="p-3 border border-slate-200/70 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 hover:bg-slate-50 transition"
                                                 >
-                                                    <div className="flex items-center gap-2.5">
-                                                        <div className="size-2 rounded-full bg-blue-600 shrink-0" />
-                                                        <div>
-                                                            <h4 className="text-xs font-bold text-slate-900">{task.title}</h4>
+                                                    <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                                                        <div className="size-2 rounded-full bg-blue-600 shrink-0 mt-1 sm:mt-0" />
+                                                        <div className="min-w-0">
+                                                            <h4 className="text-xs font-bold text-slate-900 break-words">{task.title}</h4>
                                                             {task.description && (
-                                                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{task.description}</p>
+                                                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 break-words">{task.description}</p>
                                                             )}
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2.5">
-                                                        <span className="text-[11px] text-slate-600 font-medium">
+                                                    <div className="flex items-center justify-between sm:justify-end gap-2.5 shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                                                        <span className="text-[11px] text-slate-600 font-medium truncate max-w-[120px]">
                                                             {task.assignee?.name || 'Unassigned'}
                                                         </span>
                                                         <button
@@ -1450,12 +1452,12 @@ export default function WorkspaceShow({
                                                         <select
                                                             value={task.status}
                                                             onChange={(e) => handleMoveStatus(task, e.target.value)}
-                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer"
+                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer max-w-[115px] truncate"
                                                         >
-                                                            <option value="todo">Belum Dikerjakan (To-Do)</option>
-                                                            <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
-                                                            <option value="in_review">Ulasan & QA (In Review)</option>
-                                                            <option value="completed">Selesai (Done)</option>
+                                                            <option value="todo">To-Do</option>
+                                                            <option value="in_progress">In Progress</option>
+                                                            <option value="in_review">In Review</option>
+                                                            <option value="completed">Done</option>
                                                         </select>
                                                     </div>
                                                 </div>

@@ -1624,4 +1624,69 @@ class ProjectWebController extends Controller
 
         return back()->with('success', 'Pesan diskusi berhasil dikirim ke tim.');
     }
+
+    /**
+     * Update project information and settings.
+     */
+    public function update(Request $request, string|int $id)
+    {
+        $user = $request->user();
+        $project = $this->resolveProject($id, ['team']);
+
+        if (! ($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdmin())) {
+            abort(403, 'Hanya ketua proyek yang dapat mengubah informasi dan pengaturan proyek.');
+        }
+
+        $validated = $request->validate([
+            'title' => ['sometimes', 'string', 'max:255'],
+            'short_description' => ['nullable', 'string', 'max:300'],
+            'description' => ['nullable', 'string'],
+            'category' => ['sometimes', Rule::enum(ProjectCategory::class)],
+            'difficulty' => ['nullable', 'string', 'in:beginner,intermediate,advanced'],
+            'visibility' => ['nullable', 'string'],
+            'team_name' => ['nullable', 'string', 'max:100'],
+            'tech_stack' => ['nullable', 'array'],
+            'starts_on' => ['nullable', 'date'],
+            'target_completion_on' => ['nullable', 'date'],
+        ]);
+
+        if (!empty($validated['team_name']) && $project->team) {
+            $project->team->update(['name' => trim($validated['team_name'])]);
+        }
+
+        $projectUpdateData = collect($validated)->except(['team_name'])->toArray();
+        if (!empty($projectUpdateData)) {
+            $project->update($projectUpdateData);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'message' => 'Informasi dan pengaturan proyek berhasil disimpan.',
+                'data' => $project->fresh(['team']),
+            ]);
+        }
+
+        return back()->with('success', 'Informasi dan pengaturan proyek berhasil disimpan.');
+    }
+
+    /**
+     * Disband or delete project.
+     */
+    public function destroy(Request $request, string|int $id)
+    {
+        $user = $request->user();
+        $project = $this->resolveProject($id);
+
+        if (! ($project->isLeader($user) || $user->isPlatformAdmin() || $user->isCampusAdmin())) {
+            abort(403, 'Hanya ketua proyek yang dapat membubarkan proyek.');
+        }
+
+        $project->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Proyek berhasil dibubarkan.']);
+        }
+
+        return redirect()->route('projects.index')->with('success', 'Proyek berhasil dibubarkan.');
+    }
 }

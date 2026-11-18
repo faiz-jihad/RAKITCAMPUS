@@ -276,7 +276,7 @@ export default function CompetitionWorkspace({
     const breadcrumbs: BreadcrumbItem[] = [
         { title: 'Competition Hub', href: '/competitions' },
         { title: participation.competition?.name || 'Kompetisi', href: `/competitions/${participation.competition?.slug || participation.competition?.id}` },
-        { title: participation.team?.name || 'Alba' },
+        { title: participation.team?.name || 'Alba', href: '#' },
     ];
 
     // Handlers
