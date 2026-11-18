@@ -133,7 +133,12 @@ class GoogleAuthController extends Controller
         $request->session()->regenerate();
 
         $profile = $user->profile;
-        if (!$user->isLecturer() && !$user->isPlatformAdmin() && (!$profile || !$profile->is_onboarded)) {
+        if ($user->isPlatformAdmin() || $user->isCampusAdmin()) {
+            return redirect()->intended(route('admin.index'))
+                ->with('success', "Selamat datang, {$user->name}! Anda berhasil masuk sebagai Administrator.");
+        }
+
+        if (!$user->isLecturer() && (!$profile || !$profile->is_onboarded)) {
             return redirect()->route('onboarding')
                 ->with('success', "Selamat datang, {$user->name}! Silakan lengkapi biodata singkatmu.");
         }

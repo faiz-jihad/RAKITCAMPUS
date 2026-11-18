@@ -169,7 +169,7 @@ export default function AppLayout({
 
     // Check explicit select_hub URL parameter only (never auto-popup on tab click or /dashboard)
     useEffect(() => {
-        if (isLecturer) {
+        if (isAdminArea || isAdmin || isLecturer) {
             setIsGatewayOpen(false);
             return;
         }
@@ -184,7 +184,7 @@ export default function AppLayout({
 
         // Jangan pernah memunculkan pop-up otomatis saat pindah tab atau klik Dashboard
         setIsGatewayOpen(false);
-    }, [url, isLecturer]);
+    }, [url, isLecturer, isAdmin, isAdminArea]);
 
     const initials = useMemo(() => {
         const name = user?.name || 'Mahasiswa';
@@ -202,16 +202,7 @@ export default function AppLayout({
 
     const renderUserActions = () => (
         <div className="flex items-center gap-1.5 sm:gap-2">
-            {isAdminArea ? (
-                <Link
-                    href="/dashboard"
-                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition"
-                    title="Beralih ke Portal Mahasiswa"
-                >
-                    <ArrowLeft className="size-3.5 text-slate-500" />
-                    <span>Portal Mahasiswa</span>
-                </Link>
-            ) : !isLecturer ? (
+            {!isAdminArea && !isAdmin && !isLecturer && (
                 /* Ganti Ruang Kerja (Single Jigsaw Button: Chrome Extensions Style, Colored & Center Workspace Icon) */
                 <button
                     type="button"
@@ -257,7 +248,7 @@ export default function AppLayout({
                         )}
                     </div>
                 </button>
-            ) : null}
+            )}
 
             <NotificationBell />
 
@@ -338,64 +329,54 @@ export default function AppLayout({
                                     <span>Keamanan Sandi</span>
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    href="/ai-workspace"
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                    <Bot className="size-4 text-blue-600" />
-                                    <div className="flex-1 flex items-center justify-between">
-                                        <span>AI Workspace</span>
-                                        <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                            Kopilot
-                                        </span>
-                                    </div>
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    href="/feedback"
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                    <MessageSquare className="size-4 text-blue-600" />
-                                    <div className="flex-1 flex items-center justify-between">
-                                        <span>Bantuan & Lapor Kendala</span>
-                                        <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                            Feedback
-                                        </span>
-                                    </div>
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-
-                        {isAdmin && (
-                            <>
-                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                                <DropdownMenuGroup className="space-y-0.5">
+                            {!isAdminArea && !isAdmin && (
+                                <>
                                     <DropdownMenuItem asChild>
                                         <Link
-                                            href={isAdminArea ? '/dashboard' : '/admin'}
-                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition cursor-pointer"
+                                            href="/ai-workspace"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
                                         >
-                                            <ShieldCheck className="size-4 text-rose-600" />
+                                            <Bot className="size-4 text-blue-600" />
                                             <div className="flex-1 flex items-center justify-between">
-                                                <span>{isAdminArea ? 'Beralih ke Mahasiswa' : 'Panel Administrator'}</span>
-                                                <span className="text-[9px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded">
-                                                    {isAdminArea ? 'Siswa' : 'Admin'}
+                                                <span>AI Workspace</span>
+                                                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                                    Kopilot
                                                 </span>
                                             </div>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem asChild>
                                         <Link
-                                            href="/admin/feedback"
+                                            href="/feedback"
                                             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
                                         >
-                                            <MessageSquare className="size-4 text-amber-600" />
+                                            <MessageSquare className="size-4 text-blue-600" />
                                             <div className="flex-1 flex items-center justify-between">
-                                                <span>Saran & Masukan</span>
-                                                <span className="text-[9px] font-bold text-amber-700 bg-amber-100/80 px-1.5 py-0.5 rounded">
-                                                    Masukan
+                                                <span>Bantuan & Lapor Kendala</span>
+                                                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                                    Feedback
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+                        </DropdownMenuGroup>
+
+                        {isAdmin && !isAdminArea && (
+                            <>
+                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                <DropdownMenuGroup className="space-y-0.5">
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/admin"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition cursor-pointer"
+                                        >
+                                            <ShieldCheck className="size-4 text-rose-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>Panel Administrator</span>
+                                                <span className="text-[9px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded">
+                                                    Admin
                                                 </span>
                                             </div>
                                         </Link>
@@ -474,8 +455,8 @@ export default function AppLayout({
         <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
             {title && <Head title={title} />}
 
-            {/* BIG HUB GATEWAY MODAL (Only for students, never for admin workspace or lecturers) */}
-            {!isAdminArea && !isLecturer && (
+            {/* BIG HUB GATEWAY MODAL (Only for regular students, never for admin or lecturers) */}
+            {!isAdminArea && !isAdmin && !isLecturer && (
                 <HubGatewayModal
                     isOpen={isGatewayOpen}
                     onClose={() => setIsGatewayOpen(false)}

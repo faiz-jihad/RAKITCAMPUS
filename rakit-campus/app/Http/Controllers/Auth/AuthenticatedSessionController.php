@@ -35,7 +35,13 @@ class AuthenticatedSessionController extends Controller
 
         $user = $request->user();
         $membership = $user?->activeMembership();
+        $isAdmin = $user && ($user->isPlatformAdmin() || $user->isCampusAdmin() || ($membership?->role === \App\Enums\CampusRole::Admin) || ($membership?->role === \App\Enums\CampusRole::CampusAdmin));
         $isLecturer = $user && ($user->isLecturer() || ($membership?->role === \App\Enums\CampusRole::Lecturer));
+
+        if ($isAdmin) {
+            // Administrator langsung diarahkan ke panel admin tanpa selector hub
+            return redirect()->intended(route('admin.index', absolute: false));
+        }
 
         if ($isLecturer) {
             // Dosen langsung masuk ke halaman dosen tanpa selector ruang kerja
