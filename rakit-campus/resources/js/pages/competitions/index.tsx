@@ -604,12 +604,28 @@ export default function CompetitionIndex({
                 canonicalUrl="https://rakitcampus.my.id/competitions"
             />
             <div className="space-y-6 sm:space-y-8">
-                {/* 1. MINIMAL HEADER SECTION */}
-                <header className="flex items-center justify-between gap-3 pb-5 border-b border-slate-200/80">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                            Competition Hub
-                        </h1>
+                {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-4">
+                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                            <img
+                                src="/images/mascot/mascot-trophy.png"
+                                alt="Mascot Trophy"
+                                className="w-full h-full object-contain drop-shadow-xs select-none pointer-events-none transform hover:scale-105 transition"
+                            />
+                        </div>
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
+                                <Trophy className="size-3 text-indigo-600" />
+                                <span>Competition Hub & Talent Radar</span>
+                            </div>
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                Competition Hub Mahasiswa
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
+                                Eksplorasi kompetisi bergengsi, temukan rekan tim lintas prodi, dan pantau linimasa karya lomba nasional.
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -618,12 +634,44 @@ export default function CompetitionIndex({
                             setCreateTeamPreselectedCompId(null);
                             setCreateTeamModalOpen(true);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-2xs transition shrink-0 cursor-pointer self-start md:self-auto"
                     >
                         <Plus className="w-4 h-4" />
-                        <span>Buat Tim</span>
+                        <span>Buat Tim Baru</span>
                     </button>
-                </header>
+                </div>
+
+                {/* 2. APPLE HIG SEGMENTED TAB BAR */}
+                <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto text-xs font-semibold shadow-2xs">
+                    {[
+                        { key: 'explore', label: 'Eksplor Lomba', icon: Trophy },
+                        { key: 'teams', label: 'Cari Rekan & Tim', icon: Users },
+                        { key: 'categories', label: 'Kategori Minat', icon: Layers },
+                        { key: 'my_competitions', label: 'Lomba Saya', icon: Bookmark },
+                        { key: 'recommendations', label: 'Rekomendasi AI', icon: Sparkles },
+                    ].map((tab) => {
+                        const Icon = tab.icon;
+                        const isCurrent = activeTab === tab.key;
+                        return (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => {
+                                    setActiveTab(tab.key as any);
+                                    router.get('/competitions', { tab: tab.key }, { preserveState: true, preserveScroll: true });
+                                }}
+                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                    isCurrent
+                                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Icon className="size-3.5" />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
                 {/* ========================================================= */}
                 {/* TAB 1: EKSPLOR LOMBA                                     */}
@@ -632,9 +680,9 @@ export default function CompetitionIndex({
                     <div className="space-y-6 sm:space-y-8">
                         {/* BENTO SHOWCASE GRID: 4 Cohesive Tiles */}
                         {spotlightComp && (
-                            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4.5 items-stretch">
+                            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
                                 {/* Tile 1: Spotlight Hero (lg:col-span-7 xl:col-span-8) */}
-                                <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between group">
+                                <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs flex flex-col md:flex-row justify-between group">
                                     <div className="relative aspect-[4/5] sm:aspect-auto sm:h-64 md:h-auto md:w-5/12 md:aspect-[4/5] overflow-hidden bg-slate-950 shrink-0">
                                         <img
                                             src={getCompetitionCover(spotlightComp)}
@@ -643,12 +691,12 @@ export default function CompetitionIndex({
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/20" />
 
-                                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                                            <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                                                <AnimatedIcon name="trophy" size={14} />
+                                        <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5">
+                                            <span className="px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                                                <Trophy className="size-3" />
                                                 <span>Sorotan</span>
                                             </span>
-                                            <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
+                                            <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
                                                 {spotlightComp.level || 'Nasional'}
                                             </span>
                                         </div>
@@ -656,18 +704,18 @@ export default function CompetitionIndex({
                                         <button
                                             type="button"
                                             onClick={(e) => handleToggleBookmark(e, spotlightComp.id)}
-                                            className={`absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                            className={`absolute top-3.5 right-3.5 p-2 rounded-full backdrop-blur-md transition cursor-pointer active:scale-95 ${
                                                 bookmarkedIds.includes(spotlightComp.id)
-                                                    ? 'bg-rose-500 text-white'
-                                                    : 'bg-black/30 hover:bg-black/50 text-white'
+                                                    ? 'bg-rose-500 text-white shadow-2xs'
+                                                    : 'bg-black/40 hover:bg-black/60 text-white'
                                             }`}
                                             title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
                                         >
                                             <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
                                         </button>
 
-                                        <div className="absolute bottom-2.5 left-3 text-white">
-                                            <span className="text-[10px] text-white/80 block">Deadline</span>
+                                        <div className="absolute bottom-3 left-3.5 text-white">
+                                            <span className="text-[10px] text-white/70 block uppercase tracking-wider font-bold">Deadline</span>
                                             <span className="text-xs font-bold text-white">
                                                 {spotlightComp.registration_deadline
                                                     ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
@@ -680,35 +728,35 @@ export default function CompetitionIndex({
                                         </div>
                                     </div>
 
-                                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3">
+                                    <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
                                         <div>
-                                            <span className="text-[11px] font-semibold text-slate-400 block">
+                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                                                 {spotlightComp.organizer}
                                             </span>
                                             <Link href={`/competitions/${spotlightComp.slug || spotlightComp.id}`} className="group/link block">
-                                                <h2 className="text-base sm:text-lg font-bold text-slate-900 group-hover/link:text-blue-600 transition tracking-tight leading-snug line-clamp-2 mt-0.5">
+                                                <h2 className="text-base sm:text-xl font-extrabold text-slate-900 group-hover/link:text-indigo-600 transition tracking-tight leading-snug line-clamp-2 mt-1">
                                                     {spotlightComp.name}
                                                 </h2>
                                             </Link>
                                             {spotlightComp.description && (
-                                                <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                                                <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
                                                     {spotlightComp.description}
                                                 </p>
                                             )}
                                         </div>
 
-                                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                                        <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">
                                                     {spotlightComp.competition_type || 'Tim'}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-semibold uppercase">
+                                                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
                                                     {spotlightComp.category?.replace('_', ' ') || 'Teknologi'}
                                                 </span>
                                             </div>
                                             <Link
                                                 href={`/competitions/${spotlightComp.slug || spotlightComp.id}`}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition active:scale-95"
                                             >
                                                 <span>Detail</span>
                                                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -718,16 +766,18 @@ export default function CompetitionIndex({
                                 </div>
 
                                 {/* Tile 2: Deadlines Countdown (lg:col-span-5 xl:col-span-4) */}
-                                <div className="md:col-span-2 lg:col-span-5 xl:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                                <div className="md:col-span-2 lg:col-span-5 xl:col-span-4 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                                            <div className="flex items-center gap-2">
-                                                <AnimatedIcon name="clock" size={16} />
-                                                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="size-8 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shadow-2xs">
+                                                    <Clock className="size-4" />
+                                                </div>
+                                                <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
                                                     Deadline Terdekat
                                                 </h3>
                                             </div>
-                                            <span className="text-[10px] font-semibold text-slate-400">Segera Ditutup</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Segera Ditutup</span>
                                         </div>
 
                                         <div className="divide-y divide-slate-100">
@@ -743,18 +793,18 @@ export default function CompetitionIndex({
                                                         <Link
                                                             key={comp.id}
                                                             href={`/competitions/${comp.slug || comp.id}`}
-                                                            className="py-2 flex items-center justify-between gap-2.5 group block"
+                                                            className="py-2.5 flex items-center justify-between gap-3 group block"
                                                         >
                                                             <div className="min-w-0 flex-1">
-                                                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                                                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition truncate">
                                                                     {comp.name}
                                                                 </h4>
-                                                                <p className="text-[10px] text-slate-400 truncate">
+                                                                <p className="text-[10px] text-slate-400 truncate mt-0.5">
                                                                     {comp.organizer}
                                                                 </p>
                                                             </div>
                                                             <span
-                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                                                                     daysLeft !== null && daysLeft <= 3
                                                                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                                                         : 'bg-slate-100 text-slate-700'
@@ -773,16 +823,16 @@ export default function CompetitionIndex({
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 border-t border-slate-100 text-right">
+                                    <div className="pt-2.5 border-t border-slate-100 text-right">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 const el = document.getElementById('catalog-section');
                                                 if (el) el.scrollIntoView({ behavior: 'smooth' });
                                             }}
-                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
                                         >
-                                            Lihat Semua &darr;
+                                            Lihat Semua Katalog ↓
                                         </button>
                                     </div>
                                 </div>
@@ -790,32 +840,32 @@ export default function CompetitionIndex({
                                 {/* Tile 3: Cari Rekan Tim (lg:col-span-6) */}
                                 <div
                                     onClick={() => setActiveTab('teams')}
-                                    className="col-span-1 md:col-span-1 lg:col-span-6 bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-blue-200/70 shadow-2xs hover:border-blue-400 transition cursor-pointer flex flex-col justify-between group"
+                                    className="col-span-1 md:col-span-1 lg:col-span-6 bg-indigo-50/50 rounded-3xl p-5 sm:p-6 border border-indigo-200/70 shadow-xs hover:border-indigo-400 transition cursor-pointer flex flex-col justify-between group active:scale-[0.99]"
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
-                                                <Users className="w-3.5 h-3.5" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="size-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                                                <Users className="size-5" />
                                             </span>
                                             <div>
-                                                <h3 className="text-xs font-bold text-slate-900">
+                                                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
                                                     Cari Rekan Tim
                                                 </h3>
-                                                <span className="text-[10px] text-slate-500">
+                                                <span className="text-[11px] text-slate-500">
                                                     {openRecruitingTeams.length} tim aktif membuka lowongan peran
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                                            Eksplor Tim &rarr;
+                                        <span className="text-xs font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
+                                            Eksplor Tim →
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center gap-2 flex-wrap mt-2">
+                                    <div className="flex items-center gap-2 flex-wrap mt-3">
                                         {openRecruitingTeams.slice(0, 3).map((team: any) => (
                                             <span
                                                 key={team.id}
-                                                className="px-2.5 py-1 rounded-lg bg-white/90 border border-blue-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
+                                                className="px-3 py-1 rounded-full bg-white border border-indigo-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
                                             >
                                                 {team.name}
                                             </span>
@@ -827,17 +877,17 @@ export default function CompetitionIndex({
                                 </div>
 
                                 {/* Tile 4: Kategori Unggulan (lg:col-span-6) */}
-                                <div className="col-span-1 md:col-span-1 lg:col-span-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                                <div className="col-span-1 md:col-span-1 lg:col-span-6 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="p-1.5 rounded-lg bg-slate-900 text-white shadow-xs">
-                                                <Layers className="w-3.5 h-3.5" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="size-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xs">
+                                                <Layers className="size-5" />
                                             </span>
                                             <div>
-                                                <h3 className="text-xs font-bold text-slate-900">
+                                                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
                                                     Kategori Unggulan
                                                 </h3>
-                                                <span className="text-[10px] text-slate-500">
+                                                <span className="text-[11px] text-slate-500">
                                                     Filter cepat minat kompetisi
                                                 </span>
                                             </div>
@@ -845,13 +895,13 @@ export default function CompetitionIndex({
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('categories')}
-                                            className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
                                         >
                                             Semua ({categories.length})
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-3">
                                         {categories.slice(0, 5).map((cat) => (
                                             <button
                                                 key={cat}
@@ -860,9 +910,9 @@ export default function CompetitionIndex({
                                                     setExploreCategory(cat);
                                                     router.get('/competitions', { tab: 'explore', category: cat }, { preserveState: true });
                                                 }}
-                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                                                className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer active:scale-95 ${
                                                     exploreCategory === cat
-                                                        ? 'bg-blue-600 text-white shadow-xs'
+                                                        ? 'bg-indigo-600 text-white shadow-2xs'
                                                         : 'bg-slate-100 hover:bg-slate-200/70 text-slate-700'
                                                 }`}
                                             >
