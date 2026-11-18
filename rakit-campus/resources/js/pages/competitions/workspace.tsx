@@ -2735,11 +2735,11 @@ export default function CompetitionWorkspace({
 
                     return (
                         <div className="space-y-6">
-                            <div className="bg-white rounded-xl p-5 sm:p-6 border border-slate-200/90 shadow-2xs space-y-6">
+                            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-6">
                                 {/* Header */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="size-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                        <div className="size-11 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-100/80 flex items-center justify-center shrink-0 shadow-2xs">
                                             <FolderOpen className="size-5" />
                                         </div>
                                         <div>
@@ -2761,7 +2761,7 @@ export default function CompetitionWorkspace({
                                                 if (found) docForm.setData('name', found.label);
                                                 setDocModalOpen(true);
                                             }}
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-xs cursor-pointer self-start sm:self-auto shrink-0"
                                         >
                                             <Upload className="size-3.5" />
                                             <span>Unggah Berkas Baru</span>
@@ -2771,7 +2771,7 @@ export default function CompetitionWorkspace({
 
                                 {/* Object Storage Quota Strip */}
                                 {storageQuota && (
-                                    <div className="bg-slate-50/80 rounded-xl border border-slate-200/80 p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                    <div className="bg-slate-50/70 rounded-2xl border border-slate-200/70 p-3.5 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div className="flex items-center gap-2.5">
                                             <HardDrive className="size-4 text-slate-500 shrink-0" />
                                             <span className="text-xs font-bold text-slate-800">Kapasitas Object Storage Tim</span>
@@ -2783,7 +2783,7 @@ export default function CompetitionWorkspace({
                                             <div className="w-full bg-slate-200/80 rounded-full h-1.5 overflow-hidden">
                                                 <div
                                                     className={`h-full rounded-full transition-all duration-500 ${
-                                                        storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-blue-600'
+                                                        storageQuota.percent_used > 85 ? 'bg-rose-500' : 'bg-indigo-600'
                                                     }`}
                                                     style={{ width: `${Math.min(100, storageQuota.percent_used)}%` }}
                                                 />
@@ -2795,7 +2795,7 @@ export default function CompetitionWorkspace({
                                     </div>
                                 )}
 
-                                {/* 6 Clean, Modern Interactive Folder Cards */}
+                                {/* 6 Apple HIG Bento Folder Cards */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-2">
@@ -2808,12 +2808,23 @@ export default function CompetitionWorkspace({
                                         </span>
                                     </div>
 
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
                                         {DOC_FOLDERS.map((folder) => {
                                             const count = getFolderDocCount(folder.key);
                                             const isSelected = selectedDocFolder === folder.key;
                                             const isDragTarget = dragOverFolderKey === folder.key;
                                             const folderFiles = allDocs.filter((d: any) => d.required_document_key === folder.key);
+
+                                            const folderStyles: Record<string, { icon: any; bg: string; text: string; border: string }> = {
+                                                proposal: { icon: FileText, bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100' },
+                                                pitch_deck: { icon: Award, bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
+                                                video_demo: { icon: Globe, bg: 'bg-rose-50', text: 'text-rose-600', border: 'border-rose-100' },
+                                                repo_url: { icon: GitBranch, bg: 'bg-slate-900', text: 'text-white', border: 'border-slate-800' },
+                                                poster: { icon: ImageIcon, bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100' },
+                                                registration_proof: { icon: ShieldCheck, bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
+                                            };
+                                            const style = folderStyles[folder.key] || folderStyles.proposal;
+                                            const FolderIconComp = style.icon;
 
                                             return (
                                                 <div
@@ -2838,104 +2849,98 @@ export default function CompetitionWorkspace({
                                                             setDocModalOpen(true);
                                                         }
                                                     }}
-                                                    className={`rounded-xl p-4 sm:p-4.5 border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-3 text-left relative group ${
+                                                    className={`rounded-3xl p-5 sm:p-5.5 border transition-all duration-200 cursor-pointer flex flex-col justify-between gap-4 text-left relative group shadow-xs hover:shadow-md hover:-translate-y-0.5 ${
                                                         isDragTarget
-                                                            ? 'bg-blue-50/90 border-blue-500 scale-[1.02] shadow-md ring-2 ring-blue-500/30'
+                                                            ? 'bg-indigo-50/70 border-indigo-600 scale-[1.02] shadow-md ring-2 ring-indigo-500/30'
                                                             : isSelected
-                                                            ? 'bg-blue-50/40 border-blue-600 shadow-xs ring-2 ring-blue-500/20'
-                                                            : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-2xs'
+                                                            ? 'bg-indigo-50/30 border-indigo-600 shadow-xs ring-2 ring-indigo-500/20'
+                                                            : 'bg-white border-slate-200/80 hover:border-slate-300'
                                                     }`}
                                                 >
-                                                    {/* Top Row: Folder Icon + Title + Count Badge */}
+                                                    {/* Top Row: Squircle Icon + Title & Desc + Status Pill */}
                                                     <div className="flex items-start justify-between gap-2.5">
                                                         <div className="flex items-center gap-3 min-w-0">
-                                                            <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
-                                                                isSelected
-                                                                    ? 'bg-blue-600 text-white shadow-2xs'
-                                                                    : 'bg-slate-100 group-hover:bg-blue-50 text-slate-700 group-hover:text-blue-600 border border-slate-200/80 group-hover:border-blue-200'
-                                                            }`}>
-                                                                {isSelected ? (
-                                                                    <FolderOpen className="size-5" />
-                                                                ) : (
-                                                                    <Folder className="size-5" />
-                                                                )}
+                                                            <div className={`size-11 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105 shadow-2xs border ${style.bg} ${style.text} ${style.border}`}>
+                                                                <FolderIconComp className="size-5" />
                                                             </div>
                                                             <div className="min-w-0">
-                                                                <h4 className={`text-xs font-bold leading-snug truncate transition ${
-                                                                    isSelected ? 'text-blue-900 font-black' : 'text-slate-900 group-hover:text-blue-600'
+                                                                <h4 className={`text-sm font-bold leading-snug truncate transition ${
+                                                                    isSelected ? 'text-indigo-900 font-extrabold' : 'text-slate-900 group-hover:text-indigo-600'
                                                                 }`}>
                                                                     {folder.label}
                                                                 </h4>
-                                                                <p className="text-[10px] text-slate-400 mt-0.5 truncate">
+                                                                <p className="text-xs text-slate-400 mt-0.5 truncate">
                                                                     {folder.desc}
                                                                 </p>
                                                             </div>
                                                         </div>
 
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 flex items-center gap-1 border ${
+                                                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 flex items-center gap-1 border ${
                                                             count > 0
-                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                                                : 'bg-slate-100 text-slate-500 border-slate-200'
+                                                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80'
+                                                                : 'bg-slate-100 text-slate-500 border-slate-200/60'
                                                         }`}>
                                                             {count > 0 ? (
                                                                 <>
-                                                                    <CheckCircle2 className="size-2.5 text-emerald-600" />
+                                                                    <CheckCircle2 className="size-3 text-emerald-600" />
                                                                     <span>{count} Berkas</span>
                                                                 </>
                                                             ) : (
-                                                                <span>Kosong</span>
+                                                                <span>Belum Ada</span>
                                                             )}
                                                         </span>
                                                     </div>
 
                                                     {/* Middle: Format Guideline & File Preview */}
-                                                    <div className="space-y-1.5 pt-1">
-                                                        <div className="flex items-center justify-between text-[10px] text-slate-400">
-                                                            <span className="font-mono bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200/60 text-slate-500">
-                                                                {folder.formats}
-                                                            </span>
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between text-[11px] text-slate-400">
+                                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                                {folder.formats.split(', ').map((fmt) => (
+                                                                    <span
+                                                                        key={fmt}
+                                                                        className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-lg bg-slate-50 text-slate-500 border border-slate-200/60"
+                                                                    >
+                                                                        {fmt}
+                                                                    </span>
+                                                                ))}
+                                                            </div>
                                                             {isDragTarget && (
-                                                                <span className="font-bold text-blue-600 animate-pulse">
-                                                                    Lepas file di sini
+                                                                <span className="font-bold text-indigo-600 animate-pulse text-xs">
+                                                                    Lepas berkas di sini
                                                                 </span>
                                                             )}
                                                         </div>
 
-                                                        {count > 0 && (
-                                                            <div className="space-y-1 pt-0.5">
-                                                                {folderFiles.slice(0, 1).map((f: any) => (
-                                                                    <div
-                                                                        key={f.id}
-                                                                        className="text-[10px] font-mono text-slate-700 bg-slate-50/80 border border-slate-200/80 rounded px-2 py-0.5 flex items-center justify-between gap-1.5 truncate"
-                                                                    >
-                                                                        <div className="flex items-center gap-1.5 truncate">
-                                                                            <FileText className="size-3 text-blue-600 shrink-0" />
-                                                                            <span className="truncate">{f.name || 'Berkas Dokumen'}</span>
-                                                                        </div>
-                                                                        <span className="text-[9px] font-bold text-slate-500 shrink-0">
-                                                                            v{f.version || 1}
-                                                                        </span>
-                                                                    </div>
-                                                                ))}
+                                                        {count > 0 && folderFiles.length > 0 && (
+                                                            <div className="p-2 rounded-xl bg-slate-50/90 border border-slate-100 flex items-center justify-between gap-2">
+                                                                <div className="flex items-center gap-2 truncate">
+                                                                    <FileText className="size-3.5 text-indigo-600 shrink-0" />
+                                                                    <span className="text-xs font-mono font-medium text-slate-800 truncate">
+                                                                        {folderFiles[0]?.name || 'Berkas Dokumen'}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-white border border-slate-200 text-slate-500 shrink-0">
+                                                                    v{folderFiles[0]?.version || 1}
+                                                                </span>
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     {/* Bottom Action Footer */}
-                                                    <div className={`pt-2.5 border-t flex items-center justify-between text-[11px] ${
-                                                        isSelected ? 'border-blue-200 text-blue-700' : 'border-slate-100 text-slate-500'
+                                                    <div className={`pt-3 border-t flex items-center justify-between text-xs ${
+                                                        isSelected ? 'border-indigo-100' : 'border-slate-100'
                                                     }`}>
                                                         {isSelected ? (
-                                                            <span className="font-bold text-blue-600 flex items-center gap-1.5">
-                                                                <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
-                                                                <span>Folder Sedang Dibuka</span>
-                                                                <ChevronDown className="size-3" />
+                                                            <span className="font-bold text-indigo-600 flex items-center gap-1.5">
+                                                                <span className="size-2 rounded-full bg-indigo-600 animate-pulse" />
+                                                                <span>Folder Terbuka</span>
+                                                                <ChevronDown className="size-3.5" />
                                                             </span>
                                                         ) : (
-                                                            <span className="font-semibold text-slate-500 group-hover:text-blue-600 transition flex items-center gap-1">
+                                                            <span className="font-semibold text-slate-500 group-hover:text-indigo-600 transition flex items-center gap-1">
                                                                 <span>Buka Folder</span>
-                                                                <span className="group-hover:translate-x-0.5 transition-transform">&rarr;</span>
-                                                            </span>
+                                                                <ChevronRight className="size-3.5" />
+                            </span>
                                                         )}
 
                                                         {canManageTasks && (
@@ -2947,8 +2952,8 @@ export default function CompetitionWorkspace({
                                                                     docForm.setData('name', folder.label);
                                                                     setDocModalOpen(true);
                                                                 }}
-                                                                className="font-bold text-slate-600 hover:text-blue-600 hover:bg-slate-100 px-2 py-0.5 rounded transition flex items-center gap-1 cursor-pointer"
-                                                                title={`Unggah ke folder ${folder.label}`}
+                                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                                                title={`Unggah berkas ke ${folder.label}`}
                                                             >
                                                                 <Plus className="size-3" />
                                                                 <span>Unggah</span>
@@ -2969,9 +2974,9 @@ export default function CompetitionWorkspace({
                                             <button
                                                 type="button"
                                                 onClick={() => setSelectedDocFolder('all')}
-                                                className={`text-xs font-bold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                                                className={`text-xs font-semibold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
                                                     selectedDocFolder === 'all'
-                                                        ? 'bg-slate-900 text-white shadow-2xs'
+                                                        ? 'bg-slate-900 text-white shadow-xs'
                                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                                                 }`}
                                             >
@@ -2987,15 +2992,15 @@ export default function CompetitionWorkspace({
                                                         key={f.key}
                                                         type="button"
                                                         onClick={() => setSelectedDocFolder(f.key)}
-                                                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                                                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer ${
                                                             isFSelected
-                                                                ? 'bg-blue-600 text-white shadow-2xs font-bold'
+                                                                ? 'bg-indigo-600 text-white shadow-xs font-bold'
                                                                 : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
                                                         }`}
                                                     >
                                                         {isFSelected ? <FolderOpen className="size-3" /> : <Folder className="size-3" />}
                                                         <span>{f.label}</span>
-                                                        <span className={`text-[10px] font-mono px-1 rounded ${isFSelected ? 'bg-blue-700 text-white' : 'bg-slate-200/70 text-slate-600'}`}>
+                                                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isFSelected ? 'bg-indigo-700 text-white' : 'bg-slate-200/70 text-slate-600'}`}>
                                                             {fCount}
                                                         </span>
                                                     </button>
@@ -3012,7 +3017,7 @@ export default function CompetitionWorkspace({
                                                     placeholder="Cari nama berkas..."
                                                     value={docSearchQuery}
                                                     onChange={(e) => setDocSearchQuery(e.target.value)}
-                                                    className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                                    className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-600"
                                                 />
                                                 {docSearchQuery && (
                                                     <button
@@ -3026,11 +3031,11 @@ export default function CompetitionWorkspace({
                                             </div>
 
                                             {/* View Mode Toggle: List vs Grid */}
-                                            <div className="flex items-center border border-slate-200 rounded-lg p-0.5 bg-slate-50 shrink-0">
+                                            <div className="flex items-center border border-slate-200 rounded-xl p-0.5 bg-slate-50 shrink-0">
                                                 <button
                                                     type="button"
                                                     onClick={() => setDocViewMode('list')}
-                                                    className={`p-1.5 rounded-md transition cursor-pointer ${
+                                                    className={`p-1.5 rounded-lg transition cursor-pointer ${
                                                         docViewMode === 'list'
                                                             ? 'bg-white text-slate-900 shadow-2xs'
                                                             : 'text-slate-400 hover:text-slate-700'
@@ -3042,7 +3047,7 @@ export default function CompetitionWorkspace({
                                                 <button
                                                     type="button"
                                                     onClick={() => setDocViewMode('grid')}
-                                                    className={`p-1.5 rounded-md transition cursor-pointer ${
+                                                    className={`p-1.5 rounded-lg transition cursor-pointer ${
                                                         docViewMode === 'grid'
                                                             ? 'bg-white text-slate-900 shadow-2xs'
                                                             : 'text-slate-400 hover:text-slate-700'
@@ -3066,7 +3071,7 @@ export default function CompetitionWorkspace({
                                                         }
                                                         setDocModalOpen(true);
                                                     }}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer"
+                                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs shrink-0 cursor-pointer"
                                                 >
                                                     <Upload className="size-3.5" />
                                                     <span>{selectedDocFolder !== 'all' ? `Unggah ke Folder` : `Unggah Berkas`}</span>
@@ -3282,16 +3287,20 @@ export default function CompetitionWorkspace({
                                             </div>
                                         )
                                     ) : (
-                                        <div className="text-center py-10 px-4 bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
-                                            <div className="size-12 rounded-2xl bg-white border border-slate-200 shadow-2xs mx-auto mb-3 flex items-center justify-center text-slate-400">
-                                                <FolderOpen className="size-6 text-slate-400" />
+                                        <div className="text-center py-12 px-4 bg-slate-50/70 rounded-3xl border border-dashed border-slate-200">
+                                            <div className="size-16 rounded-3xl bg-white border border-slate-200/80 shadow-xs mx-auto mb-3.5 flex items-center justify-center p-2">
+                                                <img
+                                                    src="/images/mascot/mascot-sleep.png"
+                                                    alt="Folder Kosong"
+                                                    className="w-full h-full object-contain"
+                                                />
                                             </div>
-                                            <p className="text-xs font-bold text-slate-800">
+                                            <p className="text-sm font-bold text-slate-800">
                                                 {selectedDocFolder === 'all'
                                                     ? (docSearchQuery ? 'Tidak ada berkas yang sesuai dengan pencarian' : 'Belum Ada Berkas yang Diunggah')
                                                     : `Folder "${activeFolderObj?.label}" Masih Kosong`}
                                             </p>
-                                            <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+                                            <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
                                                 {selectedDocFolder === 'all'
                                                     ? 'Tarik file langsung ke folder di atas atau klik tombol untuk mengunggah dokumen baru.'
                                                     : `Tarik file langsung ke folder ini atau klik tombol di bawah untuk menambahkan ${activeFolderObj?.label.toLowerCase() || 'berkas'}.`}
@@ -3309,7 +3318,7 @@ export default function CompetitionWorkspace({
                                                         }
                                                         setDocModalOpen(true);
                                                     }}
-                                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer"
+                                                    className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-xs cursor-pointer"
                                                 >
                                                     <Upload className="size-3.5" />
                                                     <span>
