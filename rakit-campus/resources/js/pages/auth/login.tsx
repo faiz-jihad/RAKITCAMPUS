@@ -176,7 +176,7 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
                                     disabled={processing}
-                                    placeholder="nama@student.polindra.ac.id"
+                                    placeholder="nama@student.kampus.ac.id"
                                     className="w-full bg-white text-slate-800 border border-slate-200 rounded-xl pl-10 pr-3.5 py-3 sm:py-2.5 text-base sm:text-sm placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all disabled:opacity-60 shadow-2xs"
                                 />
                             </div>

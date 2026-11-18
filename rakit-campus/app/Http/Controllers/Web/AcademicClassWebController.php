@@ -111,7 +111,7 @@ class AcademicClassWebController extends Controller
             'isLecturer' => $isLecturer,
             'campus' => [
                 'id' => $activeCampusId,
-                'name' => Campus::find($activeCampusId)?->name ?? 'Politeknik Negeri Indramayu',
+                'name' => Campus::find($activeCampusId)?->name ?? 'Perguruan Tinggi',
             ],
         ]);
     }

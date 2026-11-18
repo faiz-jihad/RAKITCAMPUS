@@ -1966,9 +1966,9 @@ export default function Dashboard({
                             <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/60 text-xs text-slate-600">
                                 <div className="flex items-center gap-1.5 font-bold text-slate-800 mb-0.5">
                                     <Building2 className="w-3.5 h-3.5 text-blue-600" />
-                                    <span>{user?.campus || 'Politeknik Negeri Indramayu'}</span>
+                                    <span>{user?.campus || 'Perguruan Tinggi'}</span>
                                 </div>
-                                <span className="text-[11px] text-slate-400">{user?.major || 'Teknik Informatika'}</span>
+                                <span className="text-[11px] text-slate-400">{user?.major || 'Program Studi'}</span>
                             </div>
                         </div>
 

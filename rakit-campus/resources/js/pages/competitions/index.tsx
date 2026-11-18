@@ -1837,81 +1837,108 @@ export default function CompetitionIndex({
                                                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                                                 : 'bg-blue-50 text-blue-700 border-blue-200';
 
+                                        const bannerGradient =
+                                            persona === 'Hipster'
+                                                ? 'from-purple-600 via-fuchsia-600 to-pink-500'
+                                                : persona === 'Hustler'
+                                                ? 'from-amber-500 via-orange-500 to-rose-500'
+                                                : 'from-blue-600 via-indigo-600 to-cyan-500';
+
                                         return (
                                             <div
                                                 key={student.id || idx}
-                                                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group"
+                                                className="bg-white rounded-[24px] border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden flex flex-col justify-between group"
                                             >
                                                 <div>
-                                                    {/* Top Row: Avatar & Persona Badge */}
-                                                    <div className="flex items-start justify-between gap-3 mb-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="size-11 rounded-2xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
-                                                                {(student.name || 'M').charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
-                                                                    {student.name}
-                                                                </h3>
-                                                                <p className="text-[11px] text-slate-500 truncate">
-                                                                    {student.study_program || 'Mahasiswa'}
-                                                                    {student.semester ? ` • Sem ${student.semester}` : ''}
-                                                                </p>
-                                                                <p className="text-[10px] text-slate-400 truncate">
-                                                                    {student.campus_name || student.campus?.name || 'Politeknik Negeri Indramayu'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
-                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
-                                                            {persona}
-                                                        </span>
+                                                    {/* Top 3D Abstract Banner Header */}
+                                                    <div className={`relative h-24 sm:h-28 w-full bg-gradient-to-tr ${bannerGradient} overflow-hidden`}>
+                                                        <div className="absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-md pointer-events-none" />
+                                                        <div className="absolute -bottom-6 -left-6 size-24 rounded-full bg-black/15 blur-sm pointer-events-none" />
+                                                        <div className="absolute top-3 left-6 size-16 rounded-full border border-white/25 pointer-events-none" />
+                                                        <div className="absolute bottom-2 right-12 size-8 rounded-full bg-white/25 backdrop-blur-xs pointer-events-none" />
                                                     </div>
 
-                                                    {/* Headline / Explanation */}
-                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
-                                                        {student.headline || cand.explanation || 'Siap berkolaborasi dan berkontribusi untuk tim kompetisi.'}
-                                                    </p>
-
-                                                    {/* Skills Pills */}
-                                                    {skills.length > 0 && (
-                                                        <div className="space-y-1.5 pt-2.5 border-t border-slate-100 mb-3">
-                                                            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-                                                                Keahlian Terverifikasi
-                                                            </span>
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {skills.slice(0, 4).map((sk: any, i: number) => (
-                                                                    <span
-                                                                        key={i}
-                                                                        className="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-700 text-[10px] font-semibold"
-                                                                    >
-                                                                        {typeof sk === 'string' ? sk : sk.name}
-                                                                    </span>
-                                                                ))}
-                                                                {skills.length > 4 && (
-                                                                    <span className="text-[10px] text-slate-400 font-medium py-0.5">
-                                                                        +{skills.length - 4} lainnya
-                                                                    </span>
-                                                                )}
-                                                            </div>
+                                                    {/* Overlapping Avatar & Action Button */}
+                                                    <div className="-mt-8 sm:-mt-9 px-5 flex items-end justify-between relative z-10">
+                                                        <div className="size-16 sm:size-18 rounded-full border-[3.5px] border-white shadow-md bg-slate-900 text-white flex items-center justify-center font-bold text-lg sm:text-xl shrink-0 overflow-hidden ring-1 ring-slate-100">
+                                                            {student.avatar ? (
+                                                                <img src={student.avatar} alt={student.name} className="size-full object-cover" />
+                                                            ) : (
+                                                                <span>{(student.name || 'M').charAt(0).toUpperCase()}</span>
+                                                            )}
                                                         </div>
-                                                    )}
+                                                        <button
+                                                            type="button"
+                                                            title="Simpan profil"
+                                                            className="size-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 shadow-2xs flex items-center justify-center transition active:scale-95 cursor-pointer"
+                                                        >
+                                                            <Bookmark className="size-4" />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Student Identity */}
+                                                    <div className="px-5 pt-3">
+                                                        <h3 className="font-bold text-slate-900 text-base sm:text-[17px] tracking-tight group-hover:text-blue-600 transition-colors truncate">
+                                                            {student.name}
+                                                        </h3>
+                                                        <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+                                                            {student.study_program || 'Mahasiswa'}{student.semester ? ` · Sem ${student.semester}` : ''}
+                                                        </p>
+                                                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                            {student.campus_name || student.campus?.name || 'Perguruan Tinggi'}
+                                                        </p>
+                                                    </div>
+
+                                                    {/* Badge / Chips */}
+                                                    <div className="flex items-center gap-1.5 px-5 mt-3 flex-wrap">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border tracking-wide uppercase ${personaStyle}`}>
+                                                            <span className="size-1.5 rounded-full bg-current" />
+                                                            <span>{persona}</span>
+                                                        </span>
+                                                        {skills.length > 0 && (
+                                                            <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-xs font-medium truncate max-w-[130px]">
+                                                                {typeof skills[0] === 'string' ? skills[0] : skills[0].name}
+                                                            </span>
+                                                        )}
+                                                        {skills.length > 1 && (
+                                                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold">
+                                                                +{skills.length - 1}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* 3-Column Metrics Stats Row */}
+                                                    <div className="mx-5 my-3.5 py-3 border-y border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
+                                                        <div>
+                                                            <div className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
+                                                                <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                                                                <span>{(score / 20).toFixed(1)}</span>
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">rating</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-slate-900">
+                                                                {score}%
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">kesiapan</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-slate-900">
+                                                                {student.semester ? `Sem ${student.semester}` : 'Aktif'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">status</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                {/* Bottom Row: Score & Invite Button */}
-                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                            {score}% Kesiapan
-                                                        </span>
-                                                    </div>
-
+                                                {/* Full-width CTA Button */}
+                                                <div className="px-5 pb-5">
                                                     <button
                                                         type="button"
                                                         onClick={() => openRadarInvite(cand)}
-                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                                                        className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm text-center transition-all shadow-xs hover:shadow active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                                                     >
-                                                        <Send className="size-3" />
+                                                        <Send className="size-3.5" />
                                                         <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
                                                     </button>
                                                 </div>

@@ -90,7 +90,7 @@ class OnboardingWebController extends Controller
             ],
             'campus' => [
                 'id' => $campus?->id,
-                'name' => $campus?->name ?? 'Politeknik Negeri Indramayu',
+                'name' => $campus?->name ?? 'Perguruan Tinggi',
                 'programs' => $campus?->settings['programs'] ?? [],
             ],
             'campuses' => $allCampuses,

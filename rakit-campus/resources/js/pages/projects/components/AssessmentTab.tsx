@@ -512,7 +512,7 @@ export default function AssessmentTab({
                                     type="url"
                                     value={demoUrl}
                                     onChange={(e) => setDemoUrl(e.target.value)}
-                                    placeholder="https://aplikasi.polindra.ac.id"
+                                    placeholder="https://aplikasi-karya.ac.id"
                                     className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                                 />
                             </div>
