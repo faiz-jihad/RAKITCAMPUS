@@ -205,7 +205,7 @@ export default function AppLayout({
             {isAdminArea ? (
                 <Link
                     href="/dashboard"
-                    className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition"
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition"
                     title="Beralih ke Portal Mahasiswa"
                 >
                     <ArrowLeft className="size-3.5 text-slate-500" />
@@ -511,12 +511,12 @@ export default function AppLayout({
                     </div>
 
                     {/* Desktop Navigation Tabs (Option 1: Underline Tabs - Clean Minimalist) */}
-                    <div className="hidden md:flex items-center justify-center h-full overflow-x-auto scrollbar-none">
+                    <div className="hidden md:flex items-center flex-1 min-w-0 h-full overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
                         {isAdminArea ? (
-                            <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                            <nav className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 h-full mx-auto">
                                 <Link
                                     href="/admin"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url === '/admin'
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
@@ -526,47 +526,47 @@ export default function AppLayout({
                                 </Link>
                                 <Link
                                     href="/admin/students"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url.startsWith('/admin/students')
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Kelola Mahasiswa
+                                    Mahasiswa
                                 </Link>
                                 <Link
                                     href="/admin/competitions"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url.startsWith('/admin/competitions')
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Kelola Kompetisi
+                                    Kompetisi
                                 </Link>
                                 <Link
                                     href="/leaderboard/admin"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url.startsWith('/leaderboard/admin')
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Aturan Leaderboard
+                                    Leaderboard
                                 </Link>
                                 <Link
                                     href="/admin/notifications"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url.startsWith('/admin/notifications')
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Monitoring Notifikasi
+                                    Notifikasi
                                 </Link>
                                 <Link
                                     href="/admin/feedback"
-                                    className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
                                         url.startsWith('/admin/feedback')
                                             ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
@@ -576,7 +576,7 @@ export default function AppLayout({
                                 </Link>
                             </nav>
                         ) : isCompetitionHub ? (
-                            <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                            <nav className="flex items-center gap-1 sm:gap-2 h-full mx-auto">
                                 <Link
                                     href="/competitions/dashboard"
                                     className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
@@ -675,7 +675,7 @@ export default function AppLayout({
                                 )}
                             </nav>
                         ) : (
-                            <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                            <nav className="flex items-center gap-1 sm:gap-2 h-full mx-auto">
                                 <Link
                                     href="/dashboard"
                                     className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
