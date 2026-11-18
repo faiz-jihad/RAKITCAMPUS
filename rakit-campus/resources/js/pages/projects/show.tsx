@@ -3244,22 +3244,17 @@ export default function ProjectShow({
 
             {/* Modal Kelola & Edit Proyek (Leader CRUD) */}
             {showEditProjectModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-                    <div className="bg-white rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-100 relative max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl sm:rounded-3xl max-w-3xl w-full shadow-2xl border border-slate-100 relative max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
                         {/* Header */}
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
-                            <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 flex items-center justify-center">
-                                    <Settings className="size-5" />
+                        <div className="p-4 sm:p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+                            <div className="flex items-center gap-2.5 sm:gap-3">
+                                <div className="size-9 sm:size-10 rounded-xl sm:rounded-2xl bg-indigo-50 text-indigo-600 border border-indigo-200/80 flex items-center justify-center shrink-0">
+                                    <Settings className="size-4.5 sm:size-5" />
                                 </div>
-                                <div>
-                                    <h3 className="text-base font-black text-slate-900 tracking-tight">
-                                        Kelola & Pengaturan Proyek
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">
-                                        Kelola rincian proyek, linimasa progres, living proposal, serta pengaturan tim.
-                                    </p>
-                                </div>
+                                <h3 className="text-sm sm:text-base font-black text-slate-900 tracking-tight">
+                                    Kelola & Pengaturan Proyek
+                                </h3>
                             </div>
                             <button
                                 type="button"
@@ -3271,55 +3266,59 @@ export default function ProjectShow({
                         </div>
 
                         {/* Navigation Tabs */}
-                        <div className="px-6 pt-3 border-b border-slate-100 flex items-center gap-2 overflow-x-auto shrink-0 bg-slate-50/50">
+                        <div className="px-3 sm:px-6 py-2 sm:pt-3 border-b border-slate-100 flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar shrink-0 bg-slate-50/70">
                             <button
                                 type="button"
                                 onClick={() => setEditProjectTab('info')}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                className={`px-3 py-1.5 sm:py-2 text-xs font-bold rounded-lg border transition cursor-pointer whitespace-nowrap shrink-0 ${
                                     editProjectTab === 'info'
                                         ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
                                         : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
                                 }`}
                             >
-                                Informasi Utama
+                                <span className="sm:hidden">Informasi</span>
+                                <span className="hidden sm:inline">Informasi Utama</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setEditProjectTab('timeline')}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                className={`px-3 py-1.5 sm:py-2 text-xs font-bold rounded-lg border transition cursor-pointer whitespace-nowrap shrink-0 ${
                                     editProjectTab === 'timeline'
                                         ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
                                         : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
                                 }`}
                             >
-                                Status, Progres & Linimasa
+                                <span className="sm:hidden">Status & Linimasa</span>
+                                <span className="hidden sm:inline">Status, Progres & Linimasa</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setEditProjectTab('proposal')}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                className={`px-3 py-1.5 sm:py-2 text-xs font-bold rounded-lg border transition cursor-pointer whitespace-nowrap shrink-0 ${
                                     editProjectTab === 'proposal'
                                         ? 'bg-white text-blue-700 border-slate-200 shadow-2xs'
                                         : 'text-slate-600 border-transparent hover:text-slate-900 hover:bg-slate-100/60'
                                 }`}
                             >
-                                Living Proposal
+                                <span className="sm:hidden">Proposal</span>
+                                <span className="hidden sm:inline">Living Proposal</span>
                             </button>
                             <button
                                 type="button"
                                 onClick={() => setEditProjectTab('danger')}
-                                className={`px-3 py-2 text-xs font-bold rounded-lg border transition cursor-pointer ${
+                                className={`px-3 py-1.5 sm:py-2 text-xs font-bold rounded-lg border transition cursor-pointer whitespace-nowrap shrink-0 ${
                                     editProjectTab === 'danger'
                                         ? 'bg-rose-50 text-rose-700 border-rose-200 shadow-2xs'
                                         : 'text-rose-600 border-transparent hover:text-rose-800 hover:bg-rose-50/50'
                                 }`}
                             >
-                                Zona Berbahaya
+                                <span className="sm:hidden">Zona Bahaya</span>
+                                <span className="hidden sm:inline">Zona Berbahaya</span>
                             </button>
                         </div>
 
                         {/* Modal Body */}
-                        <form onSubmit={handleSaveProject} className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <form onSubmit={handleSaveProject} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
                             {editProjectTab === 'info' && (
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
