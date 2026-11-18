@@ -22,8 +22,7 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Campus Admin', href: '/admin' },
+    { title: 'Ruang Kerja Admin', href: '/admin' },
 ];
 
 export default function AdminIndex({ stats, pendingVerifications: initialPending, recentProjects, recentFeedbacks = [] }: Props) {

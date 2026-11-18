@@ -33,9 +33,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Leaderboard', href: '/leaderboard' },
-    { title: 'Kelola Leaderboard', href: '/leaderboard/admin' },
+    { title: 'Ruang Kerja Admin', href: '/admin' },
+    { title: 'Aturan Leaderboard', href: '/leaderboard/admin' },
 ];
 
 export default function LeaderboardAdmin({
@@ -102,11 +101,11 @@ export default function LeaderboardAdmin({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-1">
                     <div>
                         <Link
-                            href="/leaderboard"
+                            href="/admin"
                             className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition mb-1"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Kembali ke Klasemen</span>
+                            <span>Ruang Kerja Admin</span>
                         </Link>
                         <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
                             <Shield className="size-7 text-blue-600" />

@@ -79,9 +79,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Panel Admin', href: '/admin' },
-    { title: 'Saran & Masukan Sistem', href: '/admin/feedback' },
+    { title: 'Ruang Kerja Admin', href: '/admin' },
+    { title: 'Saran & Masukan', href: '/admin/feedback' },
 ];
 
 export default function AdminFeedbackIndex({ feedbacks, statistics, filters }: Props) {
