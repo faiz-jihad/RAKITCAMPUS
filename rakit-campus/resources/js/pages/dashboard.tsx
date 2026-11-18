@@ -2269,46 +2269,69 @@ export default function Dashboard({
     // ==========================================
     return (
         <AppLayout activeTab="dashboard" title="Dashboard - RakitCampus">
-            {/* 1. HEADER ROW */}
-            <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
-                <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                        Dashboard Proyek Mahasiswa
-                    </h1>
+            {/* 1. HEADER ROW (Apple iOS HIG Hub Card with Mascot) */}
+            <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-5 mb-5 sm:mb-6">
+                {/* Left: Mascot Hero + Student Identity */}
+                <div className="flex items-center gap-4">
+                    <div className="size-16 sm:size-18 shrink-0 relative flex items-center justify-center">
+                        <img
+                            src="/images/mascot/mascot-hero.png"
+                            alt="RAKIT Mascot"
+                            className="size-full object-contain drop-shadow-md select-none pointer-events-none transform hover:scale-105 transition"
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                Workspace Mahasiswa
+                            </span>
+                            <span className="size-1 rounded-full bg-slate-300" />
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
+                                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span>{primaryTeam ? 'Tim Aktif' : 'Siap Berkolaborasi'}</span>
+                            </span>
+                        </div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                            Halo, {user?.name || 'Mahasiswa'}!
+                        </h1>
+                        <p className="text-xs sm:text-[13px] text-slate-500 font-medium">
+                            {user?.major || 'Teknik Informatika'} · {user?.campus || 'Perguruan Tinggi'}
+                        </p>
+                    </div>
                 </div>
 
+                {/* Right: Hub Switcher Pill + Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                    {/* Hub Switcher Pill */}
-                    <div className="flex items-center p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shrink-0">
-                        <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white text-blue-700 shadow-2xs flex items-center gap-1.5">
+                    <div className="flex items-center p-1 bg-slate-100/90 rounded-full border border-slate-200/80 shrink-0">
+                        <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-blue-700 shadow-2xs flex items-center gap-1.5">
                             <FolderGit2 className="size-3.5 text-blue-600" />
-                            <span>Dashboard Proyek</span>
+                            <span>Proyek</span>
                         </span>
                         <Link
                             href="/competitions/dashboard"
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5"
+                            className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5"
                         >
                             <Trophy className="size-3.5 text-amber-500" />
-                            <span>Dashboard Lomba</span>
+                            <span>Lomba</span>
                         </Link>
                     </div>
 
                     <Link
                         href="/projects/create"
-                        className="justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 cursor-pointer"
+                        className="justify-center inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                         <span>Buat Proyek</span>
                     </Link>
                     <Link
-                        href="/workspace"
-                        className="justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 hover:text-blue-600 hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition-all duration-200 cursor-pointer group"
+                        href={primaryTeam ? `/workspace/${primaryTeam.id}` : '/workspace'}
+                        className="justify-center inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer group"
                     >
-                        <span>Workspace Proyek</span>
-                        <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
+                        <span>Workspace</span>
+                        <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                     </Link>
                 </div>
-            </section>
+            </div>
 
             {/* FLASH & ERROR BANNERS */}
             {flash?.success && (
@@ -2332,7 +2355,7 @@ export default function Dashboard({
             {/* 2. BENTO GRID UTAMA (4 KARTU: PROGRES TUGAS TALL + TIM UTAMA + KESIAPAN PROFIL & REKRUTMEN) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5 mb-6 sm:mb-8 items-stretch">
                 {/* CARD 1: PROGRES TUGAS SPRINT (TALL / 4 COLS LG) */}
-                <div className="lg:col-span-4 bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                <div className="lg:col-span-4 bg-white rounded-[28px] p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -2397,7 +2420,7 @@ export default function Dashboard({
                     <div className="mt-5 sm:mt-6 pt-4 border-t border-slate-100">
                         <Link
                             href={primaryTeam ? `/workspace/${primaryTeam.id}` : '/workspace'}
-                            className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
+                            className="w-full flex items-center justify-between px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
                         >
                             <span>Buka Workspace</span>
                             <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
@@ -2408,7 +2431,7 @@ export default function Dashboard({
                 {/* RIGHT COLUMN (8 COLS LG): CARD 2 ON TOP, CARDS 3 & 4 AT BOTTOM */}
                 <div className="lg:col-span-8 flex flex-col justify-between gap-4 sm:gap-5">
                     {/* CARD 2: TIM AKADEMIK / MANDIRI & SUSUNAN TIM */}
-                    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex-1 flex flex-col justify-between group/card">
+                    <div className="bg-white rounded-[28px] p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex-1 flex flex-col justify-between group/card">
                         <div>
                             {/* Header Row */}
                             <div className="flex items-center justify-between mb-3">
@@ -2453,7 +2476,7 @@ export default function Dashboard({
                                             primaryTeam.can_access_workspace ? (
                                                 <Link
                                                     href={`/workspace/${primaryTeam.id}`}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                                 >
                                                     <FolderKanban className="size-3.5" />
                                                     <span>Buka Workspace</span>
@@ -2462,7 +2485,7 @@ export default function Dashboard({
                                             ) : (
                                                 <Link
                                                     href={primaryTeam.project ? `/projects/${primaryTeam.project.slug || primaryTeam.project.id}` : '/projects'}
-                                                    className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                                 >
                                                     <Users className="size-3.5" />
                                                     <span>Kelola Tim</span>
@@ -2472,7 +2495,7 @@ export default function Dashboard({
                                         ) : (
                                             <Link
                                                 href="/projects/create"
-                                                className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-xs cursor-pointer group"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                             >
                                                 <Plus className="size-3.5" />
                                                 <span>Buat Proyek</span>
@@ -2482,7 +2505,7 @@ export default function Dashboard({
                                         {primaryTeam?.project && (
                                             <Link
                                                 href={`/projects/${primaryTeam.project.slug || primaryTeam.project.id}`}
-                                                className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 hover:border-blue-300 text-xs font-semibold shadow-2xs hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all duration-200 cursor-pointer group"
                                             >
                                                 <span>Detail Proyek</span>
                                                 <ArrowRight className="size-3 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
@@ -2493,7 +2516,7 @@ export default function Dashboard({
 
                                 {/* Susunan Tim Box (Right side of Card 2) */}
                                 {primaryTeam && primaryTeam.members && primaryTeam.members.length > 0 && (
-                                    <div className="bg-slate-50/70 rounded-xl p-3 sm:p-3.5 border border-slate-200/70 w-full md:w-auto md:min-w-[210px] shrink-0">
+                                    <div className="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-200/70 w-full md:w-auto md:min-w-[210px] shrink-0">
                                         <div className="mb-2">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                                                 Susunan Tim
@@ -2547,7 +2570,7 @@ export default function Dashboard({
                     {/* BOTTOM ROW: KESIAPAN PROFIL & REKRUTMEN TERBUKA (2 CARDS) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                         {/* CARD 3: KESIAPAN PROFIL */}
-                        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                        <div className="bg-white rounded-[28px] p-5 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                             <div>
                                 <div className="mb-3">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -2587,7 +2610,7 @@ export default function Dashboard({
                         </div>
 
                         {/* CARD 4: REKRUTMEN TERBUKA */}
-                        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
+                        <div className="bg-white rounded-[28px] p-5 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group/card">
                             <div>
                                 <div className="mb-3">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -2649,7 +2672,7 @@ export default function Dashboard({
                 {/* LEFT COLUMN: TASKS, ACTIVE PROJECTS, INVITATIONS, RECRUITING */}
                 <div className="lg:col-span-8 space-y-5 sm:space-y-6">
                     {/* Panel 1: Tugas Prioritas */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                    <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <div>
                                 <h2 className="text-sm font-bold text-slate-900">
@@ -2696,7 +2719,7 @@ export default function Dashboard({
                                                 </div>
                                             </div>
 
-                                            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 shrink-0">
+                                            <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
                                                 {task.status || 'Aktif'}
                                             </span>
                                         </div>
@@ -2705,15 +2728,19 @@ export default function Dashboard({
                             </div>
                         ) : (
                             <div className="py-8 text-center text-xs text-slate-400">
-                                <Clock className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                                <img
+                                    src="/images/mascot/mascot-sleep.png"
+                                    alt="Semua Tugas Beres"
+                                    className="w-16 h-auto object-contain mx-auto mb-2.5 drop-shadow-2xs select-none pointer-events-none"
+                                />
                                 <p className="font-semibold text-slate-700">Semua tugas telah diselesaikan</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada tugas mendesak saat ini.</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada tugas mendesak saat ini. Waktunya istirahat atau susun sprint berikutnya!</p>
                             </div>
                         )}
                     </div>
 
                     {/* Panel 2: Proyek Kelas & Living Proposal */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                    <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                             <h2 className="text-sm font-bold text-slate-900">
                                 Proyek & Tim Anda
@@ -2739,7 +2766,7 @@ export default function Dashboard({
                                     return (
                                         <div
                                             key={team.id}
-                                            className="p-4 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50/50 hover:border-slate-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group/item"
+                                            className="p-4 rounded-2xl border border-slate-200/80 bg-white hover:bg-slate-50/50 hover:border-slate-300 hover:shadow-xs transition-all duration-200 flex flex-col justify-between gap-3 group/item"
                                         >
                                             <div>
                                                 <div className="flex items-center justify-between gap-2 mb-2">
@@ -2811,15 +2838,19 @@ export default function Dashboard({
                                 })}
                             </div>
                         ) : (
-                            <div className="py-6 text-center text-xs text-slate-400">
-                                <FolderKanban className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                            <div className="py-8 text-center text-xs text-slate-400">
+                                <img
+                                    src="/images/mascot/mascot-idea.png"
+                                    alt="Mulai Proyek Baru"
+                                    className="w-16 h-auto object-contain mx-auto mb-2.5 drop-shadow-2xs select-none pointer-events-none"
+                                />
                                 <p className="font-semibold text-slate-700">Belum tergabung dalam tim proyek</p>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
                                     Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.
                                 </p>
                                 <Link
                                     href="/projects/create"
-                                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 text-white font-semibold text-xs transition"
+                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
                                     <span>Buat Proyek Baru</span>
@@ -3070,8 +3101,40 @@ export default function Dashboard({
 
                 {/* RIGHT COLUMN: PROFILE & ACTIVITIES */}
                 <div className="lg:col-span-4 space-y-5 sm:space-y-6">
+                    {/* Mascot Companion Card (Apple iOS HIG Widget) */}
+                    <div className="rounded-[28px] bg-gradient-to-br from-indigo-50/70 via-blue-50/40 to-white p-5 border border-blue-200/60 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col justify-between">
+                        <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100/90 text-blue-800 text-[10px] font-bold uppercase tracking-wider">
+                                    <Sparkles className="size-3 text-blue-600" />
+                                    <span>Sahabat RAKIT</span>
+                                </span>
+                                <h3 className="text-sm font-bold text-slate-900 pt-1">
+                                    Cari Rekan Tim Lomba
+                                </h3>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    Temukan hacker, desainer UI/UX, dan presenter kompetisi di Radar Talenta.
+                                </p>
+                            </div>
+                            <img
+                                src="/images/mascot/mascot-laptop.png"
+                                alt="RAKIT Mascot"
+                                className="w-16 h-auto object-contain drop-shadow-sm select-none pointer-events-none shrink-0"
+                            />
+                        </div>
+                        <div className="pt-3.5 mt-3 border-t border-blue-100/70">
+                            <Link
+                                href="/competitions?tab=teams&view=radar"
+                                className="w-full py-2 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
+                            >
+                                <span>Buka Radar Rekrutmen</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                        </div>
+                    </div>
+
                     {/* User Card */}
-                    <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                    <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <h2 className="text-sm font-bold text-slate-900">
                                 Profil Mahasiswa
@@ -3114,7 +3177,7 @@ export default function Dashboard({
                                 <span className="text-[10px] text-slate-400 block font-medium mb-1.5">Keahlian</span>
                                 <div className="flex flex-wrap gap-1">
                                     {user.skills.slice(0, 4).map((s: any, idx: number) => (
-                                        <span key={s.id || idx} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-medium">
+                                        <span key={s.id || idx} className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
                                             {s.name}
                                         </span>
                                     ))}
@@ -3130,7 +3193,7 @@ export default function Dashboard({
 
                     {/* Rekan Kolaborasi Tim (Real teammates from active projects) */}
                     {teammates && teammates.length > 0 && (
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
+                        <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                                 <h2 className="text-sm font-bold text-slate-900">
                                     Rekan Kolaborasi Tim

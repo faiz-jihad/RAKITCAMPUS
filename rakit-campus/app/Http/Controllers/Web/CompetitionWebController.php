@@ -597,11 +597,25 @@ class CompetitionWebController extends Controller
             $radarCandidates = $this->matchmakingService->getGeneralTalentRadar($user, 24);
         }
 
+        $sentInvitationUserIds = [];
+        if ($user) {
+            $myTeamIds = $myTeams->pluck('team_id')->filter()->values();
+            if ($myTeamIds->isNotEmpty()) {
+                $sentInvitationUserIds = Invitation::whereIn('team_id', $myTeamIds)
+                    ->where('status', \App\Enums\InvitationStatus::Pending->value)
+                    ->pluck('invitee_id')
+                    ->unique()
+                    ->values()
+                    ->toArray();
+            }
+        }
+
         return Inertia::render('competitions/index', [
             'competitions' => $competitions,
             'openCompetitionOptions' => $openCompetitionOptions,
             'openRecruitingTeams' => $openRecruitingTeams,
             'radarCandidates' => $radarCandidates,
+            'sentInvitationUserIds' => $sentInvitationUserIds,
             'totalNeededSlots' => $totalNeededSlots,
             'myApplications' => $myApplications,
             'myTeams' => $myTeams,

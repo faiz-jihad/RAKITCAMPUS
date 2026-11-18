@@ -19,6 +19,7 @@ import {
     Bookmark,
     Briefcase,
     Calendar,
+    Check,
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
@@ -50,6 +51,7 @@ import {
     Trophy,
     User,
     UserCheck,
+    UserPlus,
     Users,
     X,
     Zap,
@@ -251,6 +253,7 @@ interface Props {
     openCompetitionOptions?: any[];
     openRecruitingTeams?: RecruitingTeam[];
     radarCandidates?: any[];
+    sentInvitationUserIds?: number[];
     totalNeededSlots?: number;
     myApplications?: MyApplication[];
     myTeams?: MyTeam[];
@@ -315,6 +318,7 @@ export default function CompetitionIndex({
     openCompetitionOptions,
     openRecruitingTeams = [],
     radarCandidates = [],
+    sentInvitationUserIds = [],
     totalNeededSlots = 0,
     myApplications = [],
     myTeams = [],
@@ -381,6 +385,8 @@ export default function CompetitionIndex({
     const [inviteRoleName, setInviteRoleName] = useState('Anggota Tim');
     const [inviteMessage, setInviteMessage] = useState('');
     const [isInviting, setIsInviting] = useState(false);
+    const [localInvitedIds, setLocalInvitedIds] = useState<number[]>([]);
+    const [inviteSuccessToast, setInviteSuccessToast] = useState<{ show: boolean; name: string } | null>(null);
 
     const myLedTeams = useMemo(() => {
         return myTeams.filter((t: any) => t.is_leader);
@@ -411,6 +417,7 @@ export default function CompetitionIndex({
 
         setIsInviting(true);
         const studentId = selectedRadarCandidate.user?.id || selectedRadarCandidate.id;
+        const candName = selectedRadarCandidate.user?.name || selectedRadarCandidate.name || 'Rekan Mahasiswa';
 
         router.post(
             `/competition-workspace/${inviteParticipationId}/send-invitation`,
@@ -423,9 +430,16 @@ export default function CompetitionIndex({
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
+                    if (studentId) {
+                        setLocalInvitedIds((prev) => (prev.includes(studentId) ? prev : [...prev, studentId]));
+                    }
                     setRadarInviteModalOpen(false);
                     setSelectedRadarCandidate(null);
                     setInviteMessage('');
+                    setInviteSuccessToast({ show: true, name: candName });
+                    setTimeout(() => {
+                        setInviteSuccessToast(null);
+                    }, 4000);
                 },
                 onFinish: () => setIsInviting(false),
             }
@@ -1496,245 +1510,190 @@ export default function CompetitionIndex({
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="group relative bg-slate-100/80 hover:bg-slate-100/95 border border-slate-200/80 rounded-[28px] p-3 sm:p-3.5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                                            className="group bg-white hover:bg-slate-50/50 border border-slate-200/80 hover:border-slate-300 rounded-[28px] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
                                         >
-                                            {/* Acrylic mounting screw rivets in 4 corners */}
-                                            <span className="absolute top-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute top-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute bottom-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute bottom-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-
-                                            {/* Inner White Card */}
-                                            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between flex-1">
-                                                {/* Top Sky-Blue Header Tab */}
-                                                <div className="bg-gradient-to-r from-sky-400 via-sky-400 to-sky-500 text-white font-extrabold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 text-center select-none shadow-xs">
-                                                    ON BOARDING
+                                            <div className="space-y-3.5">
+                                                {/* Top Row: Folder Status Pill & Deadline */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60">
+                                                        <Folder className="size-3 text-blue-600" />
+                                                        <span>Rekrutmen Tim</span>
+                                                    </div>
+                                                    <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+                                                        {formattedDeadline}
+                                                    </span>
                                                 </div>
 
-                                                {/* Card Content Area */}
-                                                <div className="p-3.5 sm:p-4 space-y-3.5 flex flex-col justify-between flex-1">
-                                                    {/* Dashed Inner Box */}
-                                                    <div className="border border-dashed border-slate-300 rounded-2xl p-3.5 bg-slate-50/40 space-y-3">
-                                                        {/* Top: Team Name & Deadline */}
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
-                                                                {team.name}
-                                                            </h3>
-                                                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap shrink-0">
-                                                                {formattedDeadline}
+                                                {/* Team Name & Competition Badge */}
+                                                <div>
+                                                    <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
+                                                        {team.name}
+                                                    </h3>
+                                                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                                        <div
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold max-w-full truncate"
+                                                            title={`Target Kompetisi: ${comp.name}`}
+                                                        >
+                                                            <Trophy className="size-3 text-amber-500 shrink-0" />
+                                                            <span className="truncate">{comp.name}</span>
+                                                        </div>
+                                                        {comp.category && (
+                                                            <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
+                                                                {comp.category.replace('_', ' ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Roles Needed */}
+                                                {roles.length > 0 && (
+                                                    <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="text-slate-500 font-medium flex items-center gap-1">
+                                                                <Briefcase className="size-3 text-slate-400" />
+                                                                <span>Dibutuhkan:</span>
+                                                            </span>
+                                                            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
+                                                                {roles.length} Posisi Terbuka
                                                             </span>
                                                         </div>
-
-                                                        {/* Target Lomba / Competition Badge */}
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <div
-                                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/90 text-blue-700 text-xs font-semibold border border-blue-200/70 max-w-full truncate shadow-2xs"
-                                                                title={`Target Kompetisi: ${comp.name}`}
-                                                            >
-                                                                <Trophy className="size-3.5 text-blue-600 shrink-0" />
-                                                                <span className="truncate">{comp.name}</span>
-                                                            </div>
-                                                            {comp.category && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
-                                                                    {comp.category.replace('_', ' ')}
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Dibutuhkan Apa Aja: Roles Needed */}
-                                                        {roles.length > 0 && (
-                                                            <div className="space-y-1.5 pt-1 border-t border-slate-200/70">
-                                                                <div className="flex items-center justify-between text-[11px]">
-                                                                    <span className="text-slate-500 font-medium flex items-center gap-1">
-                                                                        <Briefcase className="size-3 text-slate-400" />
-                                                                        <span>Dibutuhkan:</span>
-                                                                    </span>
-                                                                    <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">
-                                                                        {roles.length} Posisi Terbuka
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-1.5">
-                                                                    {roles.map((r: any) => (
-                                                                        <span
-                                                                            key={r.id}
-                                                                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/90 text-slate-700 text-[11px] font-semibold shadow-2xs hover:border-blue-300 hover:text-blue-700 transition-colors flex items-center gap-1.5"
-                                                                            title={r.requirements ? `Syarat: ${r.requirements}` : r.name}
-                                                                        >
-                                                                            <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
-                                                                            <span>{r.name}</span>
-                                                                            {r.slots > 1 && (
-                                                                                <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
-                                                                            )}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Description */}
-                                                        {descText && (
-                                                            <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                                                                {descText}
-                                                            </p>
-                                                        )}
-
-                                                        {/* UI Capacity Person / Formasi Kuota Tim */}
-                                                        <div className="pt-2 border-t border-slate-200/70 space-y-1.5">
-                                                            <div className="flex items-center justify-between text-[11px]">
-                                                                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                                                                    <Users className="size-3 text-slate-400" />
-                                                                    <span>Kapasitas Personel</span>
-                                                                </span>
-                                                                <div className="flex items-center gap-1 text-[11px]">
-                                                                    <span className="font-bold text-blue-600">{membersCount}</span>
-                                                                    <span className="text-slate-400">/</span>
-                                                                    <span className="font-semibold text-slate-700">{maxCap}</span>
-                                                                    <span className="text-slate-400 text-[10px]">Terisi</span>
-                                                                    {emptySlots > 0 ? (
-                                                                        <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">
-                                                                            Sisa {emptySlots} Slot
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="ml-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70">
-                                                                            Penuh
-                                                                        </span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {roles.map((r: any) => (
+                                                                <span
+                                                                    key={r.id}
+                                                                    className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-medium transition-colors flex items-center gap-1.5"
+                                                                    title={r.requirements ? `Syarat: ${r.requirements}` : r.name}
+                                                                >
+                                                                    <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                                                                    <span>{r.name}</span>
+                                                                    {r.slots > 1 && (
+                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
                                                                     )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Visual Person Capacity Slot Badges */}
-                                                            <div className="flex items-center gap-1.5">
-                                                                {Array.from({ length: maxCap }).map((_, idx) => {
-                                                                    const isFilled = idx < membersCount;
-                                                                    const member = memberAvatars[idx];
-                                                                    return (
-                                                                        <div
-                                                                            key={idx}
-                                                                            title={
-                                                                                isFilled
-                                                                                    ? member
-                                                                                        ? `${member.name} (${member.role})`
-                                                                                        : `Personel #${idx + 1} (Terisi)`
-                                                                                    : `Slot Personel #${idx + 1} (Terbuka)`
-                                                                            }
-                                                                            className={`size-7 rounded-lg flex items-center justify-center transition-all ${
-                                                                                isFilled
-                                                                                    ? 'bg-blue-600 text-white shadow-2xs'
-                                                                                    : 'border border-dashed border-slate-300 bg-white/80 text-slate-300 hover:border-slate-400'
-                                                                            }`}
-                                                                        >
-                                                                            <User className="size-3.5 stroke-[2.2]" />
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Avatars Stack & Status Pill */}
-                                                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                                                            {/* Stacked Avatars */}
-                                                            <div className="flex items-center -space-x-2 overflow-hidden">
-                                                                {memberAvatars.slice(0, 4).map((m, idx) => {
-                                                                    const initials = m.name
-                                                                        ? m.name.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()
-                                                                        : 'U';
-                                                                    const colorClass = avatarPalette[idx % avatarPalette.length];
-
-                                                                    return m.avatar ? (
-                                                                        <img
-                                                                            key={idx}
-                                                                            src={m.avatar}
-                                                                            alt={m.name}
-                                                                            title={`${m.name} (${m.role})`}
-                                                                            className="size-7 rounded-full object-cover ring-2 ring-white shadow-2xs"
-                                                                        />
-                                                                    ) : (
-                                                                        <div
-                                                                            key={idx}
-                                                                            title={`${m.name} (${m.role})`}
-                                                                            className={`size-7 rounded-full ${colorClass} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs`}
-                                                                        >
-                                                                            {initials}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                                {emptySlots > 0 && (
-                                                                    <div
-                                                                        className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
-                                                                        title={`${emptySlots} slot terbuka`}
-                                                                    >
-                                                                        +{emptySlots}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {/* In Progress Status Pill */}
-                                                            <span className="px-3 py-1 rounded-lg bg-[#dcfce7] text-[#16a34a] text-xs font-semibold tracking-wide border border-[#bbf7d0]/60 select-none">
-                                                                In Progress
-                                                            </span>
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                     </div>
+                                                )}
 
-                                                    {/* Bottom Row: 3 Pills & Plus Button */}
-                                                    <div className="flex items-center justify-between gap-1.5 pt-0.5">
-                                                        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                                                            {/* Comment/Roles Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                                                title={`${roles.length} lowongan peran (${roles.map((r: any) => r.name).join(', ') || 'Anggota'})`}
-                                                            >
-                                                                <MessageSquare className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span>
-                                                                    <strong className="text-slate-800 font-bold">{roles.length || 1}</strong> Peran
-                                                                </span>
-                                                            </div>
+                                                {/* Description */}
+                                                {descText && (
+                                                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                                        {descText}
+                                                    </p>
+                                                )}
 
-                                                            {/* Person Capacity Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                                                title={`${membersCount} dari ${maxCap} kuota personel terisi`}
-                                                            >
-                                                                <Link2 className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span>
-                                                                    <strong className="text-slate-800 font-bold">{membersCount}/{maxCap}</strong> Person
-                                                                </span>
-                                                            </div>
-
-                                                            {/* Folder/File Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs max-w-[100px] truncate"
-                                                                title={`Kategori: ${comp.category?.replace('_', ' ') || 'Kompetisi'} (Kapasitas: ${maxCap} orang)`}
-                                                            >
-                                                                <Folder className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span className="truncate">
-                                                                    <strong className="text-slate-800 font-bold">{maxCap}</strong> File
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Action Button: Plus or Joined Check */}
-                                                        {part.is_member || part.is_leader ? (
-                                                            <div
-                                                                className="size-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs"
-                                                                title="Anda sudah tergabung dalam tim ini"
-                                                            >
-                                                                <CheckCircle2 className="size-4" />
-                                                            </div>
+                                                {/* Capacity Slot Badges */}
+                                                <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                                                            <Users className="size-3.5 text-slate-400" />
+                                                            <span>Formasi Tim ({membersCount}/{maxCap})</span>
+                                                        </span>
+                                                        {emptySlots > 0 ? (
+                                                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
+                                                                Sisa {emptySlots} Slot
+                                                            </span>
                                                         ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    openApplyModal(part);
-                                                                }}
-                                                                className="size-8 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/90 hover:border-blue-400 text-slate-700 hover:text-blue-600 flex items-center justify-center shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                                                title="Ajukan diri bergabung ke tim ini"
-                                                            >
-                                                                <Plus className="size-4 stroke-[2.5]" />
-                                                            </button>
+                                                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+                                                                Formasi Lengkap
+                                                            </span>
                                                         )}
                                                     </div>
+
+                                                    <div className="flex items-center gap-1.5">
+                                                        {Array.from({ length: maxCap }).map((_, idx) => {
+                                                            const isFilled = idx < membersCount;
+                                                            const member = memberAvatars[idx];
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    title={
+                                                                        isFilled
+                                                                            ? member
+                                                                                ? `${member.name} (${member.role})`
+                                                                                : `Personel #${idx + 1} (Terisi)`
+                                                                            : `Slot Personel #${idx + 1} (Terbuka)`
+                                                                    }
+                                                                    className={`size-7 rounded-lg flex items-center justify-center transition-all ${
+                                                                        isFilled
+                                                                            ? 'bg-blue-600 text-white shadow-2xs'
+                                                                            : 'border border-dashed border-slate-300 bg-slate-50 text-slate-300'
+                                                                    }`}
+                                                                >
+                                                                    <User className="size-3.5 stroke-[2.2]" />
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
+
+                                                {/* Team Member Avatars Stack */}
+                                                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                                                    <div className="flex items-center -space-x-2 overflow-hidden">
+                                                        {memberAvatars.slice(0, 4).map((m, idx) => {
+                                                            const initials = m.name
+                                                                ? m.name.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()
+                                                                : 'U';
+                                                            const colorClass = avatarPalette[idx % avatarPalette.length];
+
+                                                            return m.avatar ? (
+                                                                <img
+                                                                    key={idx}
+                                                                    src={m.avatar}
+                                                                    alt={m.name}
+                                                                    title={`${m.name} (${m.role})`}
+                                                                    className="size-7 rounded-full object-cover ring-2 ring-white shadow-2xs"
+                                                                />
+                                                            ) : (
+                                                                <div
+                                                                    key={idx}
+                                                                    title={`${m.name} (${m.role})`}
+                                                                    className={`size-7 rounded-full ${colorClass} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs`}
+                                                                >
+                                                                    {initials}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        {emptySlots > 0 && (
+                                                            <div
+                                                                className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
+                                                                title={`${emptySlots} slot terbuka`}
+                                                            >
+                                                                +{emptySlots}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/60 select-none">
+                                                        Merekrut
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Bottom Action Button */}
+                                            <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                                <span className="text-xs text-slate-500 font-medium">
+                                                    {roles.length} Posisi · {membersCount}/{maxCap} Person
+                                                </span>
+
+                                                {part.is_member || part.is_leader ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-2xs">
+                                                        <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                        <span>Tergabung</span>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openApplyModal(part);
+                                                        }}
+                                                        className="px-4 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <Plus className="size-3.5 stroke-[2.5]" />
+                                                        <span>Gabung Tim</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -1747,24 +1706,25 @@ export default function CompetitionIndex({
                     {/* SUB-VIEW 2: RADAR REKRUTMEN TALENTA KANDIDAT */}
                     {teamViewMode === 'radar' && (
                         <div className="space-y-5">
-                            {/* Banner Callout with Mascot Heart */}
-                            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40 relative overflow-hidden">
-                                <div className="space-y-1 relative z-10 max-w-xl">
-                                    <p className="text-xs text-blue-200 font-medium">
-                                        Matchmaking Talenta Lomba
-                                    </p>
-                                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                                        Radar Rekrutmen Rekan Tim Lomba
+                            {/* Banner Callout with Mascot Heart (Apple iOS HIG Card) */}
+                            <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-1 max-w-xl">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60 mb-1">
+                                        <Users className="size-3.5 text-blue-600" />
+                                        <span>Radar Talenta & Rekrutmen</span>
+                                    </div>
+                                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                                        Cari Rekan & Bentuk Tim Kolaborasi
                                     </h3>
-                                    <p className="text-xs text-slate-300 leading-relaxed">
-                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Hacker, Hipster, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
+                                    <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed">
+                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Developer, UI/UX Designer, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-3 shrink-0 relative z-10">
+                                <div className="flex items-center gap-3 shrink-0">
                                     <img
                                         src="/images/mascot/mascot-heart.png"
-                                        alt="Mascot Heart"
-                                        className="w-14 sm:w-16 h-auto object-contain drop-shadow-md select-none pointer-events-none hidden sm:block transform hover:scale-105 transition"
+                                        alt="Mascot RAKIT"
+                                        className="w-14 sm:w-16 h-auto object-contain drop-shadow-sm select-none pointer-events-none hidden sm:block"
                                     />
                                     <button
                                         type="button"
@@ -1772,9 +1732,9 @@ export default function CompetitionIndex({
                                             setCreateTeamPreselectedCompId(null);
                                             setCreateTeamModalOpen(true);
                                         }}
-                                        className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                        className="px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs cursor-pointer flex items-center gap-1.5"
                                     >
-                                        <Plus className="size-3.5" />
+                                        <Plus className="size-3.5 stroke-[2.5]" />
                                         <span>Bentuk Tim Baru</span>
                                     </button>
                                 </div>
@@ -1854,6 +1814,9 @@ export default function CompetitionIndex({
                                         const persona = cand.persona || 'Hacker';
                                         const skills: string[] = cand.matched_skills || cand.skills || [];
                                         const score = cand.final_score || 85;
+                                        const isInvited =
+                                            (sentInvitationUserIds || []).includes(student.id) ||
+                                            localInvitedIds.includes(student.id);
 
                                         const personaStyle =
                                             persona === 'Hipster'
@@ -1862,110 +1825,113 @@ export default function CompetitionIndex({
                                                 ? 'bg-amber-50 text-amber-700 border-amber-200'
                                                 : 'bg-blue-50 text-blue-700 border-blue-200';
 
-                                        const bannerGradient =
-                                            persona === 'Hipster'
-                                                ? 'from-purple-600 via-fuchsia-600 to-pink-500'
-                                                : persona === 'Hustler'
-                                                ? 'from-amber-500 via-orange-500 to-rose-500'
-                                                : 'from-blue-600 via-indigo-600 to-cyan-500';
-
                                         return (
                                             <div
                                                 key={student.id || idx}
-                                                className="bg-white rounded-[24px] border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_36px_rgba(0,0,0,0.08)] transition-all duration-300 overflow-hidden flex flex-col justify-between group"
+                                                className="bg-white rounded-[28px] border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 p-5 flex flex-col justify-between group"
                                             >
-                                                <div>
-                                                    {/* Top 3D Abstract Banner Header */}
-                                                    <div className={`relative h-24 sm:h-28 w-full bg-gradient-to-tr ${bannerGradient} overflow-hidden`}>
-                                                        <div className="absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-md pointer-events-none" />
-                                                        <div className="absolute -bottom-6 -left-6 size-24 rounded-full bg-black/15 blur-sm pointer-events-none" />
-                                                        <div className="absolute top-3 left-6 size-16 rounded-full border border-white/25 pointer-events-none" />
-                                                        <div className="absolute bottom-2 right-12 size-8 rounded-full bg-white/25 backdrop-blur-xs pointer-events-none" />
-                                                    </div>
-
-                                                    {/* Overlapping Avatar & Action Button */}
-                                                    <div className="-mt-8 sm:-mt-9 px-5 flex items-end justify-between relative z-10">
-                                                        <div className="size-16 sm:size-18 rounded-full border-[3.5px] border-white shadow-md bg-slate-900 text-white flex items-center justify-center font-bold text-lg sm:text-xl shrink-0 overflow-hidden ring-1 ring-slate-100">
-                                                            {student.avatar ? (
-                                                                <img src={student.avatar} alt={student.name} className="size-full object-cover" />
-                                                            ) : (
-                                                                <span>{(student.name || 'M').charAt(0).toUpperCase()}</span>
-                                                            )}
+                                                <div className="space-y-3.5">
+                                                    {/* Top Header: Avatar + Identity + Status Badge */}
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className="size-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 border-2 border-white shadow-xs overflow-hidden">
+                                                                {student.avatar ? (
+                                                                    <img src={student.avatar} alt={student.name} className="size-full object-cover" />
+                                                                ) : (
+                                                                    <span>{(student.name || 'M').charAt(0).toUpperCase()}</span>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h3 className="font-bold text-slate-900 text-sm sm:text-base tracking-tight truncate group-hover:text-blue-600 transition-colors">
+                                                                    {student.name}
+                                                                </h3>
+                                                                <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+                                                                    {student.study_program || 'Mahasiswa'}{student.semester ? ` · Sem ${student.semester}` : ''}
+                                                                </p>
+                                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                                    {student.campus_name || student.campus?.name || 'Perguruan Tinggi'}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <button
-                                                            type="button"
-                                                            title="Simpan profil"
-                                                            className="size-9 rounded-full border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 shadow-2xs flex items-center justify-center transition active:scale-95 cursor-pointer"
-                                                        >
-                                                            <Bookmark className="size-4" />
-                                                        </button>
-                                                    </div>
 
-                                                    {/* Student Identity */}
-                                                    <div className="px-5 pt-3">
-                                                        <h3 className="font-bold text-slate-900 text-base sm:text-[17px] tracking-tight group-hover:text-blue-600 transition-colors truncate">
-                                                            {student.name}
-                                                        </h3>
-                                                        <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
-                                                            {student.study_program || 'Mahasiswa'}{student.semester ? ` · Sem ${student.semester}` : ''}
-                                                        </p>
-                                                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                                                            {student.campus_name || student.campus?.name || 'Perguruan Tinggi'}
-                                                        </p>
-                                                    </div>
-
-                                                    {/* Badge / Chips */}
-                                                    <div className="flex items-center gap-1.5 px-5 mt-3 flex-wrap">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border tracking-wide uppercase ${personaStyle}`}>
-                                                            <span className="size-1.5 rounded-full bg-current" />
-                                                            <span>{persona}</span>
-                                                        </span>
-                                                        {skills.length > 0 && (
-                                                            <span className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-xs font-medium truncate max-w-[130px]">
-                                                                {typeof skills[0] === 'string' ? skills[0] : skills[0].name}
+                                                        {isInvited ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shrink-0">
+                                                                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                                <span>Terkirim</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
+                                                                <span className="size-1.5 rounded-full bg-current" />
+                                                                <span>{persona}</span>
                                                             </span>
                                                         )}
-                                                        {skills.length > 1 && (
+                                                    </div>
+
+                                                    {/* Skills Pills */}
+                                                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                                        {skills.slice(0, 3).map((skill: any, sIdx: number) => {
+                                                            const sName = typeof skill === 'string' ? skill : skill.name;
+                                                            return (
+                                                                <span
+                                                                    key={sIdx}
+                                                                    className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-medium truncate max-w-[140px]"
+                                                                >
+                                                                    {sName}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                        {skills.length > 3 && (
                                                             <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold">
-                                                                +{skills.length - 1}
+                                                                +{skills.length - 3}
                                                             </span>
                                                         )}
                                                     </div>
 
                                                     {/* 3-Column Metrics Stats Row */}
-                                                    <div className="mx-5 my-3.5 py-3 border-y border-slate-100 grid grid-cols-3 divide-x divide-slate-100 text-center">
+                                                    <div className="py-2.5 px-3 rounded-2xl bg-slate-50/70 border border-slate-100 grid grid-cols-3 divide-x divide-slate-200/60 text-center">
                                                         <div>
-                                                            <div className="text-sm font-bold text-slate-900 flex items-center justify-center gap-1">
+                                                            <div className="text-xs font-bold text-slate-900 flex items-center justify-center gap-1">
                                                                 <Star className="size-3.5 fill-amber-400 text-amber-400" />
                                                                 <span>{(score / 20).toFixed(1)}</span>
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">rating</div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Rating</div>
                                                         </div>
                                                         <div>
-                                                            <div className="text-sm font-bold text-slate-900">
+                                                            <div className="text-xs font-bold text-slate-900">
                                                                 {score}%
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">kesiapan</div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Kesiapan</div>
                                                         </div>
                                                         <div>
-                                                            <div className="text-sm font-bold text-slate-900">
+                                                            <div className="text-xs font-bold text-slate-900">
                                                                 {student.semester ? `Sem ${student.semester}` : 'Aktif'}
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">status</div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Status</div>
                                                         </div>
                                                     </div>
                                                 </div>
 
-                                                {/* Full-width CTA Button */}
-                                                <div className="px-5 pb-5">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openRadarInvite(cand)}
-                                                        className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm text-center transition-all shadow-xs hover:shadow active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
-                                                    >
-                                                        <Send className="size-3.5" />
-                                                        <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
-                                                    </button>
+                                                {/* Bottom CTA Button */}
+                                                <div className="pt-4 mt-3 border-t border-slate-100">
+                                                    {isInvited ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled
+                                                            className="w-full py-2.5 rounded-full bg-slate-100 text-slate-500 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed select-none border border-slate-200/70"
+                                                        >
+                                                            <Check className="size-3.5 text-emerald-600 stroke-[2.5]" />
+                                                            <span className="text-slate-600 font-semibold">Undangan Terkirim</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openRadarInvite(cand)}
+                                                            className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs text-center transition-all shadow-xs hover:shadow active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer group"
+                                                        >
+                                                            <UserPlus className="size-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+                                                            <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
@@ -2975,8 +2941,8 @@ export default function CompetitionIndex({
                         <form onSubmit={handleSendRadarInvite} className="mt-4 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Calon Anggota Terpilih</label>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-                                    <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-3">
+                                    <div className="size-10 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                         {(selectedRadarCandidate.user?.name || selectedRadarCandidate.name || 'M').charAt(0).toUpperCase()}
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -2989,7 +2955,7 @@ export default function CompetitionIndex({
                                             {selectedRadarCandidate.user?.campus_name ? ` • ${selectedRadarCandidate.user?.campus_name}` : ''}
                                         </p>
                                     </div>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
                                         {selectedRadarCandidate.persona || 'Hacker'}
                                     </span>
                                 </div>
@@ -3001,7 +2967,7 @@ export default function CompetitionIndex({
                                     <select
                                         value={inviteParticipationId}
                                         onChange={(e) => setInviteParticipationId(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+                                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 cursor-pointer"
                                     >
                                         {myLedTeams.map((team: any) => (
                                             <option key={team.id} value={team.id}>
@@ -3022,8 +2988,24 @@ export default function CompetitionIndex({
                                     value={inviteRoleName}
                                     onChange={(e) => setInviteRoleName(e.target.value)}
                                     placeholder="Contoh: UI/UX Designer, Frontend Developer, Hustler / Pitcher"
-                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                                 />
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {['Frontend Developer', 'UI/UX Designer', 'Backend Engineer', 'Pitcher / Hustler', 'Data & AI'].map((qr) => (
+                                        <button
+                                            key={qr}
+                                            type="button"
+                                            onClick={() => setInviteRoleName(qr)}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ${
+                                                inviteRoleName === qr
+                                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                                            }`}
+                                        >
+                                            {qr}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
@@ -3035,11 +3017,11 @@ export default function CompetitionIndex({
                                     value={inviteMessage}
                                     onChange={(e) => setInviteMessage(e.target.value)}
                                     placeholder="Tuliskan alasan mengajak bergabung atau fokus peran yang disiapkan..."
-                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                                 />
                             </div>
 
-                            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
+                            <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
                                 <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
                                 <span>
                                     Mahasiswa akan menerima notifikasi undangan di aplikasi dan email mereka. Keanggotaan resmi berlaku setelah mahasiswa menyetujui undangan ini.
@@ -3053,14 +3035,14 @@ export default function CompetitionIndex({
                                         setRadarInviteModalOpen(false);
                                         setSelectedRadarCandidate(null);
                                     }}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isInviting}
-                                    className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                    className="px-5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                                 >
                                     {isInviting ? (
                                         <>
@@ -3120,6 +3102,14 @@ export default function CompetitionIndex({
                     onClose={() => setResultModalOpen(false)}
                     participation={selectedResultPart}
                 />
+            )}
+
+            {/* FLOATING INVITATION SUCCESS TOAST */}
+            {inviteSuccessToast?.show && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-800 text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200">
+                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                    <span>Undangan rekrutmen berhasil dikirim ke {inviteSuccessToast.name}!</span>
+                </div>
             )}
         </AppLayout>
     );
