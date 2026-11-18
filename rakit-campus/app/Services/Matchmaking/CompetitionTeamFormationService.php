@@ -117,7 +117,7 @@ class CompetitionTeamFormationService
                 $leader->id
             );
 
-            // Initialize Recruitment for MinSatu-style team finder
+            // Initialize Recruitment for team finder
             $recruitment = $team->recruitment()->firstOrCreate(
                 ['team_id' => $team->id],
                 [

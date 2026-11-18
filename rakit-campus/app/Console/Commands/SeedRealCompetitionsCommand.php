@@ -31,7 +31,7 @@ class SeedRealCompetitionsCommand extends Command
         $seeder = new RealCompetitionSeeder();
         $seeder->run();
 
-        $this->info('Successfully seeded 15 real national/international competitions and MinSatu recruiting teams.');
+        $this->info('Successfully seeded 15 real national/international competitions and recruiting teams.');
 
         return Command::SUCCESS;
     }

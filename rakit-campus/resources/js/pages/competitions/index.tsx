@@ -355,10 +355,10 @@ export default function CompetitionIndex({
     const [teamCategory, setTeamCategory] = useState(safeFilters.team_category || '');
     const [teamRole, setTeamRole] = useState(safeFilters.team_role || '');
 
-    // MinSatu Detail Modal State
+    // Team Recruitment Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
 
-    // MinSatu Apply Modal State
+    // Team Recruitment Apply Modal State
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
@@ -1791,7 +1791,7 @@ export default function CompetitionIndex({
                             </Link>
                         </div>
 
-                        {/* CASE 1: APPLICATIONS (MinSatu User Requests) */}
+                        {/* CASE 1: APPLICATIONS (Team Recruitment User Requests) */}
                         {myLifecycleFilter === 'applications' && (
                             <div>
                                 {myApplications.length === 0 ? (
@@ -2231,7 +2231,7 @@ export default function CompetitionIndex({
                 )}
             </div>
 
-            {/* MINSATU DETAIL MODAL */}
+            {/* TEAM RECRUITMENT DETAIL MODAL */}
             {detailTeam && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
                     <div className="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-7 shadow-xl border border-slate-200/90 relative my-6 space-y-5">

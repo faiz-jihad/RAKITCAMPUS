@@ -1445,7 +1445,7 @@ export default function CompetitionShow({
                 </div>
             )}
 
-            {/* MinSatu Apply Modal */}
+            {/* Team Apply Modal */}
             <ApplyCompetitionTeamModal
                 isOpen={applyModalOpen}
                 onClose={() => setApplyModalOpen(false)}

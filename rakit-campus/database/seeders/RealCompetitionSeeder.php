@@ -500,7 +500,7 @@ class RealCompetitionSeeder extends Seeder
             );
         }
 
-        // Setup active recruiting teams for MinSatu Matchmaking
+        // Setup active recruiting teams for Team Matchmaking
         $this->seedRecruitingTeams($admin);
     }
 

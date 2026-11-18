@@ -126,7 +126,7 @@ export default function CompetitionWorkspace({
         return 'overview';
     });
 
-    // MinSatu Roles & Applicants State
+    // Team Recruitment Roles & Applicants State
     const [newRoleName, setNewRoleName] = useState('');
     const [newRoleSlots, setNewRoleSlots] = useState(1);
     const [newRoleReqs, setNewRoleReqs] = useState('');
@@ -350,7 +350,7 @@ export default function CompetitionWorkspace({
         );
     };
 
-    // MinSatu Flow Handlers
+    // Team Recruitment Flow Handlers
     const handleAddRecruitmentRole = (e: React.FormEvent) => {
         e.preventDefault();
         if (!newRoleName.trim()) return;
@@ -1633,7 +1633,7 @@ export default function CompetitionWorkspace({
                 );
             })()}
 
-                {/* 6) TAB CONTENT: APPLICANTS & MINSATU RECRUITMENT */}
+                {/* 6) TAB CONTENT: APPLICANTS & TEAM RECRUITMENT */}
                 {activeTab === 'applicants' && (
                     <div className="space-y-6">
                         {/* Recruitment Header Bar */}
@@ -1644,7 +1644,7 @@ export default function CompetitionWorkspace({
                                         Perekrutan Anggota Tim
                                     </span>
                                     <span className="text-xs text-slate-400">•</span>
-                                    <span className="text-xs font-semibold text-slate-500">MinSatu Matchmaking</span>
+                                    <span className="text-xs font-semibold text-slate-500">Team Matchmaking</span>
                                 </div>
                                 <h2 className="text-base sm:text-lg font-black text-slate-900">
                                     Rekrut Rekan & Kelola Pelamar Tim

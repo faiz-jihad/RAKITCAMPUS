@@ -149,7 +149,7 @@ class CompetitionWebController extends Controller
 
         $competitions = $query->paginate(12)->withQueryString();
 
-        // MinSatu-Style Flow: Open recruiting competition teams
+        // Team Recruitment Flow: Open recruiting competition teams
         $recruitingQuery = CompetitionParticipation::where('is_formation_locked', false)
             ->whereIn('stage', ['recruiting', 'team_formation'])
             ->whereHas('competition', function ($q) use ($user) {
@@ -287,7 +287,7 @@ class CompetitionWebController extends Controller
             return max(1, $max - $current);
         });
 
-        // User's submitted applications (for MinSatu "Pengajuan" tab)
+        // User's submitted applications (for "Pengajuan" tab)
         $myApplications = $user ? Application::where('user_id', $user->id)
             ->whereHas('recruitment.team.participations')
             ->with(['recruitment.team.participations.competition', 'recruitment.team.leader.profile'])
@@ -923,7 +923,7 @@ class CompetitionWebController extends Controller
         // Check if user is eligible to participate under flexible policy
         $eligibilityCheck = $user ? $this->unifiedMembershipService->canJoinCompetition($user, null, $competition->id) : ['eligible' => false, 'reason' => 'Silakan login terlebih dahulu.'];
 
-        // Open teams looking for members in this competition (MinSatu-style)
+        // Open teams looking for members in this competition
         $openTeams = $competition->participations()
             ->where('is_formation_locked', false)
             ->whereIn('stage', ['recruiting', 'team_formation'])
@@ -1317,7 +1317,7 @@ class CompetitionWebController extends Controller
             ->latest()
             ->get() : collect();
 
-        // MinSatu Flow: Incoming applicant submissions with contact WhatsApp & portfolios
+        // Team Recruitment Flow: Incoming applicant submissions with contact WhatsApp & portfolios
         $incomingApplications = ($team && $team->recruitment)
             ? $team->recruitment->applications->map(function ($app) {
                 $u = $app->user;
@@ -2466,7 +2466,7 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Keanggotaan {$targetMember->name} dalam tim kompetisi telah berhasil dilepas.");
     }
 
-    // MinSatu Flow: Student applies to an open recruiting team
+    // Team Recruitment Flow: Student applies to an open recruiting team
     public function applyTeam(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
@@ -2568,7 +2568,7 @@ class CompetitionWebController extends Controller
         return back()->with('success', "Lamaran kamu berhasil dikirim ke ketua tim {$team->name}! Ketua tim dapat menghubungi kamu langsung via WhatsApp.");
     }
 
-    // MinSatu Flow: Team leader responds to applicant (Accept / Reject)
+    // Team Recruitment Flow: Team leader responds to applicant (Accept / Reject)
     public function respondApplication(Request $request, int|string $participationId, int $applicationId): RedirectResponse
     {
         $user = $request->user();
@@ -2648,7 +2648,7 @@ class CompetitionWebController extends Controller
         }
     }
 
-    // MinSatu Flow: Manage recruiting roles for competition team
+    // Team Recruitment Flow: Manage recruiting roles for competition team
     public function storeRecruitmentRole(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();

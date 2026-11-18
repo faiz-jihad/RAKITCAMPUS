@@ -21,7 +21,7 @@ use Inertia\Response;
 class OnboardingWebController extends Controller
 {
     /**
-     * Show the 5-step MinSatu onboarding wizard.
+     * Show the 5-step onboarding wizard.
      */
     public function show(Request $request): Response|\Illuminate\Http\RedirectResponse
     {

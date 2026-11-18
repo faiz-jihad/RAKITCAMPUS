@@ -415,7 +415,7 @@ export default function AppLayout({
         if (isCompetitionHub) {
             return [
                 { label: 'Eksplor Lomba', href: '/competitions?tab=explore', active: url === '/competitions' || url.includes('tab=explore') },
-                { label: 'Cari Tim (MinSatu)', href: '/competitions?tab=teams', active: url.includes('tab=teams') },
+                { label: 'Cari Tim', href: '/competitions?tab=teams', active: url.includes('tab=teams') },
                 { label: 'Kategori', href: '/competitions?tab=categories', active: url.includes('tab=categories') },
                 { label: 'Lomba Saya', href: '/competitions?tab=my_competitions', active: url.includes('tab=my_competitions') },
                 { label: 'Workspace', href: '/competition-workspace', active: url.startsWith('/competition-workspace') },
