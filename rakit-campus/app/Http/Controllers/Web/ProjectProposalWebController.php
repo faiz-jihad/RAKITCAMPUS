@@ -56,6 +56,10 @@ class ProjectProposalWebController extends Controller
             'timeline_plan' => ['nullable', 'string'],
             'budget_estimate' => ['nullable', 'string'],
             'tech_stack' => ['nullable'],
+            'custom_sections' => ['nullable', 'array'],
+            'custom_sections.*.id' => ['nullable', 'string'],
+            'custom_sections.*.label' => ['nullable', 'string', 'max:255'],
+            'custom_sections.*.content' => ['nullable', 'string'],
             'change_summary' => ['nullable', 'string', 'max:1000'],
         ]);
 

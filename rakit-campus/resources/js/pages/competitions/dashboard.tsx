@@ -141,15 +141,6 @@ export default function CompetitionDashboard({
             {/* 1. HEADER ROW */}
             <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/90 flex items-center gap-1.5 shadow-2xs">
-                            <Trophy className="size-3 text-amber-500" />
-                            <span>Competition Hub</span>
-                        </span>
-                        <span className="text-xs text-slate-400 font-medium">
-                            • Pusat Inkubasi Lomba & Portofolio Prestasi
-                        </span>
-                    </div>
                     <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
                         Dashboard Kompetisi Mahasiswa
                     </h1>
@@ -469,7 +460,7 @@ export default function CompetitionDashboard({
                                         <span>Pilih & Ikuti Kompetisi</span>
                                     </Link>
                                     <Link
-                                        href="/matching"
+                                        href="/competitions?tab=teams&view=radar"
                                         className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                                     >
                                         <Users className="size-3.5 text-slate-400" />
@@ -568,7 +559,7 @@ export default function CompetitionDashboard({
                             <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                                 <span className="text-[11px] text-slate-400">Matchmaking Talenta</span>
                                 <Link
-                                    href="/matching"
+                                    href="/competitions?tab=teams&view=radar"
                                     className="font-bold text-amber-800 hover:underline flex items-center gap-1"
                                 >
                                     <span>Buka Radar Rekrutmen</span>

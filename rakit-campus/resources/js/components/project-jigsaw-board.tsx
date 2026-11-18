@@ -462,11 +462,11 @@ export default function ProjectJigsawBoard({
     return (
         <div ref={containerRef} className="w-full select-none py-1">
             {/* Assembled 6x3 Jigsaw Puzzle Board (Responsive SVG Container) */}
-            <div className="w-full overflow-x-auto pb-3 pt-2 scrollbar-thin">
+            <div className="w-full overflow-visible pb-3 pt-1">
                 <svg
                     ref={svgRef}
                     viewBox="-12 -12 1134 432"
-                    className="w-full min-w-[900px] max-w-6xl mx-auto h-auto drop-shadow-sm overflow-visible"
+                    className="w-full max-w-6xl mx-auto h-auto drop-shadow-sm overflow-visible"
                 >
                     <defs>
                         {/* Gradient for active piece */}
@@ -522,12 +522,12 @@ export default function ProjectJigsawBoard({
                                         height={CH}
                                         className="pointer-events-none"
                                     >
-                                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center select-none">
-                                            <Icon className="size-6 mb-1.5 text-slate-400 shrink-0" />
-                                            <span className="text-xs sm:text-[13px] font-bold text-slate-400 leading-tight line-clamp-2 px-3">
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center select-none">
+                                            <Icon className="size-6 mb-1 text-slate-400 shrink-0" />
+                                            <span className="text-[13px] font-bold text-slate-400 leading-tight line-clamp-2 px-2">
                                                 {item.label}
                                             </span>
-                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase mt-1.5 tracking-tight bg-slate-200 text-slate-500 border border-slate-300 shadow-2xs">
+                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full uppercase mt-1 tracking-tight bg-slate-200 text-slate-500 border border-slate-300 shadow-2xs">
                                                 Khusus Akademik
                                             </span>
                                         </div>
@@ -563,13 +563,13 @@ export default function ProjectJigsawBoard({
                                     height={CH}
                                     className="pointer-events-none"
                                 >
-                                    <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center select-none">
-                                        <Icon className="size-6 mb-1.5 text-blue-600 shrink-0" />
-                                        <span className="text-xs sm:text-[13px] font-extrabold text-slate-800 leading-tight line-clamp-2 px-3">
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center select-none">
+                                        <Icon className="size-6 mb-1 text-blue-600 shrink-0" />
+                                        <span className="text-[13px] font-extrabold text-slate-800 leading-tight line-clamp-2 px-2">
                                             {item.label}
                                         </span>
                                         {item.badge && (
-                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1.5 tracking-tight bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
+                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1 tracking-tight bg-blue-50 text-blue-700 border border-blue-200/60 shadow-2xs">
                                                 {item.badge}
                                             </span>
                                         )}
@@ -611,13 +611,13 @@ export default function ProjectJigsawBoard({
                                     height={CH}
                                     className="pointer-events-none"
                                 >
-                                    <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center select-none">
-                                        <Icon className="size-6 mb-1.5 text-blue-600 shrink-0 scale-110 transition-transform duration-150" />
-                                        <span className="text-xs sm:text-[13px] font-black text-blue-900 leading-tight line-clamp-2 px-3">
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center select-none">
+                                        <Icon className="size-6 mb-1 text-blue-600 shrink-0 scale-110 transition-transform duration-150" />
+                                        <span className="text-[13px] font-black text-blue-900 leading-tight line-clamp-2 px-2">
                                             {hoveredItem.label}
                                         </span>
                                         {hoveredItem.badge && (
-                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1.5 tracking-tight bg-blue-100 text-blue-800 border border-blue-300 shadow-2xs">
+                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1 tracking-tight bg-blue-100 text-blue-800 border border-blue-300 shadow-2xs">
                                                 {hoveredItem.badge}
                                             </span>
                                         )}
@@ -657,13 +657,13 @@ export default function ProjectJigsawBoard({
                                     height={CH}
                                     className="pointer-events-none"
                                 >
-                                    <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center select-none text-white">
-                                        <Icon className="size-6 mb-1.5 text-white shrink-0 scale-110" />
-                                        <span className="text-xs sm:text-[13px] font-black leading-tight line-clamp-2 px-3 text-white">
+                                    <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center select-none text-white">
+                                        <Icon className="size-6 mb-1 text-white shrink-0 scale-110" />
+                                        <span className="text-[13px] font-black leading-tight line-clamp-2 px-2 text-white">
                                             {activeItem.label}
                                         </span>
                                         {activeItem.badge && (
-                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1.5 tracking-tight bg-white text-blue-700 shadow-xs">
+                                            <span className="text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mt-1 tracking-tight bg-white text-blue-700 shadow-xs">
                                                 {activeItem.badge}
                                             </span>
                                         )}

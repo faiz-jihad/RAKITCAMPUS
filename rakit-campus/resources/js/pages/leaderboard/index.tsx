@@ -55,6 +55,114 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Leaderboard', href: '/leaderboard' },
 ];
 
+// Curated photos for Teams (collaborative squad, hackathon teamwork, discussions)
+const TEAM_PLACEHOLDER_PHOTOS = [
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=250&q=80', // Tim berkolaborasi dengan laptop
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=250&q=80', // Mahasiswa kerja kelompok
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=250&q=80', // Sesi ide & brainstorming tim
+    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=250&q=80', // Tim kompak di meja diskusi
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=250&q=80', // Hackathon teamwork intensif
+    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=250&q=80', // Squad tech developer di ruang kerja
+    'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=250&q=80', // Rekan tim solid & ceria
+    'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=250&q=80', // Diskusi proyek kelompok
+];
+
+// Curated photos for Projects (software code, modern UI dashboard, apps, tech devices)
+const PROJECT_PLACEHOLDER_PHOTOS = [
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=250&q=80', // Dashboard data & analitik modern
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=250&q=80', // Kode pemrograman di layar laptop
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=250&q=80', // Desain UI platform digital
+    'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=250&q=80', // Prototipe website & aplikasi interaktif
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=250&q=80', // Terminal AI & arsitektur sistem
+    'https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=250&q=80', // Antarmuka aplikasi smartphone modern
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=250&q=80', // Perangkat IoT hardware & mikrokontroler
+    'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=250&q=80', // Digital product & sistem inovasi perangkat lunak
+];
+
+function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function getEntityVisual(item: any, activeHub: string, activeSubType?: string) {
+    if (!item) {
+        return {
+            url: 'https://ui-avatars.com/api/?name=RC&background=2563EB&color=fff&size=96&bold=true',
+            isTeam: false,
+            isProject: false,
+            isUser: true,
+            name: 'Peserta',
+            subtitle: '-',
+            entityLabel: 'Peserta',
+        };
+    }
+
+    // 1. Proyek (Karya / Aplikasi / Software)
+    if (item.project || activeSubType === 'projects') {
+        const proj = item.project || {};
+        const title = proj.title || 'Proyek Inovasi';
+        if (proj.cover_url) {
+            return {
+                url: proj.cover_url,
+                isTeam: false,
+                isProject: true,
+                isUser: false,
+                name: title,
+                subtitle: proj.category ? `Kategori: ${proj.category}` : 'Proyek Inovasi',
+                entityLabel: 'Proyek Inovasi',
+            };
+        }
+        const key = String(proj.id || title);
+        const index = hashString(key) % PROJECT_PLACEHOLDER_PHOTOS.length;
+        return {
+            url: PROJECT_PLACEHOLDER_PHOTOS[index],
+            isTeam: false,
+            isProject: true,
+            isUser: false,
+            name: title,
+            subtitle: proj.category ? `Kategori: ${proj.category}` : 'Proyek Inovasi',
+            entityLabel: 'Proyek Inovasi',
+        };
+    }
+
+    // 2. Tim Kompetisi (Kelompok / Squad)
+    if (item.team || activeSubType === 'teams') {
+        const team = item.team || {};
+        const teamName = team.name || 'Tim Kompetisi';
+        const key = String(team.id || teamName);
+        const index = hashString(key) % TEAM_PLACEHOLDER_PHOTOS.length;
+        return {
+            url: team.avatar || TEAM_PLACEHOLDER_PHOTOS[index],
+            isTeam: true,
+            isProject: false,
+            isUser: false,
+            name: teamName,
+            subtitle: team.competition_name || 'Kompetisi Nasional',
+            entityLabel: 'Tim Kompetisi',
+        };
+    }
+
+    // 3. Mahasiswa / Pengguna (Individu)
+    const user = item.user || {};
+    const userName = user.name || 'Mahasiswa';
+    const seed = encodeURIComponent(String(user.id || userName));
+    const randomUserPhoto = `https://i.pravatar.cc/150?u=${seed}`;
+
+    return {
+        url: user.avatar || randomUserPhoto,
+        isTeam: false,
+        isProject: false,
+        isUser: true,
+        name: userName,
+        subtitle: user.campus_name || 'Perguruan Tinggi',
+        entityLabel: 'Mahasiswa',
+    };
+}
+
 export default function LeaderboardIndex({
     activeHub,
     activePeriod,
@@ -335,13 +443,17 @@ export default function LeaderboardIndex({
                         {/* Interactive Visual Olympic Podium */}
                         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center">
                             <LeaderboardPodium
-                                rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => ({
-                                    userId: String(item.user?.id || item.team?.id || item.project?.id || idx + 1),
-                                    userName: item.user?.name || item.team?.name || item.project?.title || `Peserta #${item.rank || idx + 1}`,
-                                    rank: (item.rank || idx + 1) as 1 | 2 | 3,
-                                    value: item.points || 0,
-                                    avatarUrl: item.user?.avatar || (item.user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user.name)}&background=2563EB&color=fff` : null),
-                                }))}
+                                rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => {
+                                    const v = getEntityVisual(item, activeHub, leaderboard.sub_type);
+                                    return {
+                                        userId: String(item.user?.id || item.team?.id || item.project?.id || idx + 1),
+                                        userName: v.name,
+                                        rank: (item.rank || idx + 1) as 1 | 2 | 3,
+                                        value: item.points || 0,
+                                        avatarUrl: v.url,
+                                        entityType: v.isProject ? ('project' as const) : v.isTeam ? ('team' as const) : ('user' as const),
+                                    };
+                                })}
                                 size="default"
                                 medalStyle="modern"
                                 showValue={true}
@@ -351,134 +463,155 @@ export default function LeaderboardIndex({
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* 2nd Place (Silver) */}
-                        {leaderboard.top_three[1] && (
-                            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs">
-                                        #2
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[1].rank_change)}
-                                </div>
+                        {leaderboard.top_three[1] && (() => {
+                            const item2 = leaderboard.top_three[1];
+                            const v2 = getEntityVisual(item2, activeHub, leaderboard.sub_type);
+                            return (
+                                <div className="order-2 md:order-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
+                                    <div className="absolute top-3 left-3">
+                                        <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs">
+                                            #2
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-3 right-3">
+                                        {renderRankChange(item2.rank_change)}
+                                    </div>
 
-                                <div className="mt-4 flex flex-col items-center">
-                                    <div className="size-16 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-slate-700 font-black text-lg shadow-xs mb-3 overflow-hidden">
-                                        {leaderboard.top_three[1].user?.avatar ? (
-                                            <img src={leaderboard.top_three[1].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[1].user?.name?.slice(0, 2).toUpperCase() || 'P2'
+                                    <div className="mt-4 flex flex-col items-center">
+                                        <div className={`size-16 ${v2.isProject ? 'rounded-2xl' : 'rounded-full'} bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-slate-700 font-black text-lg shadow-xs mb-3 overflow-hidden relative`}>
+                                            <img
+                                                src={v2.url}
+                                                alt={v2.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v2.name)}&background=64748B&color=fff&size=96&bold=true`;
+                                                }}
+                                            />
+                                        </div>
+                                        <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1" title={v2.name}>
+                                            {v2.name}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                                            {v2.subtitle}
+                                        </p>
+                                        {item2.badge && (
+                                            <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                {item2.badge.name}
+                                            </span>
                                         )}
                                     </div>
-                                    <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[1].user?.name || leaderboard.top_three[1].team?.name || leaderboard.top_three[1].project?.title}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                        {leaderboard.top_three[1].user?.campus_name || leaderboard.top_three[1].team?.competition_name || leaderboard.top_three[1].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[1].badge && (
-                                        <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                            {leaderboard.top_three[1].badge.name}
-                                        </span>
-                                    )}
-                                </div>
 
-                                <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
-                                    <Zap className="size-4 text-amber-500 fill-amber-500" />
-                                    <span className="text-xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[1].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                        <Zap className="size-4 text-amber-500 fill-amber-500" />
+                                        <span className="text-xl font-black text-slate-900 font-mono">
+                                            {item2.points.toLocaleString()}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* 1st Place (Gold Champion) */}
-                        {leaderboard.top_three[0] && (
-                            <div className="order-1 md:order-2 bg-gradient-to-b from-amber-50/70 via-white to-white rounded-2xl p-6 border-2 border-amber-300 shadow-xs flex flex-col justify-between items-center text-center relative overflow-hidden group">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-400 text-amber-950 font-black text-xs flex items-center gap-1 shadow-2xs">
-                                        <Trophy className="size-3 shrink-0" />
-                                        <span>Peringkat 1</span>
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[0].rank_change)}
-                                </div>
+                        {leaderboard.top_three[0] && (() => {
+                            const item1 = leaderboard.top_three[0];
+                            const v1 = getEntityVisual(item1, activeHub, leaderboard.sub_type);
+                            return (
+                                <div className="order-1 md:order-2 bg-gradient-to-b from-amber-50/70 via-white to-white rounded-2xl p-6 border-2 border-amber-300 shadow-xs flex flex-col justify-between items-center text-center relative overflow-hidden group">
+                                    <div className="absolute top-3 left-3">
+                                        <span className="px-2.5 py-0.5 rounded-lg bg-amber-400 text-amber-950 font-black text-xs flex items-center gap-1 shadow-2xs">
+                                            <Trophy className="size-3 shrink-0" />
+                                            <span>Peringkat 1</span>
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-3 right-3">
+                                        {renderRankChange(item1.rank_change)}
+                                    </div>
 
-                                <div className="mt-5 flex flex-col items-center">
-                                    <div className="size-20 rounded-full bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-amber-900 font-black text-2xl shadow-sm mb-3 overflow-hidden">
-                                        {leaderboard.top_three[0].user?.avatar ? (
-                                            <img src={leaderboard.top_three[0].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[0].user?.name?.slice(0, 2).toUpperCase() || 'P1'
+                                    <div className="mt-5 flex flex-col items-center">
+                                        <div className={`size-20 ${v1.isProject ? 'rounded-2xl' : 'rounded-full'} bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-amber-900 font-black text-2xl shadow-sm mb-3 overflow-hidden relative`}>
+                                            <img
+                                                src={v1.url}
+                                                alt={v1.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v1.name)}&background=D97706&color=fff&size=96&bold=true`;
+                                                }}
+                                            />
+                                        </div>
+                                        <h3 className="font-black text-base text-slate-900 line-clamp-1" title={v1.name}>
+                                            {v1.name}
+                                        </h3>
+                                        <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 font-medium">
+                                            {v1.subtitle}
+                                        </p>
+                                        {item1.badge && (
+                                            <span className="mt-2 text-[11px] font-black px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200">
+                                                {item1.badge.name}
+                                            </span>
                                         )}
                                     </div>
-                                    <h3 className="font-black text-base text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[0].user?.name || leaderboard.top_three[0].team?.name || leaderboard.top_three[0].project?.title}
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 font-medium">
-                                        {leaderboard.top_three[0].user?.campus_name || leaderboard.top_three[0].team?.competition_name || leaderboard.top_three[0].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[0].badge && (
-                                        <span className="mt-2 text-[11px] font-black px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200">
-                                            {leaderboard.top_three[0].badge.name}
-                                        </span>
-                                    )}
-                                </div>
 
-                                <div className="mt-5 pt-3 border-t border-amber-100 w-full flex items-center justify-center gap-1.5">
-                                    <Sparkles className="size-4 text-amber-500" />
-                                    <span className="text-2xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[0].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    <div className="mt-5 pt-3 border-t border-amber-100 w-full flex items-center justify-center gap-1.5">
+                                        <Sparkles className="size-4 text-amber-500" />
+                                        <span className="text-2xl font-black text-slate-900 font-mono">
+                                            {item1.points.toLocaleString()}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
 
                         {/* 3rd Place (Bronze) */}
-                        {leaderboard.top_three[2] && (
-                            <div className="order-3 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200 shadow-2xs">
-                                        #3
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[2].rank_change)}
-                                </div>
+                        {leaderboard.top_three[2] && (() => {
+                            const item3 = leaderboard.top_three[2];
+                            const v3 = getEntityVisual(item3, activeHub, leaderboard.sub_type);
+                            return (
+                                <div className="order-3 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
+                                    <div className="absolute top-3 left-3">
+                                        <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200 shadow-2xs">
+                                            #3
+                                        </span>
+                                    </div>
+                                    <div className="absolute top-3 right-3">
+                                        {renderRankChange(item3.rank_change)}
+                                    </div>
 
-                                <div className="mt-4 flex flex-col items-center">
-                                    <div className="size-16 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center text-amber-800 font-black text-lg shadow-xs mb-3 overflow-hidden">
-                                        {leaderboard.top_three[2].user?.avatar ? (
-                                            <img src={leaderboard.top_three[2].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[2].user?.name?.slice(0, 2).toUpperCase() || 'P3'
+                                    <div className="mt-4 flex flex-col items-center">
+                                        <div className={`size-16 ${v3.isProject ? 'rounded-2xl' : 'rounded-full'} bg-amber-50 border-2 border-amber-200 flex items-center justify-center text-amber-800 font-black text-lg shadow-xs mb-3 overflow-hidden relative`}>
+                                            <img
+                                                src={v3.url}
+                                                alt={v3.name}
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v3.name)}&background=B45309&color=fff&size=96&bold=true`;
+                                                }}
+                                            />
+                                        </div>
+                                        <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1" title={v3.name}>
+                                            {v3.name}
+                                        </h3>
+                                        <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                                            {v3.subtitle}
+                                        </p>
+                                        {item3.badge && (
+                                            <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                {item3.badge.name}
+                                            </span>
                                         )}
                                     </div>
-                                    <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[2].user?.name || leaderboard.top_three[2].team?.name || leaderboard.top_three[2].project?.title}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                        {leaderboard.top_three[2].user?.campus_name || leaderboard.top_three[2].team?.competition_name || leaderboard.top_three[2].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[2].badge && (
-                                        <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                            {leaderboard.top_three[2].badge.name}
-                                        </span>
-                                    )}
-                                </div>
 
-                                <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
-                                    <Zap className="size-4 text-amber-500 fill-amber-500" />
-                                    <span className="text-xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[2].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                        <Zap className="size-4 text-amber-500 fill-amber-500" />
+                                        <span className="text-xl font-black text-slate-900 font-mono">
+                                            {item3.points.toLocaleString()}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-400">pts</span>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            );
+                        })()}
                         </div>
                     </div>
                 )}
@@ -548,6 +681,7 @@ export default function LeaderboardIndex({
                         <div className="divide-y divide-slate-100 overflow-x-auto">
                             {leaderboard.rankings.map((item: any, idx: number) => {
                                 const isMe = item.user?.is_current_user || item.is_my_team || item.is_my_project;
+                                const v = getEntityVisual(item, activeHub, leaderboard.sub_type);
 
                                 return (
                                     <div
@@ -573,19 +707,22 @@ export default function LeaderboardIndex({
                                             </div>
 
                                             {/* Avatar / Thumbnail */}
-                                            <div className="size-10 sm:size-11 rounded-xl bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden">
-                                                {item.user?.avatar ? (
-                                                    <img src={item.user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <span>{(item.user?.name || item.team?.name || item.project?.title || 'R').slice(0, 2).toUpperCase()}</span>
-                                                )}
+                                            <div className={`size-10 sm:size-11 ${v.isProject ? 'rounded-xl' : 'rounded-full'} bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden shadow-2xs`}>
+                                                <img
+                                                    src={v.url}
+                                                    alt={v.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v.name)}&background=2563EB&color=fff&size=96&bold=true`;
+                                                    }}
+                                                />
                                             </div>
 
                                             {/* Name & Details */}
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                                                        {item.user?.name || item.team?.name || item.project?.title}
+                                                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={v.name}>
+                                                        {v.name}
                                                     </h4>
                                                     {isMe && (
                                                         <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-md bg-blue-600 text-white">

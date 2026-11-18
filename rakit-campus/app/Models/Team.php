@@ -140,8 +140,8 @@ class Team extends Model
     public function availableSlots(): int
     {
         $count = $this->relationLoaded('members')
-            ? $this->members->where('status', 'active')->count()
-            : $this->members()->where('status', 'active')->count();
+            ? $this->members->whereIn('status', ['active', 'completed'])->count()
+            : $this->members()->whereIn('status', ['active', 'completed'])->count();
 
         return max(0, $this->capacity - $count);
     }
@@ -149,8 +149,8 @@ class Team extends Model
     public function isFull(): bool
     {
         $count = $this->relationLoaded('members')
-            ? $this->members->where('status', 'active')->count()
-            : $this->members()->where('status', 'active')->count();
+            ? $this->members->whereIn('status', ['active', 'completed'])->count()
+            : $this->members()->whereIn('status', ['active', 'completed'])->count();
 
         return $count >= $this->capacity;
     }

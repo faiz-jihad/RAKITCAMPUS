@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
     CheckCircle2,
     Clock,
@@ -95,6 +95,27 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
         low: { label: 'Rendah', badgeCls: 'bg-slate-100 text-slate-600 border-slate-200', dotCls: 'bg-slate-400' },
     };
 
+    // Helper to format due date cleanly and avoid timezone jumps
+    const formatDueDate = (dateStr?: string | null) => {
+        if (!dateStr) return null;
+        try {
+            const clean = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+            const parts = clean.split('-');
+            if (parts.length === 3) {
+                const year = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const day = parseInt(parts[2], 10);
+                const d = new Date(year, month, day);
+                return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+            }
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr;
+            return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        } catch {
+            return dateStr;
+        }
+    };
+
     // Team members for assignment dropdown
     const teamMembers = useMemo(() => {
         const members = project.team?.members || [];
@@ -122,6 +143,65 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
             return matchSearch && matchPriority;
         });
     };
+
+    // WebSocket / Real-time sync across all workspace members
+    useEffect(() => {
+        if (!teamId || typeof window === 'undefined' || !(window as any).Echo) return;
+
+        const channelName = `workspace.${teamId}`;
+        const channel = (window as any).Echo.private(channelName);
+
+        channel.listen('.task.mutated', (e: { action: string; task: any }) => {
+            const { action, task } = e;
+            if (!action || !task) return;
+
+            setKanbanState((prev) => {
+                const next = {
+                    todo: [...prev.todo],
+                    in_progress: [...prev.in_progress],
+                    in_review: [...prev.in_review],
+                    completed: [...prev.completed],
+                };
+
+                const cols: ColumnKey[] = ['todo', 'in_progress', 'in_review', 'completed'];
+
+                if (action === 'deleted') {
+                    cols.forEach((col) => {
+                        next[col] = next[col].filter((t) => t.id !== task.id);
+                    });
+                    return next;
+                }
+
+                if (action === 'created') {
+                    const exists = cols.some((col) => next[col].some((t) => t.id === task.id));
+                    if (!exists) {
+                        const targetCol = (task.status as ColumnKey) || 'todo';
+                        if (next[targetCol]) {
+                            next[targetCol] = [task, ...next[targetCol]];
+                        }
+                    }
+                    return next;
+                }
+
+                if (action === 'updated') {
+                    const targetCol = (task.status as ColumnKey) || 'todo';
+                    cols.forEach((col) => {
+                        next[col] = next[col].filter((t) => t.id !== task.id);
+                    });
+                    if (next[targetCol]) {
+                        next[targetCol] = [task, ...next[targetCol]];
+                    }
+                    return next;
+                }
+
+                return prev;
+            });
+        });
+
+        return () => {
+            (window as any).Echo.leave(channelName);
+        };
+    }, [teamId]);
 
     // ==========================================
     // 1. INLINE QUICK ADD TASK (Trello UX)
@@ -363,7 +443,7 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
         setEditPriority(task.priority || 'medium');
         setEditStatus(task.status || 'todo');
         setEditAssigneeId(task.assignee_id ? String(task.assignee_id) : '');
-        setEditDueOn(task.due_on || '');
+        setEditDueOn(task.due_on ? task.due_on.split('T')[0] : '');
     };
 
     const handleSaveCardModal = async (e: React.FormEvent) => {
@@ -551,9 +631,8 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                             {/* Priority Label Strip (Trello Style) */}
                                             <div className="flex items-center justify-between gap-1">
                                                 <span
-                                                    className={`inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.badgeCls}`}
+                                                    className={`inline-flex items-center text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.badgeCls}`}
                                                 >
-                                                    <span className={`size-1.5 rounded-full ${priority.dotCls}`} />
                                                     <span>{priority.label}</span>
                                                 </span>
 
@@ -598,25 +677,28 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                             )}
 
                                             {/* Card Footer: Assignee, Due Date & Fast Move */}
-                                            <div className="flex items-center justify-between pt-2 border-t border-slate-100 mt-1">
+                                            <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-slate-100 mt-1 min-w-0">
                                                 {/* Assignee Avatar */}
-                                                <div className="flex items-center gap-1.5">
+                                                <div className="flex items-center gap-1.5 min-w-0 flex-1">
                                                     <div className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
                                                         {task.assignee?.name
                                                             ? task.assignee.name.substring(0, 1).toUpperCase()
                                                             : '?'}
                                                     </div>
-                                                    <span className="text-[10px] text-slate-600 font-medium truncate max-w-[80px]">
+                                                    <span className="text-[10px] text-slate-600 font-medium truncate">
                                                         {task.assignee?.name?.split(' ')[0] || 'Unassigned'}
                                                     </span>
                                                 </div>
 
-                                                {/* Due Date or Fast Shift */}
-                                                <div className="flex items-center gap-1">
+                                                {/* Due Date & Fast Shift */}
+                                                <div className="flex items-center gap-1.5 shrink-0">
                                                     {task.due_on && (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] font-medium text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200">
-                                                            <Clock className="size-2.5 text-slate-400" />
-                                                            <span>{task.due_on}</span>
+                                                        <span
+                                                            title={`Tenggat: ${task.due_on.split('T')[0]}`}
+                                                            className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-200 shrink-0 whitespace-nowrap"
+                                                        >
+                                                            <Clock className="size-2.5 text-slate-400 shrink-0" />
+                                                            <span>{formatDueDate(task.due_on)}</span>
                                                         </span>
                                                     )}
 
@@ -629,7 +711,7 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                                                 e.stopPropagation();
                                                                 handleMoveStatus(task, e.target.value as ColumnKey);
                                                             }}
-                                                            className="text-[10px] bg-slate-50 border border-slate-200/90 rounded-md px-1 py-0.5 font-bold text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer"
+                                                            className="text-[10px] bg-slate-50 border border-slate-200/90 rounded-md px-1 py-0.5 font-bold text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer shrink-0"
                                                         >
                                                             <option value="todo">To-Do</option>
                                                             <option value="in_progress">In Progress</option>
@@ -710,21 +792,19 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Modal Header */}
-                        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-                            <div className="flex items-center gap-2">
-                                <FolderKanban className="size-5 text-blue-600 shrink-0" />
-                                <div>
-                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                                        Rincian Kartu Tugas
-                                    </span>
-                                    <span className="text-xs font-medium text-slate-500">
-                                        Di kolom: <strong className="text-slate-800">{columns.find((c) => c.key === activeTaskModal.status)?.title}</strong>
-                                    </span>
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-2xl bg-blue-50 text-blue-600 border border-blue-200/80 flex items-center justify-center shrink-0">
+                                    <FolderKanban className="size-5" />
                                 </div>
+                                <h3 className="text-base font-black text-slate-900 tracking-tight">
+                                    Rincian Kartu Tugas
+                                </h3>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setActiveTaskModal(null)}
-                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition"
+                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
                             >
                                 <X className="size-5" />
                             </button>
@@ -733,37 +813,43 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                         <form onSubmit={handleSaveCardModal} className="flex flex-col gap-4">
                             {/* Judul Tugas */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Judul Kartu</label>
+                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                                    Judul Kartu
+                                </label>
                                 <input
                                     type="text"
                                     value={editTitle}
                                     onChange={(e) => setEditTitle(e.target.value)}
                                     required
                                     placeholder="Contoh: Desain wireframe halaman profil"
-                                    className="w-full text-xs font-bold text-slate-900 rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    className="w-full text-xs font-semibold text-slate-900 rounded-2xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 bg-slate-50/50 hover:bg-white focus:bg-white transition"
                                 />
                             </div>
 
                             {/* Deskripsi Lengkap */}
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Pengerjaan</label>
+                                <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-2">
+                                    Deskripsi Pengerjaan
+                                </label>
                                 <textarea
                                     value={editDescription}
                                     onChange={(e) => setEditDescription(e.target.value)}
                                     rows={4}
                                     placeholder="Jelaskan instruksi tugas, kriteria pengerjaan, atau link referensi..."
-                                    className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 leading-relaxed"
+                                    className="w-full text-xs rounded-2xl border border-slate-200 p-3.5 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 bg-slate-50/50 hover:bg-white focus:bg-white text-slate-800 transition placeholder:text-slate-400 resize-none leading-relaxed"
                                 />
                             </div>
 
                             {/* Options Grid: Status, Prioritas, Penanggung Jawab, Deadline */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50/80 p-4 rounded-2xl border border-slate-100">
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Kolom Status</label>
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                                        Kolom Status
+                                    </label>
                                     <select
                                         value={editStatus}
                                         onChange={(e) => setEditStatus(e.target.value as ColumnKey)}
-                                        className="w-full text-xs rounded-xl border border-slate-200 px-3 py-2 bg-white font-medium"
+                                        className="w-full text-xs font-semibold rounded-xl border border-slate-200 px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                                     >
                                         <option value="todo">Belum Dikerjakan (To-Do)</option>
                                         <option value="in_progress">Sedang Dikerjakan</option>
@@ -773,11 +859,13 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Prioritas (Label)</label>
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                                        Prioritas (Label)
+                                    </label>
                                     <select
                                         value={editPriority}
                                         onChange={(e) => setEditPriority(e.target.value)}
-                                        className="w-full text-xs rounded-xl border border-slate-200 px-3 py-2 bg-white font-medium"
+                                        className="w-full text-xs font-semibold rounded-xl border border-slate-200 px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                                     >
                                         <option value="low">Rendah (Low)</option>
                                         <option value="medium">Menengah (Medium)</option>
@@ -787,11 +875,13 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Anggota Pelaksana</label>
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                                        Anggota Pelaksana
+                                    </label>
                                     <select
                                         value={editAssigneeId}
                                         onChange={(e) => setEditAssigneeId(e.target.value)}
-                                        className="w-full text-xs rounded-xl border border-slate-200 px-3 py-2 bg-white font-medium"
+                                        className="w-full text-xs font-semibold rounded-xl border border-slate-200 px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                                     >
                                         <option value="">Belum Ditugaskan</option>
                                         {teamMembers.map((m: any) => (
@@ -803,22 +893,24 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                 </div>
 
                                 <div>
-                                    <label className="block text-[11px] font-bold text-slate-600 mb-1">Batas Waktu (Due Date)</label>
+                                    <label className="block text-xs font-black uppercase tracking-wider text-slate-500 mb-1.5">
+                                        Batas Waktu (Due Date)
+                                    </label>
                                     <input
                                         type="date"
                                         value={editDueOn}
                                         onChange={(e) => setEditDueOn(e.target.value)}
-                                        className="w-full text-xs rounded-xl border border-slate-200 px-3 py-2 bg-white font-medium"
+                                        className="w-full text-xs font-semibold rounded-xl border border-slate-200 px-3 py-2 bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
                                     />
                                 </div>
                             </div>
 
                             {/* Modal Actions */}
-                            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-2">
+                            <div className="flex items-center justify-between pt-3.5 border-t border-slate-100 mt-2">
                                 <button
                                     type="button"
                                     onClick={() => handleDeleteTask(activeTaskModal.id, activeTaskModal.status)}
-                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition"
+                                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                 >
                                     <Trash2 className="size-3.5" />
                                     <span>Hapus Kartu</span>
@@ -828,14 +920,14 @@ export default function TasksKanbanTab({ project, kanban: initialKanban, isMembe
                                     <button
                                         type="button"
                                         onClick={() => setActiveTaskModal(null)}
-                                        className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 transition"
+                                        className="px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition cursor-pointer"
                                     >
                                         Tutup
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={modalSubmitting || !editTitle.trim()}
-                                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
+                                        className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs disabled:opacity-50 cursor-pointer"
                                     >
                                         {modalSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
                                     </button>

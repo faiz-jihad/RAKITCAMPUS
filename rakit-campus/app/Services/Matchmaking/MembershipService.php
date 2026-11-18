@@ -539,6 +539,12 @@ class MembershipService
                 $project->id,
                 $project->leader_id
             );
+
+            try {
+                \App\Services\Leaderboard\LeaderboardScoringService::recordProjectCompleted($project, $evaluatorId ? \App\Models\User::find($evaluatorId) : null);
+            } catch (\Throwable $e) {
+                // Silently ignore scoring error
+            }
         });
     }
 

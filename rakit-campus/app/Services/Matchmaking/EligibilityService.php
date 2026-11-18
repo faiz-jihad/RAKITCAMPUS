@@ -322,8 +322,8 @@ class EligibilityService
         }
 
         $currentMembers = $team->relationLoaded('members')
-            ? $team->members->where('status', 'active')->count()
-            : $team->members()->where('status', 'active')->count();
+            ? $team->members->whereIn('status', ['active', 'completed'])->count()
+            : $team->members()->whereIn('status', ['active', 'completed'])->count();
 
         return $currentMembers < $maxCapacity;
     }
@@ -334,7 +334,7 @@ class EligibilityService
     public function hasRoleVacancy(RecruitmentRole $role): bool
     {
         $filled = TeamMember::where('recruitment_role_id', $role->id)
-            ->where('status', 'active')
+            ->whereIn('status', ['active', 'completed'])
             ->count();
 
         return $filled < $role->slots;

@@ -29,18 +29,17 @@ class AllocationService
         $students = $class->students()
             ->with([
                 'profile.skills',
-                'teamMemberships' => fn ($q) => $q->where('status', 'active'),
+                'teamMemberships' => fn ($q) => $q->whereIn('status', ['active', 'completed']),
             ])
             ->wherePivot('status', 'enrolled')
             ->get();
 
-        // 2. Filter unassigned students who do not currently hold an active project (Batch lookup - Zero N+1)
-        $activeUserIds = \App\Models\TeamMember::where('status', 'active')
+        // 2. Filter unassigned students who do not currently hold an active/completed project (Batch lookup - Zero N+1)
+        $activeUserIds = \App\Models\TeamMember::whereIn('status', ['active', 'completed'])
             ->whereIn('user_id', $students->pluck('id'))
             ->whereHas('team.project', function ($q) {
                 $q->whereNotIn('status', [
                     ProjectStatus::Archived->value,
-                    ProjectStatus::Completed->value,
                 ]);
             })
             ->pluck('user_id')
@@ -91,7 +90,7 @@ class AllocationService
                 // Check if project has capacity
                 $team = $project->team;
                 $maxCap = $project->max_team_size ?: ($team?->capacity ?: 5);
-                $currCount = $team ? $team->members->where('status', 'active')->count() : 0;
+                $currCount = $team ? $team->members->whereIn('status', ['active', 'completed'])->count() : 0;
 
                 if ($currCount >= $maxCap) {
                     continue; // Skip full projects
@@ -129,7 +128,7 @@ class AllocationService
         $projectOccupancy = [];
 
         foreach ($projects as $p) {
-            $curr = $p->team ? $p->team->members->where('status', 'active')->count() : 0;
+            $curr = $p->team ? $p->team->members->whereIn('status', ['active', 'completed'])->count() : 0;
             $maxCap = $p->max_team_size ?: ($p->team?->capacity ?: 5);
             $projectOccupancy[$p->id] = [
                 'current' => $curr,

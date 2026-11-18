@@ -40,6 +40,7 @@ class TeamOptimizationService
     {
         $project->loadMissing([
             'skills',
+            'leader.profile.skills',
             'academicClass.students.profile.skills',
             'team.members.user.profile.skills',
             'team.recruitment.roles.members',
@@ -47,8 +48,10 @@ class TeamOptimizationService
 
         $team = $project->team;
         $maxCapacity = $targetSize ?: ($project->max_team_size ?: ($team?->capacity ?: 4));
-        $existingMembers = $team ? $team->members()->where('status', 'active')->with('user.profile.skills')->get() : collect();
-        $currentCount = $existingMembers->count();
+        $existingMembers = $team ? $team->members()->whereIn('status', ['active', 'completed'])->with('user.profile.skills')->get() : collect();
+        
+        $isLeaderInMembers = $project->leader_id && $existingMembers->contains('user_id', $project->leader_id);
+        $currentCount = $existingMembers->count() + ($isLeaderInMembers || ! $project->leader_id ? 0 : 1);
         $slotsToFill = max(0, $maxCapacity - $currentCount);
 
         // Required skills and open roles
@@ -69,16 +72,41 @@ class TeamOptimizationService
                 }
             }
         }
+
+        // Include project leader if not already in team members
+        if ($project->leader && ! $isLeaderInMembers) {
+            if ($project->leader->relationLoaded('profile') && $project->leader->profile) {
+                $project->leader->profile->loadMissing('skills');
+            } else {
+                $project->leader->loadMissing('profile.skills');
+            }
+            if ($project->leader->profile) {
+                foreach ($project->leader->profile->skills as $s) {
+                    $currentCoveredSkills->push(strtolower($s->name));
+                }
+            }
+            $currentRoles->push('project leader');
+        }
+
         $currentCoveredSkills = $currentCoveredSkills->unique();
 
-        if ($slotsToFill <= 0) {
+        $projectStatusStr = is_object($project->status) ? $project->status->value : (string) $project->status;
+        $isProjectCompleted = in_array($projectStatusStr, ['completed', 'archived'], true);
+
+        if ($slotsToFill <= 0 || $isProjectCompleted) {
+            $msg = $isProjectCompleted
+                ? "Proyek ini telah selesai dievaluasi ({$currentCount}/{$maxCapacity} anggota tim)."
+                : "Tim sudah mencapai kapasitas target ({$currentCount}/{$maxCapacity} anggota).";
+
             return $this->buildResult(
                 collect(),
                 $currentCoveredSkills,
                 $projectSkills,
                 $currentRoles,
                 $recruitmentRoles,
-                "Tim sudah mencapai kapasitas target ({$currentCount}/{$maxCapacity} anggota)."
+                $msg,
+                $maxCapacity,
+                $currentCount
             );
         }
 
@@ -86,9 +114,17 @@ class TeamOptimizationService
         $eligibleCandidates = collect();
         if ($project->academicClass) {
             $classStudents = $project->academicClass->students;
+            $allExistingUserIds = $team 
+                ? $team->members()->whereIn('status', ['active', 'completed'])->pluck('user_id')->all()
+                : [];
+            if ($project->leader_id) {
+                $allExistingUserIds[] = (int) $project->leader_id;
+            }
+            $allExistingUserIds = array_unique($allExistingUserIds);
+
             foreach ($classStudents as $student) {
                 // Exclude existing members or leader
-                if ($project->leader_id === $student->id || $existingMembers->contains('user_id', $student->id)) {
+                if (in_array((int) $student->id, $allExistingUserIds, true)) {
                     continue;
                 }
 
@@ -113,7 +149,9 @@ class TeamOptimizationService
                 $projectSkills,
                 $currentRoles,
                 $recruitmentRoles,
-                "Tidak ada kandidat sekelas yang memenuhi syarat dan belum memiliki kelompok."
+                "Tidak ada kandidat sekelas yang memenuhi syarat dan belum memiliki kelompok.",
+                $maxCapacity,
+                $currentCount
             );
         }
 
@@ -217,7 +255,9 @@ class TeamOptimizationService
             $projectSkills,
             $simulatedRoles,
             $recruitmentRoles,
-            "Optimasi kombinasi berhasil menemukan {$selectedCombination->count()} rekan sekelas komplementer terbaik."
+            "Optimasi kombinasi berhasil menemukan {$selectedCombination->count()} rekan sekelas komplementer terbaik.",
+            $maxCapacity,
+            $currentCount + $selectedCombination->count()
         );
     }
 
@@ -230,44 +270,71 @@ class TeamOptimizationService
         Collection $requiredSkills,
         Collection $coveredRoles,
         Collection $recruitmentRoles,
-        string $baseExplanation
+        string $baseExplanation,
+        int $maxCapacity = 4,
+        int $currentMemberCount = 0
     ): array {
-        $requiredLower = $requiredSkills->map(fn ($s) => strtolower($s));
-        $coveredLower = $coveredSkills->map(fn ($s) => strtolower($s));
+        $requiredLower = $requiredSkills->map(fn ($s) => strtolower($s))->values();
+        $coveredLower = $coveredSkills->map(fn ($s) => strtolower($s))->values();
 
-        $unmetSkills = $requiredLower->diff($coveredLower)->values()->all();
-        $coveredSkillsList = $requiredLower->intersect($coveredLower)->values()->all();
+        // Smart skill match: exact match OR substring match (e.g. "ui/ux" matches "ui/ux design") OR role match
+        $coveredSkillsList = [];
+        $unmetSkills = [];
 
-        $skillCoveragePercent = $requiredSkills->isNotEmpty()
-            ? (int) round((count($coveredSkillsList) / $requiredSkills->count()) * 100)
-            : 100;
+        foreach ($requiredLower as $req) {
+            $isCovered = $coveredLower->contains(function ($cov) use ($req) {
+                return $cov === $req || str_contains($cov, $req) || str_contains($req, $cov);
+            }) || $coveredRoles->contains(function ($r) use ($req) {
+                return str_contains($r, $req) || str_contains($req, $r);
+            });
 
-        // Role coverage
-        $totalRoleSlots = max(1, $recruitmentRoles->sum('slots'));
-        $filledRoleCount = 0;
-        $unfilledRoles = [];
-        $filledRoles = [];
-
-        foreach ($recruitmentRoles as $role) {
-            $rLower = strtolower($role->name);
-            $matchedCount = $coveredRoles->filter(fn ($r) => str_contains($r, $rLower) || str_contains($rLower, $r))->count();
-            $effectiveFilled = min($role->slots, $matchedCount);
-            $filledRoleCount += $effectiveFilled;
-
-            if ($effectiveFilled >= $role->slots) {
-                $filledRoles[] = $role->name;
+            if ($isCovered) {
+                $coveredSkillsList[] = $req;
             } else {
-                $unfilledRoles[] = "{$role->name} (kurang " . ($role->slots - $effectiveFilled) . ' orang)';
+                $unmetSkills[] = $req;
             }
         }
 
-        $roleCoveragePercent = min(100, (int) round(($filledRoleCount / $totalRoleSlots) * 100));
+        $skillCoveragePercent = $requiredLower->isNotEmpty()
+            ? (int) round((count($coveredSkillsList) / $requiredLower->count()) * 100)
+            : 100;
+
+        // Role coverage
+        if ($recruitmentRoles->isNotEmpty()) {
+            $totalRoleSlots = max(1, $recruitmentRoles->sum('slots'));
+            $filledRoleCount = 0;
+            $unfilledRoles = [];
+            $filledRoles = [];
+
+            foreach ($recruitmentRoles as $role) {
+                $rLower = strtolower($role->name);
+                $matchedCount = $coveredRoles->filter(fn ($r) => str_contains($r, $rLower) || str_contains($rLower, $r))->count();
+                $effectiveFilled = min($role->slots, $matchedCount);
+                $filledRoleCount += $effectiveFilled;
+
+                if ($effectiveFilled >= $role->slots) {
+                    $filledRoles[] = $role->name;
+                } else {
+                    $unfilledRoles[] = "{$role->name} (kurang " . ($role->slots - $effectiveFilled) . ' orang)';
+                }
+            }
+
+            $roleCoveragePercent = min(100, (int) round(($filledRoleCount / $totalRoleSlots) * 100));
+        } else {
+            // Fallback when no explicit recruitment roles were defined: role coverage reflects member capacity
+            $roleCoveragePercent = min(100, (int) round(($currentMemberCount / max(1, $maxCapacity)) * 100));
+            $unfilledCount = max(0, $maxCapacity - $currentMemberCount);
+            $unfilledRoles = $unfilledCount > 0 ? ["Lowongan Umum ({$unfilledCount} posisi)"] : [];
+            $filledRoles = $currentMemberCount > 0 ? ["Anggota Terisi ({$currentMemberCount} posisi)"] : [];
+        }
 
         $teamBalanceScore = (int) round(($skillCoveragePercent * 0.55) + ($roleCoveragePercent * 0.45));
 
         $gapsNote = '';
         if (! empty($unmetSkills)) {
             $gapsNote = ' Catatan: Masih terdapat keahlian yang belum terpenuhi: ' . implode(', ', array_map('ucwords', $unmetSkills)) . '.';
+        } elseif (empty($unfilledRoles) && ! empty($coveredSkillsList)) {
+            $gapsNote = ' Seluruh keahlian kunci dan kapasitas tim telah terpenuhi secara optimal.';
         }
 
         return [

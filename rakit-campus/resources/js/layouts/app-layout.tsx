@@ -83,14 +83,17 @@ export default function AppLayout({
             if (hubParam === 'competition') return 'competition';
             if (hubParam === 'project') return 'project';
 
-            if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+            if (
+                pathname.startsWith('/competitions') ||
+                pathname.startsWith('/competition-workspace') ||
+                pathname.startsWith('/matching')
+            ) {
                 return 'competition';
             }
             if (
                 pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
-                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
                 return 'project';
@@ -126,13 +129,16 @@ export default function AppLayout({
                 detectedHub = 'competition';
             } else if (hubParam === 'project') {
                 detectedHub = 'project';
-            } else if (pathname.startsWith('/competitions') || pathname.startsWith('/competition-workspace')) {
+            } else if (
+                pathname.startsWith('/competitions') ||
+                pathname.startsWith('/competition-workspace') ||
+                pathname.startsWith('/matching')
+            ) {
                 detectedHub = 'competition';
             } else if (
                 pathname === '/dashboard' ||
                 pathname.startsWith('/projects') ||
                 pathname.startsWith('/classes') ||
-                pathname.startsWith('/matching') ||
                 (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
             ) {
                 detectedHub = 'project';
@@ -745,7 +751,7 @@ export default function AppLayout({
             </header>
 
             {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-24 md:pb-7">
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-28 md:pb-7">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
                     <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
@@ -776,7 +782,7 @@ export default function AppLayout({
             {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
             <nav
                 aria-label="Mobile Navigation"
-                className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
+                className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
             >
                 <div className={`grid ${isAdminArea ? 'grid-cols-6' : 'grid-cols-5'} h-16 items-center px-1 max-w-lg mx-auto`}>
                     {isAdminArea ? (
@@ -1072,44 +1078,24 @@ export default function AppLayout({
                                 <span className="text-[10px] leading-none tracking-tight">Proyek</span>
                             </Link>
 
-                            {/* 4. Workspace / Kelas */}
-                            {isLecturer ? (
-                                <Link
-                                    href="/classes"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/classes')
-                                            ? 'text-emerald-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <GraduationCap
-                                        className={`size-5 ${
-                                            url.startsWith('/classes')
-                                                ? 'stroke-[2.25] text-emerald-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Kelas</span>
-                                </Link>
-                            ) : (
-                                <Link
-                                    href="/workspace"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                            {/* 4. Workspace */}
+                            <Link
+                                href="/workspace"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/workspace')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Layers
+                                    className={`size-5 ${
                                         url.startsWith('/workspace')
-                                            ? 'text-blue-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
                                     }`}
-                                >
-                                    <Layers
-                                        className={`size-5 ${
-                                            url.startsWith('/workspace')
-                                                ? 'stroke-[2.25] text-blue-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Workspace</span>
-                                </Link>
-                            )}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                            </Link>
 
                             {/* 5. Leaderboard */}
                             <Link

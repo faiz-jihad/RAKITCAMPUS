@@ -40,39 +40,31 @@ export default function ProposalVersionsTab({ project, livingProposal }: Props) 
                         className="glass-card rounded-2xl p-5 shadow-xs flex flex-col gap-3 relative overflow-hidden"
                     >
                         <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
-                            <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-xs font-bold px-3 py-0.5 rounded-full bg-blue-600 text-white shadow-2xs shrink-0">
                                     Versi {v.version_number}
                                 </span>
                                 <h4 className="text-sm font-bold text-slate-900">
                                     {v.title}
                                 </h4>
+                                <span className="text-slate-300 font-sans mx-0.5">|</span>
                                 {v.is_locked ? (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                    <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
                                         <Lock className="size-3 text-slate-400" />
                                         <span>Terkunci</span>
                                     </span>
                                 ) : (
-                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                        <span>Versi Aktif</span>
+                                    <span className="text-xs font-bold text-blue-600">
+                                        Versi Aktif
                                     </span>
                                 )}
                             </div>
 
                             <div className="flex items-center gap-2 text-xs">
-                                <span
-                                    className={`px-3 py-0.5 rounded-full text-[10px] font-bold border uppercase ${
-                                        v.status === 'approved'
-                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                            : v.status === 'submitted'
-                                            ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                            : v.status === 'revision_requested'
-                                            ? 'bg-slate-100 text-slate-700 border-slate-200'
-                                            : 'bg-slate-100 text-slate-600 border-slate-200'
-                                    }`}
-                                >
+                                <span className="font-bold text-[11px] text-slate-700 uppercase tracking-wider">
                                     {v.status}
                                 </span>
+                                <span className="text-slate-300 font-sans mx-0.5">|</span>
                                 <span className="text-slate-400 text-[11px]">
                                     {v.created_at ? new Date(v.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
                                 </span>

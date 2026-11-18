@@ -12,6 +12,7 @@ import {
     Award,
     Battery,
     Bug,
+    Building2,
     Calendar,
     Check,
     CheckCircle2,
@@ -19,7 +20,10 @@ import {
     Clock,
     FolderKanban,
     Globe,
+    GraduationCap,
     Kanban,
+    Laptop,
+    LayoutDashboard,
     Lightbulb,
     Lock,
     MessageSquare,
@@ -33,6 +37,7 @@ import {
     Search,
     Share2,
     ShieldCheck,
+    Smartphone,
     Sparkles,
     Square,
     Star,
@@ -155,7 +160,6 @@ const photoRowBottom = [
 
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
-    const [activeTab, setActiveTab] = useState<'board' | 'list'>('board');
     const laptopCardRef = useRef<HTMLDivElement>(null);
     const phoneCardRef = useRef<HTMLDivElement>(null);
     const showcaseRafRef = useRef<number | null>(null);
@@ -258,10 +262,20 @@ export default function Welcome() {
     const [introStage, setIntroStage] = useState<0 | 1 | 2 | 3>(0);
     const [textRevealed, setTextRevealed] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
+    const [rakitFontSize, setRakitFontSize] = useState(() => {
+        if (typeof window !== 'undefined') {
+            const w = window.innerWidth;
+            if (w < 480) return '95px';
+            if (w < 640) return '110px';
+            if (w < 1024) return '185px';
+        }
+        return '360px';
+    });
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [featuresDropdownOpen, setFeaturesDropdownOpen] = useState(false);
     const [isPinned, setIsPinned] = useState(false);
     const [mobileFeaturesOpen, setMobileFeaturesOpen] = useState(true);
+    const [mobileShowcaseTab, setMobileShowcaseTab] = useState<'laptop' | 'phone'>('laptop');
     const [isNavVisible, setIsNavVisible] = useState(true);
     const [isScrolledPastTop, setIsScrolledPastTop] = useState(false);
     const lastScrollYRef = useRef(0);
@@ -509,11 +523,12 @@ export default function Welcome() {
                 rakitOverlayRef.current &&
                 realSection2Ref.current
             ) {
+                const isSmallScreen = window.innerWidth < 640;
                 const tl2 = gsap.timeline({
                     scrollTrigger: {
                         trigger: section2PinContainerRef.current,
                         start: 'top top',
-                        end: '+=150%',
+                        end: isSmallScreen ? '+=80%' : '+=150%',
                         pin: true,
                         scrub: 0.35,
                         anticipatePin: 1,
@@ -548,7 +563,7 @@ export default function Welcome() {
                 tl2.to(
                     rakitOverlayRef.current,
                     {
-                        scale: 5.0,
+                        scale: isSmallScreen ? 14.0 : 5.0,
                         transformOrigin: '50% 50%',
                         ease: 'power1.inOut',
                         duration: 0.8,
@@ -1682,7 +1697,17 @@ export default function Welcome() {
         window.addEventListener('pagehide', handleBeforeUnload);
 
         const checkMobile = () => {
-            setIsMobile(window.innerWidth < 640);
+            const w = window.innerWidth;
+            setIsMobile(w < 640);
+            if (w < 480) {
+                setRakitFontSize('95px');
+            } else if (w < 640) {
+                setRakitFontSize('110px');
+            } else if (w < 1024) {
+                setRakitFontSize('185px');
+            } else {
+                setRakitFontSize('360px');
+            }
         };
         checkMobile();
         window.addEventListener('resize', checkMobile);
@@ -2406,8 +2431,8 @@ export default function Welcome() {
                                     className="font-serif uppercase font-normal select-none"
                                     style={{
                                         fontFamily: 'var(--font-serif)',
-                                        fontSize: isMobile ? '210px' : '360px',
-                                        letterSpacing: '0.04em',
+                                        fontSize: rakitFontSize,
+                                        letterSpacing: isMobile ? '0.02em' : '0.04em',
                                     }}
                                 >
                                     RAKIT
@@ -2437,8 +2462,8 @@ export default function Welcome() {
                             className="font-serif uppercase font-normal select-none pointer-events-none"
                             style={{
                                 fontFamily: 'var(--font-serif)',
-                                fontSize: isMobile ? '210px' : '360px',
-                                letterSpacing: '0.04em',
+                                fontSize: rakitFontSize,
+                                letterSpacing: isMobile ? '0.02em' : '0.04em',
                             }}
                         >
                             RAKIT
@@ -2450,7 +2475,7 @@ export default function Welcome() {
                 <section
                     ref={realSection2Ref}
                     id="overview"
-                    className="relative z-10 w-full h-screen h-[100dvh] max-h-screen bg-white text-neutral-900 flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6"
+                    className="relative z-10 w-full min-h-screen min-h-[100dvh] bg-white text-neutral-900 flex flex-col items-center justify-center overflow-hidden px-4 sm:px-6 py-12 sm:py-0"
                 >
                     {/* Subtle Dot Matrix & Ethereal Mesh Background */}
                     <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-60 pointer-events-none" />
@@ -2462,9 +2487,9 @@ export default function Welcome() {
                         ref={section2HeaderContentRef}
                         className="max-w-4xl lg:max-w-5xl mx-auto px-4 relative z-10 text-center w-full will-change-transform"
                     >
-                        <h2 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.15] sm:leading-[1.12]">
-                            Simplify Project Collaboration <br />
-                            <span className="text-blue-600">
+                        <h2 className="text-xl xs:text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-neutral-900 leading-[1.2] sm:leading-[1.12]">
+                            Simplify Project Collaboration <br className="hidden sm:inline" />
+                            <span className="text-blue-600 block sm:inline">
                                 Boost Campus Achievements
                             </span>
                         </h2>
@@ -2504,6 +2529,34 @@ export default function Welcome() {
                 <div ref={showcaseGlowRef} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[550px] bg-[radial-gradient(ellipse_at_center,rgba(59,130,246,0.10)_0%,rgba(147,197,253,0.06)_50%,transparent_72%)] pointer-events-none will-change-[opacity]" />
 
                 <div className="relative max-w-6xl xl:max-w-7xl mx-auto px-2 sm:px-4 lg:px-6">
+                    {/* Device Switcher on Mobile Screens */}
+                    <div className="flex sm:hidden items-center justify-center p-1 bg-neutral-100 rounded-full max-w-[260px] mx-auto mb-5 border border-neutral-200/80 shadow-2xs">
+                        <button
+                            type="button"
+                            onClick={() => setMobileShowcaseTab('laptop')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                mobileShowcaseTab === 'laptop'
+                                    ? 'bg-white text-neutral-900 shadow-2xs'
+                                    : 'text-neutral-500 hover:text-neutral-900'
+                            }`}
+                        >
+                            <Laptop className="size-3.5 text-blue-600" />
+                            <span>Laptop</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setMobileShowcaseTab('phone')}
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer ${
+                                mobileShowcaseTab === 'phone'
+                                    ? 'bg-white text-neutral-900 shadow-2xs'
+                                    : 'text-neutral-500 hover:text-neutral-900'
+                            }`}
+                        >
+                            <Smartphone className="size-3.5 text-blue-600" />
+                            <span>Smartphone</span>
+                        </button>
+                    </div>
+
                     {/* Dual-Device 3D Showcase: Realistic 3D Laptop with Google Chrome Desktop + Realistic 3D Handphone with Google Chrome Mobile */}
                     <div
                         ref={section2MockupRef}
@@ -2515,7 +2568,12 @@ export default function Welcome() {
                     >
 
                         {/* 1. Realistic 3D Laptop (Chassis, Chrome Desktop Browser & Dashboard) */}
-                        <div ref={laptopShowcaseRef} className="w-full relative mx-auto transform-gpu will-change-transform [backface-visibility:hidden]">
+                        <div
+                            ref={laptopShowcaseRef}
+                            className={`w-full relative mx-auto transform-gpu will-change-transform [backface-visibility:hidden] ${
+                                mobileShowcaseTab === 'laptop' ? 'block' : 'hidden sm:block'
+                            }`}
+                        >
                             <div
                                 ref={laptopCardRef}
                                 className="relative mx-auto w-full max-w-5xl lg:max-w-[1000px] xl:max-w-[1040px] will-change-transform transform-gpu select-none"
@@ -2571,17 +2629,12 @@ export default function Welcome() {
                                                 </div>
 
                                                 {/* Chrome Omnibox URL Bar */}
-                                                <div className="flex-1 flex items-center justify-between bg-white border border-neutral-200/90 rounded-full px-2.5 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[11.5px] font-sans shadow-2xs min-w-0">
+                                                <div className="flex-1 flex items-center bg-white border border-neutral-200/90 rounded-full px-2.5 sm:px-4 py-0.5 sm:py-1 text-[9px] sm:text-[11.5px] font-sans shadow-2xs min-w-0">
                                                     <div className="flex items-center gap-1 sm:gap-2 truncate">
                                                         <span className="size-1.5 rounded-full bg-blue-600 shrink-0" />
                                                         <span className="text-neutral-400 hidden sm:inline font-mono">https://</span>
-                                                        <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
-                                                        <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard/workspace</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 shrink-0 ml-1.5 sm:ml-2">
-                                                        <span className="text-[8px] sm:text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 sm:px-2.5 py-0.5 rounded-full border border-blue-200/70">
-                                                            RAKIT Hub
-                                                        </span>
+                                                        <span className="text-neutral-900 font-bold font-mono">rakitcampus.my.id</span>
+                                                        <span className="text-neutral-500 font-mono truncate hidden xs:inline">/dashboard</span>
                                                     </div>
                                                 </div>
 
@@ -2595,309 +2648,313 @@ export default function Welcome() {
                                             </div>
                                         </div>
 
-                                        {/* LAPTOP WEB DASHBOARD VIEWPORT (Inside Chrome) */}
-                                        <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[380px] xs:min-h-[420px] sm:min-h-[490px] md:min-h-[510px]">
-                                            {/* Desktop Sidebar */}
-                                            <aside className="w-48 sm:w-52 shrink-0 bg-white border-r border-neutral-200/80 p-3 sm:p-4 hidden sm:flex flex-col justify-between">
+                                        {/* LAPTOP WEB DASHBOARD VIEWPORT (Inside Chrome - Real Student Dashboard UI) */}
+                                        <div className="w-full bg-white flex text-left font-sans select-none overflow-hidden relative z-10 min-h-[240px] xs:min-h-[270px] sm:min-h-[480px] md:min-h-[510px] aspect-[16/11] sm:aspect-auto">
+                                            {/* Desktop Sidebar (AppLayout Real Navigation) */}
+                                            <aside className="w-44 sm:w-48 shrink-0 bg-white border-r border-slate-200/80 p-3 sm:p-3.5 hidden sm:flex flex-col justify-between">
                                                 <div>
                                                     {/* App Logo */}
-                                                    <div className="flex items-center gap-2.5 pb-4 border-b border-neutral-100">
-                                                        <div className="size-7 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-2xs">
-                                                            <Rocket className="size-4" />
+                                                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                                                        <div className="size-6.5 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-2xs">
+                                                            <Rocket className="size-3.5" />
                                                         </div>
                                                         <div>
-                                                            <div className="text-xs font-black tracking-tight text-neutral-900 leading-tight">RAKIT CAMPUS</div>
-                                                            <div className="text-[9px] text-neutral-400 font-medium">RAKIT Workspace</div>
+                                                            <div className="text-[11px] font-black tracking-tight text-slate-900 leading-tight">RAKIT CAMPUS</div>
+                                                            <div className="text-[8px] text-slate-400 font-medium">Dashboard Mahasiswa</div>
                                                         </div>
                                                     </div>
 
                                                     {/* Navigation Links */}
-                                                    <nav className="mt-4 space-y-1">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setActiveTab('board')}
-                                                            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 transition"
-                                                        >
-                                                            <Kanban className="size-3.5 text-blue-600" />
-                                                            <span>Sprint Kanban</span>
-                                                        </button>
-                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                            <Sparkles className="size-3.5 text-neutral-400" />
-                                                            <span>AI Matchmaking</span>
+                                                    <nav className="mt-3 space-y-0.5">
+                                                        <div className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200/60">
+                                                            <LayoutDashboard className="size-3 text-blue-600" />
+                                                            <span>Dashboard</span>
                                                         </div>
-                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                            <FolderKanban className="size-3.5 text-neutral-400" />
-                                                            <span>Living Proposal</span>
+                                                        <div className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium text-slate-600 hover:bg-slate-50 transition">
+                                                            <GraduationCap className="size-3 text-slate-400" />
+                                                            <span>Kelas Kuliah</span>
                                                         </div>
-                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                            <Trophy className="size-3.5 text-neutral-400" />
-                                                            <span>Gemastik 2026</span>
+                                                        <div className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium text-slate-600 hover:bg-slate-50 transition">
+                                                            <FolderKanban className="size-3 text-slate-400" />
+                                                            <span>Katalog Proyek</span>
                                                         </div>
-                                                        <div className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-neutral-600 hover:bg-neutral-50 transition cursor-pointer">
-                                                            <Users className="size-3.5 text-neutral-400" />
-                                                            <span>Anggota Tim (4)</span>
+                                                        <div className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium text-slate-600 hover:bg-slate-50 transition">
+                                                            <Users className="size-3 text-slate-400" />
+                                                            <span>Workspace Tim</span>
+                                                        </div>
+                                                        <div className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[10px] font-medium text-slate-600 hover:bg-slate-50 transition">
+                                                            <Trophy className="size-3 text-slate-400" />
+                                                            <span>Leaderboard</span>
                                                         </div>
                                                     </nav>
                                                 </div>
 
-                                                {/* User Card in Sidebar */}
-                                                <div className="p-2 bg-neutral-50 rounded-xl border border-neutral-200/80 flex items-center gap-2.5">
+                                                {/* Student User Profile Card in Sidebar */}
+                                                <div className="p-2 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center gap-2">
                                                     <div className="relative">
-                                                        <div className="size-7 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center">
+                                                        <div className="size-6.5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shadow-2xs">
                                                             BS
                                                         </div>
-                                                        <span className="absolute bottom-0 right-0 size-2 bg-blue-600 rounded-full border border-white" />
+                                                        <span className="absolute bottom-0 right-0 size-2 bg-emerald-500 rounded-full border border-white" />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <div className="text-[11px] font-bold text-neutral-900 truncate">Budi Santoso</div>
-                                                        <div className="text-[9px] text-neutral-500">Ketua Tim Hackathon</div>
+                                                        <div className="text-[10px] font-bold text-slate-900 truncate">Budi Santoso</div>
+                                                        <div className="text-[8px] text-slate-500 truncate">TI-2A RPL · Mahasiswa</div>
                                                     </div>
                                                 </div>
                                             </aside>
 
-                                            {/* Main Dashboard Canvas Area */}
-                                            <main className="flex-1 p-2.5 sm:p-5 flex flex-col justify-between overflow-hidden bg-white">
+                                            {/* Main Dashboard Canvas Area (Real Student Dashboard Bento View) */}
+                                            <main className="flex-1 p-2.5 sm:p-4 md:p-5 flex flex-col justify-between overflow-hidden bg-white">
                                                 <div>
-                                                    {/* Subheader */}
-                                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 sm:pb-3 border-b border-neutral-100 gap-2">
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <h3 className="text-xs sm:text-sm font-bold text-neutral-900">Sprint Proyek 2026</h3>
-                                                                <span className="text-[9px] sm:text-[10px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.5 rounded border border-blue-200/60">
-                                                                    Active Sprint
+                                                    {/* Header Row: Dashboard Mahasiswa + Actions */}
+                                                    <div className="flex items-center justify-between pb-2 sm:pb-3 border-b border-slate-100 gap-2">
+                                                        <div className="min-w-0">
+                                                            <div className="flex items-center gap-1.5 sm:gap-2">
+                                                                <h3 className="text-xs sm:text-base font-extrabold text-slate-900 tracking-tight truncate">
+                                                                    Dashboard Mahasiswa
+                                                                </h3>
+                                                                <span className="text-[7px] sm:text-[9px] font-bold uppercase text-blue-700 bg-blue-50 px-1.5 sm:px-2 py-0.2 sm:py-0.5 rounded border border-blue-200/60 shrink-0">
+                                                                    TI-2A RPL
                                                                 </span>
                                                             </div>
-                                                            <p className="text-[9px] sm:text-[11px] text-neutral-400 mt-0.5 truncate max-w-[240px] sm:max-w-none">
-                                                                Target Validasi Living Proposal & Prototype IoT Gemastik
+                                                            <p className="text-[7.5px] sm:text-[11px] text-slate-400 mt-0.5 truncate">
+                                                                Semester Ganjil 2026/2027 · POLINEMA
                                                             </p>
                                                         </div>
 
-                                                        <div className="flex items-center gap-1.5 sm:gap-2">
-                                                            <div className="flex items-center -space-x-1.5 mr-0.5 sm:mr-1">
-                                                                <div className="size-4.5 sm:size-6 rounded-full bg-blue-600 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">B</div>
-                                                                <div className="size-4.5 sm:size-6 rounded-full bg-neutral-900 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">S</div>
-                                                                <div className="size-4.5 sm:size-6 rounded-full bg-blue-500 text-white text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">A</div>
-                                                                <div className="size-4.5 sm:size-6 rounded-full bg-neutral-100 text-neutral-800 text-[7.5px] sm:text-[9px] font-bold flex items-center justify-center border-2 border-white">+3</div>
+                                                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                                                            <div className="inline-flex items-center gap-1 bg-blue-600 text-white text-[7.5px] sm:text-[10px] font-semibold px-2 sm:px-2.5 py-1 rounded-lg shadow-2xs">
+                                                                <Plus className="size-2.5 sm:size-3 stroke-[2.5]" />
+                                                                <span>Buat Proyek</span>
                                                             </div>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setActiveTab('board')}
-                                                                className={`px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[9px] sm:text-[10px] font-semibold transition ${activeTab === 'board'
-                                                                    ? 'bg-neutral-900 text-white'
-                                                                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                                                                    }`}
-                                                            >
-                                                                Board
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => setActiveTab('list')}
-                                                                className={`hidden sm:inline-block px-2.5 py-1 rounded-md text-[10px] font-semibold transition ${activeTab === 'list'
-                                                                    ? 'bg-neutral-900 text-white'
-                                                                    : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
-                                                                    }`}
-                                                            >
-                                                                List
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="hidden md:inline-flex items-center gap-1 bg-blue-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-md shadow-2xs hover:bg-blue-700 transition"
-                                                            >
-                                                                <Plus className="size-3" />
-                                                                <span>Tambah Tugas</span>
-                                                            </button>
+                                                            <div className="hidden xs:inline-flex items-center gap-1 bg-slate-50 border border-slate-200 text-slate-700 text-[7.5px] sm:text-[10px] font-semibold px-2 sm:px-2.5 py-1 rounded-lg">
+                                                                <span>Workspace Tim</span>
+                                                                <ArrowRight className="size-2.5 sm:size-3 text-slate-400" />
+                                                            </div>
                                                         </div>
                                                     </div>
 
-                                                    {/* KPI Metrics Row */}
-                                                    <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 mt-2.5 sm:mt-3 mb-2.5 sm:mb-3">
-                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
-                                                            <div className="min-w-0">
-                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Sprint</div>
-                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">78% Selesai</div>
-                                                            </div>
-                                                            <div className="w-8 sm:w-16 bg-neutral-200 h-1.5 rounded-full overflow-hidden shrink-0 ml-1">
-                                                                <div className="bg-blue-600 h-full rounded-full w-[78%]" />
-                                                            </div>
-                                                        </div>
+                                                    {/* 4-Card Bento Grid System (Identical to dashboard.tsx) */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2 sm:gap-3 mt-2 sm:mt-3">
+                                                        {/* CARD 1: PROGRES TUGAS SPRINT (Tall Donut Gauge) */}
+                                                        <div className="md:col-span-4 bg-slate-50/70 rounded-xl p-2.5 sm:p-3.5 border border-slate-200/80 flex flex-col justify-between">
+                                                            <div>
+                                                                <div className="flex items-center justify-between mb-1.5">
+                                                                    <span className="text-[7.5px] sm:text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                                                        Progres Tugas
+                                                                    </span>
+                                                                    <span className="text-[7px] sm:text-[8.5px] text-blue-600 font-semibold bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200/50">
+                                                                        Sprint Aktif
+                                                                    </span>
+                                                                </div>
 
-                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
-                                                            <div className="min-w-0">
-                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Proposal</div>
-                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-blue-700 truncate">v2.4 Valid</div>
-                                                            </div>
-                                                            <CheckCircle2 className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
-                                                        </div>
+                                                                {/* Circular Donut Gauge */}
+                                                                <div className="flex items-center justify-center my-1 sm:my-2">
+                                                                    <div className="relative size-16 sm:size-20 md:size-22 flex items-center justify-center">
+                                                                        <svg className="size-full -rotate-90 transform" viewBox="0 0 120 120">
+                                                                            <circle
+                                                                                cx="60"
+                                                                                cy="60"
+                                                                                r="46"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="10"
+                                                                                className="text-slate-200"
+                                                                                fill="transparent"
+                                                                            />
+                                                                            <circle
+                                                                                cx="60"
+                                                                                cy="60"
+                                                                                r="46"
+                                                                                stroke="currentColor"
+                                                                                strokeWidth="10"
+                                                                                strokeDasharray={2 * Math.PI * 46}
+                                                                                strokeDashoffset={2 * Math.PI * 46 * (1 - 0.78)}
+                                                                                strokeLinecap="round"
+                                                                                className="text-blue-600"
+                                                                                fill="transparent"
+                                                                            />
+                                                                        </svg>
+                                                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                                                            <span className="text-xs sm:text-base font-black text-slate-900 tracking-tight leading-none">
+                                                                                78%
+                                                                            </span>
+                                                                            <span className="text-[6px] sm:text-[7.5px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                                                                                TUNTAS
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
 
-                                                        <div className="p-1.5 sm:p-2.5 bg-neutral-50 rounded-xl border border-neutral-100 flex items-center justify-between min-w-0">
-                                                            <div className="min-w-0">
-                                                                <div className="text-[7.5px] sm:text-[9px] text-neutral-400 font-medium truncate">Gemastik</div>
-                                                                <div className="text-[10px] sm:text-xs md:text-sm font-bold text-neutral-900 truncate">14 Hari Sisa</div>
-                                                            </div>
-                                                            <Trophy className="size-3 sm:size-4 text-blue-600 shrink-0 ml-1" />
-                                                        </div>
-                                                    </div>
-
-                                                    {/* 4-Column Live Kanban Board */}
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
-                                                        {/* Column 1: To Do */}
-                                                        <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
-                                                                    To Do <span className="text-neutral-500 ml-1">3</span>
-                                                                </span>
-                                                                <MoreHorizontal className="size-3 text-neutral-400" />
-                                                            </div>
-                                                            {/* Card 1 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                                    High Priority
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Competitive Analysis & Hackathon Pitch
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span>2 Hari Lagi</span>
-                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
+                                                                <div className="text-center mt-1">
+                                                                    <div className="text-[8.5px] sm:text-xs font-bold text-slate-900">
+                                                                        18 / 23 Tugas Selesai
+                                                                    </div>
+                                                                    <p className="text-[7px] sm:text-[9.5px] text-slate-500 mt-0.5">
+                                                                        5 tugas sedang berjalan.
+                                                                    </p>
                                                                 </div>
                                                             </div>
-                                                            {/* Card 2 */}
-                                                            <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                                    Riset
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Sensor IoT LoRaWAN Spec
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span>4 Hari</span>
-                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">A</div>
+
+                                                            <div className="mt-2 pt-2 border-t border-slate-200/70">
+                                                                <div className="w-full flex items-center justify-between px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[7.5px] sm:text-[9.5px] font-semibold">
+                                                                    <span>Buka Workspace</span>
+                                                                    <ArrowRight className="size-2.5 sm:size-3" />
                                                                 </div>
                                                             </div>
                                                         </div>
 
-                                                        {/* Column 2: In Process */}
-                                                        <div className="bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex flex-col gap-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                                    In Process <span className="text-blue-500 ml-1">2</span>
-                                                                </span>
-                                                                <MoreHorizontal className="size-3 text-neutral-400" />
+                                                        {/* RIGHT COLUMN (8 COLS): CARD 2 TIM AKADEMIK + CARDS 3 & 4 */}
+                                                        <div className="md:col-span-8 flex flex-col justify-between gap-2 sm:gap-2.5">
+                                                            {/* CARD 2: TIM AKADEMIK & SUSUNAN TIM */}
+                                                            <div className="bg-slate-50/70 rounded-xl p-2.5 sm:p-3 border border-slate-200/80 flex-1 flex flex-col justify-between">
+                                                                <div>
+                                                                    <div className="flex items-center justify-between mb-1">
+                                                                        <span className="text-[7.5px] sm:text-[9px] font-bold uppercase tracking-wider text-slate-400">
+                                                                            Tim Akademik
+                                                                        </span>
+                                                                        <span className="text-[7.5px] sm:text-[9px] text-slate-400 font-medium">
+                                                                            TI-2A RPL
+                                                                        </span>
+                                                                    </div>
+
+                                                                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                                                                        <div className="min-w-0 flex-1">
+                                                                            <div className="flex items-baseline gap-1.5">
+                                                                                <h4 className="text-[11px] sm:text-sm font-black text-slate-900 tracking-tight truncate">
+                                                                                    Smart Waste Management IoT
+                                                                                </h4>
+                                                                                <span className="text-[7.5px] sm:text-[9.5px] text-slate-500 font-semibold shrink-0">
+                                                                                    · 4 Anggota
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="text-[7.5px] sm:text-[10px] text-slate-600 mt-0.5 line-clamp-1">
+                                                                                Proyek: Smart Waste Management IoT Polinema
+                                                                            </p>
+                                                                            <div className="mt-2 flex items-center gap-1.5">
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-600 text-white text-[7.5px] sm:text-[9px] font-bold">
+                                                                                    <FolderKanban className="size-2.5" />
+                                                                                    <span>Buka Workspace</span>
+                                                                                </span>
+                                                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 text-slate-700 text-[7.5px] sm:text-[9px] font-semibold">
+                                                                                    <span>Detail Proyek</span>
+                                                                                </span>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        {/* Susunan Tim Colorful Avatars Box */}
+                                                                        <div className="bg-white rounded-lg p-1.5 sm:p-2 border border-slate-200/80 shrink-0">
+                                                                            <span className="text-[6.5px] sm:text-[7.5px] font-bold uppercase tracking-wider text-slate-400 block mb-1">
+                                                                                Susunan Tim
+                                                                            </span>
+                                                                            <div className="flex items-center gap-1 mb-1">
+                                                                                <div className="size-4.5 sm:size-5 rounded-full bg-blue-600 text-white font-bold text-[6.5px] sm:text-[7px] flex items-center justify-center ring-1 ring-white" title="Budi Santoso">BS</div>
+                                                                                <div className="size-4.5 sm:size-5 rounded-full bg-amber-500 text-white font-bold text-[6.5px] sm:text-[7px] flex items-center justify-center ring-1 ring-white" title="Agus Prasetyo">AP</div>
+                                                                                <div className="size-4.5 sm:size-5 rounded-full bg-emerald-600 text-white font-bold text-[6.5px] sm:text-[7px] flex items-center justify-center ring-1 ring-white" title="Dewi Lestari">DL</div>
+                                                                                <div className="size-4.5 sm:size-5 rounded-full bg-purple-600 text-white font-bold text-[6.5px] sm:text-[7px] flex items-center justify-center ring-1 ring-white" title="Taufik Nugroho">TN</div>
+                                                                            </div>
+                                                                            <div className="text-[6.5px] sm:text-[8px] text-slate-500 font-medium truncate max-w-[125px]">
+                                                                                Ketua · IoT · UI/UX · Mobile
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
                                                             </div>
-                                                            {/* Card 1 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
+
+                                                            {/* CARDS 3 & 4: KESIAPAN PROFIL & REKRUTMEN TERBUKA */}
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                <div className="bg-slate-50/70 rounded-xl p-2 sm:p-2.5 border border-slate-200/80 flex items-center justify-between">
+                                                                    <div>
+                                                                        <span className="text-[6.5px] sm:text-[7.5px] font-bold uppercase tracking-wider text-slate-400 block">
+                                                                            Kesiapan Profil
+                                                                        </span>
+                                                                        <div className="text-xs sm:text-base font-extrabold text-slate-900 mt-0.5">
+                                                                            92%
+                                                                        </div>
+                                                                        <span className="text-[6.5px] sm:text-[8px] text-blue-600 font-semibold mt-0.5 block">
+                                                                            Kelola Profil →
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="size-7 sm:size-8.5 rounded-xl bg-blue-50 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0">
+                                                                        <ShieldCheck className="size-3 sm:size-3.5" />
+                                                                        <span className="text-[5px] sm:text-[6px] font-extrabold tracking-wider uppercase">VERIFIED</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div className="bg-slate-50/70 rounded-xl p-2 sm:p-2.5 border border-slate-200/80 flex items-center justify-between">
+                                                                    <div className="min-w-0">
+                                                                        <span className="text-[6.5px] sm:text-[7.5px] font-bold uppercase tracking-wider text-slate-400 block">
+                                                                            Rekrutmen Terbuka
+                                                                        </span>
+                                                                        <div className="text-xs sm:text-base font-extrabold text-slate-900 mt-0.5">
+                                                                            5 Proyek
+                                                                        </div>
+                                                                        <span className="text-[6.5px] sm:text-[8px] text-slate-500 truncate block">
+                                                                            SIM-Klinik [Open]
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="size-7 sm:size-8.5 rounded-xl bg-blue-50 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0">
+                                                                        <Building2 className="size-3 sm:size-3.5" />
+                                                                        <span className="text-[5px] sm:text-[6px] font-extrabold tracking-wider uppercase">OPEN SLOT</span>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* PANEL: TUGAS PRIORITAS MAHASISWA */}
+                                                    <div className="mt-2 sm:mt-2.5 bg-slate-50/70 rounded-xl p-2 sm:p-2.5 border border-slate-200/80">
+                                                        <div className="flex items-center justify-between pb-1 border-b border-slate-200/60 mb-1.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Clock className="size-2.5 sm:size-3 text-blue-600" />
+                                                                <span className="text-[8px] sm:text-[11px] font-bold text-slate-900">Tugas Prioritas Mahasiswa</span>
+                                                            </div>
+                                                            <span className="text-[7px] sm:text-[9px] text-blue-600 font-semibold">
+                                                                Buka Workspace Tim →
+                                                            </span>
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <div className="bg-white rounded-lg p-1.5 sm:p-2 border border-slate-200/70 flex items-center justify-between gap-2 shadow-2xs">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="text-[8px] sm:text-[10px] font-bold text-slate-900 truncate">
+                                                                        Finalisasi Bab 3 Metodologi Proposal (Living Proposal)
+                                                                    </div>
+                                                                    <div className="text-[6.5px] sm:text-[8.5px] text-slate-400 flex items-center gap-1 mt-0.2">
+                                                                        <span>Smart Waste Management IoT</span>
+                                                                        <span>•</span>
+                                                                        <span className="text-rose-600 font-medium">Tenggat: 22 Nov</span>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[6.5px] sm:text-[8.5px] font-bold px-1.5 sm:px-2 py-0.2 rounded bg-blue-50 text-blue-700 border border-blue-200/60 shrink-0">
+                                                                    Review Dosen
+                                                                </span>
+                                                            </div>
+                                                            <div className="hidden xs:flex bg-white rounded-lg p-1.5 sm:p-2 border border-slate-200/70 items-center justify-between gap-2 shadow-2xs">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="text-[8px] sm:text-[10px] font-bold text-slate-900 truncate">
+                                                                        Integrasi Sensor ESP32 ke Broker MQTT & Kalibrasi
+                                                                    </div>
+                                                                    <div className="text-[6.5px] sm:text-[8.5px] text-slate-400 flex items-center gap-1 mt-0.2">
+                                                                        <span>Smart Waste Management IoT</span>
+                                                                        <span>•</span>
+                                                                        <span>Tenggat: 25 Nov</span>
+                                                                    </div>
+                                                                </div>
+                                                                <span className="text-[6.5px] sm:text-[8.5px] font-bold px-1.5 sm:px-2 py-0.2 rounded bg-amber-50 text-amber-700 border border-amber-200/60 shrink-0">
                                                                     In Progress
                                                                 </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Dashboard UI Refinement & 3D Web View
-                                                                </h4>
-                                                                <div className="w-full bg-neutral-100 h-1 rounded-full mt-2 overflow-hidden">
-                                                                    <div className="bg-blue-600 h-full rounded-full w-3/4" />
-                                                                </div>
-                                                                <div className="flex items-center justify-between mt-1.5 text-[9px] text-neutral-400">
-                                                                    <span className="text-blue-600 font-semibold">75% Done</span>
-                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">S</div>
-                                                                </div>
-                                                            </div>
-                                                            {/* Card 2 */}
-                                                            <div className="hidden sm:block bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                                    Backend
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Algoritma Gemini Matching
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span>Aktif</span>
-                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Column 3: In Review */}
-                                                        <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-neutral-200/70 text-neutral-800">
-                                                                    In Review <span className="text-neutral-500 ml-1">1</span>
-                                                                </span>
-                                                                <MoreHorizontal className="size-3 text-neutral-400" />
-                                                            </div>
-                                                            {/* Card 1 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                                    Review Ready
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Living Proposal Bab 1-3 Review Dosen
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span className="text-blue-600 font-semibold">Siap Diuji</span>
-                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">A</div>
-                                                                </div>
-                                                            </div>
-                                                            {/* Card 2 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-700">
-                                                                    Testing
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Task Automation Webhook
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span>Verifikasi</span>
-                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Column 4: Completed */}
-                                                        <div className="hidden md:flex bg-neutral-50/80 border border-neutral-200/70 rounded-xl p-2 sm:p-2.5 flex-col gap-2">
-                                                            <div className="flex items-center justify-between">
-                                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200/60">
-                                                                    Completed <span className="text-blue-500 ml-1">4</span>
-                                                                </span>
-                                                                <MoreHorizontal className="size-3 text-neutral-400" />
-                                                            </div>
-                                                            {/* Card 1 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800 border border-neutral-200/60">
-                                                                    Completed
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    Design System & Strict 3-Color Tokens
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span className="flex items-center gap-1 text-blue-600 font-semibold">
-                                                                        <CheckCircle2 className="size-2.5 text-blue-600" /> Terverifikasi
-                                                                    </span>
-                                                                    <div className="size-4 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center">D</div>
-                                                                </div>
-                                                            </div>
-                                                            {/* Card 2 */}
-                                                            <div className="bg-white border border-neutral-200/90 rounded-lg p-2 sm:p-2.5 shadow-2xs">
-                                                                <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-neutral-100 text-neutral-800">
-                                                                    Repository
-                                                                </span>
-                                                                <h4 className="text-[10px] sm:text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-snug line-clamp-2">
-                                                                    GitHub CI/CD & Deploy Rules
-                                                                </h4>
-                                                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-neutral-100 text-[9px] text-neutral-400">
-                                                                    <span className="text-blue-600 font-semibold">Tersinkron</span>
-                                                                    <div className="size-4 rounded-full bg-neutral-900 text-white text-[7px] font-bold flex items-center justify-center">B</div>
-                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
 
                                                 {/* Bottom Status Ticker */}
-                                                <div className="pt-2 border-t border-neutral-100 flex items-center justify-between text-[9px] sm:text-[10px] text-neutral-400">
-                                                    <div className="flex items-center gap-2">
+                                                <div className="pt-1.5 sm:pt-2 border-t border-slate-100 flex items-center justify-between text-[7.5px] sm:text-[9.5px] text-slate-400">
+                                                    <div className="flex items-center gap-1.5 sm:gap-2">
                                                         <span className="size-1.5 rounded-full bg-blue-600 animate-pulse" />
-                                                        <span>Living Proposal Sync: Real-time via WebSocket</span>
+                                                        <span>Living Proposal Sync: Real-time via WebSocket terhubung</span>
                                                     </div>
-                                                    <span className="hidden sm:inline text-neutral-500 font-mono">v2.4.0-prod</span>
+                                                    <span className="hidden sm:inline font-mono text-slate-500 font-medium">https://rakitcampus.my.id/dashboard</span>
                                                 </div>
                                             </main>
                                         </div>
@@ -2954,11 +3011,15 @@ export default function Welcome() {
                         {/* 2. Realistic 3D Smartphone (iPhone 16 Pro Flagship) with Google Chrome Mobile */}
                         <div
                             ref={phoneShowcaseRef}
-                            className="absolute bottom-2 xs:bottom-4 sm:bottom-6 md:bottom-8 lg:bottom-10 right-1 xs:right-2 sm:right-4 md:right-6 lg:right-8 z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden]"
+                            className={`z-30 select-none transform-gpu will-change-transform [backface-visibility:hidden] ${
+                                mobileShowcaseTab === 'phone'
+                                    ? 'relative mx-auto flex justify-center py-2 sm:py-0'
+                                    : 'hidden sm:block'
+                            } sm:absolute sm:bottom-6 md:bottom-8 lg:bottom-10 sm:right-4 md:right-6 lg:right-8`}
                         >
                             <div
                                 ref={phoneCardRef}
-                                className="w-[145px] xs:w-[175px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[300px] xs:h-[360px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[24px] xs:rounded-[30px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
+                                className="w-[200px] xs:w-[220px] sm:w-[210px] md:w-[225px] lg:w-[235px] h-[410px] xs:h-[450px] sm:h-[430px] md:h-[460px] lg:h-[480px] select-none rounded-[28px] xs:rounded-[32px] sm:rounded-[36px] md:rounded-[40px] transform-gpu will-change-transform"
                                 style={{
                                     transform: 'perspective(1800px) rotateX(1.5deg) rotateY(0deg) translateZ(20px)',
                                     boxShadow: '-18px 25px 60px rgba(0,0,0,0.5), 0 10px 25px rgba(0,0,0,0.3)',
@@ -2994,15 +3055,13 @@ export default function Welcome() {
                                     {/* GOOGLE CHROME MOBILE TOP BAR */}
                                     <div className="bg-[#f8f9fa] border-b border-neutral-200/90 px-2 sm:px-2.5 py-1.5 flex items-center gap-1.5 z-10 relative select-none shrink-0">
                                         {/* Chrome Mobile Omnibox Pill */}
-                                        <div className="flex-1 bg-white border border-neutral-200 rounded-full px-2 py-0.5 flex items-center justify-between text-[7.5px] sm:text-[8px] shadow-2xs">
+                                        <div className="flex-1 bg-white border border-neutral-200 rounded-full px-2 py-0.5 flex items-center text-[7.5px] sm:text-[8px] shadow-2xs min-w-0">
                                             <div className="flex items-center gap-1 truncate">
                                                 <span className="size-1 rounded-full bg-blue-600 shrink-0" />
-                                                <span className="text-neutral-400 font-mono">m.</span>
-                                                <span className="text-neutral-900 font-bold font-mono">rakitcampus.id</span>
+                                                <span className="text-neutral-400 font-mono">https://</span>
+                                                <span className="text-neutral-900 font-bold font-mono">rakitcampus.my.id</span>
+                                                <span className="text-neutral-500 font-mono truncate">/dashboard</span>
                                             </div>
-                                            <span className="text-[7px] font-bold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/60">
-                                                SSL
-                                            </span>
                                         </div>
 
                                         {/* Chrome Open Tabs Badge [3] */}
@@ -3014,73 +3073,127 @@ export default function Welcome() {
                                         <MoreVertical className="size-3 text-neutral-800 shrink-0 cursor-pointer" />
                                     </div>
 
-                                    {/* PHONE SCREEN CONTENT: RAKIT CAMPUS RESPONSIVE MOBILE WEB */}
-                                    <div className="bg-[#fafafa] p-2 sm:p-2.5 text-left font-sans flex-1 min-h-0 flex flex-col justify-between relative z-10">
+                                    {/* PHONE SCREEN CONTENT: RAKIT CAMPUS RESPONSIVE MOBILE STUDENT DASHBOARD */}
+                                    <div className="bg-slate-50 p-2 sm:p-2.5 text-left font-sans flex-1 min-h-0 flex flex-col justify-between relative z-10 overflow-hidden">
                                         <div className="space-y-1.5">
-                                            {/* Mobile Web Header */}
-                                            <div className="flex items-center justify-between pb-1 border-b border-neutral-200/60">
-                                                <div className="flex items-center gap-1.5">
-                                                    <div className="size-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-2xs">
+                                            {/* Mobile Dashboard Header */}
+                                            <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+                                                <div className="flex items-center gap-1.5 min-w-0">
+                                                    <div className="size-4.5 rounded-md bg-blue-600 text-white flex items-center justify-center shadow-2xs shrink-0">
                                                         <Rocket className="size-2.5" />
                                                     </div>
-                                                    <span className="text-[10px] font-black text-neutral-900 tracking-tight">RAKIT</span>
-                                                </div>
-                                                <span className="text-[7.5px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/70">
-                                                    RAKIT Hub
-                                                </span>
-                                            </div>
-
-                                            {/* Mobile Card 1: Active Sprint Progress */}
-                                            <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
-                                                <div className="flex items-center justify-between text-[8px] font-bold text-neutral-900">
-                                                    <span>Sprint Proyek 2026</span>
-                                                    <span className="text-blue-600">78%</span>
-                                                </div>
-                                                <div className="w-full bg-neutral-100 h-1 rounded-full mt-1 overflow-hidden">
-                                                    <div className="bg-blue-600 h-full rounded-full w-[78%]" />
-                                                </div>
-                                                <div className="flex items-center justify-between mt-1 text-[7px] text-neutral-500">
-                                                    <span>14 Hari Tersisa</span>
-                                                    <span className="text-neutral-900 font-semibold">18/22 Tasks</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Mobile Card 2: AI Matchmaking Candidate */}
-                                            <div className="p-1.5 sm:p-2 bg-white rounded-lg border border-neutral-200/90 shadow-2xs">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-[7px] font-bold uppercase text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/70">
-                                                        + 98% MATCH
-                                                    </span>
-                                                    <span className="text-[7px] text-neutral-400">Mobile Dev</span>
-                                                </div>
-                                                <div className="flex items-center gap-1.5 mt-1">
-                                                    <div className="size-5 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center shrink-0">BS</div>
                                                     <div className="min-w-0">
-                                                        <h5 className="text-[9px] font-bold text-neutral-900 leading-tight truncate">Budi Santoso</h5>
-                                                        <p className="text-[7px] text-neutral-500 truncate">Flutter & IoT Specialist</p>
+                                                        <span className="text-[9.5px] font-black text-slate-900 tracking-tight leading-none block truncate">RAKIT CAMPUS</span>
+                                                        <span className="text-[6.5px] text-slate-400 font-medium leading-none block truncate">Dashboard Mahasiswa</span>
                                                     </div>
                                                 </div>
-                                                <div className="mt-1 pt-1 border-t border-neutral-100 flex items-center justify-between">
-                                                    <div className="flex gap-1 text-[6.5px] text-neutral-600">
-                                                        <span className="px-1 py-0.2 bg-neutral-100 rounded">Flutter</span>
-                                                        <span className="px-1 py-0.2 bg-neutral-100 rounded">MQTT</span>
+                                                <div className="flex items-center gap-1 shrink-0">
+                                                    <span className="text-[6.5px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded-full border border-blue-200/70">
+                                                        TI-2A RPL
+                                                    </span>
+                                                    <div className="size-4.5 rounded-full bg-blue-600 text-white text-[7px] font-bold flex items-center justify-center shadow-2xs">
+                                                        BS
                                                     </div>
-                                                    <span className="text-[7.5px] font-bold text-blue-600 hover:underline cursor-pointer">Undang</span>
                                                 </div>
                                             </div>
 
-                                            {/* Mobile Card 3: Gemastik Milestone */}
-                                            <div className="p-1.5 bg-neutral-50 rounded-lg border border-neutral-200/80 flex items-center justify-between">
-                                                <div className="flex items-center gap-1.5">
-                                                    <Trophy className="size-3 text-blue-600 shrink-0" />
-                                                    <div>
-                                                        <div className="text-[8px] font-bold text-neutral-900">Gemastik 2026</div>
-                                                        <div className="text-[6.5px] text-neutral-400">Babak Finalis IoT</div>
+                                            {/* Mobile Card 1: Progres Tugas (Donut Gauge) */}
+                                            <div className="p-1.5 bg-white rounded-lg border border-slate-200/90 shadow-2xs">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <span className="text-[6.5px] font-bold uppercase tracking-wider text-slate-400">Progres Tugas</span>
+                                                    <span className="text-[6px] font-bold text-blue-600 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/50">Sprint Aktif</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    {/* Mini Circular SVG Donut Gauge */}
+                                                    <div className="relative size-10 shrink-0 flex items-center justify-center">
+                                                        <svg className="size-full -rotate-90 transform" viewBox="0 0 40 40">
+                                                            <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" className="text-slate-100" fill="transparent" />
+                                                            <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" strokeDasharray={2 * Math.PI * 16} strokeDashoffset={2 * Math.PI * 16 * (1 - 0.78)} strokeLinecap="round" className="text-blue-600" fill="transparent" />
+                                                        </svg>
+                                                        <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                                                            <span className="text-[8px] font-black text-slate-900 leading-none">78%</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <div className="text-[8px] font-bold text-slate-900 truncate">18 / 23 Tugas Selesai</div>
+                                                        <div className="w-full bg-slate-100 h-1 rounded-full mt-1 overflow-hidden">
+                                                            <div className="bg-blue-600 h-full rounded-full w-[78%]" />
+                                                        </div>
+                                                        <p className="text-[6px] text-slate-400 mt-0.5">5 tugas sedang berjalan</p>
                                                     </div>
                                                 </div>
-                                                <span className="text-[7px] font-bold text-blue-700 bg-white px-1.5 py-0.2 rounded border border-neutral-200">
-                                                    H-14
-                                                </span>
+                                            </div>
+
+                                            {/* Mobile Card 2: Tim Akademik & Susunan Tim */}
+                                            <div className="p-1.5 bg-white rounded-lg border border-slate-200/90 shadow-2xs">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[6.5px] font-bold uppercase tracking-wider text-slate-400">Tim Akademik</span>
+                                                    <span className="text-[6.5px] text-slate-500 font-semibold">4 Anggota</span>
+                                                </div>
+                                                <h5 className="text-[8.5px] font-black text-slate-900 mt-0.5 truncate leading-tight">
+                                                    Smart Waste Management IoT
+                                                </h5>
+                                                <p className="text-[6.5px] text-slate-500 truncate">Proyek Polinema · Living Proposal</p>
+                                                {/* Susunan Tim Avatar Row */}
+                                                <div className="mt-1.5 pt-1 border-t border-slate-100 flex items-center justify-between">
+                                                    <div className="flex items-center -space-x-1">
+                                                        <div className="size-4 rounded-full bg-blue-600 text-white text-[6px] font-bold flex items-center justify-center border border-white" title="Budi Santoso">BS</div>
+                                                        <div className="size-4 rounded-full bg-amber-500 text-white text-[6px] font-bold flex items-center justify-center border border-white" title="Agus Prasetyo">AP</div>
+                                                        <div className="size-4 rounded-full bg-emerald-600 text-white text-[6px] font-bold flex items-center justify-center border border-white" title="Dewi Lestari">DL</div>
+                                                        <div className="size-4 rounded-full bg-purple-600 text-white text-[6px] font-bold flex items-center justify-center border border-white" title="Taufik Nugroho">TN</div>
+                                                    </div>
+                                                    <span className="text-[6.5px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200/60">
+                                                        Workspace →
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Mobile Card 3: Tugas Prioritas Mahasiswa */}
+                                            <div className="p-1.5 bg-white rounded-lg border border-slate-200/90 shadow-2xs space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-[6.5px] font-bold uppercase tracking-wider text-slate-400">Tugas Prioritas</span>
+                                                    <span className="text-[6.5px] text-blue-600 font-semibold">2 Aktif</span>
+                                                </div>
+                                                <div className="p-1 bg-slate-50 rounded border border-slate-100 flex items-center justify-between gap-1">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7px] font-bold text-slate-900 truncate">Finalisasi Bab 3 Proposal</div>
+                                                        <div className="text-[6px] text-slate-400">Tenggat: 22 Nov</div>
+                                                    </div>
+                                                    <span className="text-[6px] font-bold text-blue-700 bg-blue-50 px-1 py-0.2 rounded border border-blue-200/70 shrink-0">
+                                                        Review Dosen
+                                                    </span>
+                                                </div>
+                                                <div className="p-1 bg-slate-50 rounded border border-slate-100 flex items-center justify-between gap-1">
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7px] font-bold text-slate-900 truncate">Integrasi Sensor ESP32</div>
+                                                        <div className="text-[6px] text-slate-400">Tenggat: 25 Nov</div>
+                                                    </div>
+                                                    <span className="text-[6px] font-bold text-amber-700 bg-amber-50 px-1 py-0.2 rounded border border-amber-200/70 shrink-0">
+                                                        In Progress
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Mobile Row: Kesiapan Profil & Rekrutmen Terbuka */}
+                                            <div className="grid grid-cols-2 gap-1">
+                                                <div className="p-1 bg-white rounded-lg border border-slate-200/90 shadow-2xs flex items-center gap-1">
+                                                    <div className="size-5 rounded-md bg-blue-50 border border-blue-200/70 flex items-center justify-center text-blue-600 shrink-0">
+                                                        <ShieldCheck className="size-3" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7.5px] font-extrabold text-slate-900 leading-tight">92%</div>
+                                                        <div className="text-[5.5px] text-blue-600 font-bold uppercase truncate">VERIFIED</div>
+                                                    </div>
+                                                </div>
+                                                <div className="p-1 bg-white rounded-lg border border-slate-200/90 shadow-2xs flex items-center gap-1">
+                                                    <div className="size-5 rounded-md bg-blue-50 border border-blue-200/70 flex items-center justify-center text-blue-600 shrink-0">
+                                                        <Building2 className="size-3" />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <div className="text-[7.5px] font-extrabold text-slate-900 leading-tight">5 Proyek</div>
+                                                        <div className="text-[5.5px] text-slate-500 font-medium uppercase truncate">OPEN SLOT</div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 

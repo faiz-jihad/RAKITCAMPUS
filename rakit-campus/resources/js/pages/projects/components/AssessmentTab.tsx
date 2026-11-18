@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from '@inertiajs/react';
 import {
     AlertCircle,
     Award,
@@ -10,12 +11,14 @@ import {
     FileText,
     FolderKanban,
     GraduationCap,
+    Info,
     Lock,
     RotateCcw,
     Send,
     ShieldCheck,
     Sparkles,
     Upload,
+    X,
 } from 'lucide-react';
 
 interface Props {
@@ -99,6 +102,20 @@ export default function AssessmentTab({
         estimatedScore >= 63 ? 'BC' :
         estimatedScore >= 55 ? 'C' : 'D';
 
+    // Toast state
+    const [toast, setToast] = useState<{
+        type: 'success' | 'error' | 'info';
+        title: string;
+        message?: string;
+    } | null>(null);
+
+    const showToast = (title: string, message?: string, type: 'success' | 'error' | 'info' = 'success') => {
+        setToast({ type, title, message });
+        setTimeout(() => {
+            setToast((curr) => (curr?.title === title ? null : curr));
+        }, 4000);
+    };
+
     const handleStudentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
@@ -126,15 +143,23 @@ export default function AssessmentTab({
             });
 
             if (res.ok) {
-                alert(`Pengumpulan berkas ${period.name} berhasil disimpan bersama snapshot proyek yang tidak berubah!`);
                 setShowSubmitModal(false);
-                window.location.reload();
+                showToast(
+                    'Pengumpulan Berkas Berhasil',
+                    `Berkas ${period?.name || 'evaluasi'} berhasil disimpan.`,
+                    'success'
+                );
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal menyerahkan berkas evaluasi.');
+                showToast(
+                    'Gagal Mengumpulkan Berkas',
+                    json.message || 'Terjadi kesalahan saat menyimpan berkas.',
+                    'error'
+                );
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Kesalahan Jaringan', 'Gagal menghubungi server.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -164,15 +189,23 @@ export default function AssessmentTab({
             });
 
             if (res.ok) {
-                alert(`Evaluasi penilaian berhasil disimpan!`);
                 setShowReviewModal(false);
-                window.location.reload();
+                showToast(
+                    'Evaluasi Penilaian Berhasil Disimpan',
+                    'Nilai rubrik dan catatan bimbingan berhasil diterbitkan.',
+                    'success'
+                );
+                router.reload();
             } else {
                 const json = await res.json().catch(() => ({}));
-                alert(json.message || 'Gagal menyimpan evaluasi rubrik.');
+                showToast(
+                    'Gagal Menyimpan Evaluasi',
+                    json.message || 'Terjadi kesalahan saat menyimpan evaluasi rubrik.',
+                    'error'
+                );
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            showToast('Kesalahan Jaringan', 'Gagal menghubungi server.', 'error');
         } finally {
             setSubmitting(false);
         }
@@ -186,26 +219,35 @@ export default function AssessmentTab({
             {/* Header Assessment Card */}
             <div className="glass-card rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-3 mb-1.5 flex-wrap">
                         <span className="text-xs font-black uppercase px-2.5 py-0.5 rounded-md bg-blue-600 text-white">
                             {period?.name || (isUas ? 'Evaluasi Akhir Semester (UAS)' : 'Evaluasi Tengah Semester (UTS)')}
                         </span>
+                        <span className="h-3.5 w-px bg-slate-200 shrink-0" aria-hidden="true" />
                         <span className="text-xs font-bold text-slate-500">
                             Bobot: {period?.weight || (isUas ? 60 : 40)}%
                         </span>
-                        <span
-                            className={`text-xs font-bold px-2.5 py-0.5 rounded-full border uppercase ${
-                                submission?.status === 'accepted'
-                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                                    : submission?.status === 'submitted'
-                                    ? 'bg-blue-50 text-blue-700 border-blue-200'
-                                    : submission?.status === 'revision_required'
-                                    ? 'bg-slate-100 text-slate-700 border-slate-200'
-                                    : 'bg-slate-100 text-slate-600 border-slate-200'
-                            }`}
-                        >
-                            {submission?.status || 'Belum Dikumpulkan'}
-                        </span>
+                        <span className="h-3.5 w-px bg-slate-200 shrink-0" aria-hidden="true" />
+                        {submission?.status === 'accepted' ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600">
+                                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                <span>Accepted</span>
+                            </span>
+                        ) : submission?.status === 'submitted' ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600">
+                                <Clock className="size-3.5 text-blue-600" />
+                                <span>Menunggu Penilaian</span>
+                            </span>
+                        ) : submission?.status === 'revision_required' ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600">
+                                <RotateCcw className="size-3.5 text-amber-600" />
+                                <span>Perlu Revisi</span>
+                            </span>
+                        ) : (
+                            <span className="text-xs font-semibold text-slate-400">
+                                Belum Dikumpulkan
+                            </span>
+                        )}
                     </div>
                     <h3 className="text-base font-bold text-slate-900">
                         {period?.description || (isUas ? 'Penilaian Capstone Akhir & Verifikasi Portofolio Proyek' : 'Evaluasi Progres Tengah Semester & Living Proposal Snapshot')}
@@ -381,11 +423,12 @@ export default function AssessmentTab({
                                         href={`/storage/${doc.file_path}`}
                                         target="_blank"
                                         rel="noreferrer"
+                                        download={doc.original_name || doc.title}
                                         className="p-3 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 flex items-center justify-between text-xs transition"
                                     >
                                         <div className="flex items-center gap-2 truncate">
                                             <FileText className="size-4 text-blue-600 shrink-0" />
-                                            <span className="font-bold text-slate-800 truncate">{doc.title}</span>
+                                            <span className="font-bold text-slate-800 truncate">{doc.original_name || doc.title}</span>
                                             <span className="text-[10px] text-slate-400 shrink-0">({Math.round(doc.file_size / 1024)} KB)</span>
                                         </div>
                                         <Download className="size-3.5 text-slate-400" />
@@ -429,109 +472,136 @@ export default function AssessmentTab({
             {/* Modal: Student Submission */}
             {showSubmitModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-                    <form onSubmit={handleStudentSubmit} className="glass-surface rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col gap-4">
-                        <div>
-                            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                <Upload className="size-5 text-blue-600" />
+                    <form onSubmit={handleStudentSubmit} className="bg-white rounded-3xl p-5 sm:p-6 max-w-2xl w-full shadow-2xl border border-slate-100 flex flex-col gap-3 my-auto">
+                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
+                            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <Upload className="size-4 text-blue-600" />
+                                </div>
                                 <span>Pengumpulan Berkas {period?.name || type.toUpperCase()}</span>
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Menyerahkan tugas akan mengunci *snapshot* proposal versi aktif dan progres pengerjaan saat ini.
-                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setShowSubmitModal(false)}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Link Repository (GitHub/GitLab)</label>
-                            <input
-                                type="url"
-                                value={repoUrl}
-                                onChange={(e) => setRepoUrl(e.target.value)}
-                                placeholder="https://github.com/..."
-                                className="w-full text-xs rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
+                        {/* Grid: Links */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Link Repository (GitHub/GitLab)
+                                </label>
+                                <input
+                                    type="url"
+                                    value={repoUrl}
+                                    onChange={(e) => setRepoUrl(e.target.value)}
+                                    placeholder="https://github.com/..."
+                                    className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Link Live Demo Produk
+                                </label>
+                                <input
+                                    type="url"
+                                    value={demoUrl}
+                                    onChange={(e) => setDemoUrl(e.target.value)}
+                                    placeholder="https://aplikasi.polindra.ac.id"
+                                    className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                                />
+                            </div>
                         </div>
 
+                        {/* Catatan Pengumpulan */}
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Link Live Demo Produk</label>
-                            <input
-                                type="url"
-                                value={demoUrl}
-                                onChange={(e) => setDemoUrl(e.target.value)}
-                                placeholder="https://aplikasi.polindra.ac.id"
-                                className="w-full text-xs rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Pengumpulan & Deskripsi Hasil</label>
+                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                Catatan Pengumpulan & Deskripsi Hasil
+                            </label>
                             <textarea
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                rows={3}
+                                rows={2}
                                 placeholder="Jelaskan ringkasan pencapaian fitur dan kelengkapan berkas..."
-                                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white p-2.5 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none leading-relaxed"
                             />
                         </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Kendala yang Dihadapi & Solusi</label>
-                            <textarea
-                                value={challenges}
-                                onChange={(e) => setChallenges(e.target.value)}
-                                rows={2}
-                                placeholder="Kendala teknis selama pengerjaan dan solusi penyelesaian..."
-                                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
-                        </div>
+                        {/* Grid: Kendala & Rencana */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Kendala yang Dihadapi & Solusi
+                                </label>
+                                <textarea
+                                    value={challenges}
+                                    onChange={(e) => setChallenges(e.target.value)}
+                                    rows={2}
+                                    placeholder="Kendala teknis dan solusi penyelesaian..."
+                                    className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white p-2.5 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none leading-relaxed"
+                                />
+                            </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Rencana Pengerjaan Selanjutnya</label>
-                            <textarea
-                                value={nextSteps}
-                                onChange={(e) => setNextSteps(e.target.value)}
-                                rows={2}
-                                placeholder="Rencana sprint lanjutan..."
-                                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
+                            <div>
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Rencana Pengerjaan Selanjutnya
+                                </label>
+                                <textarea
+                                    value={nextSteps}
+                                    onChange={(e) => setNextSteps(e.target.value)}
+                                    rows={2}
+                                    placeholder="Rencana sprint lanjutan..."
+                                    className="w-full text-xs rounded-xl border border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white p-2.5 text-slate-900 placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 resize-none leading-relaxed"
+                                />
+                            </div>
                         </div>
 
                         {/* File Uploads */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Laporan Kemajuan / Akhir (PDF)</label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Laporan Kemajuan / Akhir (PDF)
+                                </label>
                                 <input
                                     type="file"
                                     accept=".pdf"
                                     onChange={(e) => setReportFile(e.target.files?.[0] || null)}
-                                    className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    className="w-full text-xs text-slate-600 file:mr-2.5 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer"
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Slide Presentasi (PPTX / PDF)</label>
+                            <div className="p-2.5 rounded-xl border border-slate-200/80 bg-slate-50/50">
+                                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                    Slide Presentasi (PPTX / PDF)
+                                </label>
                                 <input
                                     type="file"
                                     accept=".ppt,.pptx,.pdf"
                                     onChange={(e) => setPptFile(e.target.files?.[0] || null)}
-                                    className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    className="w-full text-xs text-slate-600 file:mr-2.5 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition cursor-pointer"
                                 />
                             </div>
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100 mt-0.5">
                             <button
                                 type="button"
                                 onClick={() => setShowSubmitModal(false)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
                             >
                                 Batal
                             </button>
                             <button
                                 type="submit"
                                 disabled={submitting}
-                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
+                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer disabled:opacity-50 active:scale-[0.99]"
                             >
-                                Kunci Snapshot & Kumpulkan
+                                {submitting ? 'Menyimpan...' : 'Kunci Snapshot & Kumpulkan'}
                             </button>
                         </div>
                     </form>
@@ -540,140 +610,214 @@ export default function AssessmentTab({
 
             {/* Modal: Lecturer Rubric Evaluation */}
             {showReviewModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto">
-                    <form onSubmit={handleLecturerReview} className="glass-surface rounded-3xl p-6 sm:p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto flex flex-col gap-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+                    <form
+                        onSubmit={handleLecturerReview}
+                        className="bg-white rounded-3xl p-6 sm:p-7 max-w-4xl w-full shadow-2xl border border-slate-100 flex flex-col gap-4"
+                    >
+                        {/* Header without subtitle description */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    <GraduationCap className="size-5 text-blue-600" />
-                                    <span>Penilaian Rubrik {period?.name || type.toUpperCase()}</span>
+                            <div className="flex items-center gap-2.5">
+                                <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                    <GraduationCap className="size-4 text-blue-600" />
+                                </div>
+                                <h3 className="text-base font-bold text-slate-900">
+                                    Penilaian Rubrik {period?.name || type.toUpperCase()}
                                 </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Berikan nilai skor (0-100) per kriteria rubrik terstandar akademik.
-                                </p>
                             </div>
 
-                            <div className="text-right">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
-                                    Estimasi Nilai Akhir
-                                </span>
-                                <span className="text-xl font-black text-blue-600">
-                                    {estimatedScore} ({estimatedGrade})
-                                </span>
+                            <div className="flex items-center gap-4">
+                                <div className="text-right">
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                                        Estimasi Nilai Akhir
+                                    </span>
+                                    <span className="text-xl font-black text-blue-600">
+                                        {estimatedScore} ({estimatedGrade})
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReviewModal(false)}
+                                    className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    <X className="size-4" />
+                                </button>
                             </div>
                         </div>
 
-                        {/* Rubrics Form Inputs */}
-                        <div className="flex flex-col gap-3">
-                            {rubrics.map((r: any) => (
-                                <div key={r.id} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <div className="max-w-md">
-                                        <div className="flex items-center gap-2">
-                                            <h5 className="text-xs font-bold text-slate-900">{r.criteria}</h5>
-                                            <span className="text-[10px] font-bold text-blue-700 bg-blue-100/60 px-1.5 py-0.5 rounded">
-                                                Bobot {r.weight}%
-                                            </span>
-                                        </div>
-                                        <p className="text-[11px] text-slate-500 mt-0.5">{r.description}</p>
-                                    </div>
+                        {/* 2-Column Responsive Grid without vertical scrollbar */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Left Column: Rubrics Scoring */}
+                            <div className="flex flex-col gap-2.5">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                                    Kriteria Rubrik Penilaian ({rubrics.length})
+                                </span>
+                                <div className="space-y-2">
+                                    {rubrics.map((r: any) => (
+                                        <div
+                                            key={r.id}
+                                            className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between gap-3"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-1.5 flex-wrap">
+                                                    <h5 className="text-xs font-bold text-slate-900 truncate">
+                                                        {r.criteria}
+                                                    </h5>
+                                                    <span className="text-[9px] font-bold text-blue-700 bg-blue-100/70 px-1.5 py-0.5 rounded shrink-0">
+                                                        Bobot {r.weight}%
+                                                    </span>
+                                                </div>
+                                                <p className="text-[11px] text-slate-500 truncate mt-0.5" title={r.description}>
+                                                    {r.description}
+                                                </p>
+                                            </div>
 
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <label className="text-xs font-bold text-slate-600">Nilai (0-100):</label>
-                                        <input
-                                            type="number"
-                                            min={0}
-                                            max={100}
-                                            value={rubricScores[r.id] ?? 85}
-                                            onChange={(e) =>
-                                                setRubricScores({
-                                                    ...rubricScores,
-                                                    [r.id]: Number(e.target.value),
-                                                })
-                                            }
-                                            className="w-20 text-xs font-bold text-center rounded-xl border border-slate-200 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                            <div className="flex items-center gap-1.5 shrink-0">
+                                                <label className="text-[11px] font-bold text-slate-500">Nilai:</label>
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    max={100}
+                                                    value={rubricScores[r.id] ?? 85}
+                                                    onChange={(e) =>
+                                                        setRubricScores({
+                                                            ...rubricScores,
+                                                            [r.id]: Number(e.target.value),
+                                                        })
+                                                    }
+                                                    className="w-16 text-xs font-bold text-center rounded-lg border border-slate-200 bg-white py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Right Column: Feedback & Decision */}
+                            <div className="flex flex-col justify-between gap-3">
+                                <div className="space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                                            Catatan Evaluasi / Ulasan Dosen
+                                        </label>
+                                        <textarea
+                                            value={feedback}
+                                            onChange={(e) => setFeedback(e.target.value)}
+                                            required
+                                            rows={4}
+                                            placeholder="Ulasan kualitas implementasi produk, penguasaan materi, dan penyelesaian masalah..."
+                                            className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                                         />
                                     </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-700 mb-1">
+                                            Keputusan Penilaian
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <label className={`p-2.5 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold transition ${
+                                                decision === 'accepted'
+                                                    ? 'bg-blue-50 border-blue-300 text-blue-900'
+                                                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                            }`}>
+                                                <input
+                                                    type="radio"
+                                                    name="dec"
+                                                    value="accepted"
+                                                    checked={decision === 'accepted'}
+                                                    onChange={() => setDecision('accepted')}
+                                                    className="sr-only"
+                                                />
+                                                <CheckCircle2 className="size-4 text-blue-600 shrink-0" />
+                                                <span className="truncate">Lulus / Terima (Accepted)</span>
+                                            </label>
+
+                                            <label className={`p-2.5 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold transition ${
+                                                decision === 'revision_required'
+                                                    ? 'bg-slate-100 border-slate-300 text-slate-900'
+                                                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                                            }`}>
+                                                <input
+                                                    type="radio"
+                                                    name="dec"
+                                                    value="revision_required"
+                                                    checked={decision === 'revision_required'}
+                                                    onChange={() => setDecision('revision_required')}
+                                                    className="sr-only"
+                                                />
+                                                <RotateCcw className="size-4 text-slate-600 shrink-0" />
+                                                <span className="truncate">Perlu Revisi</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* If UAS: Complete Project checkbox */}
+                                    {isUas && decision === 'accepted' && (
+                                        <label className="p-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80 flex items-center gap-2 text-[11px] text-blue-900 font-semibold cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={completeProject}
+                                                onChange={(e) => setCompleteProject(e.target.checked)}
+                                                className="rounded text-blue-600 focus:ring-blue-500 shrink-0"
+                                            />
+                                            <span>Nyatakan Proyek Resmi Selesai (Completed) dan terbitkan portofolio.</span>
+                                        </label>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
 
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Evaluasi / Ulasan Dosen</label>
-                            <textarea
-                                value={feedback}
-                                onChange={(e) => setFeedback(e.target.value)}
-                                required
-                                rows={3}
-                                placeholder="Ulasan kualitas implementasi produk, penguasaan materi, dan penyelesaian masalah..."
-                                className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1.5">Keputusan Penilaian</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    decision === 'accepted' ? 'bg-blue-50 border-blue-300 text-blue-900' : 'bg-white border-slate-200 text-slate-700'
-                                }`}>
-                                    <input
-                                        type="radio"
-                                        name="dec"
-                                        value="accepted"
-                                        checked={decision === 'accepted'}
-                                        onChange={() => setDecision('accepted')}
-                                        className="sr-only"
-                                    />
-                                    <CheckCircle2 className="size-4 text-blue-600" />
-                                    <span>Lulus / Terima (Accepted)</span>
-                                </label>
-
-                                <label className={`p-3 rounded-xl border cursor-pointer flex items-center gap-2 text-xs font-bold ${
-                                    decision === 'revision_required' ? 'bg-slate-100 border-slate-300 text-slate-900' : 'bg-white border-slate-200 text-slate-700'
-                                }`}>
-                                    <input
-                                        type="radio"
-                                        name="dec"
-                                        value="revision_required"
-                                        checked={decision === 'revision_required'}
-                                        onChange={() => setDecision('revision_required')}
-                                        className="sr-only"
-                                    />
-                                    <RotateCcw className="size-4 text-slate-600" />
-                                    <span>Perlu Revisi</span>
-                                </label>
+                                <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviewModal(false)}
+                                        className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={submitting}
+                                        className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shadow-xs cursor-pointer disabled:opacity-50 active:scale-[0.99]"
+                                    >
+                                        {submitting ? 'Menyimpan...' : 'Simpan Nilai Evaluasi'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                        {/* If UAS: Complete Project checkbox */}
-                        {isUas && decision === 'accepted' && (
-                            <label className="p-3 rounded-xl bg-blue-50/70 border border-blue-200/80 flex items-center gap-2.5 text-xs text-blue-900 font-semibold cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    checked={completeProject}
-                                    onChange={(e) => setCompleteProject(e.target.checked)}
-                                    className="rounded text-blue-600 focus:ring-blue-500"
-                                />
-                                <span>Nyatakan Proyek Resmi Selesai (Completed), Terbitkan Sertifikat Portofolio, dan Rilis Pembatasan Rule 1 Mahasiswa.</span>
-                            </label>
-                        )}
-
-                        <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
-                            <button
-                                type="button"
-                                onClick={() => setShowReviewModal(false)}
-                                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
-                            >
-                                Batal
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={submitting}
-                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50"
-                            >
-                                Simpan Nilai Evaluasi
-                            </button>
-                        </div>
                     </form>
+                </div>
+            )}
+
+            {/* In-App Floating Toast Notification */}
+            {toast && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
+                    <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${
+                        toast.type === 'success'
+                            ? 'bg-blue-600 text-white'
+                            : toast.type === 'error'
+                            ? 'bg-rose-500 text-white'
+                            : 'bg-slate-800 text-blue-400'
+                    }`}>
+                        {toast.type === 'success' ? (
+                            <CheckCircle2 className="size-4.5" />
+                        ) : toast.type === 'error' ? (
+                            <AlertCircle className="size-4.5" />
+                        ) : (
+                            <Info className="size-4.5" />
+                        )}
+                    </div>
+                    <div className="flex-1 min-w-0 pr-1">
+                        <p className="text-xs font-bold text-white leading-snug">{toast.title}</p>
+                        {toast.message && (
+                            <p className="text-[11px] text-slate-300 mt-0.5 leading-relaxed">{toast.message}</p>
+                        )}
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setToast(null)}
+                        className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition -mr-1 -mt-1 cursor-pointer"
+                    >
+                        <X className="size-3.5" />
+                    </button>
                 </div>
             )}
         </div>

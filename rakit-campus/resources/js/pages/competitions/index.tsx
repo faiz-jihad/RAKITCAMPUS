@@ -28,15 +28,18 @@ import {
     FolderKanban,
     Globe,
     GraduationCap,
+    Info,
     Layers,
     Leaf,
     Link2,
+    Loader2,
     MapPin,
     MessageSquare,
     Mic,
     Palette,
     Plus,
     Search,
+    Send,
     ShieldCheck,
     Sparkles,
     Star,
@@ -44,6 +47,7 @@ import {
     TrendingUp,
     Trophy,
     User,
+    UserCheck,
     Users,
     X,
     Zap,
@@ -244,6 +248,7 @@ interface Props {
     };
     openCompetitionOptions?: any[];
     openRecruitingTeams?: RecruitingTeam[];
+    radarCandidates?: any[];
     totalNeededSlots?: number;
     myApplications?: MyApplication[];
     myTeams?: MyTeam[];
@@ -282,6 +287,7 @@ interface Props {
         status?: string;
         level?: string;
         tab?: string;
+        view?: string;
         team_search?: string;
         team_category?: string;
         team_role?: string;
@@ -306,6 +312,7 @@ export default function CompetitionIndex({
     competitions = { data: [], current_page: 1, last_page: 1, total: 0 },
     openCompetitionOptions,
     openRecruitingTeams = [],
+    radarCandidates = [],
     totalNeededSlots = 0,
     myApplications = [],
     myTeams = [],
@@ -354,6 +361,91 @@ export default function CompetitionIndex({
     const [teamSearch, setTeamSearch] = useState(safeFilters.team_search || '');
     const [teamCategory, setTeamCategory] = useState(safeFilters.team_category || '');
     const [teamRole, setTeamRole] = useState(safeFilters.team_role || '');
+
+    // Radar Rekrutmen inside Cari Tim States
+    const [teamViewMode, setTeamViewMode] = useState<'teams' | 'radar'>(() => {
+        if ((safeFilters as any).view === 'radar') return 'radar';
+        if (typeof window !== 'undefined') {
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('view') === 'radar') return 'radar';
+        }
+        return 'teams';
+    });
+    const [radarPersonaFilter, setRadarPersonaFilter] = useState<'all' | 'Hacker' | 'Hipster' | 'Hustler'>('all');
+    const [radarSearch, setRadarSearch] = useState('');
+    const [selectedRadarCandidate, setSelectedRadarCandidate] = useState<any | null>(null);
+    const [radarInviteModalOpen, setRadarInviteModalOpen] = useState(false);
+    const [inviteParticipationId, setInviteParticipationId] = useState<string | number>('');
+    const [inviteRoleName, setInviteRoleName] = useState('Anggota Tim');
+    const [inviteMessage, setInviteMessage] = useState('');
+    const [isInviting, setIsInviting] = useState(false);
+
+    const myLedTeams = useMemo(() => {
+        return myTeams.filter((t: any) => t.is_leader);
+    }, [myTeams]);
+
+    const openRadarInvite = (candidate: any) => {
+        setSelectedRadarCandidate(candidate);
+        if (myLedTeams.length > 0) {
+            setInviteParticipationId(myLedTeams[0].id);
+            const defaultRole = candidate.persona === 'Hipster'
+                ? 'UI/UX Designer'
+                : (candidate.persona === 'Hustler' ? 'Pitcher / Hustler' : 'Fullstack / Hacker');
+            setInviteRoleName(defaultRole);
+            const candName = candidate.user?.name || candidate.name || 'Rekan';
+            setInviteMessage(`Halo ${candName}, mari bergabung dengan tim kami untuk kompetisi!`);
+            setRadarInviteModalOpen(true);
+        } else {
+            if (confirm(`Anda belum memiliki tim kompetisi yang dipimpin. Buat tim kompetisi baru sekarang untuk merekrut ${candidate.user?.name || candidate.name}?`)) {
+                setCreateTeamPreselectedCompId(null);
+                setCreateTeamModalOpen(true);
+            }
+        }
+    };
+
+    const handleSendRadarInvite = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!inviteParticipationId || !selectedRadarCandidate) return;
+
+        setIsInviting(true);
+        const studentId = selectedRadarCandidate.user?.id || selectedRadarCandidate.id;
+
+        router.post(
+            `/competition-workspace/${inviteParticipationId}/send-invitation`,
+            {
+                student_id: studentId,
+                role_name: inviteRoleName,
+                message: inviteMessage,
+            },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onSuccess: () => {
+                    setRadarInviteModalOpen(false);
+                    setSelectedRadarCandidate(null);
+                    setInviteMessage('');
+                },
+                onFinish: () => setIsInviting(false),
+            }
+        );
+    };
+
+    const filteredRadarCandidates = useMemo(() => {
+        return radarCandidates.filter((cand: any) => {
+            const student = cand.user || cand;
+            const personaMatch = radarPersonaFilter === 'all' || cand.persona === radarPersonaFilter;
+            if (!personaMatch) return false;
+
+            if (!radarSearch.trim()) return true;
+            const q = radarSearch.toLowerCase();
+            const name = (student.name || '').toLowerCase();
+            const study = (student.study_program || '').toLowerCase();
+            const campus = (student.campus_name || student.campus?.name || '').toLowerCase();
+            const skills = (cand.matched_skills || cand.skills || []).map((s: any) => (typeof s === 'string' ? s.toLowerCase() : (s.name || '').toLowerCase()));
+
+            return name.includes(q) || study.includes(q) || campus.includes(q) || skills.some((s: string) => s.includes(q));
+        });
+    }, [radarCandidates, radarPersonaFilter, radarSearch]);
 
     // Team Recruitment Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
@@ -1193,27 +1285,60 @@ export default function CompetitionIndex({
                 )}
 
                 {/* ========================================================= */}
-                {/* TAB 2: CARI TIM                                           */}
+                {/* TAB 2: CARI TIM & RADAR REKRUTMEN                        */}
                 {/* ========================================================= */}
                 {activeTab === 'teams' && (
                     <div className="space-y-6">
-                        {/* Clean Section Header */}
+                        {/* Segmented Switcher: Cari Tim vs Radar Rekrutmen */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                    Tim Mencari Rekan
-                                </h2>
-                                <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200/70">
-                                    {openRecruitingTeams.length} tim aktif
-                                </span>
+                            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl self-start border border-slate-200/80">
+                                <button
+                                    type="button"
+                                    onClick={() => setTeamViewMode('teams')}
+                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                        teamViewMode === 'teams'
+                                            ? 'bg-white text-slate-900 shadow-2xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <Users className="size-3.5 text-blue-600" />
+                                    <span>Tim Membuka Rekrutmen</span>
+                                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-50 text-blue-700 font-bold">
+                                        {openRecruitingTeams.length}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setTeamViewMode('radar')}
+                                    className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                                        teamViewMode === 'radar'
+                                            ? 'bg-white text-slate-900 shadow-2xs'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <Sparkles className="size-3.5 text-amber-500" />
+                                    <span>Radar Rekrutmen Talenta</span>
+                                    <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-50 text-amber-700 font-bold">
+                                        {radarCandidates.length}
+                                    </span>
+                                </button>
                             </div>
-                            {totalNeededSlots > 0 && (
+
+                            {teamViewMode === 'teams' && totalNeededSlots > 0 && (
                                 <span className="text-xs text-slate-500 font-medium">
                                     Tersedia <strong className="text-slate-800">{totalNeededSlots} posisi</strong> untuk mahasiswa
                                 </span>
                             )}
+                            {teamViewMode === 'radar' && (
+                                <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
+                                    <Sparkles className="size-3 text-amber-500" />
+                                    <span>Rekomendasi Persona <strong>Hacker, Hipster, Hustler</strong></span>
+                                </span>
+                            )}
                         </div>
 
+                        {teamViewMode === 'teams' && (
+                            <>
                         {/* Search & Filters */}
                         <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2">
                             <form onSubmit={handleTeamFilterSubmit} className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full">
@@ -1308,7 +1433,7 @@ export default function CompetitionIndex({
                                     if (team?.leader) {
                                         memberAvatars.push({
                                             name: team.leader.name,
-                                            avatar: team.leader.avatar,
+                                            avatar: team.leader.avatar || null,
                                             role: 'Ketua Tim',
                                         });
                                     }
@@ -1595,6 +1720,208 @@ export default function CompetitionIndex({
                                 })}
                             </div>
                         )}
+                        </>
+                    )}
+
+                    {/* SUB-VIEW 2: RADAR REKRUTMEN TALENTA KANDIDAT */}
+                    {teamViewMode === 'radar' && (
+                        <div className="space-y-5">
+                            {/* Banner Callout */}
+                            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 uppercase tracking-wider shadow-2xs">
+                                            Radar MinSatu
+                                        </span>
+                                        <span className="text-xs text-slate-300 font-medium">
+                                            Matchmaking Talenta Lomba
+                                        </span>
+                                    </div>
+                                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+                                        Radar Rekrutmen Rekan Tim Lomba
+                                    </h3>
+                                    <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Hacker, Hipster, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCreateTeamPreselectedCompId(null);
+                                            setCreateTeamModalOpen(true);
+                                        }}
+                                        className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                    >
+                                        <Plus className="size-3.5" />
+                                        <span>Bentuk Tim Baru</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Radar Filter Toolbar */}
+                            <div className="bg-white rounded-2xl p-2.5 sm:p-3 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-center gap-2.5">
+                                <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl w-full border border-slate-100">
+                                    <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                                    <input
+                                        type="text"
+                                        placeholder="Cari nama kandidat, prodi, kampus, atau keahlian (React, Figma, Pitching)..."
+                                        value={radarSearch}
+                                        onChange={(e) => setRadarSearch(e.target.value)}
+                                        className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
+                                    />
+                                    {radarSearch && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setRadarSearch('')}
+                                            className="text-slate-400 hover:text-slate-600 text-xs font-bold"
+                                        >
+                                            ✕
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Persona Segmented Filter */}
+                                <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto shrink-0 overflow-x-auto">
+                                    {(['all', 'Hacker', 'Hipster', 'Hustler'] as const).map((persona) => {
+                                        const label =
+                                            persona === 'all'
+                                                ? 'Semua Talenta'
+                                                : persona === 'Hacker'
+                                                ? 'Hacker (Dev)'
+                                                : persona === 'Hipster'
+                                                ? 'Hipster (UI/UX)'
+                                                : 'Hustler (Lead)';
+                                        const isActive = radarPersonaFilter === persona;
+                                        return (
+                                            <button
+                                                key={persona}
+                                                type="button"
+                                                onClick={() => setRadarPersonaFilter(persona)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                                                    isActive
+                                                        ? 'bg-white text-slate-900 shadow-2xs'
+                                                        : 'text-slate-600 hover:text-slate-900'
+                                                }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Candidates Grid */}
+                            {filteredRadarCandidates.length === 0 ? (
+                                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
+                                    <Sparkles className="size-10 text-amber-400 mx-auto mb-3" />
+                                    <h4 className="text-sm font-bold text-slate-900">
+                                        Tidak Ada Kandidat yang Cocok
+                                    </h4>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                        Coba sesuaikan kata kunci pencarian atau filter persona talenta.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+                                    {filteredRadarCandidates.map((cand: any, idx: number) => {
+                                        const student = cand.user || cand;
+                                        const persona = cand.persona || 'Hacker';
+                                        const skills: string[] = cand.matched_skills || cand.skills || [];
+                                        const score = cand.final_score || 85;
+
+                                        const personaStyle =
+                                            persona === 'Hipster'
+                                                ? 'bg-purple-50 text-purple-700 border-purple-200'
+                                                : persona === 'Hustler'
+                                                ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                                : 'bg-blue-50 text-blue-700 border-blue-200';
+
+                                        return (
+                                            <div
+                                                key={student.id || idx}
+                                                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group"
+                                            >
+                                                <div>
+                                                    {/* Top Row: Avatar & Persona Badge */}
+                                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="size-11 rounded-2xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                                                                {(student.name || 'M').charAt(0).toUpperCase()}
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
+                                                                    {student.name}
+                                                                </h3>
+                                                                <p className="text-[11px] text-slate-500 truncate">
+                                                                    {student.study_program || 'Mahasiswa'}
+                                                                    {student.semester ? ` • Sem ${student.semester}` : ''}
+                                                                </p>
+                                                                <p className="text-[10px] text-slate-400 truncate">
+                                                                    {student.campus_name || student.campus?.name || 'Politeknik Negeri Indramayu'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+
+                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
+                                                            {persona}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Headline / Explanation */}
+                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
+                                                        {student.headline || cand.explanation || 'Siap berkolaborasi dan berkontribusi untuk tim kompetisi.'}
+                                                    </p>
+
+                                                    {/* Skills Pills */}
+                                                    {skills.length > 0 && (
+                                                        <div className="space-y-1.5 pt-2.5 border-t border-slate-100 mb-3">
+                                                            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
+                                                                Keahlian Terverifikasi
+                                                            </span>
+                                                            <div className="flex flex-wrap gap-1.5">
+                                                                {skills.slice(0, 4).map((sk: any, i: number) => (
+                                                                    <span
+                                                                        key={i}
+                                                                        className="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-700 text-[10px] font-semibold"
+                                                                    >
+                                                                        {typeof sk === 'string' ? sk : sk.name}
+                                                                    </span>
+                                                                ))}
+                                                                {skills.length > 4 && (
+                                                                    <span className="text-[10px] text-slate-400 font-medium py-0.5">
+                                                                        +{skills.length - 4} lainnya
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Bottom Row: Score & Invite Button */}
+                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                            {score}% Kesiapan
+                                                        </span>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openRadarInvite(cand)}
+                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                                                    >
+                                                        <Send className="size-3" />
+                                                        <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     </div>
                 )}
 
@@ -1997,11 +2324,11 @@ export default function CompetitionIndex({
                                                 const team = part.team;
                                                 const status = part.lifecycle_status;
 
-                                                const tasksCount = part.tasks_count ?? team?.tasks_count ?? 0;
-                                                const completedTasksCount = part.completed_tasks_count ?? team?.completed_tasks_count ?? 0;
+                                                const tasksCount = part.tasks_count ?? (team as any)?.tasks_count ?? 0;
+                                                const completedTasksCount = part.completed_tasks_count ?? (team as any)?.completed_tasks_count ?? 0;
                                                 const progressPercent =
                                                     part.progress_percent ??
-                                                    team?.progress_percent ??
+                                                    (team as any)?.progress_percent ??
                                                     (tasksCount > 0
                                                         ? Math.round((completedTasksCount / tasksCount) * 100)
                                                         : (status === 'completed' ? 100 : (status === 'in_progress' ? 50 : (status === 'registered' ? 25 : 0))));
@@ -2473,6 +2800,137 @@ export default function CompetitionIndex({
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* RADAR REKRUTMEN INVITATION MODAL */}
+            {radarInviteModalOpen && selectedRadarCandidate && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in">
+                    <div className="w-full max-w-md p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white">
+                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                            <div className="flex items-center gap-2">
+                                <div className="size-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                                    <Send className="size-4" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900">Undang Rekan ke Tim Lomba</h3>
+                                    <p className="text-[11px] text-slate-400">Perekrutan resmi tim kompetisi</p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setRadarInviteModalOpen(false);
+                                    setSelectedRadarCandidate(null);
+                                }}
+                                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSendRadarInvite} className="mt-4 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">Calon Anggota Terpilih</label>
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
+                                    <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                        {(selectedRadarCandidate.user?.name || selectedRadarCandidate.name || 'M').charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="text-xs font-bold text-slate-900 truncate">
+                                            {selectedRadarCandidate.user?.name || selectedRadarCandidate.name}
+                                        </p>
+                                        <p className="text-[11px] text-slate-500 truncate">
+                                            {selectedRadarCandidate.user?.study_program || 'Mahasiswa'}
+                                            {selectedRadarCandidate.user?.semester ? ` • Sem ${selectedRadarCandidate.user?.semester}` : ''}
+                                            {selectedRadarCandidate.user?.campus_name ? ` • ${selectedRadarCandidate.user?.campus_name}` : ''}
+                                        </p>
+                                    </div>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                        {selectedRadarCandidate.persona || 'Hacker'}
+                                    </span>
+                                </div>
+                            </div>
+
+                            {myLedTeams.length > 1 && (
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-1">Pilih Tim Kompetisi Sasaran</label>
+                                    <select
+                                        value={inviteParticipationId}
+                                        onChange={(e) => setInviteParticipationId(e.target.value)}
+                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+                                    >
+                                        {myLedTeams.map((team: any) => (
+                                            <option key={team.id} value={team.id}>
+                                                {team.team_name || team.name} ({team.competition_name || 'Kompetisi'})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Peran / Posisi yang Ditawarkan <span className="text-blue-600">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={inviteRoleName}
+                                    onChange={(e) => setInviteRoleName(e.target.value)}
+                                    placeholder="Contoh: UI/UX Designer, Frontend Developer, Hustler / Pitcher"
+                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Pesan Undangan (Opsional)
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={inviteMessage}
+                                    onChange={(e) => setInviteMessage(e.target.value)}
+                                    placeholder="Tuliskan alasan mengajak bergabung atau fokus peran yang disiapkan..."
+                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                />
+                            </div>
+
+                            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
+                                <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
+                                <span>
+                                    Mahasiswa akan menerima notifikasi undangan di aplikasi dan email mereka. Keanggotaan resmi berlaku setelah mahasiswa menyetujui undangan ini.
+                                </span>
+                            </div>
+
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setRadarInviteModalOpen(false);
+                                        setSelectedRadarCandidate(null);
+                                    }}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={isInviting}
+                                    className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                    {isInviting ? (
+                                        <>
+                                            <Loader2 className="size-3.5 animate-spin" />
+                                            <span>Mengirim...</span>
+                                        </>
+                                    ) : (
+                                        <span>Kirim Undangan Rekrutmen</span>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

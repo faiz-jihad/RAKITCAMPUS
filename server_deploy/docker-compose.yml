@@ -28,7 +28,10 @@ services:
       - CACHE_STORE=redis
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=redis
-      - BROADCAST_CONNECTION=reverb
+      - BROADCAST_CONNECTION=log
+      - REVERB_APP_ID=rakit-campus
+      - REVERB_APP_KEY=rakit-key
+      - REVERB_APP_SECRET=rakit-secret
     depends_on:
       db:
         condition: service_healthy
@@ -65,7 +68,10 @@ services:
       - CACHE_STORE=redis
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=redis
-      - BROADCAST_CONNECTION=reverb
+      - BROADCAST_CONNECTION=log
+      - REVERB_APP_ID=rakit-campus
+      - REVERB_APP_KEY=rakit-key
+      - REVERB_APP_SECRET=rakit-secret
     depends_on:
       db:
         condition: service_healthy

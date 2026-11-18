@@ -140,10 +140,10 @@ class Project extends Model
     public function activeMembersCount(): int
     {
         if ($this->relationLoaded('team') && $this->team && $this->team->relationLoaded('members')) {
-            return $this->team->members->where('status', 'active')->count();
+            return $this->team->members->whereIn('status', ['active', 'completed'])->count();
         }
 
-        return $this->team ? $this->team->members()->where('status', 'active')->count() : 0;
+        return $this->team ? $this->team->members()->whereIn('status', ['active', 'completed'])->count() : 0;
     }
 
     public function hasCapacity(): bool

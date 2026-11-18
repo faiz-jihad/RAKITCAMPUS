@@ -13,6 +13,7 @@ interface LeaderboardRanking {
   rank: number
   value: number
   avatarUrl?: string | null
+  entityType?: "user" | "team" | "project"
 }
 
 // Variants
@@ -91,13 +92,13 @@ const LeaderboardPodium = React.forwardRef<
     },
     ref
   ) => {
-    // Get top 3, reorder for podium display: 2nd, 1st, 3rd
+    // Get top 3, reorder for podium display: 2nd (left), 1st (center), 3rd (right)
     const top3 = rankings.slice(0, 3)
-    const podiumOrder = [
-      top3.find((r) => r.rank === 2),
-      top3.find((r) => r.rank === 1),
-      top3.find((r) => r.rank === 3),
-    ].filter(Boolean) as LeaderboardRanking[]
+    const slot2 = top3[1] ? { ...top3[1], slot: 2 as const } : null
+    const slot1 = top3[0] ? { ...top3[0], slot: 1 as const } : null
+    const slot3 = top3[2] ? { ...top3[2], slot: 3 as const } : null
+
+    const podiumOrder = [slot2, slot1, slot3].filter(Boolean) as (LeaderboardRanking & { slot: 1 | 2 | 3 })[]
 
     if (podiumOrder.length === 0) {
       return null
@@ -130,14 +131,14 @@ const LeaderboardPodium = React.forwardRef<
         {...props}
       >
         {podiumOrder.map((ranking) => {
-          const config = PODIUM_CONFIG[ranking.rank as 1 | 2 | 3]
+          const config = PODIUM_CONFIG[ranking.slot]
           if (!config) return null
 
           const displayName =
             ranking.userName || `User ${ranking.userId.slice(0, 6)}`
           const avatarSrc =
-            ranking.avatarUrl ??
-            `https://i.pravatar.cc/96?u=${encodeURIComponent(ranking.userId)}`
+            ranking.avatarUrl ||
+            `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563EB&color=fff&size=96&bold=true`
           const podiumHeight = {
             sm: config.heightSm,
             default: config.height,
@@ -159,12 +160,20 @@ const LeaderboardPodium = React.forwardRef<
                   <img
                     src={avatarSrc}
                     alt={`${displayName} avatar`}
-                    className={cn("rounded-full object-cover", avatarSize)}
+                    className={cn(
+                      ranking.entityType === "project" ? "rounded-2xl" : "rounded-full",
+                      "object-cover border-2 border-white shadow-xs",
+                      avatarSize
+                    )}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=2563EB&color=fff&size=96&bold=true`;
+                    }}
                   />
                 ) : (
                   <div
                     className={cn(
-                      "flex items-center justify-center rounded-full",
+                      ranking.entityType === "project" ? "rounded-2xl" : "rounded-full",
+                      "flex items-center justify-center",
                       avatarSize,
                       config.bg
                     )}
@@ -177,7 +186,7 @@ const LeaderboardPodium = React.forwardRef<
                 {medalStyle !== "minimal" && (
                   <div
                     className={cn(
-                      "bg-background absolute -right-1 -bottom-1 flex items-center justify-center rounded-full shadow-sm",
+                      "bg-background absolute -right-1 -bottom-1 flex items-center justify-center rounded-full shadow-sm ring-2 ring-white",
                       size === "sm"
                         ? "h-5 w-5"
                         : size === "lg"
@@ -202,7 +211,7 @@ const LeaderboardPodium = React.forwardRef<
               {/* Name */}
               <span
                 className={cn(
-                  "max-w-20 truncate text-center font-medium",
+                  "max-w-[110px] sm:max-w-[130px] truncate text-center font-bold text-slate-900",
                   textSize
                 )}
                 title={displayName}
@@ -214,7 +223,7 @@ const LeaderboardPodium = React.forwardRef<
               {showValue && (
                 <span
                   className={cn(
-                    "text-muted-foreground tabular-nums",
+                    "text-slate-500 font-extrabold tabular-nums",
                     size === "sm" ? "text-xs" : "text-sm"
                   )}
                 >
@@ -226,21 +235,21 @@ const LeaderboardPodium = React.forwardRef<
               <div
                 aria-hidden="true"
                 className={cn(
-                  "mt-2 w-22 rounded-t-lg",
+                  "mt-2 w-24 sm:w-28 rounded-t-lg transition",
                   size === "sm" && "w-20",
-                  size === "lg" && "w-24",
+                  size === "lg" && "w-32",
                   podiumHeight,
                   config.bg,
-                  medalStyle === "modern" && "rounded-t-xl"
+                  medalStyle === "modern" && "rounded-t-2xl shadow-xs"
                 )}
               >
                 <div
                   className={cn(
-                    "flex h-8 items-center justify-center font-bold",
+                    "flex h-8 items-center justify-center font-black font-mono",
                     config.color
                   )}
                 >
-                  {ranking.rank}
+                  {ranking.rank ?? ranking.slot}
                 </div>
               </div>
             </div>

@@ -67,6 +67,12 @@ interface Props {
         search?: string;
         category?: string;
         status?: string;
+        scope?: 'all' | 'independent' | 'academic';
+    };
+    counts?: {
+        all: number;
+        independent: number;
+        academic: number;
     };
     categories: string[];
     statuses: string[];
@@ -83,6 +89,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function ProjectIndex({
     projects,
     filters,
+    counts,
     categories = [],
     statuses = [],
     userHasActiveProject = false,
@@ -90,6 +97,7 @@ export default function ProjectIndex({
     isGuest = false,
 }: Props) {
     const { flash, errors: pageErrors } = usePage().props as any;
+    const [scope, setScope] = useState<'all' | 'independent' | 'academic'>(filters.scope || 'all');
     const [search, setSearch] = useState(filters.search || '');
     const [category, setCategory] = useState(filters.category || '');
     const [status, setStatus] = useState(filters.status || '');
@@ -126,15 +134,55 @@ export default function ProjectIndex({
         );
     };
 
+    const handleScopeChange = (newScope: 'all' | 'independent' | 'academic') => {
+        setScope(newScope);
+        router.get(
+            '/projects',
+            {
+                scope: newScope !== 'all' ? newScope : undefined,
+                search: search || undefined,
+                category: category || undefined,
+                status: status || undefined,
+            },
+            { preserveState: true }
+        );
+    };
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get('/projects', { search, category, status }, { preserveState: true });
+        router.get(
+            '/projects',
+            {
+                scope: scope !== 'all' ? scope : undefined,
+                search: search || undefined,
+                category: category || undefined,
+                status: status || undefined,
+            },
+            { preserveState: true }
+        );
     };
 
     const handleFilterChange = (cat: string, stat: string) => {
         setCategory(cat);
         setStatus(stat);
-        router.get('/projects', { search, category: cat, status: stat }, { preserveState: true });
+        router.get(
+            '/projects',
+            {
+                scope: scope !== 'all' ? scope : undefined,
+                search: search || undefined,
+                category: cat || undefined,
+                status: stat || undefined,
+            },
+            { preserveState: true }
+        );
+    };
+
+    const handleReset = () => {
+        setSearch('');
+        setCategory('');
+        setStatus('');
+        setScope('all');
+        router.get('/projects');
     };
 
     const getStatusBadge = (stat: string) => {
@@ -199,6 +247,83 @@ export default function ProjectIndex({
                         </div>
                     )}
 
+                    {/* Segmented Filter Tabs: Semua Proyek | Proyek Mandiri & Terbuka | Kelas Perkuliahan */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="inline-flex p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shadow-2xs self-start overflow-x-auto max-w-full">
+                            <button
+                                type="button"
+                                onClick={() => handleScopeChange('all')}
+                                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                                    scope === 'all'
+                                        ? 'bg-white text-blue-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Layers className="size-3.5" />
+                                <span>Semua Proyek</span>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                    scope === 'all' ? 'bg-blue-50 text-blue-700' : 'bg-slate-200/80 text-slate-600'
+                                }`}>
+                                    {counts?.all ?? projects.total}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleScopeChange('independent')}
+                                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                                    scope === 'independent'
+                                        ? 'bg-white text-blue-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Compass className="size-3.5 text-blue-600" />
+                                <span>Proyek Mandiri & Terbuka</span>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                    scope === 'independent' ? 'bg-blue-50 text-blue-700' : 'bg-slate-200/80 text-slate-600'
+                                }`}>
+                                    {counts?.independent ?? 0}
+                                </span>
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={() => handleScopeChange('academic')}
+                                className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                                    scope === 'academic'
+                                        ? 'bg-white text-blue-700 shadow-xs'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <GraduationCap className="size-3.5 text-blue-600" />
+                                <span>Kelas Perkuliahan</span>
+                                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                    scope === 'academic' ? 'bg-blue-50 text-blue-700' : 'bg-slate-200/80 text-slate-600'
+                                }`}>
+                                    {counts?.academic ?? 0}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Contextual Banner for Scope */}
+                    {scope === 'independent' && (
+                        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-900">
+                            <Compass className="size-4 text-blue-600 shrink-0" />
+                            <p className="leading-relaxed">
+                                Menampilkan <strong>Proyek Mandiri & Terbuka</strong>. Siapa saja dapat melamar posisi rekrutmen tanpa batasan kelas perkuliahan.
+                            </p>
+                        </div>
+                    )}
+                    {scope === 'academic' && (
+                        <div className="flex items-center gap-2.5 px-4 py-2.5 bg-blue-50/70 border border-blue-200/80 rounded-xl text-xs text-blue-900">
+                            <GraduationCap className="size-4 text-blue-600 shrink-0" />
+                            <p className="leading-relaxed">
+                                Menampilkan <strong>Proyek Kelas Perkuliahan (Academic Project-Based Learning)</strong>. Rekrutmen tim dan keanggotaan terikat secara ketat pada mahasiswa yang terdaftar di kelas bersangkutan.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Filter and Search Bar */}
                     <div className="bg-white rounded-xl border border-slate-200/80 p-3 sm:p-3.5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
                         <form onSubmit={handleSearch} className="relative w-full md:w-80">
@@ -239,14 +364,9 @@ export default function ProjectIndex({
                                 ))}
                             </select>
 
-                            {(category || status || search) && (
+                            {(category || status || search || scope !== 'all') && (
                                 <button
-                                    onClick={() => {
-                                        setSearch('');
-                                        setCategory('');
-                                        setStatus('');
-                                        router.get('/projects');
-                                    }}
+                                    onClick={handleReset}
                                     className="px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
                                 >
                                     Reset
@@ -314,16 +434,18 @@ export default function ProjectIndex({
                                                         </span>
                                                         {proj.academic_class ? (
                                                             <>
-                                                                <span className="text-blue-300 text-xs shrink-0">•</span>
-                                                                <span className="text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
-                                                                    {proj.academic_class.code || proj.academic_class.name}
+                                                                <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
+                                                                    <GraduationCap className="size-3 text-blue-200 shrink-0" />
+                                                                    <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
                                                                 </span>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <span className="text-blue-300 text-xs shrink-0">•</span>
-                                                                <span className="text-[11px] font-semibold text-blue-100 truncate">
-                                                                    Mandiri
+                                                                <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
+                                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-100 truncate">
+                                                                    <Compass className="size-3 text-blue-200 shrink-0" />
+                                                                    <span>Mandiri</span>
                                                                 </span>
                                                             </>
                                                         )}
@@ -499,7 +621,7 @@ export default function ProjectIndex({
                             {Array.from({ length: projects.last_page }).map((_, i) => (
                                 <Link
                                     key={i}
-                                    href={`/projects?page=${i + 1}${category ? `&category=${category}` : ''}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}`}
+                                    href={`/projects?page=${i + 1}${scope && scope !== 'all' ? `&scope=${scope}` : ''}${category ? `&category=${category}` : ''}${status ? `&status=${status}` : ''}${search ? `&search=${search}` : ''}`}
                                     className={`size-9 rounded-xl flex items-center justify-center text-xs font-bold transition ${
                                         projects.current_page === i + 1
                                             ? 'bg-blue-600 text-white shadow-xs'

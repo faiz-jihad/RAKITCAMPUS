@@ -126,7 +126,7 @@ class MatchmakingEngine
         $candidateQuery = User::query()
             ->with([
                 'profile.skills',
-                'teamMemberships' => fn ($q) => $q->where('status', 'active'),
+                'teamMemberships' => fn ($q) => $q->whereIn('status', ['active', 'completed']),
             ])
             ->withCount([
                 'teamMemberships as completed_projects_count' => fn ($q) => $q->where('status', 'completed'),
@@ -149,13 +149,12 @@ class MatchmakingEngine
 
         $candidates = $candidateQuery->get();
 
-        // Batch pre-fetch active project memberships (Zero N+1, scoped per class when applicable)
-        $activeUserIds = \App\Models\TeamMember::where('status', 'active')
+        // Batch pre-fetch active/completed project memberships (Zero N+1, scoped per class when applicable)
+        $activeUserIds = \App\Models\TeamMember::whereIn('status', ['active', 'completed'])
             ->whereIn('user_id', $candidates->pluck('id'))
             ->whereHas('team.project', function ($q) use ($project) {
                 $q->whereNotIn('status', [
                     ProjectStatus::Archived->value,
-                    ProjectStatus::Completed->value,
                 ]);
                 if ($project->academic_class_id !== null) {
                     $q->where('academic_class_id', $project->academic_class_id);

@@ -12,12 +12,14 @@ use App\Http\Controllers\Controller;
 use App\Models\AcademicClass;
 use App\Models\AcademicClassGuidance;
 use App\Models\AcademicClassStudent;
+use App\Models\ActivityLog;
 use App\Models\Campus;
 use App\Models\Project;
 use App\Models\StudentProfile;
 use App\Models\Team;
 use App\Models\TeamMember;
 use App\Models\User;
+use App\Notifications\RakitUnifiedNotification;
 use App\Models\MatchingAllocation;
 use App\Models\MatchingSession;
 use App\Services\MatchingService;
@@ -69,7 +71,7 @@ class AcademicClassWebController extends Controller
             ->where('academic_classes.campus_id', $activeCampusId)
             ->with([
                 'lecturer:id,name,email',
-                'projects.team.members' => fn ($q) => $q->where('status', 'active'),
+                'projects.team.members' => fn ($q) => $q->whereIn('status', ['active', 'completed']),
             ])
             ->withCount(['students', 'projects'])
             ->latest()
@@ -259,7 +261,7 @@ class AcademicClassWebController extends Controller
         foreach ($academicClass->projects as $p) {
             if ($p->team && $p->team->relationLoaded('members')) {
                 foreach ($p->team->members as $tm) {
-                    if (($tm->status ?? 'active') === 'active') {
+                    if (in_array($tm->status ?? 'active', ['active', 'completed'], true)) {
                         $projectByUserId[$tm->user_id] = [
                             'id' => $p->id,
                             'title' => $p->title,
@@ -307,7 +309,7 @@ class AcademicClassWebController extends Controller
         if ($user && !$isLecturer && $isEnrolled) {
             $myClassProject = $academicClass->projects->first(function ($p) use ($user) {
                 return $p->team && $p->team->members->contains(
-                    fn ($tm) => $tm->user_id === $user->id && ($tm->status ?? 'active') === 'active'
+                    fn ($tm) => $tm->user_id === $user->id && in_array($tm->status ?? 'active', ['active', 'completed'], true)
                 );
             });
 
@@ -357,6 +359,46 @@ class AcademicClassWebController extends Controller
             ->with(['allocations.user.profile.skills', 'allocations.project.team', 'allocations.recruitmentRole'])
             ->latest()
             ->first();
+
+        // Preload riwayat chat jika user diarahkan dari klik notifikasi (?open_chat={userId})
+        $openChatUserId = $request->query('open_chat');
+        $initialChatMessages = [];
+        $initialOpenChatUserId = null;
+        if ($openChatUserId && is_numeric($openChatUserId)) {
+            $initialOpenChatUserId = (int) $openChatUserId;
+            if (\Illuminate\Support\Facades\Schema::hasTable('class_messages')) {
+                $initialChatMessages = \App\Models\ClassMessage::where('academic_class_id', $academicClass->id)
+                    ->where(function ($q) use ($user, $initialOpenChatUserId) {
+                        $q->where(function ($sub) use ($user, $initialOpenChatUserId) {
+                            $sub->where('sender_id', $user->id)->where('recipient_id', $initialOpenChatUserId);
+                        })->orWhere(function ($sub) use ($user, $initialOpenChatUserId) {
+                            $sub->where('sender_id', $initialOpenChatUserId)->where('recipient_id', $user->id);
+                        });
+                    })
+                    ->with(['sender:id,name,avatar', 'recipient:id,name'])
+                    ->orderBy('id', 'asc')
+                    ->get()
+                    ->map(function ($m) use ($user) {
+                        return [
+                            'id' => $m->id,
+                            'sender' => $m->sender_id === $user->id ? 'me' : 'student',
+                            'sender_name' => $m->sender?->name ?? 'Pengguna',
+                            'sender_id' => $m->sender_id,
+                            'text' => $m->message,
+                            'time' => $m->created_at ? $m->created_at->timezone('Asia/Jakarta')->format('H:i') : '',
+                            'read_at' => $m->read_at?->format('H:i'),
+                        ];
+                    })
+                    ->all();
+
+                // Tandai sudah dibaca secara otomatis
+                \App\Models\ClassMessage::where('academic_class_id', $academicClass->id)
+                    ->where('sender_id', $initialOpenChatUserId)
+                    ->where('recipient_id', $user->id)
+                    ->whereNull('read_at')
+                    ->update(['read_at' => now()]);
+            }
+        }
 
         return Inertia::render('classes/show', [
             'academicClass' => [
@@ -419,12 +461,12 @@ class AcademicClassWebController extends Controller
                 'status' => $p->status?->value ?? 'recruiting',
                 'progress' => $p->progress ?? 0,
                 'leader' => $p->leader,
-                'members_count' => $p->team?->members?->count() ?? 1,
-                'members' => $p->team?->members?->map(fn ($m) => [
+                'members_count' => $p->team?->members?->whereIn('status', ['active', 'completed'])->count() ?? ($p->team?->members?->count() ?? 1),
+                'members' => $p->team?->members?->filter(fn ($m) => in_array($m->status ?? 'active', ['active', 'completed'], true))->map(fn ($m) => [
                     'user_id' => $m->user_id,
                     'name' => $m->user?->name ?? 'Anggota',
                     'role_name' => $m->role_name ?? 'Member',
-                ])->all() ?? [],
+                ])->values()->all() ?? [],
                 'lecturer_notes' => $p->lecturer_notes,
                 'lecturer_evaluation' => $p->lecturer_evaluation,
             ]),
@@ -445,6 +487,8 @@ class AcademicClassWebController extends Controller
             ],
             'isLecturer' => $isLecturer,
             'isEnrolled' => $isEnrolled,
+            'initialChatMessages' => $initialChatMessages,
+            'initialOpenChatUserId' => $initialOpenChatUserId,
         ]);
     }
 
@@ -603,11 +647,28 @@ class AcademicClassWebController extends Controller
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'content' => ['required', 'string'],
-            'type' => ['required', 'string', 'in:announcement,guidance,milestone_feedback'],
+            'type' => ['required', 'string', 'in:feedback,revision,competition,evaluation,announcement,guidance,milestone_feedback'],
             'project_id' => ['nullable', 'integer', 'exists:projects,id'],
         ]);
 
-        AcademicClassGuidance::create([
+        $project = null;
+        if (!empty($validated['project_id'])) {
+            $project = Project::with(['team.members.user', 'leader'])
+                ->where('id', $validated['project_id'])
+                ->where('academic_class_id', $academicClass->id)
+                ->first();
+
+            if (! $project) {
+                return back()->withErrors(['project_id' => 'Proyek tersebut bukan bagian dari kelas ini.']);
+            }
+
+            $project->update([
+                'lecturer_notes' => $validated['content'],
+                'lecturer_evaluation' => 'Disetujui Dosen',
+            ]);
+        }
+
+        $guidance = AcademicClassGuidance::create([
             'academic_class_id' => $academicClass->id,
             'lecturer_id' => $user->id,
             'project_id' => $validated['project_id'] ?? null,
@@ -616,20 +677,41 @@ class AcademicClassWebController extends Controller
             'type' => $validated['type'],
         ]);
 
-        // If review for specific project, also update project note
-        if (!empty($validated['project_id'])) {
-            $projectInClass = Project::where('id', $validated['project_id'])
-                ->where('academic_class_id', $academicClass->id)
-                ->exists();
+        // Send activity log & notifications to team members
+        if ($project && $project->team) {
+            ActivityLog::log(
+                $project->campus_id,
+                $project->team->id,
+                $user->id,
+                'guidance_added',
+                $guidance,
+                [
+                    'title' => $validated['title'],
+                    'type' => $validated['type'],
+                    'class_name' => $academicClass->name,
+                ]
+            );
 
-            if (! $projectInClass) {
-                return back()->withErrors(['project_id' => 'Proyek tersebut bukan bagian dari kelas ini.']);
+            foreach ($project->team->members as $member) {
+                if ($member->user && $member->user_id !== $user->id) {
+                    try {
+                        $member->user->notifyNow(new RakitUnifiedNotification(
+                            notificationType: 'guidance_received',
+                            category: 'project_hub',
+                            title: "Catatan Bimbingan: {$validated['title']}",
+                            message: "Dosen {$user->name} memberikan arahan bimbingan baru untuk proyek {$project->title}.",
+                            priority: 'high',
+                            actionUrl: "/projects/{$project->slug}",
+                            actionText: 'Lihat Arahan',
+                            entityType: 'Project',
+                            entityId: $project->id,
+                            channels: ['database', 'broadcast'],
+                        ));
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::warning('Gagal kirim notifikasi bimbingan: ' . $e->getMessage());
+                    }
+                }
             }
-
-            Project::where('id', $validated['project_id'])->update([
-                'lecturer_notes' => $validated['content'],
-                'lecturer_evaluation' => 'Disetujui Dosen',
-            ]);
         }
 
         return back()->with('success', 'Catatan bimbingan/pengumuman berhasil diterbitkan.');
@@ -964,8 +1046,8 @@ class AcademicClassWebController extends Controller
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         }
 
-        // Must be participant or lecturer of this class
-        $isLecturer = $user->can('manage', $academicClass) || $user->isCampusAdminOf($academicClass->campus_id);
+        // Must be lecturer, campus admin, enrolled student, or platform admin
+        $isLecturer = $academicClass->lecturer_id === $user->id || $academicClass->isLecturer($user) || $user->can('manage', $academicClass) || $user->isCampusAdminOf($academicClass->campus_id);
         $isStudent = $academicClass->students()->where('users.id', $user->id)->exists();
 
         if (!$isLecturer && !$isStudent && !$user->isPlatformAdmin()) {
@@ -1020,6 +1102,14 @@ class AcademicClassWebController extends Controller
             \Illuminate\Support\Facades\Artisan::call('migrate', ['--force' => true]);
         }
 
+        // Validate sender authorization
+        $isLecturer = $academicClass->lecturer_id === $user->id || $academicClass->isLecturer($user) || $user->can('manage', $academicClass) || $user->isCampusAdminOf($academicClass->campus_id);
+        $isStudent = $academicClass->students()->where('users.id', $user->id)->exists();
+
+        if (!$isLecturer && !$isStudent && !$user->isPlatformAdmin()) {
+            abort(403, 'Akses percakapan ditolak.');
+        }
+
         $validated = $request->validate([
             'message' => ['required', 'string', 'max:2000'],
         ]);
@@ -1038,6 +1128,34 @@ class AcademicClassWebController extends Controller
             broadcast(new \App\Events\NewClassChatMessage($message))->toOthers();
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::info('Broadcasting notice: ' . $e->getMessage());
+        }
+
+        // Kirim notifikasi in-app ke penerima pesan secara instan (masuk ke menu notifikasi)
+        try {
+            $senderName = $user->name;
+            $classTitle = $academicClass->name;
+            $preview = Str::limit(trim($validated['message']), 80);
+            $actionUrl = "/classes/{$academicClass->id}?open_chat={$user->id}";
+
+            $recipient->notifyNow(new RakitUnifiedNotification(
+                notificationType: 'class_chat_message',
+                category: 'class_management',
+                title: "Pesan Baru dari {$senderName}",
+                message: "{$senderName} ({$classTitle}): \"{$preview}\"",
+                priority: 'low',
+                actionUrl: $actionUrl,
+                actionText: 'Buka Chat',
+                entityType: 'AcademicClass',
+                entityId: $academicClass->id,
+                details: [
+                    'Pengirim' => $senderName,
+                    'Kelas' => $classTitle,
+                    'Waktu' => now()->timezone('Asia/Jakarta')->format('H:i'),
+                ],
+                channels: ['database', 'broadcast']
+            ));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gagal membuat notifikasi chat kelas: ' . $e->getMessage());
         }
 
         return response()->json([

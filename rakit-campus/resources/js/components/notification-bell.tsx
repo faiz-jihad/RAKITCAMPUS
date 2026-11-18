@@ -8,6 +8,7 @@ import {
     CheckCheck,
     FolderKanban,
     GraduationCap,
+    MessageSquare,
     Trophy,
     Users,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ interface RecentNotification {
         link?: string;
         category?: string;
         type?: string;
+        notification_type?: string;
         team_name?: string;
         status?: string;
     };
@@ -49,6 +51,38 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
         setUnreadCount(Number(user?.unread_notifications_count || 0));
         setRecentNotifications((user?.recent_notifications || []) as RecentNotification[]);
     }, [user?.unread_notifications_count, user?.recent_notifications]);
+
+    // Instant WebSocket / Laravel Echo Notification Listener
+    useEffect(() => {
+        if (!user?.id || typeof window === 'undefined' || !(window as any).Echo) return;
+
+        const channelName = `App.Models.User.${user.id}`;
+        const channel = (window as any).Echo.private(channelName);
+
+        channel.notification((notification: any) => {
+            setUnreadCount((prev) => prev + 1);
+            setRecentNotifications((prev) => [
+                {
+                    id: notification.id || String(Date.now()),
+                    data: {
+                        title: notification.title,
+                        message: notification.message,
+                        action_url: notification.action_url,
+                        category: notification.category,
+                        priority: notification.priority,
+                        type: notification.notification_type || notification.category,
+                    },
+                    read_at: null,
+                    created_at: notification.created_at || new Date().toISOString(),
+                },
+                ...prev.slice(0, 4),
+            ]);
+        });
+
+        return () => {
+            (window as any).Echo.leave(channelName);
+        };
+    }, [user?.id]);
 
     // Live background polling & window focus sync for production reliability
     useEffect(() => {
@@ -107,7 +141,16 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
     };
 
     const handleOpenNotification = (item: RecentNotification) => {
-        let targetUrl = item.data?.action_url || item.data?.link || '/notifications';
+        const rawUrl = item.data?.action_url || item.data?.link || '/notifications';
+        let targetUrl = rawUrl;
+        try {
+            if (rawUrl.startsWith('http://') || rawUrl.startsWith('https://')) {
+                const parsed = new URL(rawUrl);
+                targetUrl = parsed.pathname + parsed.search + parsed.hash;
+            }
+        } catch {
+            targetUrl = rawUrl;
+        }
 
         // Normalize legacy competition workspace URLs to prevent 404
         if (targetUrl.includes('/competitions/workspace/')) {
@@ -135,17 +178,30 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
         }
     };
 
-    const getCategoryIcon = (category?: string, type?: string) => {
-        if (category === 'project_hub' || type?.includes('project') || type?.includes('application')) {
+    const getCategoryIcon = (category?: string, type?: string, title?: string) => {
+        const notifType = (type || '').toLowerCase();
+        const notifTitle = (title || '').toLowerCase();
+        if (
+            notifType.includes('chat') ||
+            notifType.includes('discussion') ||
+            notifType.includes('message') ||
+            notifType.includes('guidance') ||
+            notifTitle.includes('pesan baru') ||
+            notifTitle.includes('chat') ||
+            notifTitle.includes('diskusi')
+        ) {
+            return <MessageSquare className="size-3.5 text-blue-600" />;
+        }
+        if (category === 'project_hub' || notifType.includes('project') || notifType.includes('application')) {
             return <FolderKanban className="size-3.5 text-blue-600" />;
         }
-        if (category === 'competition_hub' || type?.includes('competition')) {
+        if (category === 'competition_hub' || notifType.includes('competition')) {
             return <Trophy className="size-3.5 text-amber-600" />;
         }
-        if (category === 'class_management' || type?.includes('class')) {
+        if (category === 'class_management' || notifType.includes('class')) {
             return <GraduationCap className="size-3.5 text-emerald-600" />;
         }
-        if (type?.includes('invitation') || type?.includes('team')) {
+        if (notifType.includes('invitation') || notifType.includes('team')) {
             return <Users className="size-3.5 text-blue-600" />;
         }
         return <Bell className="size-3.5 text-slate-500" />;
@@ -225,7 +281,7 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
                                     }`}
                                 >
                                     <div className="size-8 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                                        {getCategoryIcon(item.data?.category, item.data?.type)}
+                                        {getCategoryIcon(item.data?.category, item.data?.notification_type || item.data?.type, item.data?.title)}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">

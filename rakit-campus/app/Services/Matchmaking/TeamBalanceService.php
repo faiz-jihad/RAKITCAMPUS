@@ -44,7 +44,7 @@ class TeamBalanceService
         ]);
 
         $team = $project->team;
-        $members = $team ? $team->members()->where('status', 'active')->with('user.profile.skills')->get() : collect();
+        $members = $team ? $team->members()->whereIn('status', ['active', 'completed'])->with('user.profile.skills')->get() : collect();
         $targetSize = $project->max_team_size ?: ($project->academicClass?->target_team_size ?: ($team?->capacity ?: 4));
         $currentCount = $members->count();
         $vacancies = max(0, $targetSize - $currentCount);
@@ -95,12 +95,14 @@ class TeamBalanceService
                 $roleDistribution[$rLower]['contributors'][] = $userName;
             }
 
-            $primaryArchetype = $this->determinePrimaryArchetype($userSkills);
+            $isLeader = ($member->permission?->value ?? $member->permission) === 'leader' || ($user?->id && $user->id === $team?->leader_id);
+            $primaryArchetype = $this->determinePrimaryArchetype($userSkills, $member->role_name, $isLeader);
 
             $memberContributions[] = [
                 'user_id' => $user?->id ?? 0,
                 'name' => $userName,
-                'role' => $member->role_name ?? 'Member',
+                'role' => $member->role_name ?? ($isLeader ? 'Project Leader' : 'Member'),
+                'is_leader' => $isLeader,
                 'skills' => array_slice($userSkills, 0, 5),
                 'primary_archetype' => $primaryArchetype,
             ];
@@ -115,17 +117,68 @@ class TeamBalanceService
         foreach ($project->skills as $reqSkill) {
             $sLower = strtolower($reqSkill->name);
             $requiredProf = $reqSkill->pivot->min_proficiency ?? 1;
-            $dist = $skillDistribution[$sLower] ?? null;
-            $availableCount = $dist ? $dist['count'] : 0;
-            $availableProf = $dist ? $dist['max_proficiency'] : 0;
 
+            $matchedContributors = [];
+            $maxProf = 0;
+
+            foreach ($members as $member) {
+                $user = $member->user;
+                $userName = $user?->name ?? 'Anggota';
+                $roleLower = strtolower($member->role_name ?? '');
+
+                $hasCompetency = false;
+                $prof = 3; // Default proficiency when role matches
+
+                // Check member role match
+                if ($sLower === 'frontend' && (str_contains($roleLower, 'frontend') || str_contains($roleLower, 'web'))) {
+                    $hasCompetency = true;
+                } elseif ($sLower === 'backend' && (str_contains($roleLower, 'backend') || str_contains($roleLower, 'api'))) {
+                    $hasCompetency = true;
+                } elseif (($sLower === 'ui/ux' || $sLower === 'ui_ux') && (str_contains($roleLower, 'ui') || str_contains($roleLower, 'ux') || str_contains($roleLower, 'design'))) {
+                    $hasCompetency = true;
+                } elseif (str_contains($roleLower, $sLower)) {
+                    $hasCompetency = true;
+                }
+
+                // Check member skills
+                if ($user && $user->profile) {
+                    foreach ($user->profile->skills as $s) {
+                        $userSkillLower = strtolower($s->name);
+                        $sProf = $s->pivot->proficiency ?? 1;
+
+                        if ($sLower === 'frontend' && (str_contains($userSkillLower, 'react') || str_contains($userSkillLower, 'vue') || str_contains($userSkillLower, 'frontend') || str_contains($userSkillLower, 'html') || str_contains($userSkillLower, 'css') || str_contains($userSkillLower, 'tailwind') || str_contains($userSkillLower, 'typescript'))) {
+                            $hasCompetency = true;
+                            $prof = max($prof, $sProf);
+                        } elseif ($sLower === 'backend' && (str_contains($userSkillLower, 'laravel') || str_contains($userSkillLower, 'php') || str_contains($userSkillLower, 'backend') || str_contains($userSkillLower, 'sql') || str_contains($userSkillLower, 'node') || str_contains($userSkillLower, 'api'))) {
+                            $hasCompetency = true;
+                            $prof = max($prof, $sProf);
+                        } elseif (($sLower === 'ui/ux' || $sLower === 'ui_ux') && (str_contains($userSkillLower, 'figma') || str_contains($userSkillLower, 'ui') || str_contains($userSkillLower, 'ux') || str_contains($userSkillLower, 'design') || str_contains($userSkillLower, 'wirefram'))) {
+                            $hasCompetency = true;
+                            $prof = max($prof, $sProf);
+                        } elseif (str_contains($userSkillLower, $sLower) || str_contains($sLower, $userSkillLower)) {
+                            $hasCompetency = true;
+                            $prof = max($prof, $sProf);
+                        }
+                    }
+                }
+
+                if ($hasCompetency) {
+                    $entry = "{$userName} (Lvl {$prof})";
+                    if (! in_array($entry, $matchedContributors)) {
+                        $matchedContributors[] = $entry;
+                        $maxProf = max($maxProf, $prof);
+                    }
+                }
+            }
+
+            $availableCount = count($matchedContributors);
             if ($availableCount === 0) {
                 $status = 'missing';
                 $missingCompetencies[] = $reqSkill->name;
-            } elseif ($availableCount >= 3) {
+            } elseif ($availableCount >= 4) {
                 $status = 'overrepresented';
                 $overrepresentedCompetencies[] = $reqSkill->name;
-            } elseif ($availableProf >= $requiredProf) {
+            } elseif ($maxProf >= $requiredProf) {
                 $status = 'complete';
             } else {
                 $status = 'partial';
@@ -135,9 +188,9 @@ class TeamBalanceService
                 'name' => $reqSkill->name,
                 'type' => 'Keahlian Teknis',
                 'required' => $requiredProf,
-                'available' => $availableProf,
+                'available' => $maxProf,
                 'status' => $status,
-                'contributors' => $dist ? $dist['contributors'] : [],
+                'contributors' => $matchedContributors,
             ];
         }
 
@@ -279,23 +332,77 @@ class TeamBalanceService
         ];
     }
 
-    protected function determinePrimaryArchetype(array $skills): string
+    protected function determinePrimaryArchetype(array $skills, ?string $roleName = null, bool $isLeader = false): string
     {
-        $joined = strtolower(implode(' ', $skills));
-        if (str_contains($joined, 'laravel') || str_contains($joined, 'backend') || str_contains($joined, 'api')) {
-            return 'Backend Specialist';
+        $roleLower = strtolower($roleName ?? '');
+
+        // 1. If assigned role explicitly indicates specialization or leadership, prioritize that
+        if (str_contains($roleLower, 'ui') || str_contains($roleLower, 'ux') || str_contains($roleLower, 'design')) {
+            return 'UI/UX Specialist';
         }
-        if (str_contains($joined, 'react') || str_contains($joined, 'frontend') || str_contains($joined, 'vue')) {
+        if (str_contains($roleLower, 'frontend') || str_contains($roleLower, 'front-end')) {
             return 'Frontend Specialist';
         }
-        if (str_contains($joined, 'figma') || str_contains($joined, 'design') || str_contains($joined, 'ui')) {
-            return 'UI/UX Designer';
+        if (str_contains($roleLower, 'backend') || str_contains($roleLower, 'back-end')) {
+            return 'Backend Specialist';
         }
-        if (str_contains($joined, 'flutter') || str_contains($joined, 'android') || str_contains($joined, 'mobile')) {
+        if (str_contains($roleLower, 'mobile') || str_contains($roleLower, 'flutter') || str_contains($roleLower, 'android') || str_contains($roleLower, 'ios')) {
             return 'Mobile Specialist';
         }
-        if (str_contains($joined, 'database') || str_contains($joined, 'qa') || str_contains($joined, 'test')) {
+        if (str_contains($roleLower, 'qa') || str_contains($roleLower, 'test') || str_contains($roleLower, 'quality')) {
             return 'Data & QA Engineer';
+        }
+        if (str_contains($roleLower, 'data') || str_contains($roleLower, 'ai') || str_contains($roleLower, 'machine learning')) {
+            return 'Data & AI Specialist';
+        }
+        if (str_contains($roleLower, 'leader') || str_contains($roleLower, 'lead') || str_contains($roleLower, 'ketua') || $isLeader) {
+            return 'Project Leader';
+        }
+
+        // 2. Otherwise determine by member skills scoring
+        $scores = [
+            'ui_ux' => 0,
+            'frontend' => 0,
+            'backend' => 0,
+            'mobile' => 0,
+            'database_qa' => 0,
+        ];
+
+        foreach ($skills as $s) {
+            $sLower = strtolower($s);
+            if (str_contains($sLower, 'figma') || str_contains($sLower, 'ui') || str_contains($sLower, 'ux') || str_contains($sLower, 'design') || str_contains($sLower, 'wirefram')) {
+                $scores['ui_ux'] += 3;
+            }
+            if (str_contains($sLower, 'react') || str_contains($sLower, 'vue') || str_contains($sLower, 'frontend') || str_contains($sLower, 'html') || str_contains($sLower, 'css') || str_contains($sLower, 'tailwind') || str_contains($sLower, 'typescript') || str_contains($sLower, 'javascript')) {
+                $scores['frontend'] += 3;
+            }
+            if (str_contains($sLower, 'laravel') || str_contains($sLower, 'php') || str_contains($sLower, 'backend') || str_contains($sLower, 'node') || str_contains($sLower, 'sql') || str_contains($sLower, 'express') || str_contains($sLower, 'django')) {
+                $scores['backend'] += 3;
+            }
+            if (str_contains($sLower, 'flutter') || str_contains($sLower, 'dart') || str_contains($sLower, 'android') || str_contains($sLower, 'mobile') || str_contains($sLower, 'ios') || str_contains($sLower, 'react native')) {
+                $scores['mobile'] += 3;
+            }
+            if (str_contains($sLower, 'database') || str_contains($sLower, 'qa') || str_contains($sLower, 'test') || str_contains($sLower, 'docker')) {
+                $scores['database_qa'] += 2;
+            }
+            if (str_contains($sLower, 'api')) {
+                $scores['backend'] += 1;
+            }
+        }
+
+        arsort($scores);
+        $topCategory = array_key_first($scores);
+        $topScore = $scores[$topCategory] ?? 0;
+
+        if ($topScore > 0) {
+            return match ($topCategory) {
+                'ui_ux' => 'UI/UX Specialist',
+                'frontend' => 'Frontend Specialist',
+                'backend' => 'Backend Specialist',
+                'mobile' => 'Mobile Specialist',
+                'database_qa' => 'Data & QA Engineer',
+                default => 'Fullstack Collaborator',
+            };
         }
 
         return 'Fullstack Collaborator';

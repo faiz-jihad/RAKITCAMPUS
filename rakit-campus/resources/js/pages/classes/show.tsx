@@ -9,6 +9,7 @@ import {
     Award,
     BookOpen,
     Check,
+    CheckCheck,
     CheckCircle2,
     Clock,
     Copy,
@@ -17,6 +18,7 @@ import {
     FolderKanban,
     GraduationCap,
     HelpCircle,
+    Info,
     Layers,
     Lock,
     MessageSquare,
@@ -38,7 +40,7 @@ import {
     Zap,
     X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Student {
     id: number;
@@ -187,6 +189,8 @@ interface Props {
             status: string;
         }>;
     } | null;
+    initialChatMessages?: any[];
+    initialOpenChatUserId?: number | null;
 }
 
 export default function ClassShow({
@@ -202,6 +206,8 @@ export default function ClassShow({
     isEnrolled = false,
     fairnessMetrics,
     latestSimulation = null,
+    initialChatMessages = [],
+    initialOpenChatUserId = null,
 }: Props) {
     const { flash, auth } = usePage().props as any;
     const currentUserId = auth?.user?.id;
@@ -229,34 +235,165 @@ export default function ClassShow({
     const [adjustReason, setAdjustReason] = useState<string>('');
     const [submittingAdjust, setSubmittingAdjust] = useState<boolean>(false);
 
-    // Slide-over Drawer & Messenger States (Facebook Messenger style)
-    const [selectedStudentForDrawer, setSelectedStudentForDrawer] = useState<any | null>(null);
+    // Slide-over Drawer & Messenger States (Facebook & WhatsApp Messenger style)
+    const [selectedStudentForDrawer, setSelectedStudentForDrawer] = useState<any | null>(() => {
+        if (initialOpenChatUserId) {
+            if (academicClass.lecturer && academicClass.lecturer.id === initialOpenChatUserId) {
+                return {
+                    id: academicClass.lecturer.id,
+                    name: academicClass.lecturer.name,
+                    email: academicClass.lecturer.email,
+                    student_number: 'Dosen Pengampu',
+                    study_program: academicClass.name,
+                    semester: 0,
+                    has_team: true,
+                    skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
+                };
+            }
+            return students.find((s) => s.id === initialOpenChatUserId) || null;
+        }
+        return null;
+    });
     const [drawerTab, setDrawerTab] = useState<'chat' | 'profile'>('chat');
-    const [chatMessages, setChatMessages] = useState<Record<number, Array<{ id: number; sender: 'me' | 'student'; text: string; time: string; sender_name?: string }>>>({});
+    interface ChatMessageItem {
+        id: number;
+        sender: 'me' | 'student';
+        text: string;
+        time: string;
+        sender_name?: string;
+        isPending?: boolean;
+        isError?: boolean;
+    }
+    const [chatMessages, setChatMessages] = useState<Record<number, ChatMessageItem[]>>(() => {
+        if (initialOpenChatUserId && initialChatMessages && initialChatMessages.length > 0) {
+            return { [initialOpenChatUserId]: initialChatMessages };
+        }
+        return {};
+    });
+    const [isFetchingChat, setIsFetchingChat] = useState<Record<number, boolean>>({});
     const [inputChatMessage, setInputChatMessage] = useState('');
     const [isSendingMessage, setIsSendingMessage] = useState(false);
+    const chatMessagesEndRef = useRef<HTMLDivElement>(null);
+    const chatInputRef = useRef<HTMLInputElement>(null);
 
-    // Ambil riwayat percakapan dari backend database
-    const fetchDirectMessages = async (otherUserId: number) => {
+    const handleOpenLecturerChat = () => {
+        if (!academicClass.lecturer) return;
+        setSelectedStudentForDrawer({
+            id: academicClass.lecturer.id,
+            name: academicClass.lecturer.name,
+            email: academicClass.lecturer.email,
+            student_number: 'Dosen Pengampu',
+            study_program: academicClass.name,
+            semester: 0,
+            has_team: true,
+            skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
+        });
+        setDrawerTab('chat');
+    };
+
+    const scrollToChatBottom = (smooth = true) => {
+        chatMessagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
+    };
+
+    // Auto-scroll saat ganti tab obrolan atau ganti mahasiswa
+    useEffect(() => {
+        if (selectedStudentForDrawer && drawerTab === 'chat') {
+            const timer = setTimeout(() => {
+                scrollToChatBottom(false);
+            }, 60);
+            return () => clearTimeout(timer);
+        }
+    }, [selectedStudentForDrawer?.id, drawerTab]);
+
+    // Auto-scroll saat pesan baru bertambah
+    useEffect(() => {
+        if (selectedStudentForDrawer && drawerTab === 'chat') {
+            scrollToChatBottom(true);
+        }
+    }, [chatMessages[selectedStudentForDrawer?.id]?.length]);
+
+    // Auto-buka drawer chat jika diarahkan dari klik notifikasi (?open_chat={userId})
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const searchParams = new URLSearchParams(window.location.search);
+        const openChatUserId = searchParams.get('open_chat');
+        if (!openChatUserId) return;
+
+        const targetId = parseInt(openChatUserId, 10);
+        if (academicClass.lecturer && academicClass.lecturer.id === targetId) {
+            setSelectedStudentForDrawer({
+                id: academicClass.lecturer.id,
+                name: academicClass.lecturer.name,
+                email: academicClass.lecturer.email,
+                student_number: 'Dosen Pengampu',
+                study_program: academicClass.name,
+                semester: 0,
+                has_team: true,
+                skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
+            });
+            setDrawerTab('chat');
+        } else {
+            const foundStudent = students.find((s) => s.id === targetId);
+            if (foundStudent) {
+                setSelectedStudentForDrawer(foundStudent);
+                setDrawerTab('chat');
+            }
+        }
+    }, [academicClass.id, students.length]);
+
+    const getCsrfToken = () => {
+        return (
+            (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ||
+            ((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1]
+                ? decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1])
+                : '')
+        );
+    };
+
+    // Ambil riwayat percakapan dari backend database secara mulus
+    const fetchDirectMessages = async (otherUserId: number, isInitial = false) => {
+        if (isInitial && (!chatMessages[otherUserId] || chatMessages[otherUserId].length === 0)) {
+            setIsFetchingChat((prev) => ({ ...prev, [otherUserId]: true }));
+        }
         try {
-            const res = await fetch(`/classes/${academicClass.id}/messages/${otherUserId}`);
+            const res = await fetch(`/classes/${academicClass.id}/messages/${otherUserId}`, {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+            });
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === 'success' && Array.isArray(data.messages)) {
-                    setChatMessages((prev) => ({
-                        ...prev,
-                        [otherUserId]: data.messages.map((m: any) => ({
+                    setChatMessages((prev) => {
+                        const existing = prev[otherUserId] || [];
+                        const pending = existing.filter((m) => m.isPending);
+                        const serverMsgs: ChatMessageItem[] = data.messages.map((m: any) => ({
                             id: m.id,
                             sender: m.sender === 'me' ? ('me' as const) : ('student' as const),
                             text: m.text,
                             time: m.time,
                             sender_name: m.sender_name,
-                        })),
-                    }));
+                        }));
+
+                        // Pertahankan pesan pending optimistik yang belum selesai disimpan di server
+                        const stillPending = pending.filter(
+                            (p) => !serverMsgs.some((s) => s.sender === 'me' && s.text === p.text)
+                        );
+
+                        return {
+                            ...prev,
+                            [otherUserId]: [...serverMsgs, ...stillPending],
+                        };
+                    });
                 }
             }
         } catch (err) {
             console.error('Error fetching chat messages:', err);
+        } finally {
+            setIsFetchingChat((prev) => ({ ...prev, [otherUserId]: false }));
         }
     };
 
@@ -265,10 +402,10 @@ export default function ClassShow({
         if (!selectedStudentForDrawer?.id) return;
 
         const otherUserId = selectedStudentForDrawer.id;
-        fetchDirectMessages(otherUserId);
+        fetchDirectMessages(otherUserId, true);
 
         const interval = setInterval(() => {
-            fetchDirectMessages(otherUserId);
+            fetchDirectMessages(otherUserId, false);
         }, 1500);
 
         return () => clearInterval(interval);
@@ -286,18 +423,22 @@ export default function ClassShow({
                 setChatMessages((prev) => {
                     const existing = prev[selectedStudentForDrawer.id] || [];
                     if (existing.some((m) => m.id === data.id)) return prev;
+
+                    const newMsg: ChatMessageItem = {
+                        id: data.id,
+                        sender: data.sender_id === currentUserId ? ('me' as const) : ('student' as const),
+                        text: data.message,
+                        time: data.time || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+                        sender_name: data.sender_name,
+                    };
+
+                    const filtered = existing.filter(
+                        (m) => !(m.isPending && m.sender === 'me' && m.text === data.message)
+                    );
+
                     return {
                         ...prev,
-                        [selectedStudentForDrawer.id]: [
-                            ...existing,
-                            {
-                                id: data.id,
-                                sender: data.sender_id === currentUserId ? ('me' as const) : ('student' as const),
-                                text: data.message,
-                                time: data.time || new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-                                sender_name: data.sender_name,
-                            },
-                        ],
+                        [selectedStudentForDrawer.id]: [...filtered, newMsg],
                     };
                 });
             }
@@ -310,43 +451,44 @@ export default function ClassShow({
 
     const handleSendChatMessage = async (e?: React.FormEvent) => {
         if (e) e.preventDefault();
-        if (!selectedStudentForDrawer || !inputChatMessage.trim()) return;
+        if (!selectedStudentForDrawer || !inputChatMessage.trim() || isSendingMessage) return;
 
         const otherUserId = selectedStudentForDrawer.id;
         const msgText = inputChatMessage.trim();
         const now = new Date();
         const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
 
-        // Update tampilan optimistik langsung agar terasa responsif instan
+        // Update tampilan optimistik langsung agar responsif seketika
         const tempId = Date.now();
+        const optimisticMsg: ChatMessageItem = {
+            id: tempId,
+            sender: 'me',
+            text: msgText,
+            time: timeStr,
+            isPending: true,
+        };
+
         setChatMessages((prev) => ({
             ...prev,
-            [otherUserId]: [
-                ...(prev[otherUserId] || []),
-                {
-                    id: tempId,
-                    sender: 'me' as const,
-                    text: msgText,
-                    time: timeStr,
-                },
-            ],
+            [otherUserId]: [...(prev[otherUserId] || []), optimisticMsg],
         }));
 
         setInputChatMessage('');
         setIsSendingMessage(true);
+        setTimeout(() => scrollToChatBottom(true), 40);
 
         // Simpan ke database backend & broadcast WebSocket
         try {
-            const csrfToken = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content
-                || ((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] ? decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1]) : '');
-
+            const csrfToken = getCsrfToken();
             const res = await fetch(`/classes/${academicClass.id}/messages/${otherUserId}`, {
                 method: 'POST',
+                credentials: 'same-origin',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+                    Accept: 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'X-XSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
                 },
                 body: JSON.stringify({ message: msgText }),
             });
@@ -357,16 +499,35 @@ export default function ClassShow({
                     setChatMessages((prev) => ({
                         ...prev,
                         [otherUserId]: (prev[otherUserId] || []).map((m) =>
-                            m.id === tempId ? { ...m, id: data.data.id, time: data.data.time } : m
+                            m.id === tempId ? { ...m, id: data.data.id, time: data.data.time, isPending: false } : m
                         ),
                     }));
                 }
+            } else {
+                setChatMessages((prev) => ({
+                    ...prev,
+                    [otherUserId]: (prev[otherUserId] || []).map((m) =>
+                        m.id === tempId ? { ...m, isPending: false, isError: true } : m
+                    ),
+                }));
             }
         } catch (err) {
             console.error('Gagal mengirim pesan chat:', err);
+            setChatMessages((prev) => ({
+                ...prev,
+                [otherUserId]: (prev[otherUserId] || []).map((m) =>
+                    m.id === tempId ? { ...m, isPending: false, isError: true } : m
+                ),
+            }));
         } finally {
             setIsSendingMessage(false);
+            chatInputRef.current?.focus();
         }
+    };
+
+    const handleQuickPromptClick = (text: string) => {
+        setInputChatMessage(text);
+        chatInputRef.current?.focus();
     };
 
     // Manual assign: dosen pindahkan mahasiswa ke kelompok tertentu
@@ -589,7 +750,7 @@ export default function ClassShow({
                                     <span className="text-xs font-bold text-slate-800">
                                         {academicClass.study_program}
                                     </span>
-                                    <span className="text-slate-300">•</span>
+                                    <span className="text-slate-300 dark:text-slate-600 font-sans">|</span>
                                     <span className="text-xs text-slate-500 font-medium">
                                         Semester {academicClass.semester} ({academicClass.academic_year})
                                     </span>
@@ -610,6 +771,17 @@ export default function ClassShow({
                                         <GraduationCap className="size-3.5 text-slate-600" />
                                         <span>Dosen Utama: <strong className="text-slate-900 font-bold">{academicClass.lecturer?.name || 'Dosen Pengampu'}</strong></span>
                                     </span>
+                                    {!isLecturer && academicClass.lecturer && (
+                                        <button
+                                            type="button"
+                                            onClick={handleOpenLecturerChat}
+                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-700 font-bold transition shadow-2xs active:scale-95 cursor-pointer"
+                                            title="Kirim pesan langsung ke Dosen Pengampu"
+                                        >
+                                            <MessageSquare className="size-3.5 text-blue-600" />
+                                            <span>Chat Dosen</span>
+                                        </button>
+                                    )}
                                     {academicClass.co_lecturers && academicClass.co_lecturers.length > 0 && (
                                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-800 font-medium">
                                             <Users className="size-3.5 text-blue-600" />
@@ -650,26 +822,13 @@ export default function ClassShow({
                                     </button>
                                 </div>
 
-                                {!isLecturer && isEnrolled && academicClass.lecturer && (
+                                {!isLecturer && academicClass.lecturer && (
                                     <button
                                         type="button"
-                                        onClick={() => {
-                                            if (!academicClass.lecturer) return;
-                                            setSelectedStudentForDrawer({
-                                                id: academicClass.lecturer.id,
-                                                name: academicClass.lecturer.name,
-                                                email: academicClass.lecturer.email,
-                                                student_number: 'Dosen Pengampu',
-                                                study_program: academicClass.name,
-                                                semester: 0,
-                                                has_team: true,
-                                                skills: ['Dosen Pengampu', 'Pembimbing Proyek'],
-                                            });
-                                            setDrawerTab('chat');
-                                        }}
+                                        onClick={handleOpenLecturerChat}
                                         className="w-full inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all shadow-xs hover:shadow active:scale-95 cursor-pointer"
                                     >
-                                        <MessageSquare className="size-3.5" />
+                                        <MessageSquare className="size-4" />
                                         <span>Chat Dosen Pengampu</span>
                                     </button>
                                 )}
@@ -1051,24 +1210,18 @@ export default function ClassShow({
                                                         <span className="text-[11px] text-slate-400">
                                                             Masuk: {st.enrolled_at}
                                                         </span>
-                                                        <div className="flex items-center gap-2">
-                                                            <span className="text-[11px] font-bold text-blue-600 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
-                                                                <span>Detail & Chat</span>
-                                                                <ArrowRight className="size-3" />
-                                                            </span>
-                                                            {isLecturer && (
-                                                                <button
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleRemoveStudent(st.id, st.name);
-                                                                    }}
-                                                                    className="text-slate-400 hover:text-slate-900 transition p-1 cursor-pointer"
-                                                                    title="Keluarkan mahasiswa dari kelas"
-                                                                >
-                                                                    <Trash2 className="size-4" />
-                                                                </button>
-                                                            )}
-                                                        </div>
+                                                        {isLecturer && (
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemoveStudent(st.id, st.name);
+                                                                }}
+                                                                className="text-slate-400 hover:text-rose-600 transition p-1 cursor-pointer"
+                                                                title="Keluarkan mahasiswa dari kelas"
+                                                            >
+                                                                <Trash2 className="size-4" />
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 </div>
                                             ))}
@@ -1829,7 +1982,11 @@ export default function ClassShow({
                                             <div key={st.id} className="p-3.5 rounded-xl border border-slate-200/80 bg-white flex flex-col justify-between gap-2">
                                                 <div>
                                                     <div className="font-bold text-xs text-slate-900">{st.name}</div>
-                                                    <div className="text-[11px] text-slate-400">{st.student_number} • {st.study_program}</div>
+                                                    <div className="text-[11px] text-slate-400 flex items-center">
+                                                        <span>{st.student_number}</span>
+                                                        <span className="text-slate-300 mx-1.5 font-sans">|</span>
+                                                        <span>{st.study_program}</span>
+                                                    </div>
                                                     <div className="flex flex-wrap gap-1 mt-2">
                                                         {st.skills.slice(0, 3).map((s, idx) => (
                                                             <span key={idx} className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md">
@@ -1854,57 +2011,92 @@ export default function ClassShow({
 
             {/* MODAL: MANUAL ADD STUDENT (DOSEN) */}
             {showAddStudentModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="glass-surface bg-white/95 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    Tambah Mahasiswa ke Kelas
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Masukkan Email institusi kampus atau NIM mahasiswa.
-                                </p>
+                <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                        {/* Modal Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <UserPlus className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                        Tambah Mahasiswa ke Kelas
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Masukkan Email institusi kampus atau NIM mahasiswa.
+                                    </p>
+                                </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setShowAddStudentModal(false)}
-                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddStudent} className="flex flex-col gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    NIM atau Email Mahasiswa *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={addStudentData.student_identifier}
-                                    onChange={(e) => setAddStudentData('student_identifier', e.target.value)}
-                                    placeholder="Contoh: 2105001 atau student@polindra.ac.id"
-                                    required
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                />
-                                {addStudentErrors.student_identifier && (
-                                    <p className="text-rose-600 text-xs mt-1">{addStudentErrors.student_identifier}</p>
-                                )}
+                        {/* Modal Body */}
+                        <form onSubmit={handleAddStudent} className="flex flex-col">
+                            <div className="p-6 space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                        NIM atau Email Institusi Mahasiswa <span className="text-rose-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                            <Search className="size-4 text-slate-400" />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={addStudentData.student_identifier}
+                                            onChange={(e) => setAddStudentData('student_identifier', e.target.value)}
+                                            placeholder="Contoh: 2105001 atau student@polindra.ac.id"
+                                            required
+                                            autoFocus
+                                            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs font-medium"
+                                        />
+                                    </div>
+                                    {addStudentErrors.student_identifier && (
+                                        <p className="text-rose-600 text-[11px] mt-1.5 font-medium flex items-center gap-1">
+                                            <AlertCircle className="size-3 shrink-0" />
+                                            <span>{addStudentErrors.student_identifier}</span>
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="p-3.5 rounded-xl bg-blue-50/70 border border-blue-100 text-slate-600 text-xs flex items-start gap-2.5 leading-relaxed">
+                                    <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
+                                    <span>Mahasiswa yang didaftarkan akan otomatis terhubung ke kelas <strong>{academicClass.name}</strong> dan siap berpartisipasi dalam pembentukan tim proyek.</span>
+                                </div>
                             </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            {/* Modal Footer */}
+                            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2.5">
                                 <button
                                     type="button"
                                     onClick={() => setShowAddStudentModal(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={addStudentProcessing}
-                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-xs"
+                                    disabled={addStudentProcessing || !addStudentData.student_identifier.trim()}
+                                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 cursor-pointer"
                                 >
-                                    {addStudentProcessing ? 'Menambahkan...' : 'Daftarkan Mahasiswa'}
+                                    {addStudentProcessing ? (
+                                        <>
+                                            <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Mendaftarkan...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus className="size-4" />
+                                            <span>Daftarkan Mahasiswa</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -1914,105 +2106,136 @@ export default function ClassShow({
 
             {/* MODAL: ADD GUIDANCE / FEEDBACK (DOSEN) */}
             {showGuidanceModal && (
-                <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="glass-surface bg-white/95 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-white flex flex-col gap-5">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    Terbitkan Catatan Bimbingan / Pengumuman
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Catatan ini akan langsung terlihat oleh mahasiswa dan tim proyek terkait.
-                                </p>
+                <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-150">
+                        {/* Modal Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <BookOpen className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                        Terbitkan Catatan Bimbingan / Pengumuman
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Catatan ini akan langsung terlihat oleh mahasiswa dan tim proyek terkait.
+                                    </p>
+                                </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setShowGuidanceModal(false)}
-                                className="size-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+                                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                             >
                                 <X className="size-4" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleAddGuidance} className="flex flex-col gap-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Judul Bimbingan / Pengumuman *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={guidanceData.title}
-                                    onChange={(e) => setGuidanceData('title', e.target.value)}
-                                    placeholder="Contoh: Evaluasi Milestone 1 & Review Arsitektur Basis Data"
-                                    required
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                />
-                                {guidanceErrors.title && <p className="text-rose-600 text-xs mt-1">{guidanceErrors.title}</p>}
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
+                        {/* Modal Body */}
+                        <form onSubmit={handleAddGuidance} className="flex flex-col">
+                            <div className="p-6 space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                                        Jenis Catatan
+                                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                        Judul Bimbingan / Pengumuman <span className="text-rose-500">*</span>
                                     </label>
-                                    <select
-                                        value={guidanceData.type}
-                                        onChange={(e) => setGuidanceData('type', e.target.value)}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800"
-                                    >
-                                        <option value="guidance">Bimbingan Proyek</option>
-                                        <option value="announcement">Pengumuman Kelas</option>
-                                        <option value="milestone_feedback">Review Milestone</option>
-                                    </select>
+                                    <input
+                                        type="text"
+                                        value={guidanceData.title}
+                                        onChange={(e) => setGuidanceData('title', e.target.value)}
+                                        placeholder="Contoh: Evaluasi Milestone 1 & Review Arsitektur Basis Data"
+                                        required
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs font-medium"
+                                    />
+                                    {guidanceErrors.title && (
+                                        <p className="text-rose-600 text-[11px] mt-1.5 font-medium flex items-center gap-1">
+                                            <AlertCircle className="size-3 shrink-0" />
+                                            <span>{guidanceErrors.title}</span>
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                            Jenis Catatan
+                                        </label>
+                                        <select
+                                            value={guidanceData.type}
+                                            onChange={(e) => setGuidanceData('type', e.target.value)}
+                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs"
+                                        >
+                                            <option value="guidance">Bimbingan Proyek</option>
+                                            <option value="announcement">Pengumuman Kelas</option>
+                                            <option value="milestone_feedback">Review Milestone</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                            Target Proyek (Opsional)
+                                        </label>
+                                        <select
+                                            value={guidanceData.project_id || ''}
+                                            onChange={(e) => setGuidanceData('project_id', e.target.value ? parseInt(e.target.value, 10) : '')}
+                                            className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs"
+                                        >
+                                            <option value="">Seluruh Kelas</option>
+                                            {projects.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.title}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-1">
-                                        Target Proyek Tertentu (Opsional)
+                                    <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                        Isi Arahan & Catatan Bimbingan Dosen <span className="text-rose-500">*</span>
                                     </label>
-                                    <select
-                                        value={guidanceData.project_id || ''}
-                                        onChange={(e) => setGuidanceData('project_id', e.target.value ? parseInt(e.target.value, 10) : '')}
-                                        className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800"
-                                    >
-                                        <option value="">Seluruh Kelas</option>
-                                        {projects.map((p) => (
-                                            <option key={p.id} value={p.id}>
-                                                {p.title}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <textarea
+                                        value={guidanceData.content}
+                                        onChange={(e) => setGuidanceData('content', e.target.value)}
+                                        rows={4}
+                                        placeholder="Tuliskan arahan teknis, perbaikan diagram alur data, atau tenggat waktu revisi..."
+                                        required
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-900 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs"
+                                    />
+                                    {guidanceErrors.content && (
+                                        <p className="text-rose-600 text-[11px] mt-1.5 font-medium flex items-center gap-1">
+                                            <AlertCircle className="size-3 shrink-0" />
+                                            <span>{guidanceErrors.content}</span>
+                                        </p>
+                                    )}
                                 </div>
                             </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Isi Arahan & Catatan Bimbingan Dosen *
-                                </label>
-                                <textarea
-                                    value={guidanceData.content}
-                                    onChange={(e) => setGuidanceData('content', e.target.value)}
-                                    rows={4}
-                                    placeholder="Tuliskan arahan teknis, perbaikan diagram alur data, atau tenggat waktu revisi..."
-                                    required
-                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                />
-                                {guidanceErrors.content && <p className="text-rose-600 text-xs mt-1">{guidanceErrors.content}</p>}
-                            </div>
-
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            {/* Modal Footer */}
+                            <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2.5">
                                 <button
                                     type="button"
                                     onClick={() => setShowGuidanceModal(false)}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={guidanceProcessing}
-                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer shadow-xs"
+                                    disabled={guidanceProcessing || !guidanceData.title.trim() || !guidanceData.content.trim()}
+                                    className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 cursor-pointer"
                                 >
-                                    {guidanceProcessing ? 'Menerbitkan...' : 'Terbitkan Catatan'}
+                                    {guidanceProcessing ? (
+                                        <>
+                                            <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            <span>Menerbitkan...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="size-4" />
+                                            <span>Terbitkan Catatan</span>
+                                        </>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -2022,34 +2245,42 @@ export default function ClassShow({
 
             {/* Modal Adjust Allocation (Lecturer Manual Intervention) */}
             {adjustingAlloc && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fadeIn">
-                    <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="text-base font-bold text-slate-900">
-                                    Sesuaikan Alokasi Simulasi
-                                </h3>
-                                <p className="text-xs text-slate-500 mt-0.5">
-                                    Pindahkan mahasiswa <strong className="text-slate-800">{adjustingAlloc.user?.name}</strong> ke kelompok lain.
-                                </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+                    <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200/80 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
+                        {/* Modal Header */}
+                        <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="size-10 rounded-xl bg-blue-50 text-blue-600 border border-blue-100/80 flex items-center justify-center shrink-0 shadow-2xs">
+                                    <Scale className="size-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                        Sesuaikan Alokasi Simulasi
+                                    </h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        Pindahkan mahasiswa <strong className="text-slate-800">{adjustingAlloc.user?.name}</strong> ke kelompok lain.
+                                    </p>
+                                </div>
                             </div>
                             <button
+                                type="button"
                                 onClick={() => setAdjustingAlloc(null)}
-                                className="p-1 rounded-xl text-slate-400 hover:bg-slate-100 transition cursor-pointer"
+                                className="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 flex items-center justify-center transition cursor-pointer"
                             >
-                                <X className="size-5" />
+                                <X className="size-4" />
                             </button>
                         </div>
 
-                        <div className="space-y-4">
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Pilih Proyek Tujuan *
+                                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                    Pilih Proyek Tujuan <span className="text-rose-500">*</span>
                                 </label>
                                 <select
                                     value={adjustProjectId}
                                     onChange={(e) => setAdjustProjectId(Number(e.target.value))}
-                                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs bg-white text-slate-800"
+                                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-white text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs"
                                 >
                                     {projects.map((p) => (
                                         <option key={p.id} value={p.id}>
@@ -2060,33 +2291,43 @@ export default function ClassShow({
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">
-                                    Alasan Penyesuaian Akademik *
+                                <label className="block text-xs font-bold text-slate-800 mb-1.5">
+                                    Alasan Penyesuaian Akademik <span className="text-rose-500">*</span>
                                 </label>
                                 <textarea
                                     rows={3}
                                     value={adjustReason}
                                     onChange={(e) => setAdjustReason(e.target.value)}
                                     placeholder="Contoh: Mahasiswa memiliki minat riset khusus atau kesepakatan topik bimbingan..."
-                                    className="w-full rounded-xl border border-slate-200 p-3 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-hidden"
+                                    className="w-full rounded-xl border border-slate-200 p-3.5 text-xs text-slate-900 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition shadow-2xs"
                                 />
                             </div>
+                        </div>
 
-                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-                                <button
-                                    onClick={() => setAdjustingAlloc(null)}
-                                    className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    onClick={handleAdjustAllocation}
-                                    disabled={submittingAdjust}
-                                    className="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
-                                >
-                                    {submittingAdjust ? 'Menyimpan...' : 'Simpan Penyesuaian'}
-                                </button>
-                            </div>
+                        {/* Modal Footer */}
+                        <div className="px-6 py-4 bg-slate-50/80 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                            <button
+                                type="button"
+                                onClick={() => setAdjustingAlloc(null)}
+                                className="px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-2xs"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleAdjustAllocation}
+                                disabled={submittingAdjust || !adjustReason.trim() || !adjustProjectId}
+                                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-xs font-semibold shadow-2xs hover:shadow-xs hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none flex items-center gap-1.5 cursor-pointer"
+                            >
+                                {submittingAdjust ? (
+                                    <>
+                                        <span className="size-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                        <span>Menyimpan...</span>
+                                    </>
+                                ) : (
+                                    <span>Simpan Penyesuaian</span>
+                                )}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -2121,8 +2362,14 @@ export default function ClassShow({
                                     <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate leading-tight">
                                         {selectedStudentForDrawer.name}
                                     </h3>
-                                    <p className="text-xs text-slate-400 truncate mt-0.5 font-mono">
-                                        NIM: {selectedStudentForDrawer.student_number} • {selectedStudentForDrawer.study_program}
+                                    <p className="text-xs text-slate-400 truncate mt-0.5 font-mono flex items-center">
+                                        <span>NIM: {selectedStudentForDrawer.student_number}</span>
+                                        {selectedStudentForDrawer.study_program && (
+                                            <>
+                                                <span className="text-slate-300 dark:text-slate-600 mx-1.5 font-sans">|</span>
+                                                <span>{selectedStudentForDrawer.study_program}</span>
+                                            </>
+                                        )}
                                     </p>
                                 </div>
                             </div>
@@ -2171,76 +2418,116 @@ export default function ClassShow({
 
                         {/* TAB 1: MESSENGER CHAT */}
                         {drawerTab === 'chat' && (
-                            <div className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <div className="flex-1 flex flex-col justify-between overflow-hidden bg-slate-50/50 dark:bg-[#0c1222]">
                                 {/* Chat Messages Scroll Area */}
-                                <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
-                                    <div className="text-center py-2">
-                                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full">
-                                            Ruang Percakapan Terenkripsi • {academicClass.name}
+                                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
+                                    <div className="text-center py-1.5">
+                                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 bg-white dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200/60 dark:border-slate-700/60 shadow-2xs">
+                                            <Lock className="size-2.5 text-blue-500" />
+                                            <span>Ruang Percakapan Terenkripsi</span>
+                                            <span className="text-slate-300 dark:text-slate-600 font-sans">|</span>
+                                            <span className="text-slate-600 dark:text-slate-300 font-bold">{academicClass.name}</span>
                                         </span>
                                     </div>
 
-                                    {/* Empty State jika belum ada pesan */}
-                                    {(!chatMessages[selectedStudentForDrawer.id] || chatMessages[selectedStudentForDrawer.id].length === 0) && (
-                                        <div className="py-8 text-center text-xs text-slate-400">
-                                            <MessageSquare className="size-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                                            <p className="font-semibold text-slate-700 dark:text-slate-300">
+                                    {/* Loading / Empty State */}
+                                    {isFetchingChat[selectedStudentForDrawer.id] && (!chatMessages[selectedStudentForDrawer.id] || chatMessages[selectedStudentForDrawer.id].length === 0) ? (
+                                        <div className="py-16 text-center text-xs text-slate-400 max-w-sm mx-auto flex flex-col items-center">
+                                            <div className="size-10 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 animate-spin border border-blue-200/60 dark:border-blue-900/40 shadow-2xs">
+                                                <RefreshCw className="size-5" />
+                                            </div>
+                                            <p className="font-bold text-slate-700 dark:text-slate-300 text-sm">
+                                                Memuat riwayat obrolan...
+                                            </p>
+                                            <p className="text-[11px] text-slate-400 mt-1">
+                                                Menghubungkan ke ruang percakapan dengan <strong>{selectedStudentForDrawer.name}</strong>.
+                                            </p>
+                                        </div>
+                                    ) : (!chatMessages[selectedStudentForDrawer.id] || chatMessages[selectedStudentForDrawer.id].length === 0) ? (
+                                        <div className="py-12 text-center text-xs text-slate-400 max-w-sm mx-auto">
+                                            <div className="size-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-3 border border-blue-200/70 dark:border-blue-800/60 shadow-2xs">
+                                                <MessageSquare className="size-6" />
+                                            </div>
+                                            <p className="font-bold text-slate-800 dark:text-slate-200 text-sm">
                                                 Mulai Percakapan Langsung
                                             </p>
-                                            <p className="text-[11px] text-slate-400 mt-0.5 max-w-xs mx-auto">
+                                            <p className="text-xs text-slate-400 mt-1 leading-relaxed">
                                                 Ketik arahan atau pertanyaan di bawah untuk berdiskusi dengan <strong>{selectedStudentForDrawer.name}</strong> secara real-time.
                                             </p>
                                         </div>
-                                    )}
+                                    ) : null}
 
                                     {/* Render dynamic chat history for this user */}
                                     {(chatMessages[selectedStudentForDrawer.id] || []).map((msg) => (
                                         <div
                                             key={msg.id}
-                                            className={`flex items-start gap-2 ${
+                                            className={`flex items-end gap-2 ${
                                                 msg.sender === 'me'
                                                     ? 'justify-end'
-                                                    : 'max-w-[85%]'
+                                                    : 'justify-start'
                                             }`}
                                         >
                                             {msg.sender !== 'me' && (
-                                                <div className="size-7 rounded-lg bg-blue-50 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0 border border-blue-200/80">
+                                                <div className="size-7 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 font-bold text-xs flex items-center justify-center shrink-0 border border-blue-200/80 dark:border-blue-800 shadow-2xs mb-0.5">
                                                     {selectedStudentForDrawer.name.charAt(0).toUpperCase()}
                                                 </div>
                                             )}
 
-                                            <div className={msg.sender === 'me' ? 'max-w-[85%]' : ''}>
+                                            <div
+                                                className={`max-w-[85%] sm:max-w-[78%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-2xs transition-all ${
+                                                    msg.sender === 'me'
+                                                        ? 'bg-blue-600 text-white rounded-br-xs font-medium'
+                                                        : 'bg-white dark:bg-[#151f32] text-slate-800 dark:text-slate-100 border border-slate-200/80 dark:border-slate-800 rounded-bl-xs'
+                                                }`}
+                                            >
+                                                {msg.sender !== 'me' && (
+                                                    <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 block mb-1">
+                                                        {msg.sender_name || selectedStudentForDrawer.name.split(' ')[0]}
+                                                    </span>
+                                                )}
+                                                <p className="whitespace-pre-wrap break-words">{msg.text}</p>
                                                 <div
-                                                    className={`p-3 rounded-2xl text-xs leading-relaxed shadow-2xs ${
+                                                    className={`flex items-center justify-end gap-1.5 mt-1.5 pt-0.5 text-[10px] ${
                                                         msg.sender === 'me'
-                                                            ? 'rounded-tr-xs bg-blue-600 text-white font-medium'
-                                                            : 'rounded-tl-xs bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100'
+                                                            ? 'text-blue-100'
+                                                            : 'text-slate-400'
                                                     }`}
                                                 >
-                                                    {msg.text}
+                                                    <span>{msg.time}</span>
+                                                    {msg.sender === 'me' && (
+                                                        <>
+                                                            {msg.isPending ? (
+                                                                <Clock className="size-3 text-blue-200 animate-pulse" />
+                                                            ) : msg.isError ? (
+                                                                <span title="Gagal terkirim">
+                                                                    <AlertCircle className="size-3 text-red-300" />
+                                                                </span>
+                                                            ) : (
+                                                                <CheckCheck className="size-3.5 text-blue-200" />
+                                                            )}
+                                                        </>
+                                                    )}
                                                 </div>
-                                                <span className={`text-[10px] text-slate-400 block mt-1 ${msg.sender === 'me' ? 'text-right mr-1' : 'ml-1'}`}>
-                                                    {msg.time} • {msg.sender === 'me' ? 'Terkirim' : (selectedStudentForDrawer.name.split(' ')[0])}
-                                                </span>
                                             </div>
                                         </div>
                                     ))}
+                                    <div ref={chatMessagesEndRef} />
                                 </div>
 
                                 {/* Quick Prompt Suggestions */}
-                                <div className="px-4 py-2 border-t border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-[#0c1222] flex flex-wrap gap-1.5 shrink-0">
+                                <div className="px-4 py-2 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-[#0e172a]/80 backdrop-blur-xs flex flex-wrap gap-1.5 shrink-0">
                                     <button
                                         type="button"
-                                        onClick={() => setInputChatMessage('Bagaimana perkembangan sprint proyek kelompokmu minggu ini?')}
-                                        className="text-[11px] px-2.5 py-1 rounded-full bg-white dark:bg-[#0e172a] hover:bg-blue-50 dark:hover:bg-blue-950 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-medium transition cursor-pointer flex items-center gap-1.5"
+                                        onClick={() => handleQuickPromptClick('Bagaimana perkembangan sprint proyek kelompokmu minggu ini?')}
+                                        className="text-[11px] px-2.5 py-1 rounded-full bg-slate-50 dark:bg-[#0c1222] hover:bg-blue-50 dark:hover:bg-blue-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer flex items-center gap-1.5 active:scale-95"
                                     >
                                         <Sparkles className="size-3 text-blue-500" />
                                         <span>Tanya progres sprint</span>
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() => setInputChatMessage('Tolong perbaiki dokumen Living Proposal sesuai catatan bimbingan ya.')}
-                                        className="text-[11px] px-2.5 py-1 rounded-full bg-white dark:bg-[#0e172a] hover:bg-blue-50 dark:hover:bg-blue-950 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-medium transition cursor-pointer flex items-center gap-1.5"
+                                        onClick={() => handleQuickPromptClick('Tolong perbaiki dokumen Living Proposal sesuai catatan bimbingan ya.')}
+                                        className="text-[11px] px-2.5 py-1 rounded-full bg-slate-50 dark:bg-[#0c1222] hover:bg-blue-50 dark:hover:bg-blue-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium transition cursor-pointer flex items-center gap-1.5 active:scale-95"
                                     >
                                         <FileText className="size-3 text-indigo-500" />
                                         <span>Revisi proposal</span>
@@ -2250,9 +2537,9 @@ export default function ClassShow({
                                             href={`https://wa.me/${selectedStudentForDrawer.phone.replace(/\D/g, '')}?text=Halo%20${encodeURIComponent(selectedStudentForDrawer.name)},%20ini%20dosen%20pengampu%20kelas%20${encodeURIComponent(academicClass.name)}`}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="text-[11px] px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-bold transition flex items-center gap-1 cursor-pointer"
+                                            className="text-[11px] px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 font-bold transition flex items-center gap-1 cursor-pointer"
                                         >
-                                            <Phone className="size-3" />
+                                            <Phone className="size-3 text-emerald-600" />
                                             <span>WhatsApp</span>
                                         </a>
                                     )}
@@ -2264,17 +2551,24 @@ export default function ClassShow({
                                     className="p-3 sm:p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0c1222] flex items-center gap-2 shrink-0"
                                 >
                                     <input
+                                        ref={chatInputRef}
                                         type="text"
                                         value={inputChatMessage}
                                         onChange={(e) => setInputChatMessage(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendChatMessage();
+                                            }
+                                        }}
                                         placeholder={`Ketik pesan untuk ${selectedStudentForDrawer.name.split(' ')[0]}...`}
-                                        className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0e172a] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-blue-600 font-medium"
+                                        className="flex-1 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-[#0e172a] text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:border-blue-600 font-medium placeholder:text-slate-400"
                                     />
                                     <button
                                         type="submit"
-                                        disabled={!inputChatMessage.trim()}
-                                        className="size-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition disabled:opacity-40 cursor-pointer shrink-0 shadow-xs"
-                                        title="Kirim Pesan"
+                                        disabled={!inputChatMessage.trim() || isSendingMessage}
+                                        className="size-10 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition disabled:opacity-40 cursor-pointer shrink-0 shadow-xs active:scale-95"
+                                        title="Kirim Pesan (Enter)"
                                     >
                                         <Send className="size-4" />
                                     </button>
@@ -2295,8 +2589,10 @@ export default function ClassShow({
                                             <h4 className="text-base font-bold text-slate-900 dark:text-white">
                                                 {selectedStudentForDrawer.name}
                                             </h4>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                                                {selectedStudentForDrawer.study_program} • Semester {selectedStudentForDrawer.semester}
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center">
+                                                <span>{selectedStudentForDrawer.study_program}</span>
+                                                <span className="text-slate-300 dark:text-slate-600 mx-1.5 font-sans">|</span>
+                                                <span>Semester {selectedStudentForDrawer.semester}</span>
                                             </p>
                                         </div>
                                     </div>

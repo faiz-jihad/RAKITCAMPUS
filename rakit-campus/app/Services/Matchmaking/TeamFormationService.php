@@ -180,7 +180,7 @@ class TeamFormationService
         }
 
         $team = $project->team;
-        $activeMembersCount = $team ? $team->members()->where('status', 'active')->count() : 0;
+        $activeMembersCount = $team ? $team->members()->whereIn('status', ['active', 'completed'])->count() : 0;
         $targetCapacity = $project->academicClass?->target_team_size 
             ?? $project->max_team_size 
             ?? $project->team?->capacity 
@@ -266,7 +266,7 @@ class TeamFormationService
         });
 
         $recipients = collect([$project->leader])
-            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->merge($project->team?->members->whereIn('status', ['active', 'completed'])->pluck('user') ?? collect())
             ->filter();
         $this->notifyFormationRecipients($project, $recipients, 'formation_approved', $resolvedNotes, $lecturer);
     }
@@ -298,7 +298,7 @@ class TeamFormationService
         });
 
         $recipients = collect([$project->leader])
-            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->merge($project->team?->members->whereIn('status', ['active', 'completed'])->pluck('user') ?? collect())
             ->filter();
         $this->notifyFormationRecipients($project, $recipients, 'formation_rejected', $reason, $lecturer);
     }
@@ -330,7 +330,7 @@ class TeamFormationService
         });
 
         $recipients = collect([$project->leader])
-            ->merge($project->team?->members->where('status', 'active')->pluck('user') ?? collect())
+            ->merge($project->team?->members->whereIn('status', ['active', 'completed'])->pluck('user') ?? collect())
             ->filter();
         $this->notifyFormationRecipients($project, $recipients, 'formation_revision_requested', $revisionNotes, $lecturer);
     }
