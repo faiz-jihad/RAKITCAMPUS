@@ -899,19 +899,21 @@ export default function ProjectShow({
                         <Link
                             href="/projects"
                             className="group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-white border border-slate-200/80 text-xs font-semibold text-slate-600 hover:text-blue-600 hover:bg-blue-50/50 hover:border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap shrink-0"
+                            title="Kembali ke Proyek"
                         >
-                            <ArrowLeft className="size-3.5 text-slate-500 group-hover:text-blue-600 transition-all duration-200 group-hover:-translate-x-1" />
+                            <ArrowLeft className="size-3.5 text-slate-500 group-hover:text-blue-600 transition-all duration-200 group-hover:-translate-x-0.5" />
                             <span className="hidden sm:inline">Kembali ke Proyek</span>
                             <span className="sm:hidden">Kembali</span>
                         </Link>
 
-                        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
                             {project.team && (isMember || isLeader || isLecturer) && canAccessWorkspace && (
                                 <Link
                                     href={`/workspace/${project.team.id}`}
-                                    className="group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                    className="group inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap"
+                                    title="Workspace Tim"
                                 >
-                                    <FolderKanban className="size-3.5 text-blue-600 transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6" />
+                                    <FolderKanban className="size-3.5 text-blue-600 transition-transform duration-200 group-hover:scale-110" />
                                     <span className="hidden sm:inline">Workspace Tim</span>
                                     <span className="sm:hidden">Workspace</span>
                                 </Link>
@@ -921,7 +923,7 @@ export default function ProjectShow({
                                 <button
                                     type="button"
                                     onClick={() => setShowEditProjectModal(true)}
-                                    className="group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
+                                    className="group inline-flex items-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 cursor-pointer"
                                     title="Kelola informasi, progres, dan pengaturan proyek"
                                 >
                                     <Settings className="size-3.5 text-indigo-600 transition-transform duration-200 group-hover:rotate-45" />
@@ -932,22 +934,22 @@ export default function ProjectShow({
 
                             <button
                                 onClick={toggleBookmark}
-                                className={`group inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 whitespace-nowrap ${
+                                className={`group inline-flex items-center justify-center gap-1.5 px-2 sm:px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 shrink-0 ${
                                     bookmarked
                                         ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
                                         : 'bg-white text-slate-700 border-slate-200/80 hover:bg-blue-50/50 hover:text-blue-600 hover:border-blue-200'
                                 }`}
                                 title={bookmarked ? 'Hapus dari simpanan' : 'Simpan proyek ini'}
+                                aria-label={bookmarked ? 'Hapus dari simpanan' : 'Simpan proyek ini'}
                             >
                                 <Bookmark
                                     className={`size-3.5 transition-all duration-200 group-hover:scale-110 ${
                                         bookmarked
                                             ? 'fill-blue-600 text-blue-600'
-                                            : 'text-slate-400 group-hover:text-blue-600 group-hover:-rotate-6'
+                                            : 'text-slate-400 group-hover:text-blue-600'
                                     }`}
                                 />
                                 <span className="hidden sm:inline">{bookmarked ? 'Tersimpan' : 'Simpan Proyek'}</span>
-                                <span className="sm:hidden">{bookmarked ? 'Tersimpan' : 'Simpan'}</span>
                             </button>
                         </div>
                     </div>
@@ -983,14 +985,15 @@ export default function ProjectShow({
                                 {academicClass ? (
                                     <Link
                                         href={`/classes/${academicClass.code || academicClass.id}`}
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:text-blue-600 hover:bg-blue-50 text-[11px] sm:text-xs font-semibold transition border border-slate-200/60"
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 hover:text-blue-600 hover:bg-blue-50 text-[11px] sm:text-xs font-semibold transition border border-slate-200/60 max-w-[240px] sm:max-w-none"
+                                        title={`${academicClass.name} (${academicClass.code})`}
                                     >
-                                        <BookOpen className="size-3 text-blue-600" />
-                                        <span>{academicClass.name} ({academicClass.code})</span>
+                                        <BookOpen className="size-3 text-blue-600 shrink-0" />
+                                        <span className="truncate">{academicClass.name} ({academicClass.code})</span>
                                     </Link>
                                 ) : (
                                     <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] sm:text-xs font-semibold border border-slate-200/60">
-                                        <UserCheck className="size-3 text-slate-500" />
+                                        <UserCheck className="size-3 text-slate-500 shrink-0" />
                                         <span>Proyek Mandiri</span>
                                     </span>
                                 )}
@@ -1002,8 +1005,8 @@ export default function ProjectShow({
 
                                 {/* Status Workspace */}
                                 {(canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] sm:text-xs font-semibold border border-emerald-200/60">
-                                        <FolderKanban className="size-3 text-emerald-600" />
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] sm:text-xs font-semibold border border-blue-200/80">
+                                        <FolderKanban className="size-3 text-blue-600" />
                                         <span>Workspace Aktif</span>
                                     </span>
                                 ) : academicClass ? (
