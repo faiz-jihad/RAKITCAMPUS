@@ -20,6 +20,8 @@ import {
     Briefcase,
     Calendar,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Clock,
     Cpu,
     ExternalLink,
@@ -446,6 +448,25 @@ export default function CompetitionIndex({
             return name.includes(q) || study.includes(q) || campus.includes(q) || skills.some((s: string) => s.includes(q));
         });
     }, [radarCandidates, radarPersonaFilter, radarSearch]);
+
+    const [radarPage, setRadarPage] = useState(1);
+    const RADAR_PER_PAGE = 6;
+    const totalRadarPages = Math.ceil(filteredRadarCandidates.length / RADAR_PER_PAGE);
+    const paginatedRadarCandidates = useMemo(() => {
+        const start = (radarPage - 1) * RADAR_PER_PAGE;
+        return filteredRadarCandidates.slice(start, start + RADAR_PER_PAGE);
+    }, [filteredRadarCandidates, radarPage]);
+
+    React.useEffect(() => {
+        setRadarPage(1);
+    }, [radarPersonaFilter, radarSearch]);
+
+    const [myCompPage, setMyCompPage] = useState(1);
+    const MY_COMP_PER_PAGE = 6;
+
+    React.useEffect(() => {
+        setMyCompPage(1);
+    }, [myLifecycleFilter]);
 
     // Team Recruitment Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
@@ -1729,14 +1750,9 @@ export default function CompetitionIndex({
                             {/* Banner Callout */}
                             <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40">
                                 <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 uppercase tracking-wider shadow-2xs">
-                                            Radar MinSatu
-                                        </span>
-                                        <span className="text-xs text-slate-300 font-medium">
-                                            Matchmaking Talenta Lomba
-                                        </span>
-                                    </div>
+                                    <p className="text-xs text-blue-200 font-medium">
+                                        Matchmaking Talenta Lomba
+                                    </p>
                                     <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
                                         Radar Rekrutmen Rekan Tim Lomba
                                     </h3>
@@ -1776,7 +1792,7 @@ export default function CompetitionIndex({
                                             onClick={() => setRadarSearch('')}
                                             className="text-slate-400 hover:text-slate-600 text-xs font-bold"
                                         >
-                                            ✕
+                                            <X className="size-3.5" />
                                         </button>
                                     )}
                                 </div>
@@ -1824,7 +1840,7 @@ export default function CompetitionIndex({
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                                    {filteredRadarCandidates.map((cand: any, idx: number) => {
+                                    {paginatedRadarCandidates.map((cand: any, idx: number) => {
                                         const student = cand.user || cand;
                                         const persona = cand.persona || 'Hacker';
                                         const skills: string[] = cand.matched_skills || cand.skills || [];
@@ -1945,6 +1961,54 @@ export default function CompetitionIndex({
                                             </div>
                                         );
                                     })}
+                                </div>
+                            )}
+
+                            {/* Radar Candidates Pagination */}
+                            {totalRadarPages > 1 && (
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 mt-3 border-t border-slate-200/80">
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Menampilkan <strong className="text-slate-800">{(radarPage - 1) * RADAR_PER_PAGE + 1}</strong> - <strong className="text-slate-800">{Math.min(radarPage * RADAR_PER_PAGE, filteredRadarCandidates.length)}</strong> dari <strong className="text-slate-800">{filteredRadarCandidates.length}</strong> kandidat
+                                    </p>
+
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            disabled={radarPage === 1}
+                                            onClick={() => setRadarPage(p => Math.max(1, p - 1))}
+                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <ChevronLeft className="size-3.5" />
+                                            <span>Sebelumnya</span>
+                                        </button>
+
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: totalRadarPages }).map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => setRadarPage(i + 1)}
+                                                    className={`size-8 rounded-xl flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                                                        radarPage === i + 1
+                                                            ? 'bg-slate-900 text-white shadow-xs'
+                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            disabled={radarPage === totalRadarPages}
+                                            onClick={() => setRadarPage(p => Math.min(totalRadarPages, p + 1))}
+                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <span>Berikutnya</span>
+                                            <ChevronRight className="size-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -2344,9 +2408,16 @@ export default function CompetitionIndex({
                                         );
                                     }
 
+                                    const totalMyCompPages = Math.ceil(filteredParticipations.length / MY_COMP_PER_PAGE);
+                                    const paginatedParticipations = filteredParticipations.slice(
+                                        (myCompPage - 1) * MY_COMP_PER_PAGE,
+                                        myCompPage * MY_COMP_PER_PAGE
+                                    );
+
                                     return (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {filteredParticipations.map((part) => {
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {paginatedParticipations.map((part) => {
                                                 const comp = part.competition;
                                                 const team = part.team;
                                                 const status = part.lifecycle_status;
@@ -2385,107 +2456,93 @@ export default function CompetitionIndex({
                                                 const workspaceUrl = `/competition-workspace/${comp?.slug || part.id}`;
 
                                                 return (
-                                                    <div key={part.id} className="flex flex-col group">
-                                                        {/* Laptop Workstation Mockup Card */}
+                                                    <div key={part.id} className="group relative flex flex-col transition-all duration-300 hover:-translate-y-1.5">
+                                                        {/* 3D Folder Card Container */}
                                                         <Link
                                                             href={workspaceUrl}
-                                                            className="block cursor-pointer transition-all duration-300 hover:-translate-y-1.5 focus:outline-none"
+                                                            className="block cursor-pointer focus:outline-none"
                                                         >
-                                                            {/* Laptop Lid / Outer Chassis */}
-                                                            <div className="bg-[#0b1020] p-2.5 sm:p-3 rounded-t-[22px] border-t border-x border-slate-700/60 shadow-xl transition-all duration-300 group-hover:border-blue-500/40 group-hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.25)]">
-                                                                {/* Center Camera Bezel Dot */}
-                                                                <div className="flex items-center justify-center mb-2">
-                                                                    <div className="size-1.5 rounded-full bg-slate-900 border border-slate-700/60 shadow-inner" />
+                                                            <div className="relative pt-6">
+                                                                {/* Top Back Folder Tab */}
+                                                                <div className="absolute top-0 left-0 h-8 w-32 sm:w-36 rounded-t-2xl bg-gradient-to-b from-slate-200 to-slate-300/80 border-t border-x border-slate-300/70 shadow-xs flex items-center px-3.5">
+                                                                    <span className="text-[10px] font-mono font-bold text-slate-600 truncate">
+                                                                        ~/workspace/{part.team?.id || part.id}
+                                                                    </span>
                                                                 </div>
 
-                                                                {/* Display Screen Canvas */}
-                                                                <div className="relative overflow-hidden rounded-xl border border-blue-900/40 bg-gradient-to-b from-[#060c1d] via-[#091530] to-[#040916] p-4 sm:p-5 flex flex-col justify-between min-h-[220px] shadow-inner">
-                                                                    {/* Ambient Radial Glow */}
-                                                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/15 via-transparent to-transparent pointer-events-none" />
+                                                                {/* Peeking White Paper Sheet(s) inside the folder pocket */}
+                                                                <div className="absolute top-2.5 left-4 right-4 h-14 rounded-t-xl bg-white border-t border-x border-slate-200/90 shadow-2xs px-3.5 py-1.5 transition-transform duration-300 group-hover:-translate-y-2 pointer-events-none z-0">
+                                                                    <div className="space-y-1 opacity-60">
+                                                                        <div className="h-1.5 w-24 bg-slate-200 rounded-full" />
+                                                                        <div className="h-1.5 w-40 bg-slate-100 rounded-full" />
+                                                                    </div>
+                                                                </div>
 
-                                                                    {/* Screen Header Bar */}
-                                                                    <div className="relative z-10 flex items-center justify-between gap-2">
-                                                                        {/* 3 Blue Window Control Dots */}
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                                                {/* Front Folder Pocket Body */}
+                                                                <div className="relative z-10 rounded-[24px] bg-white border border-slate-200/90 shadow-[0_8px_24px_rgba(0,0,0,0.04)] group-hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] transition-all duration-300 p-5 sm:p-6 overflow-hidden flex flex-col justify-between min-h-[210px]">
+                                                                    {/* Subtle top edge curve */}
+                                                                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent pointer-events-none" />
+
+                                                                    <div>
+                                                                        {/* Top Row: Role & Status Pills */}
+                                                                        <div className="flex items-center justify-between gap-2 mb-3">
+                                                                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
+                                                                                {statusLabel}
+                                                                            </span>
+                                                                            <div className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 border border-slate-200/60">
+                                                                                <Award className="size-3 text-slate-500" />
+                                                                                <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                            </div>
                                                                         </div>
 
-                                                                        {/* Center Path Pill */}
-                                                                        <div className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-700/70 font-mono text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1 shadow-inner">
-                                                                            <span className="text-slate-400">~/workspace/</span>
-                                                                            <span className="text-white font-bold">{part.team?.id || part.id}</span>
-                                                                        </div>
-
-                                                                        {/* Right Role Badge */}
-                                                                        <div className="px-2 py-0.5 rounded-md bg-blue-950/40 border border-blue-500/30 text-blue-300 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-2xs">
-                                                                            <Award className="size-3 text-blue-400" />
-                                                                            <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                        {/* Team Name & Competition */}
+                                                                        <div className="space-y-1 mb-4">
+                                                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-blue-600 transition">
+                                                                                {team?.name || 'Mandiri'}
+                                                                            </h3>
+                                                                            <p className="text-xs sm:text-sm font-medium text-slate-500 leading-normal line-clamp-1">
+                                                                                {comp?.name || 'Kompetisi'}
+                                                                            </p>
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* Screen Body: Team & Competition */}
-                                                                    <div className="relative z-10 my-5 space-y-1">
-                                                                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug line-clamp-1 group-hover:text-blue-200 transition">
-                                                                            {team?.name || 'Mandiri'}
-                                                                        </h3>
-                                                                        <p className="text-xs sm:text-sm font-medium text-blue-400/95 leading-normal line-clamp-1">
-                                                                            {comp?.name || 'Kompetisi'}
-                                                                        </p>
-                                                                    </div>
-
-                                                                    {/* Screen Footer: Progress & Stats */}
-                                                                    <div className="relative z-10 space-y-2 pt-2 border-t border-slate-800/60">
+                                                                    {/* Progress & Bottom Metadata */}
+                                                                    <div className="space-y-2.5 pt-3 border-t border-slate-100">
                                                                         {/* Progress Row */}
-                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs">
-                                                                            <span className="text-slate-400 font-medium">Progres</span>
-                                                                            <span className="text-white font-bold">{progressPercent}%</span>
-                                                                        </div>
-
-                                                                        {/* Progress Bar Track */}
-                                                                        <div className="w-full h-1.5 bg-slate-800/90 rounded-full overflow-hidden">
-                                                                            <div
-                                                                                className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.7)] transition-all duration-500"
-                                                                                style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
-                                                                            />
+                                                                        <div>
+                                                                            <div className="flex items-center justify-between text-[11px] sm:text-xs mb-1">
+                                                                                <span className="text-slate-400 font-medium">Progres</span>
+                                                                                <span className="text-slate-800 font-bold">{progressPercent}%</span>
+                                                                            </div>
+                                                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                                <div
+                                                                                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                                                                                    style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                                                                                />
+                                                                            </div>
                                                                         </div>
 
                                                                         {/* Meta Stats Row */}
-                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-300 pt-0.5">
+                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 pt-0.5">
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <Users className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <Users className="size-3.5 text-slate-400 shrink-0" />
                                                                                 <span>{team?.members_count || 1} Anggota</span>
                                                                             </div>
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <CheckCircle2 className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <CheckCircle2 className="size-3.5 text-slate-400 shrink-0" />
                                                                                 <span>{completedTasksCount}/{tasksCount} Selesai</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-
-                                                            {/* Laptop Bottom Chassis / Base */}
-                                                            <div className="relative">
-                                                                {/* Hinge & Main Base */}
-                                                                <div className="h-3.5 sm:h-4 bg-gradient-to-b from-[#0c1222] to-[#040711] rounded-b-xl border-t border-slate-700/50 shadow-md relative flex items-start justify-center">
-                                                                    {/* Center Thumb Notch */}
-                                                                    <div className="w-14 sm:w-16 h-1 bg-slate-900 border-b border-x border-slate-700/80 rounded-b-sm" />
-                                                                </div>
-                                                                {/* Wider Base Feet Lip */}
-                                                                <div className="w-[103%] -ml-[1.5%] h-1 sm:h-1.5 bg-[#0a0f1d] rounded-b-2xl border-t border-slate-700/40 shadow-xl" />
-                                                            </div>
                                                         </Link>
 
                                                         {/* Bottom Meta & Quick Action Toolbar */}
                                                         <div className="mt-3 flex items-center justify-between gap-2 px-1 text-xs">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
-                                                                    {statusLabel}
-                                                                </span>
                                                                 {part.stage_label && (
-                                                                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[130px]">
+                                                                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
                                                                         {part.stage_label}
                                                                     </span>
                                                                 )}
@@ -2516,6 +2573,55 @@ export default function CompetitionIndex({
                                                     </div>
                                                 );
                                             })}
+                                            </div>
+
+                                            {/* Folder Cards Pagination */}
+                                            {totalMyCompPages > 1 && (
+                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-slate-200/80">
+                                                    <p className="text-xs text-slate-500 font-medium">
+                                                        Menampilkan <strong className="text-slate-800">{(myCompPage - 1) * MY_COMP_PER_PAGE + 1}</strong> - <strong className="text-slate-800">{Math.min(myCompPage * MY_COMP_PER_PAGE, filteredParticipations.length)}</strong> dari <strong className="text-slate-800">{filteredParticipations.length}</strong> tim
+                                                    </p>
+
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            disabled={myCompPage === 1}
+                                                            onClick={() => setMyCompPage(p => Math.max(1, p - 1))}
+                                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <ChevronLeft className="size-3.5" />
+                                                            <span>Sebelumnya</span>
+                                                        </button>
+
+                                                        <div className="flex items-center gap-1">
+                                                            {Array.from({ length: totalMyCompPages }).map((_, i) => (
+                                                                <button
+                                                                    key={i}
+                                                                    type="button"
+                                                                    onClick={() => setMyCompPage(i + 1)}
+                                                                    className={`size-8 rounded-xl flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                                                                        myCompPage === i + 1
+                                                                            ? 'bg-slate-900 text-white shadow-xs'
+                                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={myCompPage === totalMyCompPages}
+                                                            onClick={() => setMyCompPage(p => Math.min(totalMyCompPages, p + 1))}
+                                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <span>Berikutnya</span>
+                                                            <ChevronRight className="size-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })()}
