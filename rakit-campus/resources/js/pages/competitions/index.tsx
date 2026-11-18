@@ -1747,20 +1747,25 @@ export default function CompetitionIndex({
                     {/* SUB-VIEW 2: RADAR REKRUTMEN TALENTA KANDIDAT */}
                     {teamViewMode === 'radar' && (
                         <div className="space-y-5">
-                            {/* Banner Callout */}
-                            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40">
-                                <div className="space-y-1">
+                            {/* Banner Callout with Mascot Heart */}
+                            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40 relative overflow-hidden">
+                                <div className="space-y-1 relative z-10 max-w-xl">
                                     <p className="text-xs text-blue-200 font-medium">
                                         Matchmaking Talenta Lomba
                                     </p>
                                     <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
                                         Radar Rekrutmen Rekan Tim Lomba
                                     </h3>
-                                    <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+                                    <p className="text-xs text-slate-300 leading-relaxed">
                                         Temukan rekan mahasiswa kampus dengan profil komplementer (Hacker, Hipster, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-3 shrink-0 relative z-10">
+                                    <img
+                                        src="/images/mascot/mascot-heart.png"
+                                        alt="Mascot Heart"
+                                        className="w-14 sm:w-16 h-auto object-contain drop-shadow-md select-none pointer-events-none hidden sm:block transform hover:scale-105 transition"
+                                    />
                                     <button
                                         type="button"
                                         onClick={() => {
@@ -1829,8 +1834,12 @@ export default function CompetitionIndex({
 
                             {/* Candidates Grid */}
                             {filteredRadarCandidates.length === 0 ? (
-                                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                    <Sparkles className="size-10 text-amber-400 mx-auto mb-3" />
+                                <div className="bg-white rounded-2xl p-10 sm:p-12 text-center border border-slate-200/80 shadow-xs">
+                                    <img
+                                        src="/images/mascot/mascot-thinking.png"
+                                        alt="Mascot Thinking"
+                                        className="w-20 h-20 object-contain mx-auto mb-3 select-none pointer-events-none drop-shadow-sm"
+                                    />
                                     <h4 className="text-sm font-bold text-slate-900">
                                         Tidak Ada Kandidat yang Cocok
                                     </h4>

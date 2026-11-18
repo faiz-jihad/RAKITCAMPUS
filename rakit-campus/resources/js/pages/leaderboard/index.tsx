@@ -260,12 +260,23 @@ export default function LeaderboardIndex({
             />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-20">
-                {/* 1. TOP HERO HEADER */}
+                {/* 1. TOP HERO HEADER with Mascot Trophy */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                            Klasemen & Peringkat RAKIT Campus
-                        </h1>
+                    <div className="flex items-center gap-3.5">
+                        <img
+                            src="/images/mascot/mascot-trophy.png"
+                            alt="Mascot Champion Trophy"
+                            className="size-12 sm:size-14 object-contain drop-shadow-md select-none pointer-events-none transform hover:scale-105 transition"
+                        />
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200/80 text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-0.5">
+                                <Award className="size-3 text-amber-600" />
+                                <span>Hall of Fame & Podium</span>
+                            </div>
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
+                                Klasemen & Peringkat RAKIT Campus
+                            </h1>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">

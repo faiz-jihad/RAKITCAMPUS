@@ -458,17 +458,26 @@ export default function CompetitionDashboard({
                             <div className="absolute -top-10 -right-10 size-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
                             <div className="absolute -bottom-8 -left-8 size-28 rounded-full bg-purple-400/20 blur-xl pointer-events-none" />
 
-                            <div>
-                                <div className="size-10 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center mb-4">
-                                    <Bot className="size-5 text-amber-300" />
+                            <div className="flex items-start justify-between gap-3">
+                                <div>
+                                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[11px] font-bold text-amber-300 mb-3">
+                                        <Sparkles className="size-3" />
+                                        <span>Asisten Cerdas</span>
+                                    </div>
+
+                                    <h3 className="text-lg font-black tracking-tight text-white mb-1">
+                                        AI Workspace RAKIT
+                                    </h3>
+                                    <p className="text-xs text-indigo-100/90 leading-relaxed max-w-[210px]">
+                                        Konsultasikan draf proposal, telaah kriteria penjurian GEMASTIK/PKM, dan perbaiki penulisan karya secara instan.
+                                    </p>
                                 </div>
 
-                                <h3 className="text-lg font-black tracking-tight text-white mb-1">
-                                    AI Workspace RAKIT
-                                </h3>
-                                <p className="text-xs text-indigo-100/90 leading-relaxed">
-                                    Konsultasikan draf proposal, telaah kriteria penjurian GEMASTIK/PKM, dan perbaiki penulisan karya secara instan.
-                                </p>
+                                <img
+                                    src="/images/mascot/mascot-idea.png"
+                                    alt="RAKIT AI Mascot"
+                                    className="w-16 sm:w-20 h-auto object-contain drop-shadow-lg -mr-1 -mt-1 select-none pointer-events-none transform hover:scale-105 transition"
+                                />
                             </div>
 
                             <div className="mt-5">

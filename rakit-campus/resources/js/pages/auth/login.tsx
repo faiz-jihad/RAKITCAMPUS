@@ -98,8 +98,20 @@ export default function Login({ status, canResetPassword = true }: LoginProps) {
                     </Link>
                 </header>
 
-                {/* Center Content: Hero Headline */}
+                {/* Center Content: Hero Headline with Official Mascot */}
                 <div className="relative z-10 my-auto py-8 sm:py-12 flex flex-col items-center lg:items-start text-center lg:text-left w-full max-w-[540px] mx-auto lg:mx-0">
+                    <div className="flex items-center gap-4 sm:gap-5 mb-5">
+                        <img
+                            src="/images/mascot/mascot-hero.png"
+                            alt="RAKIT Mascot"
+                            className="w-24 sm:w-28 h-auto drop-shadow-xl select-none pointer-events-none transform -rotate-1 hover:rotate-0 transition duration-300"
+                        />
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-xs font-semibold shadow-2xs">
+                            <span className="size-2 rounded-full bg-blue-600 animate-pulse" />
+                            <span>From Idea to Podium</span>
+                        </div>
+                    </div>
+
                     <h1 className="text-4xl sm:text-5xl lg:text-[50px] xl:text-[54px] font-black tracking-tight text-slate-900 leading-[1.16]">
                         Rakit tim yang <br className="hidden sm:inline" />
                         saling{' '}
