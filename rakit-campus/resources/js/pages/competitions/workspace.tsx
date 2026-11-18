@@ -753,293 +753,249 @@ export default function CompetitionWorkspace({
                     </div>
                 )}
 
-                {/* 1. WORKSPACE HEADER — PRIMARY IDENTITY (Linear & Notion inspired) */}
-                <div className="space-y-4 pt-1">
-                    {/* Breadcrumbs & Status Indicators */}
-                    <div className="flex flex-wrap items-center justify-between gap-2.5 text-xs text-slate-500">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                            <Link
-                                href="/competitions"
-                                className="hover:text-slate-900 transition font-medium"
-                            >
-                                Competition Hub
-                            </Link>
-                            <ChevronRight className="size-3 text-slate-400 shrink-0" />
-                            <Link
-                                href={`/competitions/${participation.competition?.slug || participation.competition?.id}`}
-                                className="hover:text-slate-900 transition font-medium truncate max-w-[200px] sm:max-w-xs"
-                            >
-                                {participation.competition?.name}
-                            </Link>
-                            <ChevronRight className="size-3 text-slate-400 shrink-0" />
-                            <span className="font-semibold text-slate-900">
+                {/* 1. WORKSPACE HEADER — APPLE iOS HIG BENTO CONTEXT CARD (CLEAN & LESS TEXT) */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="space-y-2 min-w-0">
+                        {/* Team Title & Rename Action */}
+                        <div className="flex items-center gap-2.5">
+                            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight truncate">
                                 {participation.team?.name || 'Alba'}
-                            </span>
+                            </h1>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setNewTeamName(participation.team?.name || '');
+                                    setRenameModalOpen(true);
+                                }}
+                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
+                                title="Ubah Nama Tim"
+                            >
+                                <PenLine className="size-3.5" />
+                            </button>
                         </div>
 
-                        {/* Status Micro-Pills */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {/* Current Stage Pill */}
+                        {/* Minimal Competition Subtitle */}
+                        <p className="text-xs text-slate-500 font-medium truncate max-w-xl">
+                            {participation.competition?.name}
+                            {participation.competition?.level && (
+                                <span className="ml-2 uppercase text-[10px] font-bold text-slate-400">
+                                    • {participation.competition.level}
+                                </span>
+                            )}
+                        </p>
+
+                        {/* Apple HIG Micro-Pills */}
+                        <div className="flex items-center gap-2 flex-wrap pt-0.5">
                             <button
                                 type="button"
                                 onClick={() => (isLeader || isMentor || isAdmin) && setStageModalOpen(true)}
-                                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold transition ${
+                                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition ${
                                     (isLeader || isMentor || isAdmin)
-                                        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200/80 cursor-pointer'
+                                        ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 cursor-pointer'
                                         : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
                                 }`}
                                 title="Tahapan Seleksi Kompetisi"
                             >
-                                <span className="size-1.5 rounded-full bg-blue-600" />
-                                <span>Tahap: {selectionStages[participation.stage]?.label || participation.stage}</span>
-                                {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-blue-600" />}
+                                <span className="size-1.5 rounded-full bg-indigo-600" />
+                                <span>{selectionStages[participation.stage]?.label || participation.stage}</span>
+                                {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-indigo-600" />}
                             </button>
 
-                            {/* Formation Lock or Active Status */}
                             {participation.is_formation_locked ? (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                                    <Lock className="size-2.5" />
-                                    <span>Formasi Terkunci</span>
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <Lock className="size-3" />
+                                    <span>Terkunci</span>
                                 </span>
                             ) : (
-                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/70">
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                                     <span className="size-1.5 rounded-full bg-emerald-500" />
-                                    <span>Pendaftaran Aktif</span>
+                                    <span>Aktif</span>
                                 </span>
                             )}
 
-                            {/* Remaining Time / Deadline Badge */}
                             {daysLeft !== null && (
-                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${
+                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${
                                     daysLeft <= 7
                                         ? 'bg-rose-50 text-rose-700 border-rose-200'
                                         : 'bg-slate-50 text-slate-600 border-slate-200'
                                 }`}>
-                                    <Clock className="size-2.5" />
-                                    <span>{daysLeft > 0 ? `Sisa ${daysLeft} Hari` : 'Hari Terakhir!'}</span>
+                                    <Clock className="size-3" />
+                                    <span>{daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini!'}</span>
                                 </span>
                             )}
                         </div>
                     </div>
 
-                    {/* Dominant Workspace Name & Linear Action Toolbar */}
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                                    {participation.team?.name || 'Alba'}
-                                </h1>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        setNewTeamName(participation.team?.name || '');
-                                        setRenameModalOpen(true);
-                                    }}
-                                    className="p-1 rounded-md text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer"
-                                    title="Ubah Nama Tim"
-                                >
-                                    <PenLine className="size-3.5" />
-                                </button>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-                                <span className="font-medium text-slate-700">{participation.competition?.name}</span>
-                                <span>•</span>
-                                <span className="capitalize">{participation.competition?.category?.replace('_', ' ') || 'Kompetisi'}</span>
-                                {participation.category_track && (
-                                    <>
-                                        <span>•</span>
-                                        <span>Jalur: {participation.category_track}</span>
-                                    </>
-                                )}
-                                {participation.competition?.level && (
-                                    <>
-                                        <span>•</span>
-                                        <span className="uppercase text-[10px] font-semibold text-slate-400">{participation.competition.level}</span>
-                                    </>
-                                )}
-                            </div>
-                        </div>
+                    {/* Apple HIG Clean Action Toolbar */}
+                    <div className="flex items-center gap-2 flex-wrap shrink-0">
+                        {/* Web Resmi & Portal (Icon Buttons) */}
+                        {participation.competition?.official_url && (
+                            <a
+                                href={participation.competition.official_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition shadow-2xs"
+                                title="Website Resmi Penyelenggara"
+                            >
+                                <Globe className="size-4" />
+                            </a>
+                        )}
 
-                        {/* Linear-Style Action Toolbar */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                            {/* Official Competition Portal / Web */}
-                            {participation.competition?.official_url && (
-                                <a
-                                    href={participation.competition.official_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 hover:text-slate-900 transition shadow-2xs"
-                                    title="Website Resmi Penyelenggara"
-                                >
-                                    <Globe className="size-3.5 text-slate-400" />
-                                    <span className="hidden sm:inline">Web Resmi</span>
-                                    <ExternalLink className="size-3 text-slate-400" />
-                                </a>
+                        {participation.competition?.registration_url && (
+                            <a
+                                href={participation.competition.registration_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 transition shadow-2xs"
+                                title="Portal Pendaftaran Resmi"
+                            >
+                                <ExternalLink className="size-4" />
+                            </a>
+                        )}
+
+                        {/* GitHub Status Button */}
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('github')}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer"
+                            title="Monitoring GitHub Tim"
+                        >
+                            <Github className="size-3.5 text-slate-700" />
+                            {githubRepo ? (
+                                <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            ) : (
+                                <span className="text-[11px] text-slate-500">+ GitHub</span>
                             )}
+                        </button>
 
-                            {participation.competition?.registration_url && (
-                                <a
-                                    href={participation.competition.registration_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-600 hover:text-slate-900 transition shadow-2xs"
-                                    title="Portal Pendaftaran Resmi"
-                                >
-                                    <span>Portal Pendaftaran</span>
-                                    <ExternalLink className="size-3 text-slate-400" />
-                                </a>
-                            )}
+                        {/* Team Management Dropdown (Leader / Mentor / Admin) */}
+                        {(isLeader || isMentor || isAdmin) && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer"
+                                    >
+                                        <span>Kelola</span>
+                                        <ChevronDown className="size-3 text-slate-400 shrink-0" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-2xl shadow-lg border border-slate-200 bg-white z-50">
+                                    <DropdownMenuItem
+                                        onClick={() => setStageModalOpen(true)}
+                                        className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100"
+                                    >
+                                        <Sparkles className="size-3.5 text-indigo-600" />
+                                        <span>Update Tahapan Seleksi</span>
+                                    </DropdownMenuItem>
 
-                            {/* GitHub Status Button */}
+                                    {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
+                                        <>
+                                            <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                            <DropdownMenuItem
+                                                onClick={handleApproveFormation}
+                                                className="cursor-pointer gap-2 text-xs font-bold text-emerald-700 px-3 py-2 rounded-xl hover:bg-emerald-50"
+                                            >
+                                                <ShieldCheck className="size-3.5 text-emerald-600" />
+                                                <span>Setujui Formasi Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+
+                                    {isLeader && !participation.is_formation_locked && (
+                                        <>
+                                            <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                            <DropdownMenuItem
+                                                onClick={handleLockFormation}
+                                                className="cursor-pointer gap-2 text-xs font-semibold text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50"
+                                            >
+                                                <Lock className="size-3.5 text-rose-600" />
+                                                <span>Kunci Formasi Tim</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+
+                        {/* AI Orchestrator Action */}
+                        {isMember && (
                             <button
                                 type="button"
-                                onClick={() => setActiveTab('github')}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer"
-                                title="Monitoring GitHub Tim"
+                                onClick={handleOpenAiModal}
+                                disabled={aiGenerating}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer disabled:opacity-50"
+                                title="Susun otomatis rencana tugas dengan AI"
                             >
-                                <Github className="size-3.5 text-slate-700" />
-                                {githubRepo ? (
-                                    <>
-                                        <span className="font-mono text-[11px] truncate max-w-[120px] text-slate-800">
-                                            {githubRepo.name || githubRepo.full_name}
-                                        </span>
-                                        <span className="size-1.5 rounded-full bg-emerald-500 shrink-0" />
-                                    </>
-                                ) : (
-                                    <span className="text-[11px] text-slate-500">+ GitHub</span>
-                                )}
+                                <Sparkles className="size-3.5 text-indigo-600" />
+                                <span>{aiGenerating ? 'Menyusun...' : 'Susun AI'}</span>
                             </button>
+                        )}
 
-                            {/* Team Management Dropdown (Leader / Mentor / Admin) */}
-                            {(isLeader || isMentor || isAdmin) && (
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <button
-                                            type="button"
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer"
-                                        >
-                                            <span>Kelola Tim</span>
-                                            <ChevronDown className="size-3 text-slate-400 shrink-0" />
-                                        </button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="w-56 p-1 rounded-xl shadow-lg border border-slate-200 bg-white z-50">
-                                        <DropdownMenuItem
-                                            onClick={() => setStageModalOpen(true)}
-                                            className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-lg hover:bg-slate-100"
-                                        >
-                                            <Sparkles className="size-3.5 text-blue-600" />
-                                            <span>Update Tahapan Seleksi</span>
-                                        </DropdownMenuItem>
-
-                                        {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
-                                            <>
-                                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                                                <DropdownMenuItem
-                                                    onClick={handleApproveFormation}
-                                                    className="cursor-pointer gap-2 text-xs font-bold text-emerald-700 px-3 py-2 rounded-lg hover:bg-emerald-50"
-                                                >
-                                                    <ShieldCheck className="size-3.5 text-emerald-600" />
-                                                    <span>Setujui Formasi Tim</span>
-                                                </DropdownMenuItem>
-                                            </>
-                                        )}
-
-                                        {isLeader && !participation.is_formation_locked && (
-                                            <>
-                                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
-                                                <DropdownMenuItem
-                                                    onClick={handleLockFormation}
-                                                    className="cursor-pointer gap-2 text-xs font-semibold text-rose-700 px-3 py-2 rounded-lg hover:bg-rose-50"
-                                                >
-                                                    <Lock className="size-3.5 text-rose-600" />
-                                                    <span>Kunci Formasi Tim</span>
-                                                </DropdownMenuItem>
-                                            </>
-                                        )}
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            )}
-
-                            {/* AI Orchestrator Action */}
-                            {isMember && (
-                                <button
-                                    type="button"
-                                    onClick={handleOpenAiModal}
-                                    disabled={aiGenerating}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer disabled:opacity-50"
-                                    title="Susun otomatis rencana tugas dengan AI"
-                                >
-                                    <Sparkles className="size-3.5 text-blue-600" />
-                                    <span>{aiGenerating ? 'AI Menyusun...' : 'Susun AI'}</span>
-                                </button>
-                            )}
-
-                            {/* Add Task Primary CTA */}
-                            {canManageTasks && (
-                                <button
-                                    type="button"
-                                    onClick={() => setTaskModalOpen(true)}
-                                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
-                                >
-                                    <Plus className="size-3.5" />
-                                    <span>Tambah Tugas</span>
-                                </button>
-                            )}
-                        </div>
+                        {/* Add Task Primary CTA */}
+                        {canManageTasks && (
+                            <button
+                                type="button"
+                                onClick={() => setTaskModalOpen(true)}
+                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
+                            >
+                                <Plus className="size-3.5" />
+                                <span>Tugas</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* 2. WORKSPACE TABS NAVIGATION (Linear Minimalist Border-B) */}
-                <div
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                    className="flex items-center gap-1 overflow-x-auto border-b border-slate-200/80 no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden -mx-1 px-1"
-                >
-                    {[
-                        { id: 'overview', label: 'Ikhtisar Tim', icon: Users },
-                        { id: 'kanban', label: 'Papan Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
-                        { id: 'github', label: 'Monitoring GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
-                        { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount} Baru` : null },
-                        { id: 'documents', label: 'Berkas & Karya', icon: FileText, count: participation.documents?.length || 0 },
-                        { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
-                    ].map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
+                {/* 2. APPLE iOS SEGMENTED CONTROL TABS (CLEAN & LESS TEXT) */}
+                <div className="flex items-center justify-between gap-3 overflow-x-auto no-scrollbar py-0.5">
+                    <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm">
+                        {[
+                            { id: 'overview', label: 'Ikhtisar', icon: Users },
+                            { id: 'kanban', label: 'Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
+                            { id: 'github', label: 'GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
+                            { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount}` : null },
+                            { id: 'documents', label: 'Berkas', icon: FileText, count: participation.documents?.length || 0 },
+                            { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
+                        ].map((tab) => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
 
-                        return (
-                            <button
-                                key={tab.id}
-                                type="button"
-                                onClick={() => setActiveTab(tab.id as any)}
-                                className={`shrink-0 flex items-center gap-2 px-3.5 py-2.5 text-xs transition border-b-2 whitespace-nowrap cursor-pointer -mb-px font-medium ${
-                                    isActive
-                                        ? 'border-slate-900 text-slate-900 font-semibold'
-                                        : 'border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-300'
-                                }`}
-                            >
-                                <Icon className={`size-3.5 shrink-0 ${isActive ? 'text-slate-900' : 'text-slate-400'}`} />
-                                <span>{tab.label}</span>
-                                {typeof tab.count === 'number' && (
-                                    <span className={`text-[10px] font-mono font-medium px-1.5 py-0.2 rounded min-w-[18px] text-center shrink-0 ${
-                                        isActive ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
-                                    }`}>
-                                        {tab.count}
-                                    </span>
-                                )}
-                                {tab.badge && (
-                                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-slate-900 text-white shrink-0">
-                                        {tab.badge}
-                                    </span>
-                                )}
-                            </button>
-                        );
-                    })}
+                            return (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                                        isActive
+                                            ? 'bg-white text-slate-900 shadow-xs'
+                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                    }`}
+                                >
+                                    <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                    <span>{tab.label}</span>
+                                    {typeof tab.count === 'number' && (
+                                        <span className={`text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full min-w-[18px] text-center ${
+                                            isActive ? 'bg-slate-900 text-white' : 'bg-slate-200/80 text-slate-700'
+                                        }`}>
+                                            {tab.count}
+                                        </span>
+                                    )}
+                                    {tab.badge && (
+                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500 text-white">
+                                            {tab.badge}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
 
                     {participation.team_id && (
                         <Link
                             href={`/ai-workspace?team_id=${participation.team_id}&assistant=competition`}
-                            className="ml-auto shrink-0 flex items-center gap-1.5 px-3 py-1.5 my-1 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg transition"
+                            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs hover:shadow transition"
                         >
-                            <Sparkles className="size-3.5 text-blue-600" />
+                            <Sparkles className="size-3.5" />
                             <span>AI Workspace</span>
                         </Link>
                     )}
