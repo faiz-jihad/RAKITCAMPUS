@@ -38,8 +38,9 @@ class AuthenticatedSessionController extends Controller
         $isLecturer = $user && ($user->isLecturer() || ($membership?->role === \App\Enums\CampusRole::Lecturer));
 
         if ($isLecturer) {
-            // Dosen langsung masuk ke halaman dosen tanpa selector ruang kerja
-            return redirect()->intended(route('dashboard', absolute: false));
+            // Dosen langsung masuk ke halaman dashboard dosen
+            $request->session()->forget('url.intended');
+            return redirect()->route('dashboard');
         }
 
         $profile = $user?->profile;
@@ -47,9 +48,9 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('onboarding');
         }
 
-        $request->session()->put('show_hub_selector', true);
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Redirect langsung ke dashboard tanpa popup hub selector atau intended url lama
+        $request->session()->forget('url.intended');
+        return redirect()->route('dashboard');
     }
 
     /**

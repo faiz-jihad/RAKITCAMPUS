@@ -1259,7 +1259,7 @@ export default function CompetitionIndex({
                                                                             <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
                                                                             <span>{r.name}</span>
                                                                             {r.slots > 1 && (
-                                                                                <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
+                                                                                <span className="text-[10px] text-slate-400 font-normal">({r.slots} posisi)</span>
                                                                             )}
                                                                         </span>
                                                                     ))}
@@ -1288,7 +1288,7 @@ export default function CompetitionIndex({
                                                                     <span className="text-slate-400 text-[10px]">Terisi</span>
                                                                     {emptySlots > 0 ? (
                                                                         <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">
-                                                                            Sisa {emptySlots} Slot
+                                                                            Sisa {emptySlots} Kuota
                                                                         </span>
                                                                     ) : (
                                                                         <span className="ml-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70">

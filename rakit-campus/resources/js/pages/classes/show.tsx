@@ -1353,7 +1353,7 @@ export default function ClassShow({
                                     <div className="bg-white p-4 rounded-2xl border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
                                         <div>
                                             <h3 className="text-sm font-bold text-slate-900">Rekomendasi Rekan Sekelas</h3>
-                                            <p className="text-xs text-slate-500 mt-0.5">Pilih rekan dengan keahlian yang melengkapi slot tim Anda.</p>
+                                            <p className="text-xs text-slate-500 mt-0.5">Pilih rekan dengan keahlian yang melengkapi formasi tim Anda.</p>
                                         </div>
 
                                         <div className="text-xs shrink-0">

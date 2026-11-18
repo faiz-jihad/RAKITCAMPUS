@@ -454,7 +454,7 @@ export default function MatchmakingTab({
                                 <strong className="text-blue-700 font-bold text-base">{teamOptimization.covered_skills?.length || 0} Keahlian</strong>
                             </div>
                             <div className="p-3 rounded-xl bg-white border border-slate-200">
-                                <span className="text-slate-400 block font-semibold text-[10px] uppercase">Slot Lowong</span>
+                                <span className="text-slate-400 block font-semibold text-[10px] uppercase">Posisi Lowong</span>
                                 <strong className="text-slate-900 font-bold text-base">{teamOptimization.unfilled_roles?.length || 0} Posisi</strong>
                             </div>
                         </div>
