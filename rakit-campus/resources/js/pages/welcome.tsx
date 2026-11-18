@@ -1808,7 +1808,9 @@ export default function Welcome() {
                                         : 'all 500ms ease-out',
                         }}
                     >
-                        <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
+                        <span className={`text-2xl xs:text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.18em] sm:tracking-[0.22em] uppercase whitespace-nowrap transition-colors duration-500 ${
+                            introStage === 0 && !isMobile ? 'text-neutral-950' : 'text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]'
+                        }`}>
                             RAKIT
                         </span>
                     </div>
@@ -1834,7 +1836,9 @@ export default function Welcome() {
                                         : 'all 500ms ease-out',
                         }}
                     >
-                        <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
+                        <span className={`text-2xl xs:text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.18em] sm:tracking-[0.22em] uppercase whitespace-nowrap transition-colors duration-500 ${
+                            introStage === 0 && !isMobile ? 'text-neutral-950' : 'text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]'
+                        }`}>
                             CAMPUS
                         </span>
                     </div>
@@ -1854,8 +1858,8 @@ export default function Welcome() {
                     }`}
             >
                 {/* Logo (Serif All-Caps) */}
-                <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2">
-                    <span className="font-serif text-lg xs:text-xl sm:text-2xl md:text-3xl font-normal tracking-[0.15em] sm:tracking-[0.22em] text-white uppercase drop-shadow-md truncate">
+                <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2 shrink-0">
+                    <span className="font-serif text-base xs:text-lg sm:text-2xl md:text-3xl font-normal tracking-[0.18em] sm:tracking-[0.22em] text-white uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] whitespace-nowrap select-none">
                         RAKIT CAMPUS
                     </span>
                 </Link>
@@ -2025,11 +2029,16 @@ export default function Welcome() {
                     transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 }}
             >
-                {/* Top Bar of Sidebar with Close Button (Border line removed as requested) */}
-                <div className="flex items-center justify-end">
+                {/* Top Bar of Sidebar with Brand Logo & Close Button */}
+                <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-2">
+                    <Link href="/" onClick={() => setMobileMenuOpen(false)} className="flex items-center group">
+                        <span className="font-serif text-base sm:text-xl font-normal tracking-[0.2em] text-white uppercase drop-shadow-md">
+                            RAKIT CAMPUS
+                        </span>
+                    </Link>
                     <button
                         onClick={() => setMobileMenuOpen(false)}
-                        className="h-[38px] w-[46px] bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition-colors shadow-sm cursor-pointer"
+                        className="h-[38px] w-[46px] bg-white text-black flex items-center justify-center hover:bg-neutral-200 transition-colors shadow-sm cursor-pointer shrink-0"
                         aria-label="Tutup Menu"
                     >
                         <X className="w-5 h-5 stroke-[2]" />
