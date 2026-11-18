@@ -916,7 +916,7 @@ export default function LivingProposalTab({
 
             {/* Non-blocking Toast Notification (Menggantikan Alert Native Pop-up) */}
             {toastMessage && (
-                <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
                     <div
                         className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-xl border text-xs font-semibold backdrop-blur-md ${
                             toastMessage.type === 'success'

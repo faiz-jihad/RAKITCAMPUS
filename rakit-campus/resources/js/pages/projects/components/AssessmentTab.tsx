@@ -789,7 +789,7 @@ export default function AssessmentTab({
 
             {/* In-App Floating Toast Notification */}
             {toast && (
-                <div className="fixed bottom-6 right-6 z-50 flex items-start gap-3 p-4 bg-slate-900 text-white rounded-2xl shadow-2xl border border-slate-800 max-w-sm animate-in fade-in slide-in-from-bottom-5 duration-300">
+                <div className="fixed bottom-20 left-4 right-4 sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-sm z-50 flex items-start gap-3 p-3.5 sm:p-4 bg-slate-900/95 backdrop-blur-md text-white rounded-2xl shadow-2xl border border-slate-800 animate-in fade-in slide-in-from-bottom-5 duration-300">
                     <div className={`size-8 rounded-xl flex items-center justify-center shrink-0 ${
                         toast.type === 'success'
                             ? 'bg-blue-600 text-white'
