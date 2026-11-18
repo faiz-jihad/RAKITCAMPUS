@@ -36,9 +36,15 @@ class ProjectOrchestratorAgent
             }
 
             // 1. Define 4 Realistic Sprint Milestones (Roadmap Timeline)
+            $existingCount = $team->milestones()->count();
+            $s1 = $existingCount + 1;
+            $s2 = $existingCount + 2;
+            $s3 = $existingCount + 3;
+            $s4 = $existingCount + 4;
+
             $sprintsDefinition = [
                 [
-                    'title' => 'Sprint 1: Analisis Kebutuhan & Desain Arsitektur Sistem',
+                    'title' => "Sprint {$s1}: Analisis Kebutuhan & Desain Arsitektur Sistem",
                     'description' => 'Pemetaan spesifikasi kebutuhan fungsional (SRS), perancangan Entity Relationship Diagram (ERD), dan sketsa wireframe awal.',
                     'start_offset_weeks' => 0,
                     'due_offset_weeks' => 2,
@@ -59,7 +65,7 @@ class ProjectOrchestratorAgent
                     ],
                 ],
                 [
-                    'title' => 'Sprint 2: Pengembangan Fondasi UI/UX & Desain Basis Data',
+                    'title' => "Sprint {$s2}: Pengembangan Fondasi UI/UX & Desain Basis Data",
                     'description' => 'Slicing prototipe antarmuka pengguna, pembuatan migrasi tabel database, dan setup repositori kolaboratif.',
                     'start_offset_weeks' => 2,
                     'due_offset_weeks' => 5,
@@ -86,7 +92,7 @@ class ProjectOrchestratorAgent
                     ],
                 ],
                 [
-                    'title' => 'Sprint 3: Implementasi Fitur Utama, REST API & Logika Bisnis',
+                    'title' => "Sprint {$s3}: Implementasi Fitur Utama, REST API & Logika Bisnis",
                     'description' => 'Pengembangan modul inti, integrasi endpoint REST API, manajemen otentikasi peran, dan pengolahan data transaksi.',
                     'start_offset_weeks' => 5,
                     'due_offset_weeks' => 8,
@@ -113,7 +119,7 @@ class ProjectOrchestratorAgent
                     ],
                 ],
                 [
-                    'title' => 'Sprint 4: Pengujian Komprehensif, Review Dosen & Deployment',
+                    'title' => "Sprint {$s4}: Pengujian Komprehensif, Review Dosen & Deployment",
                     'description' => 'Audit keamanan sistem, pengujian end-to-end, presentasi progres bimbingan dosen, dan peluncuran produk ke server produksi.',
                     'start_offset_weeks' => 8,
                     'due_offset_weeks' => 10,

@@ -216,7 +216,7 @@ export default function ApplyCompetitionTeamModal({
                                                 </div>
                                             </div>
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 shrink-0">
-                                                {role.slots} Slot
+                                                {role.slots} Posisi
                                             </span>
                                         </label>
                                     ))}

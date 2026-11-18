@@ -141,7 +141,35 @@ export default function WorkspaceShow({
     const [taskAssignee, setTaskAssignee] = useState('');
     const [taskMilestone, setTaskMilestone] = useState('');
     const [targetColumn, setTargetColumn] = useState('todo');
+    const [taskDueOn, setTaskDueOn] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    // Helpers untuk konversi dan format tanggal agar input[type=date] selalu sinkron
+    const toDateInputValue = (val: string | null | undefined): string => {
+        if (!val) return '';
+        if (typeof val === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+            if (/^\d{4}-\d{2}-\d{2}T/.test(val)) return val.slice(0, 10);
+        }
+        const parsed = new Date(val);
+        if (!isNaN(parsed.getTime())) {
+            const year = parsed.getFullYear();
+            const month = String(parsed.getMonth() + 1).padStart(2, '0');
+            const day = String(parsed.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        return '';
+    };
+
+    const formatDisplayDate = (val: string | null | undefined): string => {
+        if (!val) return '';
+        if (typeof val === 'string' && /^\d{1,2}\s+[A-Za-z]{3}\s+\d{4}$/.test(val)) return val;
+        const parsed = new Date(val);
+        if (!isNaN(parsed.getTime())) {
+            return parsed.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+        }
+        return String(val);
+    };
 
     // Trello-style Drag & Drop state
     const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
@@ -172,9 +200,43 @@ export default function WorkspaceShow({
     const [sprintStartsOn, setSprintStartsOn] = useState('');
     const [sprintSubmitting, setSprintSubmitting] = useState(false);
 
+    // Helper: bersihkan judul milestone dari prefix "Sprint X:" atau "Milestone X:"
+    const getCleanMilestoneTitle = (rawTitle: string | null | undefined): string => {
+        if (!rawTitle) return '';
+        return rawTitle.replace(/^(Sprint|Milestone)\s*\d+\s*[:\-–]\s*/i, '').trim();
+    };
+
+    // Helper: dapatkan label badge sprint yang konsisten & urut sesuai urutan kartu roadmap (Sprint 1, Sprint 2, dst)
+    const getSprintBadge = (milestoneOrId: any): string | null => {
+        if (!milestoneOrId) return null;
+        const mId = typeof milestoneOrId === 'object' ? milestoneOrId.id : milestoneOrId;
+        if (!mId) return null;
+        const idx = milestones.findIndex((m: any) => Number(m.id) === Number(mId));
+        if (idx !== -1) {
+            return `Sprint ${idx + 1}`;
+        }
+        return null;
+    };
+
+    // Helper: format opsi sprint di dropdown form Buat & Edit Tugas
+    const formatSprintOptionTitle = (m: any, idx: number): string => {
+        const cleanTitle = getCleanMilestoneTitle(m?.title);
+        if (!cleanTitle || cleanTitle.toLowerCase() === `sprint ${idx + 1}`.toLowerCase()) {
+            return `Sprint ${idx + 1}`;
+        }
+        return `Sprint ${idx + 1}: ${cleanTitle}`;
+    };
+
     const openAddSprint = () => {
         setSprintToEdit(null);
-        setSprintTitle('');
+        // Cari angka sprint tertinggi yang ada agar sprint baru selalu urut
+        const existingNumbers = milestones.map((m: any, idx: number) => {
+            const match = m.title?.match(/Sprint\s+(\d+)/i);
+            return match ? parseInt(match[1], 10) : (idx + 1);
+        });
+        const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers, milestones.length) : milestones.length;
+        const nextNum = maxNum + 1;
+        setSprintTitle(`Sprint ${nextNum}: `);
         setSprintDescription('');
         setSprintStatus('planned');
         setSprintDueOn('');
@@ -182,13 +244,16 @@ export default function WorkspaceShow({
         setSprintModalOpen(true);
     };
 
-    const openEditSprint = (m: any) => {
+    const openEditSprint = (m: any, idx?: number) => {
         setSprintToEdit(m);
-        setSprintTitle(m.title || '');
+        const sprintIndex = typeof idx === 'number' ? idx : milestones.findIndex((item: any) => item.id === m.id);
+        const cleanTitle = getCleanMilestoneTitle(m.title);
+        const sprintNum = sprintIndex !== -1 ? sprintIndex + 1 : 1;
+        setSprintTitle(`Sprint ${sprintNum}: ${cleanTitle || m.title || ''}`);
         setSprintDescription(m.description || '');
         setSprintStatus(m.status?.toLowerCase().replace(' ', '_') || 'planned');
-        setSprintDueOn(m.due_on || '');
-        setSprintStartsOn(m.starts_on || '');
+        setSprintDueOn(m.due_on_iso || toDateInputValue(m.due_on));
+        setSprintStartsOn(m.starts_on_iso || toDateInputValue(m.starts_on));
         setSprintModalOpen(true);
     };
 
@@ -304,6 +369,24 @@ export default function WorkspaceShow({
     const completedTasksCount = (kanban.completed || []).length;
     const progressPercent = totalTasksCount > 0 ? Math.round((completedTasksCount / totalTasksCount) * 100) : (project?.progress || 0);
 
+    // Helper: hitung progress sprint dari kanban state (reaktif, selalu up to date saat task dipindah)
+    const getSprintProgress = (milestoneId: number, fallbackTotal = 0, fallbackCompleted = 0) => {
+        const sprintTasks = allTasks.filter((t: any) => Number(t.milestone_id) === Number(milestoneId));
+        if (sprintTasks.length > 0) {
+            const sprintCompleted = (kanban.completed || []).filter((t: any) => Number(t.milestone_id) === Number(milestoneId));
+            return {
+                total: sprintTasks.length,
+                completed: sprintCompleted.length,
+                percent: Math.round((sprintCompleted.length / sprintTasks.length) * 100),
+            };
+        }
+        return {
+            total: fallbackTotal,
+            completed: fallbackCompleted,
+            percent: fallbackTotal > 0 ? Math.round((fallbackCompleted / fallbackTotal) * 100) : 0,
+        };
+    };
+
     // AI Orchestrator Agent Trigger
     const handleTriggerAiAgent = async () => {
         setOrchestrating(true);
@@ -358,18 +441,32 @@ export default function WorkspaceShow({
                     assignee_id: taskAssignee ? parseInt(taskAssignee, 10) : null,
                     milestone_id: taskMilestone ? parseInt(taskMilestone, 10) : null,
                     status: targetColumn,
+                    due_on: taskDueOn || null,
                 }),
             });
 
             const json = await res.json();
             if (res.ok) {
+                const newTask = json.data ? {
+                    ...json.data,
+                    due_on: json.data.due_on ? toDateInputValue(json.data.due_on) : (taskDueOn || null),
+                } : {
+                    id: Date.now(),
+                    title: taskTitle,
+                    description: taskDescription,
+                    priority: taskPriority,
+                    status: targetColumn,
+                    due_on: taskDueOn || null,
+                    milestone_id: taskMilestone ? parseInt(taskMilestone, 10) : null,
+                };
                 setKanban((prev) => ({
                     ...prev,
-                    [targetColumn]: [json.data, ...(prev as any)[targetColumn]],
+                    [targetColumn]: [newTask, ...(prev as any)[targetColumn]],
                 }));
                 setTaskModalOpen(false);
                 setTaskTitle('');
                 setTaskDescription('');
+                setTaskDueOn('');
             } else {
                 alert(json.message || 'Gagal menambahkan tugas.');
             }
@@ -382,7 +479,12 @@ export default function WorkspaceShow({
 
     // Edit Task
     const handleOpenEditModal = (task: any) => {
-        setTaskToEdit({ ...task });
+        setTaskToEdit({
+            ...task,
+            due_on: toDateInputValue(task.due_on),
+            assignee_id: task.assignee_id ?? task.assignee?.id ?? '',
+            milestone_id: task.milestone_id ?? task.milestone?.id ?? '',
+        });
         setEditModalOpen(true);
     };
 
@@ -414,7 +516,10 @@ export default function WorkspaceShow({
 
             const json = await res.json();
             if (res.ok) {
-                const updated = json.data || taskToEdit;
+                const updated = json.data ? {
+                    ...json.data,
+                    due_on: json.data.due_on ? toDateInputValue(json.data.due_on) : (taskToEdit.due_on || null),
+                } : taskToEdit;
                 // Reconstruct Kanban lists
                 setKanban((prev: any) => {
                     const nextKanban: any = { todo: [], in_progress: [], in_review: [], completed: [] };
@@ -757,7 +862,7 @@ export default function WorkspaceShow({
                                 <span className="font-bold text-slate-900">{team.members?.length || 1}/{team.capacity} Anggota</span>
                                 <span className="text-slate-300">·</span>
                                 <span className={`font-semibold ${isFull ? 'text-blue-600' : 'text-slate-500'}`}>
-                                    {isFull ? 'Penuh' : 'Slot Terbuka'}
+                                    {isFull ? 'Penuh' : 'Kuota Tersedia'}
                                 </span>
                             </span>
 
@@ -1092,7 +1197,7 @@ export default function WorkspaceShow({
                                                         <div className="flex items-center gap-0.5 ml-1">
                                                             <button
                                                                 type="button"
-                                                                onClick={() => openEditSprint(m)}
+                                                                onClick={() => openEditSprint(m, idx)}
                                                                 className="p-1 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition cursor-pointer"
                                                                 title="Edit Sprint"
                                                             >
@@ -1111,8 +1216,8 @@ export default function WorkspaceShow({
                                                 </div>
                                             </div>
 
-                                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1 leading-snug">
-                                                {m.title}
+                                            <h4 className="text-xs font-bold text-slate-900 line-clamp-1 leading-snug" title={m.title}>
+                                                {getCleanMilestoneTitle(m.title) || m.title}
                                             </h4>
 
                                             {m.description && (
@@ -1123,21 +1228,28 @@ export default function WorkspaceShow({
                                         </div>
 
                                         <div className="mt-4 pt-3 border-t border-slate-100">
-                                            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-                                                <span className="flex items-center gap-1">
-                                                    <Clock className="size-3 text-slate-400" />
-                                                    <span>{m.due_on || 'Tenggat Waktu'}</span>
-                                                </span>
-                                                <span className="font-bold text-slate-800">
-                                                    {m.completed_tasks_count || 0}/{m.tasks_count || 0} Selesai
-                                                </span>
-                                            </div>
-                                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/40">
-                                                <div
-                                                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
-                                                    style={{ width: `${m.progress || 0}%` }}
-                                                />
-                                            </div>
+                                            {(() => {
+                                                const sp = getSprintProgress(m.id, m.tasks_count, m.completed_tasks_count);
+                                                return (
+                                                    <>
+                                                        <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
+                                                            <span className="flex items-center gap-1">
+                                                                <Clock className="size-3 text-slate-400" />
+                                                                <span>{m.due_on || 'Tenggat Waktu'}</span>
+                                                            </span>
+                                                            <span className="font-bold text-slate-800">
+                                                                {sp.completed}/{sp.total} Selesai ({sp.percent}%)
+                                                            </span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden border border-slate-200/40">
+                                                            <div
+                                                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-500"
+                                                                style={{ width: `${sp.percent}%` }}
+                                                            />
+                                                        </div>
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                     </div>
                                 ))
@@ -1267,21 +1379,21 @@ export default function WorkspaceShow({
                                                         }`}
                                                     >
                                                         {/* Priority Chip & Actions */}
-                                                        <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center justify-between gap-1.5 min-w-0 w-full">
                                                             <span
-                                                                className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border ${priority.cls}`}
+                                                                className={`inline-flex items-center gap-1 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${priority.cls}`}
                                                             >
                                                                 <span className={`size-1.5 rounded-full ${priority.dot}`} />
                                                                 <span>{priority.label}</span>
                                                             </span>
 
-                                                            <div className="flex items-center gap-1">
+                                                            <div className="flex items-center gap-1 min-w-0 shrink">
                                                                 <button
                                                                     onClick={(e) => {
                                                                         e.stopPropagation();
                                                                         handleOpenEditModal(task);
                                                                     }}
-                                                                    className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100"
+                                                                    className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 transition opacity-0 group-hover:opacity-100 shrink-0 cursor-pointer"
                                                                     title="Edit Kartu"
                                                                 >
                                                                     <Edit3 className="size-3" />
@@ -1295,12 +1407,13 @@ export default function WorkspaceShow({
                                                                         e.stopPropagation();
                                                                         handleMoveStatus(task, e.target.value);
                                                                     }}
-                                                                    className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none hover:bg-slate-100 cursor-pointer"
+                                                                    className="text-[10px] font-semibold bg-slate-50 border border-slate-200 rounded-md px-1.5 py-0.5 text-slate-600 focus:outline-none focus:ring-1 focus:ring-blue-500 hover:bg-slate-100 cursor-pointer max-w-[85px] sm:max-w-[105px] truncate"
+                                                                    title="Pindah Status"
                                                                 >
                                                                     <option value="todo">To Do</option>
-                                                                    <option value="in_progress">In Process</option>
-                                                                    <option value="in_review">In Review</option>
-                                                                    <option value="completed">Completed</option>
+                                                                    <option value="in_progress">Progress</option>
+                                                                    <option value="in_review">Review</option>
+                                                                    <option value="completed">Done</option>
                                                                 </select>
                                                             </div>
                                                         </div>
@@ -1317,24 +1430,36 @@ export default function WorkspaceShow({
                                                             </p>
                                                         )}
 
-                                                        {/* Card Footer: Assignee & Milestone Sprint */}
-                                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] mt-1">
-                                                            <div className="flex items-center gap-1.5 text-slate-600">
+                                                        {/* Card Footer: Assignee, Due Date & Milestone Sprint */}
+                                                        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 text-[11px] mt-1 flex-wrap">
+                                                            <div className="flex items-center gap-1.5 text-slate-600 min-w-0">
                                                                 <div className="size-5 rounded-full bg-blue-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0 shadow-2xs">
                                                                     {task.assignee?.name
                                                                         ? task.assignee.name.substring(0, 1).toUpperCase()
                                                                         : '?'}
                                                                 </div>
-                                                                <span className="truncate max-w-[90px] text-[10px] font-medium text-slate-700">
+                                                                <span className="truncate max-w-[80px] text-[10px] font-medium text-slate-700">
                                                                     {task.assignee?.name?.split(' ')[0] || 'Unassigned'}
                                                                 </span>
                                                             </div>
 
-                                                            {task.milestone && (
-                                                                <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold truncate max-w-[100px]">
-                                                                    {task.milestone.title?.split(':')[0] || task.milestone.title}
-                                                                </span>
-                                                            )}
+                                                            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+                                                                {task.due_on && (
+                                                                    <span
+                                                                        className="flex items-center gap-1 text-[9px] font-medium text-slate-500 bg-slate-50 border border-slate-200/60 rounded px-1.5 py-0.5"
+                                                                        title={`Tenggat: ${formatDisplayDate(task.due_on)}`}
+                                                                    >
+                                                                        <Clock className="size-2.5 text-slate-400 shrink-0" />
+                                                                        <span className="font-mono">{formatDisplayDate(task.due_on)}</span>
+                                                                    </span>
+                                                                )}
+
+                                                                {(task.milestone_id || task.milestone) && getSprintBadge(task.milestone_id || task.milestone) && (
+                                                                    <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold shrink-0">
+                                                                        {getSprintBadge(task.milestone_id || task.milestone)}
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 );
@@ -1428,13 +1553,27 @@ export default function WorkspaceShow({
                                                         </div>
                                                     </div>
 
-                                                    <div className="flex items-center gap-2.5">
-                                                        <span className="text-[11px] text-slate-600 font-medium">
+                                                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap sm:flex-nowrap">
+                                                        {(task.milestone_id || task.milestone) && getSprintBadge(task.milestone_id || task.milestone) && (
+                                                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100 font-semibold shrink-0">
+                                                                {getSprintBadge(task.milestone_id || task.milestone)}
+                                                            </span>
+                                                        )}
+                                                        {task.due_on && (
+                                                            <span
+                                                                className="flex items-center gap-1 text-[10px] text-slate-500 font-medium bg-slate-50 border border-slate-200/60 rounded px-2 py-1 shrink-0"
+                                                                title={`Tenggat: ${formatDisplayDate(task.due_on)}`}
+                                                            >
+                                                                <Clock className="size-3 text-slate-400 shrink-0" />
+                                                                <span className="font-mono">{formatDisplayDate(task.due_on)}</span>
+                                                            </span>
+                                                        )}
+                                                        <span className="text-[11px] text-slate-600 font-medium shrink-0">
                                                             {task.assignee?.name || 'Unassigned'}
                                                         </span>
                                                         <button
                                                             onClick={() => handleOpenEditModal(task)}
-                                                            className="p-1 rounded text-slate-400 hover:text-blue-600 transition cursor-pointer"
+                                                            className="p-1 rounded text-slate-400 hover:text-blue-600 transition cursor-pointer shrink-0"
                                                             title="Edit Tugas"
                                                         >
                                                             <Edit3 className="size-3.5" />
@@ -1442,12 +1581,12 @@ export default function WorkspaceShow({
                                                         <select
                                                             value={task.status}
                                                             onChange={(e) => handleMoveStatus(task, e.target.value)}
-                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer"
+                                                            className="text-[10px] border border-slate-200 rounded-lg px-2 py-1 text-slate-700 outline-none bg-slate-50 cursor-pointer max-w-[105px] truncate shrink-0"
                                                         >
                                                             <option value="todo">To Do</option>
-                                                            <option value="in_progress">In Process</option>
-                                                            <option value="in_review">In Review</option>
-                                                            <option value="completed">Completed</option>
+                                                            <option value="in_progress">Progress</option>
+                                                            <option value="in_review">Review</option>
+                                                            <option value="completed">Done</option>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1542,22 +1681,36 @@ export default function WorkspaceShow({
                                     </div>
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                        Sprint / Milestone Terkait
-                                    </label>
-                                    <select
-                                        value={taskMilestone}
-                                        onChange={(e) => setTaskMilestone(e.target.value)}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
-                                    >
-                                        <option value="">-- Tanpa Sprint Khusus --</option>
-                                        {milestones.map((m: any) => (
-                                            <option key={m.id} value={m.id}>
-                                                {m.title}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Sprint / Milestone Terkait
+                                        </label>
+                                        <select
+                                            value={taskMilestone}
+                                            onChange={(e) => setTaskMilestone(e.target.value)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
+                                        >
+                                            <option value="">-- Tanpa Sprint Khusus --</option>
+                                            {milestones.map((m: any, idx: number) => (
+                                                <option key={m.id} value={m.id}>
+                                                    {formatSprintOptionTitle(m, idx)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Tenggat Waktu (Due Date)
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={taskDueOn}
+                                            onChange={(e) => setTaskDueOn(e.target.value)}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
@@ -1695,22 +1848,36 @@ export default function WorkspaceShow({
                                     </select>
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                                        Sprint / Milestone Terkait
-                                    </label>
-                                    <select
-                                        value={taskToEdit.milestone_id || ''}
-                                        onChange={(e) => setTaskToEdit({ ...taskToEdit, milestone_id: e.target.value })}
-                                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
-                                    >
-                                        <option value="">-- Tanpa Sprint --</option>
-                                        {milestones.map((m: any) => (
-                                            <option key={m.id} value={m.id}>
-                                                {m.title}
-                                            </option>
-                                        ))}
-                                    </select>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Sprint / Milestone Terkait
+                                        </label>
+                                        <select
+                                            value={taskToEdit.milestone_id || ''}
+                                            onChange={(e) => setTaskToEdit({ ...taskToEdit, milestone_id: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
+                                        >
+                                            <option value="">-- Tanpa Sprint --</option>
+                                            {milestones.map((m: any, idx: number) => (
+                                                <option key={m.id} value={m.id}>
+                                                    {formatSprintOptionTitle(m, idx)}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                            Tenggat Waktu (Due Date)
+                                        </label>
+                                        <input
+                                            type="date"
+                                            value={taskToEdit.due_on || ''}
+                                            onChange={(e) => setTaskToEdit({ ...taskToEdit, due_on: e.target.value })}
+                                            className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-900 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div className="flex items-center justify-between gap-2.5 mt-4 pt-3 border-t border-slate-100">

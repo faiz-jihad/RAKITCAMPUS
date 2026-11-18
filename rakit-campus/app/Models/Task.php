@@ -34,7 +34,7 @@ class Task extends Model
         return [
             'status' => TaskStatus::class,
             'priority' => TaskPriority::class,
-            'due_on' => 'date',
+            'due_on' => 'date:Y-m-d',
             'completed_at' => 'datetime',
             'position' => 'integer',
         ];

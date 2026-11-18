@@ -2227,7 +2227,7 @@ export default function ProjectShow({
                                                     : !hasOpenRecruitment
                                                     ? 'Rekrutmen Ditutup'
                                                     : project.has_capacity
-                                                    ? 'Rekrutmen Terbuka • Slot Tersedia'
+                                                    ? 'Rekrutmen Terbuka • Kuota Tersedia'
                                                     : 'Kapasitas Penuh'}
                                             </span>
                                             {isLeader && !['team_locked', 'workspace_activated'].includes(project.formation_status || '') && (
@@ -2301,7 +2301,7 @@ export default function ProjectShow({
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-900">{role.name}</h4>
                                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                                            Kebutuhan: {role.slots || 1} slot • {role.requirements || role.description || 'Keahlian teknis relevan dengan proyek'}
+                                                            Kebutuhan: {role.slots || 1} posisi • {role.requirements || role.description || 'Keahlian teknis relevan dengan proyek'}
                                                         </p>
                                                     </div>
 

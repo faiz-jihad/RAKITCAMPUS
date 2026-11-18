@@ -168,7 +168,7 @@ class WorkspaceWebController extends Controller
             ->withCount(['tasks', 'tasks as completed_tasks_count' => function ($q) {
                 $q->where('status', TaskStatus::Completed->value);
             }])
-            ->orderBy('starts_on')
+            ->orderBy('id', 'asc')
             ->get()
             ->map(fn ($m) => [
                 'id' => $m->id,
@@ -177,6 +177,8 @@ class WorkspaceWebController extends Controller
                 'status' => $m->status,
                 'starts_on' => $m->starts_on?->format('d M Y'),
                 'due_on' => $m->due_on?->format('d M Y'),
+                'starts_on_iso' => $m->starts_on?->format('Y-m-d'),
+                'due_on_iso' => $m->due_on?->format('Y-m-d'),
                 'tasks_count' => $m->tasks_count,
                 'completed_tasks_count' => $m->completed_tasks_count,
                 'progress' => $m->tasks_count > 0 ? (int) round(($m->completed_tasks_count / $m->tasks_count) * 100) : 0,
@@ -274,6 +276,7 @@ class WorkspaceWebController extends Controller
             'assignee_id' => ['nullable', 'exists:users,id'],
             'milestone_id' => ['nullable', 'exists:milestones,id'],
             'status' => ['required', Rule::enum(TaskStatus::class)],
+            'due_on' => ['nullable', 'date'],
         ]);
 
         $user = $request->user();
@@ -290,6 +293,7 @@ class WorkspaceWebController extends Controller
             'assignee_id' => $validated['assignee_id'] ?? null,
             'milestone_id' => $validated['milestone_id'] ?? null,
             'status' => $validated['status'],
+            'due_on' => $validated['due_on'] ?? null,
             'position' => $maxPos + 1,
             'completed_at' => $validated['status'] === TaskStatus::Completed->value ? now() : null,
         ]);
@@ -489,6 +493,8 @@ class WorkspaceWebController extends Controller
                     'status' => $milestone->status->value ?? $milestone->status,
                     'starts_on' => $milestone->starts_on?->format('d M Y'),
                     'due_on' => $milestone->due_on?->format('d M Y'),
+                    'starts_on_iso' => $milestone->starts_on?->format('Y-m-d'),
+                    'due_on_iso' => $milestone->due_on?->format('Y-m-d'),
                     'tasks_count' => 0,
                     'completed_tasks_count' => 0,
                     'progress' => 0,
@@ -549,6 +555,8 @@ class WorkspaceWebController extends Controller
                     'status' => is_object($milestone->status) ? $milestone->status->value : $milestone->status,
                     'starts_on' => $milestone->starts_on?->format('d M Y'),
                     'due_on' => $milestone->due_on?->format('d M Y'),
+                    'starts_on_iso' => $milestone->starts_on?->format('Y-m-d'),
+                    'due_on_iso' => $milestone->due_on?->format('Y-m-d'),
                     'tasks_count' => $tasksCount,
                     'completed_tasks_count' => $completedCount,
                     'progress' => $progress,
