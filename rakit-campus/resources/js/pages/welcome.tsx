@@ -1761,7 +1761,7 @@ export default function Welcome() {
                 title="RAKIT Campus — Platform Kolaborasi Mahasiswa, Tim Proyek & Hub Kompetisi Berbasis AI"
                 description="Platform terpadu untuk pembentukan tim proyek, living proposal, matchmaking berbasis AI, manajemen tugas akademik, dan hub kompetisi nasional antar kampus. Daftar gratis sekarang."
                 keywords="platform kolaborasi mahasiswa, tim proyek kampus, kompetisi mahasiswa, living proposal, AI matchmaking, hackathon indonesia, portofolio mahasiswa, manajemen tim akademik, RAKIT Campus, inovasi kampus"
-                canonicalUrl="https://rakitcampus.my.id"
+                canonicalUrl="https://rakitcampus.my.id/"
             />
 
             {/* Suppress blue NProgress bar on Landing Page when navigating into website */}

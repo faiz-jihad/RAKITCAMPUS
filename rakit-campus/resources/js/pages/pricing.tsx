@@ -1,3 +1,4 @@
+import SeoHead from '@/components/seo/SeoHead';
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
@@ -147,7 +148,12 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Paket & Biaya Mahasiswa — RAKIT Campus" />
+            <SeoHead
+                title="Paket & Biaya Mahasiswa — Investasi Terjangkau untuk Prestasi Nyata"
+                description="Pilihan paket berlangganan RAKIT Campus untuk mahasiswa dan tim: Akses eksplorasi kompetisi gratis selamanya, AI Pass, RAKIT Pro, dan Paket Tim dengan QRIS instan tanpa kartu kredit."
+                keywords="harga rakit campus, langganan rakit pro, kuota ai mahasiswa, paket tim kompetisi, rakit campus"
+                canonicalUrl="https://rakitcampus.my.id/pricing"
+            />
 
             <div className="py-8 sm:py-12 px-4 sm:px-6 max-w-7xl mx-auto w-full space-y-10 sm:space-y-14">
                 {/* Header Section */}

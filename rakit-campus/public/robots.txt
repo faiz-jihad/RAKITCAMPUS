@@ -23,6 +23,8 @@ Allow: /favicon.png
 Disallow: /dashboard
 Disallow: /workspace
 Disallow: /workspace/*
+Disallow: /ai-workspace
+Disallow: /ai-workspace/*
 Disallow: /competition-workspace
 Disallow: /competition-workspace/*
 Disallow: /admin
@@ -40,6 +42,11 @@ Disallow: /reset-password
 Disallow: /email/
 Disallow: /storage-download/
 Disallow: /feedback
+Disallow: /classes
+Disallow: /classes/*
+Disallow: /portfolio
+Disallow: /competitions/create
+Disallow: /projects/create
 
 # Search Engine Crawlers
 User-agent: Googlebot

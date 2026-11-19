@@ -50,6 +50,24 @@ class SitemapWebController extends Controller
                 'changefreq' => 'weekly',
                 'priority' => '0.8',
             ],
+            [
+                'loc' => $baseUrl . '/pricing',
+                'lastmod' => $now,
+                'changefreq' => 'weekly',
+                'priority' => '0.8',
+            ],
+            [
+                'loc' => $baseUrl . '/terms',
+                'lastmod' => $now,
+                'changefreq' => 'monthly',
+                'priority' => '0.5',
+            ],
+            [
+                'loc' => $baseUrl . '/privacy',
+                'lastmod' => $now,
+                'changefreq' => 'monthly',
+                'priority' => '0.5',
+            ],
         ];
 
         // Public Active Competitions

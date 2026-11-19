@@ -29,15 +29,24 @@ export default function SeoHead({
     // Strip trailing brand suffix if already present so app.tsx title formatter doesn't duplicate
     const cleanTitle = title.replace(/\s*[-—|]\s*RAKIT\s*Campus.*$/i, '').trim();
 
-    // Strictly normalize canonical URL to https://rakitcampus.my.id without www, trailing slashes, or query params
-    const normalizedCanonical = canonicalUrl
-        ? canonicalUrl
-              .replace(/^http:\/\//, 'https://')
-              .replace('https://www.rakitcampus.my.id', 'https://rakitcampus.my.id')
-              .replace('https://rakitcampus.mataceria.my.id', 'https://rakitcampus.my.id')
-              .split('?')[0]
-              .replace(/\/+$/, '') || 'https://rakitcampus.my.id'
-        : 'https://rakitcampus.my.id';
+    // Strictly normalize canonical URL to https://rakitcampus.my.id
+    // Root path strictly resolves to https://rakitcampus.my.id/ to match sitemap.xml and W3C standard
+    // Sub-paths strictly resolve to https://rakitcampus.my.id/path (without trailing slash)
+    let normalizedCanonical = 'https://rakitcampus.my.id/';
+    if (canonicalUrl) {
+        const clean = canonicalUrl
+            .replace(/^http:\/\//, 'https://')
+            .replace('https://www.rakitcampus.my.id', 'https://rakitcampus.my.id')
+            .replace('https://rakitcampus.mataceria.my.id', 'https://rakitcampus.my.id')
+            .split('?')[0];
+
+        const path = clean.replace('https://rakitcampus.my.id', '').trim();
+        if (!path || path === '/' || path === '') {
+            normalizedCanonical = 'https://rakitcampus.my.id/';
+        } else {
+            normalizedCanonical = 'https://rakitcampus.my.id/' + path.replace(/^\/+/, '').replace(/\/+$/, '');
+        }
+    }
 
     return (
         <Head title={cleanTitle}>

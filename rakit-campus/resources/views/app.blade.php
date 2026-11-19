@@ -12,12 +12,14 @@
             $baseUrl = 'https://rakitcampus.my.id';
 
             // Canonical URL: Strictly enforce canonical scheme & production domain (https://rakitcampus.my.id)
-            // Strip any query strings, trailing slashes, or alternate host headers (www, mataceria, 127.0.0.1)
+            // Root path strictly resolves to https://rakitcampus.my.id/ to match sitemap.xml and W3C standard
+            // Sub-paths strictly resolve to https://rakitcampus.my.id/path (without trailing slash)
             $pathInfo = request()->getPathInfo();
-            $canonicalPath = '/' . ltrim($pathInfo, '/');
-            $canonicalUrl = rtrim($baseUrl . $canonicalPath, '/');
-            if ($canonicalPath === '/' || empty($canonicalUrl)) {
-                $canonicalUrl = $baseUrl;
+            $cleanPath = trim($pathInfo, '/');
+            if (empty($cleanPath)) {
+                $canonicalUrl = $baseUrl . '/';
+            } else {
+                $canonicalUrl = $baseUrl . '/' . $cleanPath;
             }
             $currentUrl = $canonicalUrl;
 
@@ -27,6 +29,11 @@
                 'workspace/index',
                 'workspace/show',
                 'competitions/workspace',
+                'competitions/create',
+                'projects/create',
+                'ai-workspace/index',
+                'ai-workspace/history',
+                'feedback/index',
                 'settings/profile',
                 'settings/password',
                 'settings/appearance',
@@ -34,15 +41,24 @@
                 'admin/competitions/index',
                 'admin/notifications/index',
                 'admin/students',
+                'admin/teams',
+                'admin/feedback/index',
                 'notifications/index',
                 'onboarding/index',
                 'classes/index',
                 'classes/show',
                 'leaderboard/admin',
+                'portfolio/index',
+                'auth/login',
+                'auth/register',
+                'auth/forgot-password',
+                'auth/reset-password',
+                'auth/verify-email',
+                'auth/confirm-password',
             ];
 
             $isPrivate = in_array($component, $privateComponents, true)
-                || \Illuminate\Support\Str::startsWith($component, ['admin/', 'settings/']);
+                || \Illuminate\Support\Str::startsWith($component, ['admin/', 'settings/', 'ai-workspace', 'auth/', 'workspace', 'classes']);
 
             $atContext = '@context';
             $atId = '@id';
@@ -193,6 +209,18 @@
                 $seoTitle = "Portofolio & Rekam Jejak {$uName} — RAKIT Campus";
                 $seoDescription = "Lihat rekam jejak akademik, portofolio karya, dan riwayat prestasi kompetisi {$uName}" . ($headline ? " ({$headline})" : '') . " di RAKIT Campus.";
                 $seoKeywords = "portofolio {$uName}, prestasi mahasiswa, rekam jejak, karya mahasiswa, rakit campus";
+            } elseif ($component === 'pricing') {
+                $seoTitle = 'Paket & Biaya Mahasiswa — Investasi Terjangkau untuk Prestasi Nyata | RAKIT Campus';
+                $seoDescription = 'Pilihan paket berlangganan RAKIT Campus untuk mahasiswa dan tim: Akses eksplorasi gratis, AI Pass, RAKIT Pro, dan Paket Tim dengan QRIS instan tanpa kartu kredit.';
+                $seoKeywords = 'harga rakit campus, langganan rakit pro, kuota ai mahasiswa, paket tim kompetisi, rakit campus';
+            } elseif ($component === 'terms/index') {
+                $seoTitle = 'Syarat & Ketentuan Layanan — RAKIT Campus';
+                $seoDescription = 'Ketentuan penggunaan platform RAKIT Campus untuk mahasiswa, dosen, dan institusi pendidikan tinggi.';
+                $seoKeywords = 'syarat ketentuan rakit campus, aturan platform, terms of service';
+            } elseif ($component === 'privacy/index') {
+                $seoTitle = 'Kebijakan Privasi — RAKIT Campus';
+                $seoDescription = 'Kebijakan perlindungan data pribadi dan privasi pengguna di ekosistem RAKIT Campus.';
+                $seoKeywords = 'kebijakan privasi rakit campus, privasi data mahasiswa, privacy policy';
             }
         @endphp
 
