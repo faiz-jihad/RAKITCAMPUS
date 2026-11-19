@@ -397,78 +397,78 @@ export default function ProjectIndex({
                             actionHref={!(search || category || status) && !isLecturer ? "/projects/create" : undefined}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-2">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
+                                const jigsawPathD = "M 42 42 L 154 42 C 160 42 174 40.1 180 33.64 C 158 22.24 173.4 4 200 4 C 226.6 4 242 22.24 220 33.64 C 226 40.1 240 42 246 42 L 358 42 L 358 184 C 358 190 356.1 204 349.64 210 C 338.24 188 320 203.4 320 230 C 320 256.6 338.24 272 349.64 250 C 356.1 256 358 270 358 276 L 358 418 L 246 418 C 240 418 226 416.1 220 409.64 C 242 398.24 226.6 380 200 380 C 173.4 380 158 398.24 180 409.64 C 174 416.1 160 418 154 418 L 42 418 L 42 276 C 42 270 40.1 256 33.64 250 C 22.24 272 4 256.6 4 230 C 4 203.4 22.24 188 33.64 210 C 40.1 204 42 190 42 184 L 42 42 Z";
+
                                 return (
                                     <div
                                         key={proj.id}
-                                        className="group relative pt-6 transition-all duration-300"
+                                        className="group relative transition-all duration-300 ease-out hover:-translate-y-2.5 cursor-default select-none"
                                     >
-                                        {/* 3D FLOATING JIGSAW PIECE WRAPPER (Melayang bersamaan saat di-hover) */}
-                                        <div className="relative transition-all duration-300 ease-out group-hover:-translate-y-2">
-                                            {/* 1. 3D JIGSAW CONNECTOR TAB (Kuping/Tonjolan Sambungan Puzzle 3D di Atas) */}
-                                            <div className="absolute -top-[21px] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                                                <svg
-                                                    viewBox="0 0 76 24"
-                                                    className="w-[76px] h-[24px] overflow-visible drop-shadow-[0_-3px_6px_rgba(29,78,216,0.35)]"
-                                                    fill="none"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                >
-                                                    <defs>
-                                                        <linearGradient id={`jigsaw-tab-${proj.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                                            <stop offset="0%" stopColor="#3B82F6" />
-                                                            <stop offset="100%" stopColor="#2563EB" />
-                                                        </linearGradient>
-                                                    </defs>
-                                                    {/* Badan Tonjolan Puzzle */}
-                                                    <path
-                                                        d="M 0 24 C 14 24 18 19 20 14 C 13 8 16 0 38 0 C 60 0 63 8 56 14 C 58 19 62 24 76 24 Z"
-                                                        fill={`url(#jigsaw-tab-${proj.id})`}
-                                                    />
-                                                    {/* Kilau Specular 3D Tepi Atas */}
-                                                    <path
-                                                        d="M 3 23 C 15 23 18 19 21 14 C 15 8 18 1.5 38 1.5 C 58 1.5 61 8 55 14 C 58 19 61 23 73 23"
-                                                        stroke="rgba(255,255,255,0.65)"
-                                                        strokeWidth="1.6"
-                                                        strokeLinecap="round"
-                                                    />
-                                                    {/* Pin / Socket Connector Dot 3D */}
-                                                    <circle cx="38" cy="11" r="3" fill="#1D4ED8" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
-                                                </svg>
-                                            </div>
+                                        {/* 1. AUTHENTIC 3D JIGSAW PUZZLE PIECE (Bentuk Utuh Kepingan Puzzle 3D) */}
+                                        <div className="relative w-full aspect-[400/460] drop-shadow-[0_14px_22px_rgba(30,58,138,0.28)] group-hover:drop-shadow-[0_24px_34px_rgba(30,58,138,0.44)] transition-all duration-300">
+                                            <svg
+                                                viewBox="0 0 400 460"
+                                                className="w-full h-full overflow-visible pointer-events-none"
+                                            >
+                                                <defs>
+                                                    {/* 3D Extrusion Side Wall Gradient (Ketebalan Sisi Bawah/Samping 3D) */}
+                                                    <linearGradient id={`extrusion-${proj.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                                        <stop offset="0%" stopColor="#1E3A8A" />
+                                                        <stop offset="100%" stopColor="#0B132B" />
+                                                    </linearGradient>
 
-                                            {/* 2. 3D SOLID JIGSAW BODY (Badan Kepingan Puzzle dengan Bevel & Ketebalan 3D) */}
-                                            <div className="relative z-10 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 text-white rounded-2xl p-5 sm:p-6 shadow-[0_12px_28px_-6px_rgba(37,99,235,0.28),_0_4px_12px_rgba(15,23,42,0.08)] group-hover:shadow-[0_24px_44px_-8px_rgba(37,99,235,0.42),_0_10px_20px_rgba(15,23,42,0.14)] border-t border-l border-r border-blue-400/50 border-b-[5px] border-b-blue-900/80 group-hover:border-blue-300 flex flex-col justify-between min-h-[340px] overflow-hidden transition-all duration-300">
-                                                {/* Lekukan Jigsaw Socket di Tepi Kanan */}
-                                                <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-3.5 h-10 rounded-l-full bg-blue-950/25 border-l border-y border-white/20 shadow-[inset_2px_0_5px_rgba(0,0,0,0.35)] pointer-events-none" />
+                                                    {/* Glossy Front Face Gradient */}
+                                                    <linearGradient id={`face-${proj.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                                                        <stop offset="0%" stopColor="#3B82F6" />
+                                                        <stop offset="35%" stopColor="#2563EB" />
+                                                        <stop offset="100%" stopColor="#1D4ED8" />
+                                                    </linearGradient>
+                                                </defs>
 
-                                                {/* Watermark Kepingan Puzzle Transparan */}
-                                                <div className="absolute right-3 bottom-3 opacity-[0.06] pointer-events-none text-white select-none">
-                                                    <svg viewBox="0 0 100 100" className="size-24" fill="currentColor">
-                                                        <path d="M 0 0 L 100 0 L 100 36 C 100 39 104 40 109 40 C 118 39 122 31 122 50 C 122 69 118 61 109 60 C 104 60 100 61 100 64 L 100 100 L 64 100 C 61 100 60 104 60 109 C 61 118 69 122 50 122 C 31 122 39 118 40 109 C 40 104 39 100 36 100 L 0 100 Z" />
-                                                    </svg>
-                                                </div>
+                                                {/* Lapisan Ketebalan Fisik 3D (Extruded Depth) */}
+                                                <path
+                                                    d={jigsawPathD}
+                                                    transform="translate(0, 10)"
+                                                    fill={`url(#extrusion-${proj.id})`}
+                                                />
 
+                                                {/* Permukaan Depan Kepingan Jigsaw Puzzle (Front Face dengan Specular Bevel Rim) */}
+                                                <path
+                                                    d={jigsawPathD}
+                                                    fill={`url(#face-${proj.id})`}
+                                                    stroke="rgba(255, 255, 255, 0.55)"
+                                                    strokeWidth="2.2"
+                                                    strokeLinejoin="round"
+                                                />
+                                            </svg>
+
+                                            {/* 2. KONTEN DI DALAM SAFE-AREA KEPINGAN PUZZLE */}
+                                            <div
+                                                className="absolute inset-0 z-10 flex flex-col justify-between text-white pointer-events-auto"
+                                                style={{ top: '11%', bottom: '16%', left: '13%', right: '20%' }}
+                                            >
                                                 <div>
-                                                    {/* Top Bar Dalam Kepingan Jigsaw: Kategori, Kelas / Jalur & Status Rekrutmen */}
-                                                    <div className="flex items-center justify-between gap-2 mb-3">
-                                                        <div className="flex items-center gap-1.5 truncate">
-                                                            <span className="text-[11px] font-black tracking-wider uppercase text-blue-200 truncate">
+                                                    {/* Top Bar: Kategori, Kelas/Mandiri & Status Rekrutmen */}
+                                                    <div className="flex items-center justify-between gap-1.5 mb-2">
+                                                        <div className="flex items-center gap-1 truncate text-[10px] sm:text-[11px]">
+                                                            <span className="font-black tracking-wider uppercase text-blue-200 truncate">
                                                                 {proj.category.replace('_', ' ')}
                                                             </span>
                                                             {proj.academic_class ? (
                                                                 <>
-                                                                    <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
-                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
+                                                                    <span className="text-blue-300 shrink-0 font-sans mx-0.5">|</span>
+                                                                    <span className="inline-flex items-center gap-1 font-semibold text-white truncate" title={proj.academic_class.name}>
                                                                         <GraduationCap className="size-3 text-blue-200 shrink-0" />
                                                                         <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
                                                                     </span>
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
-                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-100 truncate">
+                                                                    <span className="text-blue-300 shrink-0 font-sans mx-0.5">|</span>
+                                                                    <span className="inline-flex items-center gap-1 font-semibold text-blue-100 truncate">
                                                                         <Compass className="size-3 text-blue-200 shrink-0" />
                                                                         <span>Mandiri</span>
                                                                     </span>
@@ -477,18 +477,18 @@ export default function ProjectIndex({
                                                         </div>
 
                                                         {proj.status === 'recruiting' ? (
-                                                            <div className="inline-flex items-center gap-1.5 text-white bg-white/20 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shrink-0 border border-white/25">
-                                                                <UserPlus className="size-3.5 text-white" />
+                                                            <div className="inline-flex items-center gap-1 text-white bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight shrink-0 border border-white/25">
+                                                                <UserPlus className="size-3 text-white" />
                                                                 <span>Rekrutmen</span>
                                                             </div>
                                                         ) : proj.status === 'in_progress' ? (
-                                                            <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
-                                                                <Clock className="size-3.5 text-blue-200" />
+                                                            <div className="inline-flex items-center gap-1 text-blue-100 text-[10px] font-medium tracking-tight shrink-0">
+                                                                <Clock className="size-3 text-blue-200" />
                                                                 <span>Sedang Berjalan</span>
                                                             </div>
                                                         ) : (
-                                                            <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
-                                                                <CheckCircle2 className="size-3.5 text-blue-200" />
+                                                            <div className="inline-flex items-center gap-1 text-blue-100 text-[10px] font-medium tracking-tight shrink-0">
+                                                                <CheckCircle2 className="size-3 text-blue-200" />
                                                                 <span>Selesai</span>
                                                             </div>
                                                         )}
@@ -496,44 +496,44 @@ export default function ProjectIndex({
 
                                                     {/* Title */}
                                                     <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
-                                                        <h3 className="text-base sm:text-lg font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
+                                                        <h3 className="text-sm sm:text-base font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
                                                             {proj.title}
                                                         </h3>
                                                     </Link>
 
                                                     {/* Description */}
-                                                    <p className="text-xs text-blue-100 mt-2 line-clamp-2 leading-relaxed min-h-[34px]">
+                                                    <p className="text-[11px] text-blue-100 mt-1 line-clamp-2 leading-relaxed">
                                                         {proj.short_description}
                                                     </p>
 
                                                     {/* Integrated Recruitment Strip / Team Status */}
-                                                    <div className="mt-3.5 pt-3 border-t border-white/15 min-h-[52px] flex flex-col justify-center">
+                                                    <div className="mt-2.5 pt-2 border-t border-white/15">
                                                         {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 ? (
                                                             <div>
-                                                                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                                                                <div className="flex items-center justify-between text-[10px] mb-1">
                                                                     <span className="font-bold text-white">Dibutuhkan:</span>
-                                                                    <span className="text-[10px] font-bold text-blue-100 bg-white/20 px-2 py-0.5 rounded-full">{openRoles.length} Posisi Terbuka</span>
+                                                                    <span className="font-bold text-blue-100 bg-white/20 px-1.5 py-0.5 rounded-full text-[9px]">{openRoles.length} Terbuka</span>
                                                                 </div>
                                                                 <div className="flex flex-wrap gap-1">
                                                                     {openRoles.slice(0, 2).map((r, rIdx) => (
                                                                         <span
                                                                             key={rIdx}
-                                                                            className="text-[10px] font-semibold bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20 truncate max-w-[150px]"
+                                                                            className="text-[9px] font-semibold bg-white/15 text-white px-1.5 py-0.5 rounded border border-white/20 truncate max-w-[130px]"
                                                                         >
                                                                             {r}
                                                                         </span>
                                                                     ))}
                                                                     {openRoles.length > 2 && (
-                                                                        <span className="text-[10px] font-medium text-blue-200 self-center px-1">
+                                                                        <span className="text-[9px] font-medium text-blue-200 self-center px-0.5">
                                                                             +{openRoles.length - 2} lagi
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex items-center justify-between text-[11px] py-1">
+                                                            <div className="flex items-center justify-between text-[10px] py-0.5">
                                                                 <span className="font-medium text-blue-100">Susunan Tim:</span>
-                                                                <span className="text-[10px] font-semibold text-white bg-white/20 px-2 py-0.5 rounded-md border border-white/20">
+                                                                <span className="text-[9px] font-semibold text-white bg-white/20 px-1.5 py-0.5 rounded border border-white/20">
                                                                     Tim Lengkap
                                                                 </span>
                                                             </div>
@@ -542,18 +542,18 @@ export default function ProjectIndex({
 
                                                     {/* Tech Stack Chips */}
                                                     {proj.tech_stack && proj.tech_stack.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1.5 mt-2.5">
-                                                            {proj.tech_stack.slice(0, 4).map((tech, i) => (
+                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                            {proj.tech_stack.slice(0, 3).map((tech, i) => (
                                                                 <span
                                                                     key={i}
-                                                                    className="text-[10px] font-medium bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/10"
+                                                                    className="text-[9px] font-medium bg-white/15 text-white px-1.5 py-0.5 rounded border border-white/10"
                                                                 >
                                                                     {tech}
                                                                 </span>
                                                             ))}
-                                                            {proj.tech_stack.length > 4 && (
-                                                                <span className="text-[10px] text-blue-200 font-medium self-center px-0.5">
-                                                                    +{proj.tech_stack.length - 4}
+                                                            {proj.tech_stack.length > 3 && (
+                                                                <span className="text-[9px] text-blue-200 font-medium self-center px-0.5">
+                                                                    +{proj.tech_stack.length - 3}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -561,42 +561,42 @@ export default function ProjectIndex({
                                                 </div>
 
                                                 {/* Card Footer */}
-                                                <div className="pt-3.5 mt-3.5 border-t border-white/15 flex items-center justify-between gap-2 text-xs">
-                                                    <div className="flex items-center gap-1.5 text-white">
-                                                        <Users className="size-3.5 text-blue-200" />
-                                                        <span className="font-bold text-white text-xs">
+                                                <div className="pt-2 mt-2 border-t border-white/15 flex items-center justify-between gap-1 text-[11px]">
+                                                    <div className="flex items-center gap-1 text-white">
+                                                        <Users className="size-3 text-blue-200" />
+                                                        <span className="font-bold text-white text-[11px]">
                                                             {proj.team?.members?.length || 1} Anggota
                                                         </span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                    <div className="flex items-center gap-1 shrink-0">
                                                         {proj.status === 'recruiting' && !isLecturer && (
                                                             proj.is_member ? (
                                                                 proj.can_access_workspace ? (
                                                                     <Link
                                                                         href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
-                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition"
+                                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold border border-white/30 transition"
                                                                         title="Buka Workspace Tim Proyek"
                                                                     >
-                                                                        <FolderKanban className="size-3 text-white" />
+                                                                        <FolderKanban className="size-2.5 text-white" />
                                                                         <span>Workspace</span>
                                                                     </Link>
                                                                 ) : (
-                                                                    <span className="text-[11px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-md border border-white/30">
+                                                                    <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-0.5 rounded border border-white/30">
                                                                         Tim Anda
                                                                     </span>
                                                                 )
                                                             ) : proj.has_applied ? (
-                                                                <span className="text-[11px] font-medium text-blue-100 bg-white/15 px-2 py-1 rounded-md border border-white/20">
-                                                                    Sudah Melamar
+                                                                <span className="text-[10px] font-medium text-blue-100 bg-white/15 px-1.5 py-0.5 rounded border border-white/20">
+                                                                    Dilamar
                                                                 </span>
                                                             ) : isGuest ? (
                                                                 proj.has_open_recruitment !== false && (
                                                                     <Link
                                                                         href="/login"
-                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition"
+                                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold shadow-xs transition"
                                                                     >
-                                                                        <Send className="size-3 text-blue-700" />
+                                                                        <Send className="size-2.5 text-blue-700" />
                                                                         <span>Lamar</span>
                                                                     </Link>
                                                                 )
@@ -604,21 +604,19 @@ export default function ProjectIndex({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => openJoinModal(proj)}
-                                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition cursor-pointer"
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold shadow-xs transition cursor-pointer"
                                                                 >
-                                                                    <Send className="size-3 text-blue-700" />
-                                                                    <span>Lamar Posisi</span>
+                                                                    <Send className="size-2.5 text-blue-700" />
+                                                                    <span>Lamar</span>
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-[11px] font-medium text-blue-200">
+                                                                <span className="text-[10px] font-medium text-blue-200">
                                                                     {proj.has_open_recruitment === false
-                                                                        ? 'Rekrutmen Tutup'
+                                                                        ? 'Tutup'
                                                                         : proj.has_capacity === false
                                                                         ? 'Penuh'
                                                                         : proj.is_class_restricted
                                                                         ? 'Khusus Kelas'
-                                                                        : proj.has_active_in_scope
-                                                                        ? 'Sudah Punya Tim'
                                                                         : 'Tidak Memenuhi Syarat'}
                                                                 </span>
                                                             )
@@ -626,10 +624,10 @@ export default function ProjectIndex({
 
                                                         <Link
                                                             href={`/projects/${proj.slug || proj.id}`}
-                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-extrabold transition shadow-xs duration-150 active:scale-95"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-black transition shadow-xs active:scale-95"
                                                         >
                                                             <span>Detail</span>
-                                                            <ArrowRight className="size-3 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
+                                                            <ArrowRight className="size-2.5 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
                                                         </Link>
                                                     </div>
                                                 </div>
