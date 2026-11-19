@@ -164,11 +164,14 @@ class EligibilityService
      * Check if student currently holds an active competition team membership in a specific competition.
      * Checks in-memory eager loaded relation if present (Zero N+1 query).
      */
-    public function hasActiveCompetitionMembershipIn(User $student, int $competitionId): bool
+    public function hasActiveCompetitionMembershipIn(User $student, int $competitionId, ?int $exceptTeamId = null): bool
     {
         if ($student->relationLoaded('teamMemberships')) {
-            return $student->teamMemberships->contains(function ($m) use ($competitionId) {
+            return $student->teamMemberships->contains(function ($m) use ($competitionId, $exceptTeamId) {
                 if ($m->status !== 'active' || !$m->team) {
+                    return false;
+                }
+                if ($exceptTeamId && $m->team_id === $exceptTeamId) {
                     return false;
                 }
                 if ($m->team->relationLoaded('participations')) {
@@ -180,7 +183,7 @@ class EligibilityService
             });
         }
 
-        return TeamMember::where('user_id', $student->id)
+        $query = TeamMember::where('user_id', $student->id)
             ->where('status', 'active')
             ->whereHas('team.participations', function ($query) use ($competitionId) {
                 $query->where('competition_id', $competitionId)
@@ -189,8 +192,13 @@ class EligibilityService
                         'not_selected',
                         'withdrawn',
                     ]);
-            })
-            ->exists();
+            });
+
+        if ($exceptTeamId) {
+            $query->where('team_id', '!=', $exceptTeamId);
+        }
+
+        return $query->exists();
     }
 
     /**
@@ -244,7 +252,7 @@ class EligibilityService
             $targetCompId = $team->participations()->latest()->value('competition_id');
         }
 
-        if ($targetCompId && $this->hasActiveCompetitionMembershipIn($student, $targetCompId)) {
+        if ($targetCompId && $this->hasActiveCompetitionMembershipIn($student, $targetCompId, $team?->id)) {
             return [
                 'eligible' => false,
                 'reason' => 'Mahasiswa sudah memiliki tim aktif dalam kompetisi ini (Aturan 1 Tim per Kompetisi).',
@@ -261,7 +269,8 @@ class EligibilityService
             }
 
             $currentMembers = $team->members()->where('status', 'active')->count();
-            if ($team->capacity && $currentMembers >= $team->capacity) {
+            $effectiveCapacity = (int) ($team->capacity ?: ($participation?->competition?->max_team_size ?: 5));
+            if ($effectiveCapacity > 0 && $currentMembers >= $effectiveCapacity) {
                 return [
                     'eligible' => false,
                     'reason' => 'Kapasitas anggota tim kompetisi sudah penuh.',
