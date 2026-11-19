@@ -139,6 +139,11 @@ export function AppSidebar() {
                   icon: Award,
               },
               {
+                  title: 'Paket & Langganan',
+                  url: '/pricing',
+                  icon: Sparkles,
+              },
+              {
                   title: 'Notifikasi',
                   url: '/notifications',
                   icon: Bell,

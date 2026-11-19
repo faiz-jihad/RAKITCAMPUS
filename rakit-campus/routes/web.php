@@ -4,6 +4,7 @@ use App\Enums\CampusRole;
 use App\Http\Controllers\OnboardingWebController;
 use App\Http\Controllers\Web\AcademicClassWebController;
 use App\Http\Controllers\Web\AdminWebController;
+use App\Http\Controllers\Web\BillingWebController;
 use App\Http\Controllers\Web\Admin\AdminCompetitionWebController;
 use App\Http\Controllers\Web\Admin\AdminFeedbackWebController;
 use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
@@ -67,7 +68,14 @@ Route::get('/leaderboard', [LeaderboardWebController::class, 'index'])->name('le
 Route::inertia('/terms', 'terms/index')->name('terms');
 Route::inertia('/privacy', 'privacy/index')->name('privacy');
 
+// RAKIT Pricing & Subscription
+Route::get('/pricing', [BillingWebController::class, 'index'])->name('pricing');
+
 Route::middleware(['auth'])->group(function () {
+    // Billing Checkout & Simulation
+    Route::post('/checkout', [BillingWebController::class, 'checkout'])->name('billing.checkout');
+    Route::match(['get', 'post'], '/billing/simulate/{orderId}', [BillingWebController::class, 'simulatePayment'])->name('billing.simulate');
+
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
     Route::post('/onboarding/check-nim', [OnboardingWebController::class, 'checkNim'])->name('onboarding.check-nim');
     Route::post('/onboarding', [OnboardingWebController::class, 'store'])->name('onboarding.store');

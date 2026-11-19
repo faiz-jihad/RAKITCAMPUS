@@ -3,7 +3,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { type User } from '@/types';
 import { Link } from '@inertiajs/react';
-import { LogOut, Settings, Sparkles } from 'lucide-react';
+import { Crown, LogOut, Settings, Sparkles } from 'lucide-react';
 
 interface UserMenuContentProps {
     user: User;
@@ -25,6 +25,12 @@ export function UserMenuContent({ user }: UserMenuContentProps) {
                     <Link className="block w-full" href={route('onboarding')} as="button" prefetch onClick={cleanup}>
                         <Sparkles className="mr-2" />
                         Lengkapi Biodata
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link className="block w-full" href="/pricing" as="button" prefetch onClick={cleanup}>
+                        <Crown className="mr-2 text-amber-500" />
+                        Paket & Langganan
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
