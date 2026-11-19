@@ -438,7 +438,11 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                                         {member.role || 'Member'}
                                     </span>
                                 </div>
-                                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md border ${
+                                    member.primary_archetype === 'Project Leader' || member.role?.toLowerCase().includes('leader')
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-blue-50 text-blue-700 border-blue-200'
+                                }`}>
                                     {member.primary_archetype}
                                 </span>
                             </div>
@@ -525,7 +529,7 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                                             </span>
                                         </td>
                                         <td className="py-3.5 px-4 text-center font-bold text-slate-700">
-                                            {row.type === 'Keahlian Teknis' ? `Lvl ${row.required}` : `${row.required} Posisi`}
+                                            {row.type === 'Keahlian Teknis' ? `Lvl ${row.required}` : `${row.required} Slot`}
                                         </td>
                                         <td className="py-3.5 px-4 text-center font-bold text-slate-900">
                                             {row.type === 'Keahlian Teknis' ? `Lvl ${row.available}` : `${row.available} Terisi`}

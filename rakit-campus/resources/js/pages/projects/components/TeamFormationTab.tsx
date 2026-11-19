@@ -14,10 +14,10 @@ import {
     GraduationCap,
     Info,
     Lock,
+    MessageSquareQuote,
     Send,
     Shield,
     ShieldAlert,
-    ShieldCheck,
     Sparkles,
     Unlock,
     UserCheck,
@@ -46,7 +46,7 @@ export default function TeamFormationTab({
     const isAcademic = Boolean(academicClass || project.academic_class_id || project.category === 'academic');
     const formationStatus = project.formation_status || 'draft';
     const formationApprover = project.formation_approver || project.formationApprover;
-    const activeMembers = (project.team?.members || []).filter((m: any) => !m.status || m.status === 'active');
+    const activeMembers = (project.team?.members || []).filter((m: any) => !m.status || m.status === 'active' || m.status === 'completed');
     const minRequired = project.min_team_size || 2;
     const targetCapacity = academicClass?.target_team_size 
         || project.academic_class?.target_team_size 
@@ -199,54 +199,14 @@ export default function TeamFormationTab({
         <div className="space-y-8 animate-fadeIn">
             {/* Top Lifecycle Header Card */}
             <div className="glass-surface p-6 sm:p-8 rounded-3xl relative overflow-hidden">
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-200">
-                                <ShieldCheck className="size-5" />
-                            </span>
-                            <span className="text-xs font-extrabold uppercase tracking-wider text-blue-700">
-                                {isAcademic ? 'Siklus Formasi Tim & Persetujuan Dosen' : 'Siklus Formasi Tim Mandiri'}
-                            </span>
-                        </div>
-                        <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                            Status Formasi: {stages[currentStageIndex]?.title}
-                        </h2>
-                    </div>
-
-                    {/* Quick Status Pill */}
-                    <div className="flex flex-wrap items-center gap-3">
-                        {isWorkspaceUnlocked ? (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-600 text-white font-bold text-xs shadow-md">
-                                <Sparkles className="size-4" />
-                                <span>Workspace Aktif</span>
-                            </div>
-                        ) : formationStatus === 'lecturer_approved' ? (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-blue-600 text-white font-bold text-xs shadow-md">
-                                <CheckCircle2 className="size-4" />
-                                <span>Disetujui Dosen</span>
-                            </div>
-                        ) : formationStatus === 'formation_review' ? (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-800 text-white font-bold text-xs shadow-md">
-                                <Clock className="size-4" />
-                                <span>Menunggu Persetujuan Dosen</span>
-                            </div>
-                        ) : formationStatus === 'formation_rejected' ? (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-md">
-                                <AlertCircle className="size-4" />
-                                <span>Ditolak Dosen</span>
-                            </div>
-                        ) : (
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900 text-white font-bold text-xs shadow-md">
-                                <Users className="size-4" />
-                                <span>Tahap Rekrutmen & Pembentukan</span>
-                            </div>
-                        )}
-                    </div>
+                <div className="relative z-10">
+                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                        Status Formasi: {stages[currentStageIndex]?.title}
+                    </h2>
                 </div>
 
                 {/* Pipeline visual */}
-                <div className="mt-8 pt-6 border-t border-slate-100">
+                <div className="mt-6 pt-6 border-t border-slate-100">
                     <div className={`grid grid-cols-2 ${isAcademic ? 'sm:grid-cols-4 lg:grid-cols-7' : 'sm:grid-cols-3 lg:grid-cols-5'} gap-3`}>
                         {stages.map((stg, idx) => {
                             const isCompleted = idx < currentStageIndex;
@@ -309,7 +269,7 @@ export default function TeamFormationTab({
             {isAcademic && project.formation_notes && (
                 <div className="glass-surface p-5 rounded-3xl border border-blue-200 bg-blue-50/40">
                     <div className="flex items-start gap-3">
-                        <GraduationCap className="size-5 text-blue-600 shrink-0 mt-0.5" />
+                        <MessageSquareQuote className="size-5 text-blue-600 shrink-0 mt-0.5" />
                         <div>
                             <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
                                 Catatan / Umpan Balik Dosen Pengampu:
@@ -320,7 +280,12 @@ export default function TeamFormationTab({
                             {formationApprover && (
                                 <p className="text-[11px] text-slate-500 mt-1.5 font-medium">
                                     Oleh: <span className="font-semibold text-slate-800">{formationApprover.name}</span>
-                                    {project.formation_approved_at && ` • Disetujui pada ${new Date(project.formation_approved_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                                    {project.formation_approved_at && (
+                                        <>
+                                            <span className="text-slate-300 font-sans mx-1.5">|</span>
+                                            <span>Disetujui pada {new Date(project.formation_approved_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                                        </>
+                                    )}
                                 </p>
                             )}
                         </div>
@@ -557,19 +522,14 @@ export default function TeamFormationTab({
                             {isWorkspaceUnlocked ? <Unlock className="size-6" /> : <Lock className="size-6" />}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 flex-wrap">
                                 <h3 className="text-lg font-black text-slate-900">
                                     Project Workspace {isAcademic ? 'Gatekeeper' : ''}
                                 </h3>
-                                {isWorkspaceUnlocked ? (
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-blue-700 border border-blue-200">
-                                        Terbuka Penuh
-                                    </span>
-                                ) : (
-                                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-100 text-slate-600 border border-slate-200">
-                                        {isAcademic ? 'Terkunci' : 'Menunggu Kuota Lengkap'}
-                                    </span>
-                                )}
+                                <span className="text-slate-300 font-sans mx-0.5">|</span>
+                                <span className={`text-xs font-bold ${isWorkspaceUnlocked ? 'text-blue-600' : 'text-slate-500'}`}>
+                                    {isWorkspaceUnlocked ? 'Terbuka Penuh' : (isAcademic ? 'Terkunci' : 'Menunggu Kuota Lengkap')}
+                                </span>
                             </div>
                             <p className="text-xs text-slate-600 mt-1 max-w-xl leading-relaxed">
                                 {isWorkspaceUnlocked

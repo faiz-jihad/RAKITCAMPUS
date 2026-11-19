@@ -67,9 +67,6 @@ function EditClassForm({
                             <h2 className="text-base font-bold text-slate-900 leading-tight">
                                 Edit Ruang Kelas
                             </h2>
-                            <p className="text-[11px] text-slate-400 mt-0.5">
-                                Perbarui informasi umum, kode, dan kapasitas kelompok kelas
-                            </p>
                         </div>
                     </div>
                     <button

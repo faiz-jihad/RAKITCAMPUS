@@ -19,6 +19,7 @@ import {
     Info, 
     Lock, 
     Mail, 
+    MessageSquare,
     Settings, 
     ShieldAlert, 
     Sliders, 
@@ -72,6 +73,19 @@ export default function NotificationsIndex({
         }, {} as Record<string, { in_app: boolean; email: boolean }>),
     });
 
+    const resolveActionUrl = (urlStr?: string) => {
+        if (!urlStr) return '/notifications';
+        try {
+            if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
+                const parsed = new URL(urlStr);
+                return parsed.pathname + parsed.search + parsed.hash;
+            }
+        } catch {
+            // fallback
+        }
+        return urlStr;
+    };
+
     const handleFilterChange = (filter: string, category: string) => {
         router.get(
             '/notifications',
@@ -113,7 +127,20 @@ export default function NotificationsIndex({
         });
     };
 
-    const getCategoryIcon = (category: string) => {
+    const getCategoryIcon = (category: string, type?: string, title?: string) => {
+        const notifType = (type || '').toLowerCase();
+        const notifTitle = (title || '').toLowerCase();
+        if (
+            notifType.includes('chat') ||
+            notifType.includes('discussion') ||
+            notifType.includes('message') ||
+            notifType.includes('guidance') ||
+            notifTitle.includes('pesan baru') ||
+            notifTitle.includes('chat') ||
+            notifTitle.includes('diskusi')
+        ) {
+            return <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />;
+        }
         switch (category) {
             case 'project_hub':
                 return <FolderKanban className="h-4 w-4 text-blue-500" />;
@@ -127,19 +154,6 @@ export default function NotificationsIndex({
                 return <Clock className="h-4 w-4 text-orange-500" />;
             default:
                 return <Bell className="h-4 w-4 text-slate-500" />;
-        }
-    };
-
-    const getPriorityBadge = (priority: string) => {
-        switch (priority) {
-            case 'critical':
-                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-800">KRITIS</span>;
-            case 'high':
-                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-200 dark:border-amber-800">TINGGI</span>;
-            case 'medium':
-                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800">SEDANG</span>;
-            default:
-                return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">INFO</span>;
         }
     };
 
@@ -353,7 +367,6 @@ export default function NotificationsIndex({
                         notifications.data.map((item) => {
                             const isUnread = !item.read_at;
                             const data = item.data || {};
-                            const priority = data.priority || 'medium';
                             const category = data.category || 'general';
 
                             return (
@@ -373,15 +386,14 @@ export default function NotificationsIndex({
                                     {/* Main Content */}
                                     <div className="flex items-start gap-4 flex-1 pl-2">
                                         <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0 mt-0.5">
-                                            {getCategoryIcon(category)}
+                                            {getCategoryIcon(category, (data as any)?.notification_type || (data as any)?.type, data.title)}
                                         </div>
 
-                                        <div className="space-y-1.5 flex-1">
+                                        <div className="space-y-1 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                                                     {data.title || 'Notifikasi'}
                                                 </h3>
-                                                {getPriorityBadge(priority)}
                                                 <span className="text-xs text-slate-400 dark:text-slate-500">
                                                     • {new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
                                                 </span>
@@ -390,21 +402,6 @@ export default function NotificationsIndex({
                                             <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                                                 {data.message}
                                             </p>
-
-                                            {/* Details key-value pills if present */}
-                                            {data.details && Object.keys(data.details).length > 0 && (
-                                                <div className="flex flex-wrap gap-2 pt-1.5">
-                                                    {Object.entries(data.details).map(([k, v]) => (
-                                                        <span
-                                                            key={k}
-                                                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs bg-slate-100 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700/60"
-                                                        >
-                                                            <strong className="text-slate-500 dark:text-slate-400 font-medium">{k}:</strong>
-                                                            <span>{String(v)}</span>
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            )}
                                         </div>
                                     </div>
 
@@ -412,7 +409,7 @@ export default function NotificationsIndex({
                                     <div className="flex items-center gap-2 self-end md:self-center shrink-0 pt-2 md:pt-0">
                                         {data.action_url && (
                                             <a
-                                                href={data.action_url}
+                                                href={resolveActionUrl(data.action_url)}
                                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition-colors"
                                             >
                                                 <span>{data.action_text || 'Lihat'}</span>

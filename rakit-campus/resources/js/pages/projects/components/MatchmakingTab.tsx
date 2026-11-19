@@ -3,7 +3,6 @@ import { router } from '@inertiajs/react';
 import {
     Award,
     Check,
-    CheckCircle2,
     Clock,
     Filter,
     HelpCircle,
@@ -28,6 +27,7 @@ interface Props {
     teamBalance?: any;
     isLeader: boolean;
     isLecturer: boolean;
+    isAcademic?: boolean;
     userHasActiveProject?: boolean;
 }
 
@@ -38,9 +38,18 @@ export default function MatchmakingTab({
     teamOptimization,
     isLeader,
     isLecturer,
+    isAcademic: isAcademicProp,
     userHasActiveProject,
 }: Props) {
-    const [subTab, setSubTab] = useState<'manual' | 'recommendations' | 'optimal'>('manual');
+    const isAcademic = isAcademicProp ?? Boolean(
+        project.academic_class_id ||
+        project.academicClass?.id ||
+        project.academic_class?.id ||
+        project.category === 'academic'
+    );
+    const [subTab, setSubTab] = useState<'manual' | 'recommendations' | 'optimal'>(
+        isAcademic ? 'manual' : 'recommendations'
+    );
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedSkillFilter, setSelectedSkillFilter] = useState('');
     const [selectedRoleFilter, setSelectedRoleFilter] = useState('');
@@ -111,35 +120,39 @@ export default function MatchmakingTab({
 
     return (
         <div className="flex flex-col gap-6">
-            {/* Class Boundary Notice Banner */}
-            <div className="glass-card rounded-2xl p-5 border-l-4 border-l-blue-600 bg-blue-50/40">
-                <div className="flex items-start gap-3">
-                    <Info className="size-5 text-blue-600 shrink-0 mt-0.5" />
-                    <div>
-                        <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide">
-                            Batas Ekosistem Kelas Perkuliahan (Strictly Class-Based)
-                        </h4>
-                        <p className="text-xs text-blue-800/90 mt-0.5 leading-relaxed">
-                            Proyek ini terikat pada kelas perkuliahan <strong className="text-blue-950 font-bold">{(project.academic_class || project.academicClass)?.name} ({(project.academic_class || project.academicClass)?.code})</strong>.
-                            Hanya mahasiswa yang terdaftar resmi pada kelas ini yang dapat dicari, direkomendasikan, dan diundang ke dalam tim.
-                        </p>
+            {/* Class Boundary Notice Banner (Hanya untuk Proyek Akademik / Kelas) */}
+            {isAcademic && (
+                <div className="glass-card rounded-2xl p-5 border-l-4 border-l-blue-600 bg-blue-50/40">
+                    <div className="flex items-start gap-3">
+                        <Info className="size-5 text-blue-600 shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="text-xs font-bold text-blue-900 uppercase tracking-wide">
+                                Batas Ekosistem Kelas Perkuliahan (Strictly Class-Based)
+                            </h4>
+                            <p className="text-xs text-blue-800/90 mt-0.5 leading-relaxed">
+                                Proyek ini terikat pada kelas perkuliahan <strong className="text-blue-950 font-bold">{(project.academic_class || project.academicClass)?.name} ({(project.academic_class || project.academicClass)?.code})</strong>.
+                                Hanya mahasiswa yang terdaftar resmi pada kelas ini yang dapat dicari, direkomendasikan, dan diundang ke dalam tim.
+                            </p>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
-            {/* Sub-mode Navigation Selector (A - B - C) */}
+            {/* Sub-mode Navigation Selector */}
             <div className="glass-surface p-1.5 rounded-2xl flex flex-wrap items-center gap-1">
-                <button
-                    onClick={() => setSubTab('manual')}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
-                        subTab === 'manual'
-                            ? 'bg-blue-600 text-white shadow-xs'
-                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                    }`}
-                >
-                    <Search className="size-3.5" />
-                    <span>Mode A: Cari Rekan Sekelas ({classStudents.length})</span>
-                </button>
+                {isAcademic && (
+                    <button
+                        onClick={() => setSubTab('manual')}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                            subTab === 'manual'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
+                        }`}
+                    >
+                        <Search className="size-3.5" />
+                        <span>Mode A: Cari Rekan Sekelas ({classStudents.length})</span>
+                    </button>
+                )}
 
                 <button
                     onClick={() => setSubTab('recommendations')}
@@ -150,7 +163,7 @@ export default function MatchmakingTab({
                     }`}
                 >
                     <Sparkles className="size-3.5" />
-                    <span>Mode B: Rekomendasi Cerdas ({sameClassCandidates.length})</span>
+                    <span>{isAcademic ? 'Mode B: ' : ''}Rekomendasi Cerdas ({sameClassCandidates.length})</span>
                 </button>
 
                 {teamOptimization && (
@@ -163,13 +176,13 @@ export default function MatchmakingTab({
                         }`}
                     >
                         <Zap className="size-3.5" />
-                        <span>Mode C: Kombinasi Tim Optimal</span>
+                        <span>{isAcademic ? 'Mode C: ' : ''}Kombinasi Tim Optimal</span>
                     </button>
                 )}
             </div>
 
-            {/* SUB-TAB 1: MODE A - MANUAL SAME-CLASS SEARCH */}
-            {subTab === 'manual' && (
+            {/* SUB-TAB 1: MODE A - MANUAL SAME-CLASS SEARCH (Hanya untuk Proyek Akademik) */}
+            {isAcademic && subTab === 'manual' && (
                 <div className="flex flex-col gap-4">
                     {/* Search & Filters */}
                     <div className="glass-card rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-3">
@@ -312,7 +325,9 @@ export default function MatchmakingTab({
                             <Users className="size-10 text-slate-300 mx-auto mb-2" />
                             <h4 className="text-sm font-bold text-slate-700">Belum Ada Kandidat Tersedia</h4>
                             <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                                Seluruh mahasiswa di kelas ini telah memiliki kelompok atau belum melengkapi profil keahlian mereka.
+                                {isAcademic
+                                    ? 'Seluruh mahasiswa di kelas ini telah memiliki kelompok atau belum melengkapi profil keahlian mereka.'
+                                    : 'Seluruh calon anggota potensial telah memiliki kelompok atau belum melengkapi profil keahlian mereka.'}
                             </p>
                         </div>
                     ) : (
@@ -454,7 +469,7 @@ export default function MatchmakingTab({
                                 <strong className="text-blue-700 font-bold text-base">{teamOptimization.covered_skills?.length || 0} Keahlian</strong>
                             </div>
                             <div className="p-3 rounded-xl bg-white border border-slate-200">
-                                <span className="text-slate-400 block font-semibold text-[10px] uppercase">Posisi Lowong</span>
+                                <span className="text-slate-400 block font-semibold text-[10px] uppercase">Slot Lowong</span>
                                 <strong className="text-slate-900 font-bold text-base">{teamOptimization.unfilled_roles?.length || 0} Posisi</strong>
                             </div>
                         </div>
@@ -466,46 +481,48 @@ export default function MatchmakingTab({
                     </div>
 
                     {/* Recommended Optimal Combination Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {teamOptimization.optimal_candidates?.map((item: any, idx: number) => (
-                            <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col justify-between gap-3">
-                                <div>
-                                    <div className="flex items-start justify-between gap-2">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="size-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
-                                                {item.user?.name?.charAt(0) || 'M'}
+                    {teamOptimization.optimal_candidates && teamOptimization.optimal_candidates.length > 0 && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {teamOptimization.optimal_candidates.map((item: any, idx: number) => (
+                                <div key={idx} className="glass-card rounded-2xl p-5 flex flex-col justify-between gap-3">
+                                    <div>
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="size-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                                                    {item.user?.name?.charAt(0) || 'M'}
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-slate-900">{item.user?.name}</h4>
+                                                    <span className="text-[11px] font-semibold text-blue-700">
+                                                        Ditugaskan: {item.assigned_role}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className="text-xs font-bold text-slate-900">{item.user?.name}</h4>
-                                                <span className="text-[11px] font-semibold text-blue-700">
-                                                    Ditugaskan: {item.assigned_role}
-                                                </span>
-                                            </div>
+                                            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                                                {item.individual_score}% Match
+                                            </span>
                                         </div>
-                                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
-                                            {item.individual_score}% Match
-                                        </span>
+
+                                        <p className="text-xs text-slate-600 mt-2.5 p-2 rounded-lg bg-slate-50">
+                                            {item.marginal_contribution}
+                                        </p>
                                     </div>
 
-                                    <p className="text-xs text-slate-600 mt-2.5 p-2 rounded-lg bg-slate-50">
-                                        {item.marginal_contribution}
-                                    </p>
+                                    <div className="pt-2 flex justify-end">
+                                        {isLeader && (
+                                            <button
+                                                onClick={() => handleOpenInvite(item.user)}
+                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                                            >
+                                                <Send className="size-3.5" />
+                                                <span>Undang Kandidat Ini</span>
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-
-                                <div className="pt-2 flex justify-end">
-                                    {isLeader && (
-                                        <button
-                                            onClick={() => handleOpenInvite(item.user)}
-                                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
-                                        >
-                                            <Send className="size-3.5" />
-                                            <span>Undang Kandidat Ini</span>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             )}
 

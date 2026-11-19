@@ -19,7 +19,10 @@ import {
     Bookmark,
     Briefcase,
     Calendar,
+    Check,
     CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
     Clock,
     Cpu,
     ExternalLink,
@@ -48,6 +51,7 @@ import {
     Trophy,
     User,
     UserCheck,
+    UserPlus,
     Users,
     X,
     Zap,
@@ -249,6 +253,7 @@ interface Props {
     openCompetitionOptions?: any[];
     openRecruitingTeams?: RecruitingTeam[];
     radarCandidates?: any[];
+    sentInvitationUserIds?: number[];
     totalNeededSlots?: number;
     myApplications?: MyApplication[];
     myTeams?: MyTeam[];
@@ -313,6 +318,7 @@ export default function CompetitionIndex({
     openCompetitionOptions,
     openRecruitingTeams = [],
     radarCandidates = [],
+    sentInvitationUserIds = [],
     totalNeededSlots = 0,
     myApplications = [],
     myTeams = [],
@@ -379,6 +385,8 @@ export default function CompetitionIndex({
     const [inviteRoleName, setInviteRoleName] = useState('Anggota Tim');
     const [inviteMessage, setInviteMessage] = useState('');
     const [isInviting, setIsInviting] = useState(false);
+    const [localInvitedIds, setLocalInvitedIds] = useState<number[]>([]);
+    const [inviteSuccessToast, setInviteSuccessToast] = useState<{ show: boolean; name: string } | null>(null);
 
     const myLedTeams = useMemo(() => {
         return myTeams.filter((t: any) => t.is_leader);
@@ -409,6 +417,7 @@ export default function CompetitionIndex({
 
         setIsInviting(true);
         const studentId = selectedRadarCandidate.user?.id || selectedRadarCandidate.id;
+        const candName = selectedRadarCandidate.user?.name || selectedRadarCandidate.name || 'Rekan Mahasiswa';
 
         router.post(
             `/competition-workspace/${inviteParticipationId}/send-invitation`,
@@ -421,9 +430,16 @@ export default function CompetitionIndex({
                 preserveScroll: true,
                 preserveState: true,
                 onSuccess: () => {
+                    if (studentId) {
+                        setLocalInvitedIds((prev) => (prev.includes(studentId) ? prev : [...prev, studentId]));
+                    }
                     setRadarInviteModalOpen(false);
                     setSelectedRadarCandidate(null);
                     setInviteMessage('');
+                    setInviteSuccessToast({ show: true, name: candName });
+                    setTimeout(() => {
+                        setInviteSuccessToast(null);
+                    }, 4000);
                 },
                 onFinish: () => setIsInviting(false),
             }
@@ -447,10 +463,29 @@ export default function CompetitionIndex({
         });
     }, [radarCandidates, radarPersonaFilter, radarSearch]);
 
-    // MinSatu Detail Modal State
+    const [radarPage, setRadarPage] = useState(1);
+    const RADAR_PER_PAGE = 6;
+    const totalRadarPages = Math.ceil(filteredRadarCandidates.length / RADAR_PER_PAGE);
+    const paginatedRadarCandidates = useMemo(() => {
+        const start = (radarPage - 1) * RADAR_PER_PAGE;
+        return filteredRadarCandidates.slice(start, start + RADAR_PER_PAGE);
+    }, [filteredRadarCandidates, radarPage]);
+
+    React.useEffect(() => {
+        setRadarPage(1);
+    }, [radarPersonaFilter, radarSearch]);
+
+    const [myCompPage, setMyCompPage] = useState(1);
+    const MY_COMP_PER_PAGE = 6;
+
+    React.useEffect(() => {
+        setMyCompPage(1);
+    }, [myLifecycleFilter]);
+
+    // Team Recruitment Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
 
-    // MinSatu Apply Modal State
+    // Team Recruitment Apply Modal State
     const [applyModalOpen, setApplyModalOpen] = useState(false);
     const [selectedTeamData, setSelectedTeamData] = useState<ApplyTeamData | null>(null);
 
@@ -569,12 +604,28 @@ export default function CompetitionIndex({
                 canonicalUrl="https://rakitcampus.my.id/competitions"
             />
             <div className="space-y-6 sm:space-y-8">
-                {/* 1. MINIMAL HEADER SECTION */}
-                <header className="flex items-center justify-between gap-3 pb-5 border-b border-slate-200/80">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
-                            Competition Hub
-                        </h1>
+                {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-4">
+                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                            <img
+                                src="/images/mascot/mascot-trophy.png"
+                                alt="Mascot Trophy"
+                                className="w-full h-full object-contain drop-shadow-xs select-none pointer-events-none transform hover:scale-105 transition"
+                            />
+                        </div>
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
+                                <Trophy className="size-3 text-indigo-600" />
+                                <span>Competition Hub & Talent Radar</span>
+                            </div>
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                Competition Hub Mahasiswa
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
+                                Eksplorasi kompetisi bergengsi, temukan rekan tim lintas prodi, dan pantau linimasa karya lomba nasional.
+                            </p>
+                        </div>
                     </div>
 
                     <button
@@ -583,12 +634,44 @@ export default function CompetitionIndex({
                             setCreateTeamPreselectedCompId(null);
                             setCreateTeamModalOpen(true);
                         }}
-                        className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold shadow-xs transition shrink-0 cursor-pointer"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-2xs transition shrink-0 cursor-pointer self-start md:self-auto"
                     >
                         <Plus className="w-4 h-4" />
-                        <span>Buat Tim</span>
+                        <span>Buat Tim Baru</span>
                     </button>
-                </header>
+                </div>
+
+                {/* 2. APPLE HIG SEGMENTED TAB BAR */}
+                <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto text-xs font-semibold shadow-2xs">
+                    {[
+                        { key: 'explore', label: 'Eksplor Lomba', icon: Trophy },
+                        { key: 'teams', label: 'Cari Rekan & Tim', icon: Users },
+                        { key: 'categories', label: 'Kategori Minat', icon: Layers },
+                        { key: 'my_competitions', label: 'Lomba Saya', icon: Bookmark },
+                        { key: 'recommendations', label: 'Rekomendasi AI', icon: Sparkles },
+                    ].map((tab) => {
+                        const Icon = tab.icon;
+                        const isCurrent = activeTab === tab.key;
+                        return (
+                            <button
+                                key={tab.key}
+                                type="button"
+                                onClick={() => {
+                                    setActiveTab(tab.key as any);
+                                    router.get('/competitions', { tab: tab.key }, { preserveState: true, preserveScroll: true });
+                                }}
+                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
+                                    isCurrent
+                                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Icon className="size-3.5" />
+                                <span>{tab.label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
 
                 {/* ========================================================= */}
                 {/* TAB 1: EKSPLOR LOMBA                                     */}
@@ -597,9 +680,9 @@ export default function CompetitionIndex({
                     <div className="space-y-6 sm:space-y-8">
                         {/* BENTO SHOWCASE GRID: 4 Cohesive Tiles */}
                         {spotlightComp && (
-                            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-3 sm:gap-4.5 items-stretch">
+                            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
                                 {/* Tile 1: Spotlight Hero (lg:col-span-7 xl:col-span-8) */}
-                                <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs flex flex-col md:flex-row justify-between group">
+                                <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs flex flex-col md:flex-row justify-between group">
                                     <div className="relative aspect-[4/5] sm:aspect-auto sm:h-64 md:h-auto md:w-5/12 md:aspect-[4/5] overflow-hidden bg-slate-950 shrink-0">
                                         <img
                                             src={getCompetitionCover(spotlightComp)}
@@ -608,12 +691,12 @@ export default function CompetitionIndex({
                                         />
                                         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-black/20" />
 
-                                        <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                                            <span className="px-2 py-0.5 rounded-md bg-blue-600 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-xs">
-                                                <AnimatedIcon name="trophy" size={14} />
+                                        <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5">
+                                            <span className="px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-xs">
+                                                <Trophy className="size-3" />
                                                 <span>Sorotan</span>
                                             </span>
-                                            <span className="px-2 py-0.5 rounded-md bg-black/40 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
+                                            <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
                                                 {spotlightComp.level || 'Nasional'}
                                             </span>
                                         </div>
@@ -621,18 +704,18 @@ export default function CompetitionIndex({
                                         <button
                                             type="button"
                                             onClick={(e) => handleToggleBookmark(e, spotlightComp.id)}
-                                            className={`absolute top-3 right-3 p-1.5 rounded-full backdrop-blur-md transition cursor-pointer ${
+                                            className={`absolute top-3.5 right-3.5 p-2 rounded-full backdrop-blur-md transition cursor-pointer active:scale-95 ${
                                                 bookmarkedIds.includes(spotlightComp.id)
-                                                    ? 'bg-rose-500 text-white'
-                                                    : 'bg-black/30 hover:bg-black/50 text-white'
+                                                    ? 'bg-rose-500 text-white shadow-2xs'
+                                                    : 'bg-black/40 hover:bg-black/60 text-white'
                                             }`}
                                             title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
                                         >
                                             <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
                                         </button>
 
-                                        <div className="absolute bottom-2.5 left-3 text-white">
-                                            <span className="text-[10px] text-white/80 block">Deadline</span>
+                                        <div className="absolute bottom-3 left-3.5 text-white">
+                                            <span className="text-[10px] text-white/70 block uppercase tracking-wider font-bold">Deadline</span>
                                             <span className="text-xs font-bold text-white">
                                                 {spotlightComp.registration_deadline
                                                     ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
@@ -645,35 +728,35 @@ export default function CompetitionIndex({
                                         </div>
                                     </div>
 
-                                    <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between gap-3">
+                                    <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4">
                                         <div>
-                                            <span className="text-[11px] font-semibold text-slate-400 block">
+                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
                                                 {spotlightComp.organizer}
                                             </span>
                                             <Link href={`/competitions/${spotlightComp.slug || spotlightComp.id}`} className="group/link block">
-                                                <h2 className="text-base sm:text-lg font-bold text-slate-900 group-hover/link:text-blue-600 transition tracking-tight leading-snug line-clamp-2 mt-0.5">
+                                                <h2 className="text-base sm:text-xl font-extrabold text-slate-900 group-hover/link:text-indigo-600 transition tracking-tight leading-snug line-clamp-2 mt-1">
                                                     {spotlightComp.name}
                                                 </h2>
                                             </Link>
                                             {spotlightComp.description && (
-                                                <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+                                                <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
                                                     {spotlightComp.description}
                                                 </p>
                                             )}
                                         </div>
 
-                                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-semibold">
+                                        <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-1.5 flex-wrap">
+                                                <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">
                                                     {spotlightComp.competition_type || 'Tim'}
                                                 </span>
-                                                <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 text-[11px] font-semibold uppercase">
+                                                <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
                                                     {spotlightComp.category?.replace('_', ' ') || 'Teknologi'}
                                                 </span>
                                             </div>
                                             <Link
                                                 href={`/competitions/${spotlightComp.slug || spotlightComp.id}`}
-                                                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition"
+                                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition active:scale-95"
                                             >
                                                 <span>Detail</span>
                                                 <ArrowUpRight className="w-3.5 h-3.5" />
@@ -683,16 +766,18 @@ export default function CompetitionIndex({
                                 </div>
 
                                 {/* Tile 2: Deadlines Countdown (lg:col-span-5 xl:col-span-4) */}
-                                <div className="md:col-span-2 lg:col-span-5 xl:col-span-4 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                                <div className="md:col-span-2 lg:col-span-5 xl:col-span-4 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div>
-                                        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100">
-                                            <div className="flex items-center gap-2">
-                                                <AnimatedIcon name="clock" size={16} />
-                                                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                                        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                                            <div className="flex items-center gap-2.5">
+                                                <div className="size-8 rounded-xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shadow-2xs">
+                                                    <Clock className="size-4" />
+                                                </div>
+                                                <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
                                                     Deadline Terdekat
                                                 </h3>
                                             </div>
-                                            <span className="text-[10px] font-semibold text-slate-400">Segera Ditutup</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Segera Ditutup</span>
                                         </div>
 
                                         <div className="divide-y divide-slate-100">
@@ -708,18 +793,18 @@ export default function CompetitionIndex({
                                                         <Link
                                                             key={comp.id}
                                                             href={`/competitions/${comp.slug || comp.id}`}
-                                                            className="py-2 flex items-center justify-between gap-2.5 group block"
+                                                            className="py-2.5 flex items-center justify-between gap-3 group block"
                                                         >
                                                             <div className="min-w-0 flex-1">
-                                                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                                                                <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition truncate">
                                                                     {comp.name}
                                                                 </h4>
-                                                                <p className="text-[10px] text-slate-400 truncate">
+                                                                <p className="text-[10px] text-slate-400 truncate mt-0.5">
                                                                     {comp.organizer}
                                                                 </p>
                                                             </div>
                                                             <span
-                                                                className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                                                                     daysLeft !== null && daysLeft <= 3
                                                                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                                                         : 'bg-slate-100 text-slate-700'
@@ -738,16 +823,16 @@ export default function CompetitionIndex({
                                         </div>
                                     </div>
 
-                                    <div className="pt-2 border-t border-slate-100 text-right">
+                                    <div className="pt-2.5 border-t border-slate-100 text-right">
                                         <button
                                             type="button"
                                             onClick={() => {
                                                 const el = document.getElementById('catalog-section');
                                                 if (el) el.scrollIntoView({ behavior: 'smooth' });
                                             }}
-                                            className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition"
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
                                         >
-                                            Lihat Semua &darr;
+                                            Lihat Semua Katalog ↓
                                         </button>
                                     </div>
                                 </div>
@@ -755,32 +840,32 @@ export default function CompetitionIndex({
                                 {/* Tile 3: Cari Rekan Tim (lg:col-span-6) */}
                                 <div
                                     onClick={() => setActiveTab('teams')}
-                                    className="col-span-1 md:col-span-1 lg:col-span-6 bg-gradient-to-br from-blue-50/70 to-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-blue-200/70 shadow-2xs hover:border-blue-400 transition cursor-pointer flex flex-col justify-between group"
+                                    className="col-span-1 md:col-span-1 lg:col-span-6 bg-indigo-50/50 rounded-3xl p-5 sm:p-6 border border-indigo-200/70 shadow-xs hover:border-indigo-400 transition cursor-pointer flex flex-col justify-between group active:scale-[0.99]"
                                 >
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
-                                                <Users className="w-3.5 h-3.5" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="size-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                                                <Users className="size-5" />
                                             </span>
                                             <div>
-                                                <h3 className="text-xs font-bold text-slate-900">
+                                                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
                                                     Cari Rekan Tim
                                                 </h3>
-                                                <span className="text-[10px] text-slate-500">
+                                                <span className="text-[11px] text-slate-500">
                                                     {openRecruitingTeams.length} tim aktif membuka lowongan peran
                                                 </span>
                                             </div>
                                         </div>
-                                        <span className="text-xs font-bold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                                            Eksplor Tim &rarr;
+                                        <span className="text-xs font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
+                                            Eksplor Tim →
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center gap-2 flex-wrap mt-2">
+                                    <div className="flex items-center gap-2 flex-wrap mt-3">
                                         {openRecruitingTeams.slice(0, 3).map((team: any) => (
                                             <span
                                                 key={team.id}
-                                                className="px-2.5 py-1 rounded-lg bg-white/90 border border-blue-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
+                                                className="px-3 py-1 rounded-full bg-white border border-indigo-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
                                             >
                                                 {team.name}
                                             </span>
@@ -792,17 +877,17 @@ export default function CompetitionIndex({
                                 </div>
 
                                 {/* Tile 4: Kategori Unggulan (lg:col-span-6) */}
-                                <div className="col-span-1 md:col-span-1 lg:col-span-6 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-2xs flex flex-col justify-between">
+                                <div className="col-span-1 md:col-span-1 lg:col-span-6 bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
                                     <div className="flex items-center justify-between mb-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="p-1.5 rounded-lg bg-slate-900 text-white shadow-xs">
-                                                <Layers className="w-3.5 h-3.5" />
+                                        <div className="flex items-center gap-3">
+                                            <span className="size-10 rounded-2xl bg-slate-900 text-white flex items-center justify-center shadow-2xs">
+                                                <Layers className="size-5" />
                                             </span>
                                             <div>
-                                                <h3 className="text-xs font-bold text-slate-900">
+                                                <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
                                                     Kategori Unggulan
                                                 </h3>
-                                                <span className="text-[10px] text-slate-500">
+                                                <span className="text-[11px] text-slate-500">
                                                     Filter cepat minat kompetisi
                                                 </span>
                                             </div>
@@ -810,13 +895,13 @@ export default function CompetitionIndex({
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('categories')}
-                                            className="text-xs font-bold text-blue-600 hover:text-blue-700 cursor-pointer"
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
                                         >
                                             Semua ({categories.length})
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                                    <div className="flex items-center gap-1.5 flex-wrap mt-3">
                                         {categories.slice(0, 5).map((cat) => (
                                             <button
                                                 key={cat}
@@ -825,9 +910,9 @@ export default function CompetitionIndex({
                                                     setExploreCategory(cat);
                                                     router.get('/competitions', { tab: 'explore', category: cat }, { preserveState: true });
                                                 }}
-                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition cursor-pointer ${
+                                                className={`px-3 py-1 rounded-full text-[11px] font-bold transition cursor-pointer active:scale-95 ${
                                                     exploreCategory === cat
-                                                        ? 'bg-blue-600 text-white shadow-xs'
+                                                        ? 'bg-indigo-600 text-white shadow-2xs'
                                                         : 'bg-slate-100 hover:bg-slate-200/70 text-slate-700'
                                                 }`}
                                             >
@@ -1433,7 +1518,7 @@ export default function CompetitionIndex({
                                     if (team?.leader) {
                                         memberAvatars.push({
                                             name: team.leader.name,
-                                            avatar: team.leader.avatar,
+                                            avatar: team.leader.avatar || null,
                                             role: 'Ketua Tim',
                                         });
                                     }
@@ -1475,245 +1560,190 @@ export default function CompetitionIndex({
                                         <div
                                             key={part.id}
                                             onClick={() => setDetailTeam(part)}
-                                            className="group relative bg-slate-100/80 hover:bg-slate-100/95 border border-slate-200/80 rounded-[28px] p-3 sm:p-3.5 shadow-xs hover:shadow-md hover:border-slate-300 transition-all duration-300 cursor-pointer flex flex-col justify-between"
+                                            className="group bg-white hover:bg-slate-50/50 border border-slate-200/80 hover:border-slate-300 rounded-[28px] p-5 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between"
                                         >
-                                            {/* Acrylic mounting screw rivets in 4 corners */}
-                                            <span className="absolute top-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute top-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute bottom-2.5 left-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-                                            <span className="absolute bottom-2.5 right-2.5 size-2 rounded-full border border-slate-300/80 bg-slate-200/70 shadow-2xs pointer-events-none" />
-
-                                            {/* Inner White Card */}
-                                            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden flex flex-col justify-between flex-1">
-                                                {/* Top Sky-Blue Header Tab */}
-                                                <div className="bg-gradient-to-r from-sky-400 via-sky-400 to-sky-500 text-white font-extrabold text-[11px] sm:text-xs tracking-widest uppercase py-2.5 px-4 text-center select-none shadow-xs">
-                                                    ON BOARDING
+                                            <div className="space-y-3.5">
+                                                {/* Top Row: Folder Status Pill & Deadline */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60">
+                                                        <Folder className="size-3 text-blue-600" />
+                                                        <span>Rekrutmen Tim</span>
+                                                    </div>
+                                                    <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
+                                                        {formattedDeadline}
+                                                    </span>
                                                 </div>
 
-                                                {/* Card Content Area */}
-                                                <div className="p-3.5 sm:p-4 space-y-3.5 flex flex-col justify-between flex-1">
-                                                    {/* Dashed Inner Box */}
-                                                    <div className="border border-dashed border-slate-300 rounded-2xl p-3.5 bg-slate-50/40 space-y-3">
-                                                        {/* Top: Team Name & Deadline */}
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
-                                                                {team.name}
-                                                            </h3>
-                                                            <span className="text-xs text-slate-400 font-medium whitespace-nowrap shrink-0">
-                                                                {formattedDeadline}
+                                                {/* Team Name & Competition Badge */}
+                                                <div>
+                                                    <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
+                                                        {team.name}
+                                                    </h3>
+                                                    <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                                        <div
+                                                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold max-w-full truncate"
+                                                            title={`Target Kompetisi: ${comp.name}`}
+                                                        >
+                                                            <Trophy className="size-3 text-amber-500 shrink-0" />
+                                                            <span className="truncate">{comp.name}</span>
+                                                        </div>
+                                                        {comp.category && (
+                                                            <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
+                                                                {comp.category.replace('_', ' ')}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Roles Needed */}
+                                                {roles.length > 0 && (
+                                                    <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                                                        <div className="flex items-center justify-between text-xs">
+                                                            <span className="text-slate-500 font-medium flex items-center gap-1">
+                                                                <Briefcase className="size-3 text-slate-400" />
+                                                                <span>Dibutuhkan:</span>
+                                                            </span>
+                                                            <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
+                                                                {roles.length} Posisi Terbuka
                                                             </span>
                                                         </div>
-
-                                                        {/* Target Lomba / Competition Badge */}
-                                                        <div className="flex items-center gap-1.5 flex-wrap">
-                                                            <div
-                                                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/90 text-blue-700 text-xs font-semibold border border-blue-200/70 max-w-full truncate shadow-2xs"
-                                                                title={`Target Kompetisi: ${comp.name}`}
-                                                            >
-                                                                <Trophy className="size-3.5 text-blue-600 shrink-0" />
-                                                                <span className="truncate">{comp.name}</span>
-                                                            </div>
-                                                            {comp.category && (
-                                                                <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
-                                                                    {comp.category.replace('_', ' ')}
-                                                                </span>
-                                                            )}
-                                                        </div>
-
-                                                        {/* Dibutuhkan Apa Aja: Roles Needed */}
-                                                        {roles.length > 0 && (
-                                                            <div className="space-y-1.5 pt-1 border-t border-slate-200/70">
-                                                                <div className="flex items-center justify-between text-[11px]">
-                                                                    <span className="text-slate-500 font-medium flex items-center gap-1">
-                                                                        <Briefcase className="size-3 text-slate-400" />
-                                                                        <span>Dibutuhkan:</span>
-                                                                    </span>
-                                                                    <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">
-                                                                        {roles.length} Posisi Terbuka
-                                                                    </span>
-                                                                </div>
-                                                                <div className="flex flex-wrap gap-1.5">
-                                                                    {roles.map((r: any) => (
-                                                                        <span
-                                                                            key={r.id}
-                                                                            className="px-2.5 py-1 rounded-lg bg-white border border-slate-200/90 text-slate-700 text-[11px] font-semibold shadow-2xs hover:border-blue-300 hover:text-blue-700 transition-colors flex items-center gap-1.5"
-                                                                            title={r.requirements ? `Syarat: ${r.requirements}` : r.name}
-                                                                        >
-                                                                            <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
-                                                                            <span>{r.name}</span>
-                                                                            {r.slots > 1 && (
-                                                                                <span className="text-[10px] text-slate-400 font-normal">({r.slots} posisi)</span>
-                                                                            )}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {/* Description */}
-                                                        {descText && (
-                                                            <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
-                                                                {descText}
-                                                            </p>
-                                                        )}
-
-                                                        {/* UI Capacity Person / Formasi Kuota Tim */}
-                                                        <div className="pt-2 border-t border-slate-200/70 space-y-1.5">
-                                                            <div className="flex items-center justify-between text-[11px]">
-                                                                <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                                                                    <Users className="size-3 text-slate-400" />
-                                                                    <span>Kapasitas Personel</span>
-                                                                </span>
-                                                                <div className="flex items-center gap-1 text-[11px]">
-                                                                    <span className="font-bold text-blue-600">{membersCount}</span>
-                                                                    <span className="text-slate-400">/</span>
-                                                                    <span className="font-semibold text-slate-700">{maxCap}</span>
-                                                                    <span className="text-slate-400 text-[10px]">Terisi</span>
-                                                                    {emptySlots > 0 ? (
-                                                                        <span className="ml-1 text-[10px] font-semibold text-amber-700 bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200/70">
-                                                                            Sisa {emptySlots} Kuota
-                                                                        </span>
-                                                                    ) : (
-                                                                        <span className="ml-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200/70">
-                                                                            Penuh
-                                                                        </span>
+                                                        <div className="flex flex-wrap gap-1.5">
+                                                            {roles.map((r: any) => (
+                                                                <span
+                                                                    key={r.id}
+                                                                    className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-medium transition-colors flex items-center gap-1.5"
+                                                                    title={r.requirements ? `Syarat: ${r.requirements}` : r.name}
+                                                                >
+                                                                    <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
+                                                                    <span>{r.name}</span>
+                                                                    {r.slots > 1 && (
+                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
                                                                     )}
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Visual Person Capacity Slot Badges */}
-                                                            <div className="flex items-center gap-1.5">
-                                                                {Array.from({ length: maxCap }).map((_, idx) => {
-                                                                    const isFilled = idx < membersCount;
-                                                                    const member = memberAvatars[idx];
-                                                                    return (
-                                                                        <div
-                                                                            key={idx}
-                                                                            title={
-                                                                                isFilled
-                                                                                    ? member
-                                                                                        ? `${member.name} (${member.role})`
-                                                                                        : `Personel #${idx + 1} (Terisi)`
-                                                                                    : `Slot Personel #${idx + 1} (Terbuka)`
-                                                                            }
-                                                                            className={`size-7 rounded-lg flex items-center justify-center transition-all ${
-                                                                                isFilled
-                                                                                    ? 'bg-blue-600 text-white shadow-2xs'
-                                                                                    : 'border border-dashed border-slate-300 bg-white/80 text-slate-300 hover:border-slate-400'
-                                                                            }`}
-                                                                        >
-                                                                            <User className="size-3.5 stroke-[2.2]" />
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Avatars Stack & Status Pill */}
-                                                        <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-                                                            {/* Stacked Avatars */}
-                                                            <div className="flex items-center -space-x-2 overflow-hidden">
-                                                                {memberAvatars.slice(0, 4).map((m, idx) => {
-                                                                    const initials = m.name
-                                                                        ? m.name.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()
-                                                                        : 'U';
-                                                                    const colorClass = avatarPalette[idx % avatarPalette.length];
-
-                                                                    return m.avatar ? (
-                                                                        <img
-                                                                            key={idx}
-                                                                            src={m.avatar}
-                                                                            alt={m.name}
-                                                                            title={`${m.name} (${m.role})`}
-                                                                            className="size-7 rounded-full object-cover ring-2 ring-white shadow-2xs"
-                                                                        />
-                                                                    ) : (
-                                                                        <div
-                                                                            key={idx}
-                                                                            title={`${m.name} (${m.role})`}
-                                                                            className={`size-7 rounded-full ${colorClass} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs`}
-                                                                        >
-                                                                            {initials}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                                {emptySlots > 0 && (
-                                                                    <div
-                                                                        className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
-                                                                        title={`${emptySlots} slot terbuka`}
-                                                                    >
-                                                                        +{emptySlots}
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            {/* In Progress Status Pill */}
-                                                            <span className="px-3 py-1 rounded-lg bg-[#dcfce7] text-[#16a34a] text-xs font-semibold tracking-wide border border-[#bbf7d0]/60 select-none">
-                                                                In Progress
-                                                            </span>
+                                                                </span>
+                                                            ))}
                                                         </div>
                                                     </div>
+                                                )}
 
-                                                    {/* Bottom Row: 3 Pills & Plus Button */}
-                                                    <div className="flex items-center justify-between gap-1.5 pt-0.5">
-                                                        <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-                                                            {/* Comment/Roles Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                                                title={`${roles.length} lowongan peran (${roles.map((r: any) => r.name).join(', ') || 'Anggota'})`}
-                                                            >
-                                                                <MessageSquare className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span>
-                                                                    <strong className="text-slate-800 font-bold">{roles.length || 1}</strong> Peran
-                                                                </span>
-                                                            </div>
+                                                {/* Description */}
+                                                {descText && (
+                                                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">
+                                                        {descText}
+                                                    </p>
+                                                )}
 
-                                                            {/* Person Capacity Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs whitespace-nowrap"
-                                                                title={`${membersCount} dari ${maxCap} kuota personel terisi`}
-                                                            >
-                                                                <Link2 className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span>
-                                                                    <strong className="text-slate-800 font-bold">{membersCount}/{maxCap}</strong> Person
-                                                                </span>
-                                                            </div>
-
-                                                            {/* Folder/File Pill */}
-                                                            <div
-                                                                className="px-2.5 py-1.5 rounded-xl bg-white border border-slate-200/90 text-slate-600 text-[11px] font-medium flex items-center gap-1.5 shadow-2xs max-w-[100px] truncate"
-                                                                title={`Kategori: ${comp.category?.replace('_', ' ') || 'Kompetisi'} (Kapasitas: ${maxCap} orang)`}
-                                                            >
-                                                                <Folder className="size-3.5 text-slate-400 shrink-0" />
-                                                                <span className="truncate">
-                                                                    <strong className="text-slate-800 font-bold">{maxCap}</strong> File
-                                                                </span>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Action Button: Plus or Joined Check */}
-                                                        {part.is_member || part.is_leader ? (
-                                                            <div
-                                                                className="size-8 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs"
-                                                                title="Anda sudah tergabung dalam tim ini"
-                                                            >
-                                                                <CheckCircle2 className="size-4" />
-                                                            </div>
+                                                {/* Capacity Slot Badges */}
+                                                <div className="pt-2.5 border-t border-slate-100 space-y-1.5">
+                                                    <div className="flex items-center justify-between text-xs">
+                                                        <span className="text-slate-500 font-medium flex items-center gap-1.5">
+                                                            <Users className="size-3.5 text-slate-400" />
+                                                            <span>Formasi Tim ({membersCount}/{maxCap})</span>
+                                                        </span>
+                                                        {emptySlots > 0 ? (
+                                                            <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
+                                                                Sisa {emptySlots} Slot
+                                                            </span>
                                                         ) : (
-                                                            <button
-                                                                type="button"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    openApplyModal(part);
-                                                                }}
-                                                                className="size-8 rounded-xl bg-white hover:bg-blue-50 border border-slate-200/90 hover:border-blue-400 text-slate-700 hover:text-blue-600 flex items-center justify-center shrink-0 shadow-2xs transition-all active:scale-95 cursor-pointer"
-                                                                title="Ajukan diri bergabung ke tim ini"
-                                                            >
-                                                                <Plus className="size-4 stroke-[2.5]" />
-                                                            </button>
+                                                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+                                                                Formasi Lengkap
+                                                            </span>
                                                         )}
                                                     </div>
+
+                                                    <div className="flex items-center gap-1.5">
+                                                        {Array.from({ length: maxCap }).map((_, idx) => {
+                                                            const isFilled = idx < membersCount;
+                                                            const member = memberAvatars[idx];
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    title={
+                                                                        isFilled
+                                                                            ? member
+                                                                                ? `${member.name} (${member.role})`
+                                                                                : `Personel #${idx + 1} (Terisi)`
+                                                                            : `Slot Personel #${idx + 1} (Terbuka)`
+                                                                    }
+                                                                    className={`size-7 rounded-lg flex items-center justify-center transition-all ${
+                                                                        isFilled
+                                                                            ? 'bg-blue-600 text-white shadow-2xs'
+                                                                            : 'border border-dashed border-slate-300 bg-slate-50 text-slate-300'
+                                                                    }`}
+                                                                >
+                                                                    <User className="size-3.5 stroke-[2.2]" />
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
+
+                                                {/* Team Member Avatars Stack */}
+                                                <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                                                    <div className="flex items-center -space-x-2 overflow-hidden">
+                                                        {memberAvatars.slice(0, 4).map((m, idx) => {
+                                                            const initials = m.name
+                                                                ? m.name.split(/\s+/).map((p: string) => p[0]).slice(0, 2).join('').toUpperCase()
+                                                                : 'U';
+                                                            const colorClass = avatarPalette[idx % avatarPalette.length];
+
+                                                            return m.avatar ? (
+                                                                <img
+                                                                    key={idx}
+                                                                    src={m.avatar}
+                                                                    alt={m.name}
+                                                                    title={`${m.name} (${m.role})`}
+                                                                    className="size-7 rounded-full object-cover ring-2 ring-white shadow-2xs"
+                                                                />
+                                                            ) : (
+                                                                <div
+                                                                    key={idx}
+                                                                    title={`${m.name} (${m.role})`}
+                                                                    className={`size-7 rounded-full ${colorClass} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs`}
+                                                                >
+                                                                    {initials}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                        {emptySlots > 0 && (
+                                                            <div
+                                                                className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
+                                                                title={`${emptySlots} slot terbuka`}
+                                                            >
+                                                                +{emptySlots}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/60 select-none">
+                                                        Merekrut
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            {/* Bottom Action Button */}
+                                            <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                                <span className="text-xs text-slate-500 font-medium">
+                                                    {roles.length} Posisi · {membersCount}/{maxCap} Person
+                                                </span>
+
+                                                {part.is_member || part.is_leader ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-2xs">
+                                                        <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                        <span>Tergabung</span>
+                                                    </span>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openApplyModal(part);
+                                                        }}
+                                                        className="px-4 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs flex items-center gap-1.5 cursor-pointer"
+                                                    >
+                                                        <Plus className="size-3.5 stroke-[2.5]" />
+                                                        <span>Gabung Tim</span>
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     );
@@ -1726,34 +1756,35 @@ export default function CompetitionIndex({
                     {/* SUB-VIEW 2: RADAR REKRUTMEN TALENTA KANDIDAT */}
                     {teamViewMode === 'radar' && (
                         <div className="space-y-5">
-                            {/* Banner Callout */}
-                            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 border border-blue-800/40">
-                                <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 uppercase tracking-wider shadow-2xs">
-                                            Radar MinSatu
-                                        </span>
-                                        <span className="text-xs text-slate-300 font-medium">
-                                            Matchmaking Talenta Lomba
-                                        </span>
+                            {/* Banner Callout with Mascot Heart (Apple iOS HIG Card) */}
+                            <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-1 max-w-xl">
+                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60 mb-1">
+                                        <Users className="size-3.5 text-blue-600" />
+                                        <span>Radar Talenta & Rekrutmen</span>
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
-                                        Radar Rekrutmen Rekan Tim Lomba
+                                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                                        Cari Rekan & Bentuk Tim Kolaborasi
                                     </h3>
-                                    <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
-                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Hacker, Hipster, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
+                                    <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed">
+                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Developer, UI/UX Designer, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <img
+                                        src="/images/mascot/mascot-heart.png"
+                                        alt="Mascot RAKIT"
+                                        className="w-14 sm:w-16 h-auto object-contain drop-shadow-sm select-none pointer-events-none hidden sm:block"
+                                    />
                                     <button
                                         type="button"
                                         onClick={() => {
                                             setCreateTeamPreselectedCompId(null);
                                             setCreateTeamModalOpen(true);
                                         }}
-                                        className="px-4 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition shadow-xs cursor-pointer flex items-center gap-1.5"
+                                        className="px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs cursor-pointer flex items-center gap-1.5"
                                     >
-                                        <Plus className="size-3.5" />
+                                        <Plus className="size-3.5 stroke-[2.5]" />
                                         <span>Bentuk Tim Baru</span>
                                     </button>
                                 </div>
@@ -1776,7 +1807,7 @@ export default function CompetitionIndex({
                                             onClick={() => setRadarSearch('')}
                                             className="text-slate-400 hover:text-slate-600 text-xs font-bold"
                                         >
-                                            ✕
+                                            <X className="size-3.5" />
                                         </button>
                                     )}
                                 </div>
@@ -1813,8 +1844,12 @@ export default function CompetitionIndex({
 
                             {/* Candidates Grid */}
                             {filteredRadarCandidates.length === 0 ? (
-                                <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                    <Sparkles className="size-10 text-amber-400 mx-auto mb-3" />
+                                <div className="bg-white rounded-2xl p-10 sm:p-12 text-center border border-slate-200/80 shadow-xs">
+                                    <img
+                                        src="/images/mascot/mascot-thinking.png"
+                                        alt="Mascot Thinking"
+                                        className="w-20 h-20 object-contain mx-auto mb-3 select-none pointer-events-none drop-shadow-sm"
+                                    />
                                     <h4 className="text-sm font-bold text-slate-900">
                                         Tidak Ada Kandidat yang Cocok
                                     </h4>
@@ -1824,11 +1859,14 @@ export default function CompetitionIndex({
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                                    {filteredRadarCandidates.map((cand: any, idx: number) => {
+                                    {paginatedRadarCandidates.map((cand: any, idx: number) => {
                                         const student = cand.user || cand;
                                         const persona = cand.persona || 'Hacker';
                                         const skills: string[] = cand.matched_skills || cand.skills || [];
                                         const score = cand.final_score || 85;
+                                        const isInvited =
+                                            (sentInvitationUserIds || []).includes(student.id) ||
+                                            localInvitedIds.includes(student.id);
 
                                         const personaStyle =
                                             persona === 'Hipster'
@@ -1840,84 +1878,162 @@ export default function CompetitionIndex({
                                         return (
                                             <div
                                                 key={student.id || idx}
-                                                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs hover:shadow-md hover:border-slate-300 transition-all duration-200 flex flex-col justify-between group"
+                                                className="bg-white rounded-[28px] border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-md hover:border-slate-300 transition-all duration-200 p-5 flex flex-col justify-between group"
                                             >
-                                                <div>
-                                                    {/* Top Row: Avatar & Persona Badge */}
-                                                    <div className="flex items-start justify-between gap-3 mb-3">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="size-11 rounded-2xl bg-slate-900 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-2xs">
-                                                                {(student.name || 'M').charAt(0).toUpperCase()}
-                                                            </div>
-                                                            <div className="min-w-0">
-                                                                <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-blue-600 transition-colors">
-                                                                    {student.name}
-                                                                </h3>
-                                                                <p className="text-[11px] text-slate-500 truncate">
-                                                                    {student.study_program || 'Mahasiswa'}
-                                                                    {student.semester ? ` • Sem ${student.semester}` : ''}
-                                                                </p>
-                                                                <p className="text-[10px] text-slate-400 truncate">
-                                                                    {student.campus_name || student.campus?.name || 'Politeknik Negeri Indramayu'}
-                                                                </p>
-                                                            </div>
-                                                        </div>
-
-                                                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
-                                                            {persona}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Headline / Explanation */}
-                                                    <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed mb-3">
-                                                        {student.headline || cand.explanation || 'Siap berkolaborasi dan berkontribusi untuk tim kompetisi.'}
-                                                    </p>
-
-                                                    {/* Skills Pills */}
-                                                    {skills.length > 0 && (
-                                                        <div className="space-y-1.5 pt-2.5 border-t border-slate-100 mb-3">
-                                                            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">
-                                                                Keahlian Terverifikasi
-                                                            </span>
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {skills.slice(0, 4).map((sk: any, i: number) => (
-                                                                    <span
-                                                                        key={i}
-                                                                        className="px-2 py-0.5 rounded-lg bg-slate-50 border border-slate-200/80 text-slate-700 text-[10px] font-semibold"
-                                                                    >
-                                                                        {typeof sk === 'string' ? sk : sk.name}
-                                                                    </span>
-                                                                ))}
-                                                                {skills.length > 4 && (
-                                                                    <span className="text-[10px] text-slate-400 font-medium py-0.5">
-                                                                        +{skills.length - 4} lainnya
-                                                                    </span>
+                                                <div className="space-y-3.5">
+                                                    {/* Top Header: Avatar + Identity + Status Badge */}
+                                                    <div className="flex items-start justify-between gap-3">
+                                                        <div className="flex items-center gap-3 min-w-0">
+                                                            <div className="size-12 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm shrink-0 border-2 border-white shadow-xs overflow-hidden">
+                                                                {student.avatar ? (
+                                                                    <img src={student.avatar} alt={student.name} className="size-full object-cover" />
+                                                                ) : (
+                                                                    <span>{(student.name || 'M').charAt(0).toUpperCase()}</span>
                                                                 )}
                                                             </div>
+                                                            <div className="min-w-0">
+                                                                <h3 className="font-bold text-slate-900 text-sm sm:text-base tracking-tight truncate group-hover:text-blue-600 transition-colors">
+                                                                    {student.name}
+                                                                </h3>
+                                                                <p className="text-xs text-slate-500 font-medium truncate mt-0.5">
+                                                                    {student.study_program || 'Mahasiswa'}{student.semester ? ` · Sem ${student.semester}` : ''}
+                                                                </p>
+                                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                                                                    {student.campus_name || student.campus?.name || 'Perguruan Tinggi'}
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                    )}
-                                                </div>
 
-                                                {/* Bottom Row: Score & Invite Button */}
-                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-2">
-                                                    <div className="flex items-center gap-1.5">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                                            {score}% Kesiapan
-                                                        </span>
+                                                        {isInvited ? (
+                                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shrink-0">
+                                                                <CheckCircle2 className="size-3.5 text-emerald-600" />
+                                                                <span>Terkirim</span>
+                                                            </span>
+                                                        ) : (
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
+                                                                <span className="size-1.5 rounded-full bg-current" />
+                                                                <span>{persona}</span>
+                                                            </span>
+                                                        )}
                                                     </div>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => openRadarInvite(cand)}
-                                                        className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5"
-                                                    >
-                                                        <Send className="size-3" />
-                                                        <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
-                                                    </button>
+                                                    {/* Skills Pills */}
+                                                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                                        {skills.slice(0, 3).map((skill: any, sIdx: number) => {
+                                                            const sName = typeof skill === 'string' ? skill : skill.name;
+                                                            return (
+                                                                <span
+                                                                    key={sIdx}
+                                                                    className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-medium truncate max-w-[140px]"
+                                                                >
+                                                                    {sName}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                        {skills.length > 3 && (
+                                                            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[11px] font-semibold">
+                                                                +{skills.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {/* 3-Column Metrics Stats Row */}
+                                                    <div className="py-2.5 px-3 rounded-2xl bg-slate-50/70 border border-slate-100 grid grid-cols-3 divide-x divide-slate-200/60 text-center">
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-900 flex items-center justify-center gap-1">
+                                                                <Star className="size-3.5 fill-amber-400 text-amber-400" />
+                                                                <span>{(score / 20).toFixed(1)}</span>
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Rating</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-900">
+                                                                {score}%
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Kesiapan</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs font-bold text-slate-900">
+                                                                {student.semester ? `Sem ${student.semester}` : 'Aktif'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Status</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Bottom CTA Button */}
+                                                <div className="pt-4 mt-3 border-t border-slate-100">
+                                                    {isInvited ? (
+                                                        <button
+                                                            type="button"
+                                                            disabled
+                                                            className="w-full py-2.5 rounded-full bg-slate-100 text-slate-500 font-semibold text-xs flex items-center justify-center gap-1.5 cursor-not-allowed select-none border border-slate-200/70"
+                                                        >
+                                                            <Check className="size-3.5 text-emerald-600 stroke-[2.5]" />
+                                                            <span className="text-slate-600 font-semibold">Undangan Terkirim</span>
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => openRadarInvite(cand)}
+                                                            className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs text-center transition-all shadow-xs hover:shadow active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer group"
+                                                        >
+                                                            <UserPlus className="size-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
+                                                            <span>{myLedTeams.length > 0 ? 'Undang ke Tim' : 'Ajak Kolaborasi'}</span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
                                     })}
+                                </div>
+                            )}
+
+                            {/* Radar Candidates Pagination */}
+                            {totalRadarPages > 1 && (
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 mt-3 border-t border-slate-200/80">
+                                    <p className="text-xs text-slate-500 font-medium">
+                                        Menampilkan <strong className="text-slate-800">{(radarPage - 1) * RADAR_PER_PAGE + 1}</strong> - <strong className="text-slate-800">{Math.min(radarPage * RADAR_PER_PAGE, filteredRadarCandidates.length)}</strong> dari <strong className="text-slate-800">{filteredRadarCandidates.length}</strong> kandidat
+                                    </p>
+
+                                    <div className="flex items-center gap-1.5">
+                                        <button
+                                            type="button"
+                                            disabled={radarPage === 1}
+                                            onClick={() => setRadarPage(p => Math.max(1, p - 1))}
+                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <ChevronLeft className="size-3.5" />
+                                            <span>Sebelumnya</span>
+                                        </button>
+
+                                        <div className="flex items-center gap-1">
+                                            {Array.from({ length: totalRadarPages }).map((_, i) => (
+                                                <button
+                                                    key={i}
+                                                    type="button"
+                                                    onClick={() => setRadarPage(i + 1)}
+                                                    className={`size-8 rounded-xl flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                                                        radarPage === i + 1
+                                                            ? 'bg-slate-900 text-white shadow-xs'
+                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {i + 1}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            disabled={radarPage === totalRadarPages}
+                                            onClick={() => setRadarPage(p => Math.min(totalRadarPages, p + 1))}
+                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <span>Berikutnya</span>
+                                            <ChevronRight className="size-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -2118,7 +2234,7 @@ export default function CompetitionIndex({
                             </Link>
                         </div>
 
-                        {/* CASE 1: APPLICATIONS (MinSatu User Requests) */}
+                        {/* CASE 1: APPLICATIONS (Team Recruitment User Requests) */}
                         {myLifecycleFilter === 'applications' && (
                             <div>
                                 {myApplications.length === 0 ? (
@@ -2317,18 +2433,25 @@ export default function CompetitionIndex({
                                         );
                                     }
 
+                                    const totalMyCompPages = Math.ceil(filteredParticipations.length / MY_COMP_PER_PAGE);
+                                    const paginatedParticipations = filteredParticipations.slice(
+                                        (myCompPage - 1) * MY_COMP_PER_PAGE,
+                                        myCompPage * MY_COMP_PER_PAGE
+                                    );
+
                                     return (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                            {filteredParticipations.map((part) => {
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                                {paginatedParticipations.map((part) => {
                                                 const comp = part.competition;
                                                 const team = part.team;
                                                 const status = part.lifecycle_status;
 
-                                                const tasksCount = part.tasks_count ?? team?.tasks_count ?? 0;
-                                                const completedTasksCount = part.completed_tasks_count ?? team?.completed_tasks_count ?? 0;
+                                                const tasksCount = part.tasks_count ?? (team as any)?.tasks_count ?? 0;
+                                                const completedTasksCount = part.completed_tasks_count ?? (team as any)?.completed_tasks_count ?? 0;
                                                 const progressPercent =
                                                     part.progress_percent ??
-                                                    team?.progress_percent ??
+                                                    (team as any)?.progress_percent ??
                                                     (tasksCount > 0
                                                         ? Math.round((completedTasksCount / tasksCount) * 100)
                                                         : (status === 'completed' ? 100 : (status === 'in_progress' ? 50 : (status === 'registered' ? 25 : 0))));
@@ -2358,107 +2481,93 @@ export default function CompetitionIndex({
                                                 const workspaceUrl = `/competition-workspace/${comp?.slug || part.id}`;
 
                                                 return (
-                                                    <div key={part.id} className="flex flex-col group">
-                                                        {/* Laptop Workstation Mockup Card */}
+                                                    <div key={part.id} className="group relative flex flex-col transition-all duration-300 hover:-translate-y-1.5">
+                                                        {/* 3D Folder Card Container */}
                                                         <Link
                                                             href={workspaceUrl}
-                                                            className="block cursor-pointer transition-all duration-300 hover:-translate-y-1.5 focus:outline-none"
+                                                            className="block cursor-pointer focus:outline-none"
                                                         >
-                                                            {/* Laptop Lid / Outer Chassis */}
-                                                            <div className="bg-[#0b1020] p-2.5 sm:p-3 rounded-t-[22px] border-t border-x border-slate-700/60 shadow-xl transition-all duration-300 group-hover:border-blue-500/40 group-hover:shadow-[0_15px_30px_-5px_rgba(37,99,235,0.25)]">
-                                                                {/* Center Camera Bezel Dot */}
-                                                                <div className="flex items-center justify-center mb-2">
-                                                                    <div className="size-1.5 rounded-full bg-slate-900 border border-slate-700/60 shadow-inner" />
+                                                            <div className="relative pt-6">
+                                                                {/* Top Back Folder Tab */}
+                                                                <div className="absolute top-0 left-0 h-8 w-32 sm:w-36 rounded-t-2xl bg-gradient-to-b from-slate-200 to-slate-300/80 border-t border-x border-slate-300/70 shadow-xs flex items-center px-3.5">
+                                                                    <span className="text-[10px] font-mono font-bold text-slate-600 truncate">
+                                                                        ~/workspace/{part.team?.id || part.id}
+                                                                    </span>
                                                                 </div>
 
-                                                                {/* Display Screen Canvas */}
-                                                                <div className="relative overflow-hidden rounded-xl border border-blue-900/40 bg-gradient-to-b from-[#060c1d] via-[#091530] to-[#040916] p-4 sm:p-5 flex flex-col justify-between min-h-[220px] shadow-inner">
-                                                                    {/* Ambient Radial Glow */}
-                                                                    <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-600/15 via-transparent to-transparent pointer-events-none" />
+                                                                {/* Peeking White Paper Sheet(s) inside the folder pocket */}
+                                                                <div className="absolute top-2.5 left-4 right-4 h-14 rounded-t-xl bg-white border-t border-x border-slate-200/90 shadow-2xs px-3.5 py-1.5 transition-transform duration-300 group-hover:-translate-y-2 pointer-events-none z-0">
+                                                                    <div className="space-y-1 opacity-60">
+                                                                        <div className="h-1.5 w-24 bg-slate-200 rounded-full" />
+                                                                        <div className="h-1.5 w-40 bg-slate-100 rounded-full" />
+                                                                    </div>
+                                                                </div>
 
-                                                                    {/* Screen Header Bar */}
-                                                                    <div className="relative z-10 flex items-center justify-between gap-2">
-                                                                        {/* 3 Blue Window Control Dots */}
-                                                                        <div className="flex items-center gap-1.5">
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
-                                                                            <span className="size-2 sm:size-2.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]" />
+                                                                {/* Front Folder Pocket Body */}
+                                                                <div className="relative z-10 rounded-[24px] bg-white border border-slate-200/90 shadow-[0_8px_24px_rgba(0,0,0,0.04)] group-hover:shadow-[0_16px_36px_rgba(0,0,0,0.08)] transition-all duration-300 p-5 sm:p-6 overflow-hidden flex flex-col justify-between min-h-[210px]">
+                                                                    {/* Subtle top edge curve */}
+                                                                    <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-blue-500/20 to-transparent pointer-events-none" />
+
+                                                                    <div>
+                                                                        {/* Top Row: Role & Status Pills */}
+                                                                        <div className="flex items-center justify-between gap-2 mb-3">
+                                                                            <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
+                                                                                {statusLabel}
+                                                                            </span>
+                                                                            <div className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 border border-slate-200/60">
+                                                                                <Award className="size-3 text-slate-500" />
+                                                                                <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                            </div>
                                                                         </div>
 
-                                                                        {/* Center Path Pill */}
-                                                                        <div className="px-2.5 py-0.5 rounded-md bg-slate-900/90 border border-slate-700/70 font-mono text-[10px] sm:text-[11px] text-slate-300 flex items-center gap-1 shadow-inner">
-                                                                            <span className="text-slate-400">~/workspace/</span>
-                                                                            <span className="text-white font-bold">{part.team?.id || part.id}</span>
-                                                                        </div>
-
-                                                                        {/* Right Role Badge */}
-                                                                        <div className="px-2 py-0.5 rounded-md bg-blue-950/40 border border-blue-500/30 text-blue-300 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 shadow-2xs">
-                                                                            <Award className="size-3 text-blue-400" />
-                                                                            <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                        {/* Team Name & Competition */}
+                                                                        <div className="space-y-1 mb-4">
+                                                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-blue-600 transition">
+                                                                                {team?.name || 'Mandiri'}
+                                                                            </h3>
+                                                                            <p className="text-xs sm:text-sm font-medium text-slate-500 leading-normal line-clamp-1">
+                                                                                {comp?.name || 'Kompetisi'}
+                                                                            </p>
                                                                         </div>
                                                                     </div>
 
-                                                                    {/* Screen Body: Team & Competition */}
-                                                                    <div className="relative z-10 my-5 space-y-1">
-                                                                        <h3 className="text-base sm:text-lg font-bold text-white tracking-tight leading-snug line-clamp-1 group-hover:text-blue-200 transition">
-                                                                            {team?.name || 'Mandiri'}
-                                                                        </h3>
-                                                                        <p className="text-xs sm:text-sm font-medium text-blue-400/95 leading-normal line-clamp-1">
-                                                                            {comp?.name || 'Kompetisi'}
-                                                                        </p>
-                                                                    </div>
-
-                                                                    {/* Screen Footer: Progress & Stats */}
-                                                                    <div className="relative z-10 space-y-2 pt-2 border-t border-slate-800/60">
+                                                                    {/* Progress & Bottom Metadata */}
+                                                                    <div className="space-y-2.5 pt-3 border-t border-slate-100">
                                                                         {/* Progress Row */}
-                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs">
-                                                                            <span className="text-slate-400 font-medium">Progres</span>
-                                                                            <span className="text-white font-bold">{progressPercent}%</span>
-                                                                        </div>
-
-                                                                        {/* Progress Bar Track */}
-                                                                        <div className="w-full h-1.5 bg-slate-800/90 rounded-full overflow-hidden">
-                                                                            <div
-                                                                                className="h-full bg-blue-500 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.7)] transition-all duration-500"
-                                                                                style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
-                                                                            />
+                                                                        <div>
+                                                                            <div className="flex items-center justify-between text-[11px] sm:text-xs mb-1">
+                                                                                <span className="text-slate-400 font-medium">Progres</span>
+                                                                                <span className="text-slate-800 font-bold">{progressPercent}%</span>
+                                                                            </div>
+                                                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                                                                                <div
+                                                                                    className="h-full bg-blue-600 rounded-full transition-all duration-500"
+                                                                                    style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
+                                                                                />
+                                                                            </div>
                                                                         </div>
 
                                                                         {/* Meta Stats Row */}
-                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-300 pt-0.5">
+                                                                        <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 pt-0.5">
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <Users className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <Users className="size-3.5 text-slate-400 shrink-0" />
                                                                                 <span>{team?.members_count || 1} Anggota</span>
                                                                             </div>
                                                                             <div className="flex items-center gap-1.5">
-                                                                                <CheckCircle2 className="size-3.5 text-blue-400 shrink-0" />
+                                                                                <CheckCircle2 className="size-3.5 text-slate-400 shrink-0" />
                                                                                 <span>{completedTasksCount}/{tasksCount} Selesai</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                             </div>
-
-                                                            {/* Laptop Bottom Chassis / Base */}
-                                                            <div className="relative">
-                                                                {/* Hinge & Main Base */}
-                                                                <div className="h-3.5 sm:h-4 bg-gradient-to-b from-[#0c1222] to-[#040711] rounded-b-xl border-t border-slate-700/50 shadow-md relative flex items-start justify-center">
-                                                                    {/* Center Thumb Notch */}
-                                                                    <div className="w-14 sm:w-16 h-1 bg-slate-900 border-b border-x border-slate-700/80 rounded-b-sm" />
-                                                                </div>
-                                                                {/* Wider Base Feet Lip */}
-                                                                <div className="w-[103%] -ml-[1.5%] h-1 sm:h-1.5 bg-[#0a0f1d] rounded-b-2xl border-t border-slate-700/40 shadow-xl" />
-                                                            </div>
                                                         </Link>
 
                                                         {/* Bottom Meta & Quick Action Toolbar */}
                                                         <div className="mt-3 flex items-center justify-between gap-2 px-1 text-xs">
                                                             <div className="flex items-center gap-1.5">
-                                                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${statusBadge}`}>
-                                                                    {statusLabel}
-                                                                </span>
                                                                 {part.stage_label && (
-                                                                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[130px]">
+                                                                    <span className="text-[11px] text-slate-500 font-medium truncate max-w-[140px]">
                                                                         {part.stage_label}
                                                                     </span>
                                                                 )}
@@ -2489,6 +2598,55 @@ export default function CompetitionIndex({
                                                     </div>
                                                 );
                                             })}
+                                            </div>
+
+                                            {/* Folder Cards Pagination */}
+                                            {totalMyCompPages > 1 && (
+                                                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-slate-200/80">
+                                                    <p className="text-xs text-slate-500 font-medium">
+                                                        Menampilkan <strong className="text-slate-800">{(myCompPage - 1) * MY_COMP_PER_PAGE + 1}</strong> - <strong className="text-slate-800">{Math.min(myCompPage * MY_COMP_PER_PAGE, filteredParticipations.length)}</strong> dari <strong className="text-slate-800">{filteredParticipations.length}</strong> tim
+                                                    </p>
+
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            disabled={myCompPage === 1}
+                                                            onClick={() => setMyCompPage(p => Math.max(1, p - 1))}
+                                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <ChevronLeft className="size-3.5" />
+                                                            <span>Sebelumnya</span>
+                                                        </button>
+
+                                                        <div className="flex items-center gap-1">
+                                                            {Array.from({ length: totalMyCompPages }).map((_, i) => (
+                                                                <button
+                                                                    key={i}
+                                                                    type="button"
+                                                                    onClick={() => setMyCompPage(i + 1)}
+                                                                    className={`size-8 rounded-xl flex items-center justify-center text-xs font-bold transition cursor-pointer ${
+                                                                        myCompPage === i + 1
+                                                                            ? 'bg-slate-900 text-white shadow-xs'
+                                                                            : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                                                                    }`}
+                                                                >
+                                                                    {i + 1}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        <button
+                                                            type="button"
+                                                            disabled={myCompPage === totalMyCompPages}
+                                                            onClick={() => setMyCompPage(p => Math.min(totalMyCompPages, p + 1))}
+                                                            className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
+                                                        >
+                                                            <span>Berikutnya</span>
+                                                            <ChevronRight className="size-3.5" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })()}
@@ -2558,7 +2716,7 @@ export default function CompetitionIndex({
                 )}
             </div>
 
-            {/* MINSATU DETAIL MODAL */}
+            {/* TEAM RECRUITMENT DETAIL MODAL */}
             {detailTeam && (
                 <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
                     <div className="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-7 shadow-xl border border-slate-200/90 relative my-6 space-y-5">
@@ -2833,8 +2991,8 @@ export default function CompetitionIndex({
                         <form onSubmit={handleSendRadarInvite} className="mt-4 space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">Calon Anggota Terpilih</label>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-3">
-                                    <div className="size-9 rounded-xl bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center gap-3">
+                                    <div className="size-10 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                         {(selectedRadarCandidate.user?.name || selectedRadarCandidate.name || 'M').charAt(0).toUpperCase()}
                                     </div>
                                     <div className="min-w-0 flex-1">
@@ -2847,7 +3005,7 @@ export default function CompetitionIndex({
                                             {selectedRadarCandidate.user?.campus_name ? ` • ${selectedRadarCandidate.user?.campus_name}` : ''}
                                         </p>
                                     </div>
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800">
                                         {selectedRadarCandidate.persona || 'Hacker'}
                                     </span>
                                 </div>
@@ -2859,7 +3017,7 @@ export default function CompetitionIndex({
                                     <select
                                         value={inviteParticipationId}
                                         onChange={(e) => setInviteParticipationId(e.target.value)}
-                                        className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
+                                        className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600 cursor-pointer"
                                     >
                                         {myLedTeams.map((team: any) => (
                                             <option key={team.id} value={team.id}>
@@ -2880,8 +3038,24 @@ export default function CompetitionIndex({
                                     value={inviteRoleName}
                                     onChange={(e) => setInviteRoleName(e.target.value)}
                                     placeholder="Contoh: UI/UX Designer, Frontend Developer, Hustler / Pitcher"
-                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                                 />
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                    {['Frontend Developer', 'UI/UX Designer', 'Backend Engineer', 'Pitcher / Hustler', 'Data & AI'].map((qr) => (
+                                        <button
+                                            key={qr}
+                                            type="button"
+                                            onClick={() => setInviteRoleName(qr)}
+                                            className={`px-2.5 py-1 rounded-full text-[11px] font-medium transition cursor-pointer ${
+                                                inviteRoleName === qr
+                                                    ? 'bg-blue-600 text-white shadow-2xs'
+                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
+                                            }`}
+                                        >
+                                            {qr}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
 
                             <div>
@@ -2893,11 +3067,11 @@ export default function CompetitionIndex({
                                     value={inviteMessage}
                                     onChange={(e) => setInviteMessage(e.target.value)}
                                     placeholder="Tuliskan alasan mengajak bergabung atau fokus peran yang disiapkan..."
-                                    className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:border-blue-600"
                                 />
                             </div>
 
-                            <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
+                            <div className="p-3 bg-blue-50/70 rounded-2xl border border-blue-200/80 text-[11px] text-blue-900 flex items-start gap-2">
                                 <Info className="size-4 text-blue-600 shrink-0 mt-0.5" />
                                 <span>
                                     Mahasiswa akan menerima notifikasi undangan di aplikasi dan email mereka. Keanggotaan resmi berlaku setelah mahasiswa menyetujui undangan ini.
@@ -2911,14 +3085,14 @@ export default function CompetitionIndex({
                                         setRadarInviteModalOpen(false);
                                         setSelectedRadarCandidate(null);
                                     }}
-                                    className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
+                                    className="px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={isInviting}
-                                    className="px-4.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                                    className="px-5 py-2 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition active:scale-[0.98] shadow-xs cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                                 >
                                     {isInviting ? (
                                         <>
@@ -2978,6 +3152,14 @@ export default function CompetitionIndex({
                     onClose={() => setResultModalOpen(false)}
                     participation={selectedResultPart}
                 />
+            )}
+
+            {/* FLOATING INVITATION SUCCESS TOAST */}
+            {inviteSuccessToast?.show && (
+                <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl bg-slate-900 text-white shadow-2xl border border-slate-800 text-xs font-semibold animate-in slide-in-from-bottom-5 duration-200">
+                    <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
+                    <span>Undangan rekrutmen berhasil dikirim ke {inviteSuccessToast.name}!</span>
+                </div>
             )}
         </AppLayout>
     );
