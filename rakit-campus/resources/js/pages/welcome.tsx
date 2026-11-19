@@ -1808,9 +1808,7 @@ export default function Welcome() {
                                         : 'all 500ms ease-out',
                         }}
                     >
-                        <span className={`text-2xl xs:text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.18em] sm:tracking-[0.22em] uppercase whitespace-nowrap transition-colors duration-500 ${
-                            introStage === 0 && !isMobile ? 'text-neutral-950' : 'text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]'
-                        }`}>
+                        <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
                             RAKIT
                         </span>
                     </div>
@@ -1836,9 +1834,7 @@ export default function Welcome() {
                                         : 'all 500ms ease-out',
                         }}
                     >
-                        <span className={`text-2xl xs:text-3xl sm:text-5xl md:text-6xl font-serif tracking-[0.18em] sm:tracking-[0.22em] uppercase whitespace-nowrap transition-colors duration-500 ${
-                            introStage === 0 && !isMobile ? 'text-neutral-950' : 'text-white drop-shadow-[0_4px_24px_rgba(0,0,0,0.85)]'
-                        }`}>
+                        <span className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight text-neutral-950 whitespace-nowrap">
                             CAMPUS
                         </span>
                     </div>
