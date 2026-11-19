@@ -71,6 +71,7 @@ createInertiaApp({
                 msg.includes('error loading dynamically imported module')
             ) {
                 window.location.reload();
+                return new Promise(() => {});
             }
             throw error;
         }),

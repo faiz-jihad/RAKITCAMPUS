@@ -20,12 +20,29 @@ export class AppErrorBoundary extends Component<Props, State> {
         return { hasError: true, error };
     }
 
+    public componentDidMount() {
+        // If the error was caused by a stale bundle chunk after deploy, auto-reload immediately
+        if (this.state.hasError) {
+            const msg = String(this.state.error?.message || '');
+            if (
+                msg.includes('Failed to fetch') ||
+                msg.includes('dynamically imported module') ||
+                msg.includes('Importing a module script failed') ||
+                msg.includes('Loading chunk')
+            ) {
+                setTimeout(() => window.location.reload(), 300);
+            }
+        }
+    }
+
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Uncaught React error caught by AppErrorBoundary:', error, errorInfo);
         const msg = String(error?.message || '');
         if (
-            msg.includes('Failed to fetch dynamically imported module') ||
-            msg.includes('Importing a module script failed')
+            msg.includes('Failed to fetch') ||
+            msg.includes('dynamically imported module') ||
+            msg.includes('Importing a module script failed') ||
+            msg.includes('Loading chunk')
         ) {
             window.location.reload();
         }
