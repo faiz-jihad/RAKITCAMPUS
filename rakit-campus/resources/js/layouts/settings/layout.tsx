@@ -1,39 +1,41 @@
 import Heading from '@/components/heading';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/hooks/use-locale';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { KeyRound, LogOut, Palette, User } from 'lucide-react';
 
-const sidebarNavItems = [
-    {
-        title: 'Profil & Keahlian',
-        url: '/settings/profile',
-        icon: User,
-        desc: 'Biodata, skill, & ketersediaan',
-    },
-    {
-        title: 'Keamanan Sandi',
-        url: '/settings/password',
-        icon: KeyRound,
-        desc: 'Ubah password & otentikasi',
-    },
-    {
-        title: 'Tema & Tampilan',
-        url: '/settings/appearance',
-        icon: Palette,
-        desc: 'Mode gelap, terang, & sistem',
-    },
-];
-
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+    const { t, locale } = useLocale();
     const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/settings/profile';
+
+    const sidebarNavItems = [
+        {
+            title: t('nav.profile', 'Profil & Keahlian'),
+            url: '/settings/profile',
+            icon: User,
+            desc: locale === 'en' ? 'Bio, skills & availability' : 'Biodata, skill, & ketersediaan',
+        },
+        {
+            title: t('nav.security', 'Keamanan Sandi'),
+            url: '/settings/password',
+            icon: KeyRound,
+            desc: locale === 'en' ? 'Change password & auth' : 'Ubah password & otentikasi',
+        },
+        {
+            title: t('nav.appearance', 'Tema & Tampilan'),
+            url: '/settings/appearance',
+            icon: Palette,
+            desc: locale === 'en' ? 'Dark mode, light, & language' : 'Mode gelap, terang, & bahasa',
+        },
+    ];
 
     return (
         <div className="space-y-6 pt-2">
             {/* Header: Judulnya saja */}
             <div className="border-b border-slate-100 pb-4">
                 <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">
-                    Pengaturan Akun & Profil
+                    {t('settings.title', 'Pengaturan Akun & Profil')}
                 </h1>
             </div>
 
@@ -42,7 +44,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                     <aside className="w-full lg:w-72 shrink-0">
                         <div className="bg-white border border-neutral-200/80 rounded-3xl p-3 shadow-sm flex flex-col gap-1.5">
                             <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider px-3 pt-2 pb-1 block">
-                                Navigasi Pengaturan
+                                {locale === 'en' ? 'Settings Navigation' : 'Navigasi Pengaturan'}
                             </span>
                             {sidebarNavItems.map((item) => {
                                 const Icon = item.icon;
@@ -90,9 +92,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                                         <LogOut className="size-4" />
                                     </div>
                                     <div>
-                                        <div className="leading-tight font-bold">Keluar Akun</div>
+                                        <div className="leading-tight font-bold">{t('nav.logout', 'Keluar Akun')}</div>
                                         <div className="text-[10px] text-rose-400 font-normal mt-0.5">
-                                            Akhiri sesi login di perangkat ini
+                                            {locale === 'en' ? 'End session on this device' : 'Akhiri sesi login di perangkat ini'}
                                         </div>
                                     </div>
                                 </Link>

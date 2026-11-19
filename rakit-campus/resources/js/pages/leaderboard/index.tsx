@@ -1,6 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import SeoHead from '@/components/seo/SeoHead';
 import { LeaderboardPodium, type LeaderboardRanking } from '@/components/ui/leaderboard-podium';
+import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -172,6 +173,7 @@ export default function LeaderboardIndex({
     rules = [],
     canManage = false,
 }: Props) {
+    const { t, locale } = useLocale();
     const [search, setSearch] = useState(searchQuery || '');
     const [rulesModalOpen, setRulesModalOpen] = useState(false);
 
@@ -261,9 +263,9 @@ export default function LeaderboardIndex({
 
             <div className="max-w-7xl mx-auto space-y-6 pb-20">
                 {/* 1. TOP HERO HEADER with Mascot Trophy (Apple HIG Bento Context Card) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-                    <div className="flex items-center gap-4">
-                        <div className="size-16 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-3.5 sm:gap-4">
+                        <div className="size-14 sm:size-16 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
                             <img
                                 src="/images/mascot/mascot-trophy.png"
                                 alt="Mascot Champion Trophy"
@@ -273,13 +275,13 @@ export default function LeaderboardIndex({
                         <div>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1">
                                 <Award className="size-3 text-amber-600" />
-                                <span>Hall of Fame & Podium Nasional</span>
+                                <span>{t('leaderboard.tag', 'Hall of Fame & Podium Nasional')}</span>
                             </div>
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
-                                Klasemen & Peringkat RAKIT Campus
+                                {t('leaderboard.title', 'Klasemen & Peringkat RAKIT Campus')}
                             </h1>
                             <p className="text-xs text-slate-500 mt-1 max-w-xl">
-                                Panggung prestasi mahasiswa, kontributor proyek teraktif, dan tim juara kompetisi terverifikasi se-Indonesia.
+                                {t('leaderboard.subtitle', 'Panggung prestasi mahasiswa, kontributor proyek teraktif, dan tim juara kompetisi terverifikasi se-Indonesia.')}
                             </p>
                         </div>
                     </div>
@@ -288,66 +290,68 @@ export default function LeaderboardIndex({
                         <button
                             type="button"
                             onClick={() => setRulesModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer active:scale-95"
                         >
                             <Info className="size-3.5 text-indigo-600" />
-                            <span>Aturan Poin</span>
+                            <span>{t('leaderboard.point_rules', 'Aturan Poin')}</span>
                         </button>
 
                         {canManage && (
                             <Link
                                 href="/leaderboard/admin"
-                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition cursor-pointer active:scale-95"
                             >
                                 <Shield className="size-3.5" />
-                                <span>Kelola Leaderboard</span>
+                                <span>{t('leaderboard.manage_leaderboard', 'Kelola Leaderboard')}</span>
                             </Link>
                         )}
                     </div>
                 </div>
 
                 {/* 2. MAIN HUB TABS & CONTROLS BAR (Apple iOS Segmented Control) */}
-                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+                <div className="bg-white rounded-3xl p-4.5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
                     {/* Primary Hub Switcher */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm overflow-x-auto no-scrollbar">
-                            {[
-                                { id: 'overall', label: 'Klasemen Utama', icon: Trophy },
-                                { id: 'project', label: 'Project Hub', icon: FolderKanban },
-                                { id: 'competition', label: 'Competition Hub', icon: Award },
-                            ].map((tab) => {
-                                const Icon = tab.icon;
-                                const isActive = activeHub === tab.id;
-                                return (
-                                    <button
-                                        key={tab.id}
-                                        type="button"
-                                        onClick={() => handleSwitchHub(tab.id as any)}
-                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-                                            isActive
-                                                ? 'bg-white text-slate-900 font-bold shadow-xs'
-                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                                        }`}
-                                    >
-                                        <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                        <span>{tab.label}</span>
-                                    </button>
-                                );
-                            })}
+                        <div className="w-full sm:w-auto overflow-x-auto no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
+                            <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm max-w-full">
+                                {[
+                                    { id: 'overall', label: t('leaderboard.tabs.overall', 'Klasemen Utama'), icon: Trophy },
+                                    { id: 'project', label: t('leaderboard.tabs.project', 'Project Hub'), icon: FolderKanban },
+                                    { id: 'competition', label: t('leaderboard.tabs.competition', 'Competition Hub'), icon: Award },
+                                ].map((tab) => {
+                                    const Icon = tab.icon;
+                                    const isActive = activeHub === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            type="button"
+                                            onClick={() => handleSwitchHub(tab.id as any)}
+                                            className={`inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
+                                                isActive
+                                                    ? 'bg-white text-slate-900 font-bold shadow-xs'
+                                                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                            }`}
+                                        >
+                                            <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                            <span>{tab.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
 
                         {/* Period Filter (Apple Segmented Pill) */}
-                        <div className="bg-slate-100/90 p-1 rounded-xl inline-flex items-center gap-1 shrink-0 self-start sm:self-auto border border-slate-200/50">
+                        <div className="bg-slate-100/90 p-1 rounded-xl inline-flex items-center gap-1 shrink-0 self-start sm:self-auto border border-slate-200/50 overflow-x-auto no-scrollbar max-w-full">
                             {[
-                                { id: 'weekly', label: '7 Hari' },
-                                { id: 'monthly', label: 'Bulan Ini' },
-                                { id: 'all_time', label: 'Semua Waktu' },
+                                { id: 'weekly', label: t('leaderboard.periods.weekly', '7 Hari') },
+                                { id: 'monthly', label: t('leaderboard.periods.monthly', 'Bulan Ini') },
+                                { id: 'all_time', label: t('leaderboard.periods.all_time', 'Semua Waktu') },
                             ].map((p) => (
                                 <button
                                     key={p.id}
                                     type="button"
                                     onClick={() => handleSwitchPeriod(p.id)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
                                         activePeriod === p.id
                                             ? 'bg-white text-slate-900 font-bold shadow-2xs'
                                             : 'text-slate-500 hover:text-slate-800'
@@ -373,7 +377,7 @@ export default function LeaderboardIndex({
                                                 : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
-                                        Peringkat Proyek
+                                        {locale === 'en' ? 'Project Ranking' : 'Peringkat Proyek'}
                                     </button>
                                     <button
                                         type="button"
@@ -384,7 +388,7 @@ export default function LeaderboardIndex({
                                                 : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
-                                        Kontributor Teraktif
+                                        {t('leaderboard.subtypes.contributors', 'Kontributor Teraktif')}
                                     </button>
                                 </>
                             )}
@@ -400,7 +404,7 @@ export default function LeaderboardIndex({
                                                 : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
-                                        Peringkat Mahasiswa
+                                        {t('leaderboard.subtypes.students', 'Peringkat Mahasiswa')}
                                     </button>
                                     <button
                                         type="button"
@@ -411,14 +415,16 @@ export default function LeaderboardIndex({
                                                 : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
-                                        Peringkat Tim
+                                        {t('leaderboard.subtypes.teams', 'Peringkat Tim')}
                                     </button>
                                 </>
                             )}
 
                             {activeHub === 'overall' && (
                                 <span className="text-xs text-slate-500 font-medium">
-                                    Periode: <strong className="text-slate-800 font-semibold">{leaderboard.period_label}</strong> · {leaderboard.total_participants} peserta aktif
+                                    {locale === 'en'
+                                        ? `Period: ${leaderboard.period_label} · ${leaderboard.total_participants} active participants`
+                                        : `Periode: ${leaderboard.period_label} · ${leaderboard.total_participants} peserta aktif`}
                                 </span>
                             )}
                         </div>
@@ -428,7 +434,7 @@ export default function LeaderboardIndex({
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-slate-400" />
                             <input
                                 type="text"
-                                placeholder="Cari nama / kampus..."
+                                placeholder={t('leaderboard.search_placeholder', 'Cari nama / kampus...')}
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-600 transition"
@@ -441,7 +447,7 @@ export default function LeaderboardIndex({
                 {leaderboard.top_three && leaderboard.top_three.length >= 2 && !search && (
                     <div className="space-y-6 pt-2">
                         {/* Interactive Visual Olympic Podium */}
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center">
+                        <div className="bg-white rounded-3xl p-4 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center overflow-x-auto no-scrollbar">
                             <LeaderboardPodium
                                 rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => {
                                     const v = getEntityVisual(item, activeHub, leaderboard.sub_type);
@@ -625,17 +631,21 @@ export default function LeaderboardIndex({
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-semibold text-indigo-300">Posisi Peringkat Anda</span>
+                                    <span className="text-xs font-semibold text-indigo-300">
+                                        {locale === 'en' ? 'Your Ranking Position' : 'Posisi Peringkat Anda'}
+                                    </span>
                                     {renderRankChange(userContext.rank_change)}
                                 </div>
                                 <h4 className="text-base sm:text-lg font-extrabold text-white mt-0.5">
-                                    {userContext.points.toLocaleString()} Total Poin Terverifikasi
+                                    {userContext.points.toLocaleString()} {locale === 'en' ? 'Total Verified Points' : 'Total Poin Terverifikasi'}
                                 </h4>
                                 {userContext.points_to_next > 0 && (
                                     <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
                                         <TrendingUp className="size-3.5 shrink-0 text-emerald-400" />
                                         <span>
-                                            Butuh <strong className="text-white">{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!
+                                            {locale === 'en'
+                                                ? <>Need <strong className="text-white">{userContext.points_to_next} more points</strong> to overtake rank #{userContext.next_target_rank}!</>
+                                                : <>Butuh <strong className="text-white">{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!</>}
                                         </span>
                                     </p>
                                 )}
@@ -647,13 +657,13 @@ export default function LeaderboardIndex({
                                 href="/projects"
                                 className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition border border-white/10"
                             >
-                                Kembangkan Proyek
+                                {locale === 'en' ? 'Explore Projects' : 'Kembangkan Proyek'}
                             </Link>
                             <Link
                                 href="/competitions"
                                 className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-xs"
                             >
-                                Ikuti Kompetisi
+                                {locale === 'en' ? 'Browse Competitions' : 'Ikuti Kompetisi'}
                             </Link>
                         </div>
                     </div>
@@ -663,19 +673,23 @@ export default function LeaderboardIndex({
                 <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
                     <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between gap-2">
                         <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center gap-2">
-                            <span>Daftar Lengkap Peringkat</span>
-                            <span className="text-xs font-normal text-slate-400">({leaderboard.rankings.length} data)</span>
+                            <span>{locale === 'en' ? 'Complete Leaderboard' : 'Daftar Lengkap Peringkat'}</span>
+                            <span className="text-xs font-normal text-slate-400">({leaderboard.rankings.length} {locale === 'en' ? 'entries' : 'data'})</span>
                         </h3>
                         <span className="text-xs text-slate-400">
-                            Diperbarui otomatis secara real-time
+                            {locale === 'en' ? 'Updated automatically in real-time' : 'Diperbarui otomatis secara real-time'}
                         </span>
                     </div>
 
                     {leaderboard.rankings.length === 0 ? (
                         <div className="p-12 text-center text-slate-400">
                             <Target className="size-8 mx-auto mb-2 text-slate-300" />
-                            <p className="text-xs font-semibold text-slate-600">Belum ada aktivitas terverifikasi untuk filter ini.</p>
-                            <p className="text-[11px] text-slate-400 mt-1">Selesaikan proyek atau ikuti kompetisi untuk mulai mengumpulkan skor.</p>
+                            <p className="text-xs font-semibold text-slate-600">
+                                {locale === 'en' ? 'No verified activities for this filter yet.' : 'Belum ada aktivitas terverifikasi untuk filter ini.'}
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-1">
+                                {locale === 'en' ? 'Complete projects or participate in competitions to start earning points.' : 'Selesaikan proyek atau ikuti kompetisi untuk mulai mengumpulkan skor.'}
+                            </p>
                         </div>
                     ) : (
                         <div className="divide-y divide-slate-100 overflow-x-auto">
@@ -726,7 +740,7 @@ export default function LeaderboardIndex({
                                                     </h4>
                                                     {isMe && (
                                                         <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-600 text-white">
-                                                            Anda
+                                                            {t('common.you', 'Anda')}
                                                         </span>
                                                     )}
                                                     {item.badge && (

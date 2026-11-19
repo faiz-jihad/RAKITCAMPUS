@@ -128,27 +128,29 @@ export default function AiHistoryIndex({ sessions }: Props) {
                     </div>
 
                     {/* Segmented Control */}
-                    <div className="flex items-center gap-1 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto text-xs font-semibold shrink-0">
-                        {[
-                            { key: 'all', label: 'Semua' },
-                            { key: 'project', label: 'Proyek' },
-                            { key: 'competition', label: 'Lomba' },
-                            { key: 'team', label: 'Tim' },
-                            { key: 'document', label: 'Dokumen' },
-                        ].map((t) => (
-                            <button
-                                key={t.key}
-                                type="button"
-                                onClick={() => setFilterType(t.key)}
-                                className={`px-3.5 py-1.5 rounded-xl capitalize transition-all cursor-pointer text-xs ${
-                                    filterType === t.key
-                                        ? 'bg-white text-slate-900 shadow-2xs font-bold'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                {t.label}
-                            </button>
-                        ))}
+                    <div className="w-full sm:w-auto overflow-x-auto no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
+                        <div className="flex items-center gap-1 bg-slate-200/60 p-1.5 rounded-2xl text-xs font-semibold shrink-0">
+                            {[
+                                { key: 'all', label: 'Semua' },
+                                { key: 'project', label: 'Proyek' },
+                                { key: 'competition', label: 'Lomba' },
+                                { key: 'team', label: 'Tim' },
+                                { key: 'document', label: 'Dokumen' },
+                            ].map((t) => (
+                                <button
+                                    key={t.key}
+                                    type="button"
+                                    onClick={() => setFilterType(t.key)}
+                                    className={`px-3.5 py-1.5 rounded-xl capitalize transition-all cursor-pointer text-xs whitespace-nowrap shrink-0 ${
+                                        filterType === t.key
+                                            ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </div>
 

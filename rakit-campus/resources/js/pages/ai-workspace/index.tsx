@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -307,6 +308,7 @@ export default function AiWorkspaceIndex({
     messages: initialMessages,
     assistantType: initialAssistantType,
 }: Props) {
+    const { t, locale } = useLocale();
     const [assistantType, setAssistantType] = useState<'project' | 'competition' | 'team' | 'document'>(
         activeSession?.assistant_type || initialAssistantType || 'project'
     );
@@ -636,10 +638,10 @@ export default function AiWorkspaceIndex({
 
             <div className="space-y-5 pt-1 max-w-[1600px] mx-auto pb-16">
                 {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
-                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                <div className="bg-white rounded-3xl p-4.5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-5">
                     {/* Left: Mascot & Branding */}
-                    <div className="flex items-center gap-4">
-                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                    <div className="flex items-center gap-3.5 sm:gap-4">
+                        <div className="size-14 sm:size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
                             <img
                                 src="/images/mascot/mascot-laptop.png"
                                 alt="Sahabat RAKIT AI"
@@ -649,31 +651,33 @@ export default function AiWorkspaceIndex({
                         <div>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
                                 <Sparkles className="size-3 text-indigo-600" />
-                                <span>AI Workspace & Automation Hub</span>
+                                <span>{t('ai_workspace.tag', 'AI Workspace & Automation Hub')}</span>
                             </div>
                             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                                Ruang Kerja Cerdas AI
+                                {t('ai_workspace.title', 'Ruang Kerja Cerdas AI')}
                             </h1>
                             <p className="text-xs text-slate-500 mt-0.5 max-w-xl">
-                                Konsultasi ide proyek, analisis aturan lomba, dan automasi pembagian tugas Kanban dengan konteks tim terintegrasi.
+                                {t('ai_workspace.subtitle', 'Konsultasi ide proyek, analisis aturan lomba, dan automasi pembagian tugas Kanban dengan konteks tim terintegrasi.')}
                             </p>
                         </div>
                     </div>
 
                     {/* Right: Team Picker & Quota Bento Pill */}
-                    <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto">
+                    <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-auto w-full lg:w-auto">
                         {teams.length > 0 && (
-                            <div className="flex items-center gap-2 bg-slate-100/80 border border-slate-200/80 rounded-2xl px-3.5 py-2 shadow-2xs">
-                                <Users className="size-3.5 text-slate-500 shrink-0" />
-                                <span className="text-xs font-medium text-slate-500 hidden sm:inline">Tim:</span>
-                                <div className="relative">
+                            <div className="flex items-center gap-2 bg-slate-100/80 border border-slate-200/80 rounded-2xl px-3.5 py-2 shadow-2xs flex-1 sm:flex-initial justify-between sm:justify-start">
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Users className="size-3.5 text-slate-500 shrink-0" />
+                                    <span className="text-xs font-medium text-slate-500 hidden sm:inline">{t('ai_workspace.team_label', 'Tim:')}</span>
+                                </div>
+                                <div className="relative min-w-0">
                                     <select
                                         value={activeTeam?.id || ''}
                                         onChange={(e) => {
                                             const tId = e.target.value;
                                             router.get(`/ai-workspace?team_id=${tId}&assistant=${assistantType}`);
                                         }}
-                                        className="text-xs font-bold text-slate-800 bg-transparent pr-5 cursor-pointer focus:outline-hidden appearance-none"
+                                        className="text-xs font-bold text-slate-800 bg-transparent pr-5 cursor-pointer focus:outline-hidden appearance-none truncate max-w-[180px] sm:max-w-none"
                                     >
                                         {teams.map((t) => (
                                             <option key={t.id} value={t.id}>
@@ -688,16 +692,16 @@ export default function AiWorkspaceIndex({
 
                         {/* Quota Gauge Pill */}
                         {quotaInfo && (
-                            <div className={`flex items-center gap-2.5 px-3.5 py-2 rounded-2xl border text-xs font-semibold shadow-2xs ${
+                            <div className={`flex items-center gap-2.5 px-3.5 py-2 rounded-2xl border text-xs font-semibold shadow-2xs shrink-0 ${
                                 quotaInfo.is_exhausted
                                     ? 'bg-rose-50 border-rose-200 text-rose-700'
                                     : 'bg-slate-100/80 border-slate-200/80 text-slate-700'
                             }`}>
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Kuota:</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t('ai_workspace.quota_label', 'Kuota:')}</span>
                                         <span className="tabular-nums font-bold text-slate-900">
-                                            {quotaInfo.quota_used}/{quotaInfo.quota_limit} sesi
+                                            {quotaInfo.quota_used}/{quotaInfo.quota_limit} {locale === 'en' ? 'sessions' : 'sesi'}
                                         </span>
                                     </div>
                                     <div className="w-20 h-1.5 rounded-full bg-slate-200 overflow-hidden mt-1">
@@ -710,7 +714,7 @@ export default function AiWorkspaceIndex({
                                     </div>
                                 </div>
                                 <span className="text-[11px] text-slate-400 shrink-0">
-                                    ({quotaInfo.quota_remaining} tersisa)
+                                    ({quotaInfo.quota_remaining} {t('ai_workspace.sessions_remaining', 'tersisa')})
                                 </span>
                             </div>
                         )}

@@ -8,6 +8,7 @@ import RecordResultModal from '@/components/competitions/RecordResultModal';
 import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { getCompetitionCover } from '@/lib/competition-cover';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -336,6 +337,7 @@ export default function CompetitionIndex({
     filters = {},
 }: Props) {
     const safeFilters = (Array.isArray(filters) || !filters) ? {} : filters;
+    const { t, locale } = useLocale();
 
     const [activeTab, setActiveTab] = useState<'explore' | 'teams' | 'categories' | 'my_competitions' | 'recommendations'>(
         (safeFilters.tab as any) || 'explore'
@@ -605,9 +607,9 @@ export default function CompetitionIndex({
             />
             <div className="space-y-6 sm:space-y-8">
                 {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-                    <div className="flex items-center gap-4">
-                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-3.5 sm:gap-4">
+                        <div className="size-14 sm:size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
                             <img
                                 src="/images/mascot/mascot-trophy.png"
                                 alt="Mascot Trophy"
@@ -617,13 +619,13 @@ export default function CompetitionIndex({
                         <div>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
                                 <Trophy className="size-3 text-indigo-600" />
-                                <span>Competition Hub & Talent Radar</span>
+                                <span>{t('competitions.tag', 'Competition Hub & Talent Radar')}</span>
                             </div>
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
-                                Competition Hub Mahasiswa
+                                {t('competitions.hub_title', 'Competition Hub Mahasiswa')}
                             </h1>
                             <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
-                                Eksplorasi kompetisi bergengsi, temukan rekan tim lintas prodi, dan pantau linimasa karya lomba nasional.
+                                {t('competitions.hub_subtitle', 'Eksplorasi kompetisi bergengsi, temukan rekan tim lintas prodi, dan pantau linimasa karya lomba nasional.')}
                             </p>
                         </div>
                     </div>
@@ -634,43 +636,45 @@ export default function CompetitionIndex({
                             setCreateTeamPreselectedCompId(null);
                             setCreateTeamModalOpen(true);
                         }}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-2xs transition shrink-0 cursor-pointer self-start md:self-auto"
+                        className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold shadow-2xs transition shrink-0 cursor-pointer w-full sm:w-auto"
                     >
                         <Plus className="w-4 h-4" />
-                        <span>Buat Tim Baru</span>
+                        <span>{t('competitions.create_team', 'Buat Tim Baru')}</span>
                     </button>
                 </div>
 
                 {/* 2. APPLE HIG SEGMENTED TAB BAR */}
-                <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto text-xs font-semibold shadow-2xs">
-                    {[
-                        { key: 'explore', label: 'Eksplor Lomba', icon: Trophy },
-                        { key: 'teams', label: 'Cari Rekan & Tim', icon: Users },
-                        { key: 'categories', label: 'Kategori Minat', icon: Layers },
-                        { key: 'my_competitions', label: 'Lomba Saya', icon: Bookmark },
-                        { key: 'recommendations', label: 'Rekomendasi AI', icon: Sparkles },
-                    ].map((tab) => {
-                        const Icon = tab.icon;
-                        const isCurrent = activeTab === tab.key;
-                        return (
-                            <button
-                                key={tab.key}
-                                type="button"
-                                onClick={() => {
-                                    setActiveTab(tab.key as any);
-                                    router.get('/competitions', { tab: tab.key }, { preserveState: true, preserveScroll: true });
-                                }}
-                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap ${
-                                    isCurrent
-                                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                                        : 'text-slate-600 hover:text-slate-900'
-                                }`}
-                            >
-                                <Icon className="size-3.5" />
-                                <span>{tab.label}</span>
-                            </button>
-                        );
-                    })}
+                <div className="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+                    <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl text-xs font-semibold shadow-2xs w-max sm:w-full">
+                        {[
+                            { key: 'explore', label: t('competitions.tabs.explore', 'Eksplor Lomba'), icon: Trophy },
+                            { key: 'teams', label: t('competitions.tabs.teams', 'Cari Rekan & Tim'), icon: Users },
+                            { key: 'categories', label: t('competitions.tabs.categories', 'Kategori Minat'), icon: Layers },
+                            { key: 'my_competitions', label: t('competitions.tabs.my_competitions', 'Lomba Saya'), icon: Bookmark },
+                            { key: 'recommendations', label: t('competitions.tabs.recommendations', 'Rekomendasi AI'), icon: Sparkles },
+                        ].map((tab) => {
+                            const Icon = tab.icon;
+                            const isCurrent = activeTab === tab.key;
+                            return (
+                                <button
+                                    key={tab.key}
+                                    type="button"
+                                    onClick={() => {
+                                        setActiveTab(tab.key as any);
+                                        router.get('/competitions', { tab: tab.key }, { preserveState: true, preserveScroll: true });
+                                    }}
+                                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                                        isCurrent
+                                            ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <Icon className="size-3.5" />
+                                    <span>{tab.label}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* ========================================================= */}
@@ -683,7 +687,7 @@ export default function CompetitionIndex({
                             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
                                 {/* Tile 1: Spotlight Hero (lg:col-span-7 xl:col-span-8) */}
                                 <div className="md:col-span-2 lg:col-span-7 xl:col-span-8 bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs flex flex-col md:flex-row justify-between group">
-                                    <div className="relative aspect-[4/5] sm:aspect-auto sm:h-64 md:h-auto md:w-5/12 md:aspect-[4/5] overflow-hidden bg-slate-950 shrink-0">
+                                    <div className="relative aspect-[16/10] sm:aspect-auto sm:h-64 md:h-auto md:w-5/12 md:aspect-[4/5] overflow-hidden bg-slate-950 shrink-0">
                                         <img
                                             src={getCompetitionCover(spotlightComp)}
                                             alt={spotlightComp.name}
@@ -964,7 +968,7 @@ export default function CompetitionIndex({
                                             { preserveState: true, preserveScroll: true }
                                         );
                                     }}
-                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate max-w-[170px]"
+                                    className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate max-w-none lg:max-w-[170px]"
                                     title="Filter Penyelenggara Kompetisi"
                                 >
                                     <option value="">Semua Penyelenggara</option>

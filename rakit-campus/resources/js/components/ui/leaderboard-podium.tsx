@@ -17,12 +17,12 @@ interface LeaderboardRanking {
 }
 
 // Variants
-const podiumVariants = cva("flex items-end justify-center gap-4", {
+const podiumVariants = cva("flex items-end justify-center gap-2 sm:gap-4", {
   variants: {
     size: {
-      sm: "gap-2",
-      default: "gap-4",
-      lg: "gap-6",
+      sm: "gap-1.5 sm:gap-2",
+      default: "gap-2 sm:gap-4",
+      lg: "gap-3 sm:gap-6",
     },
   },
   defaultVariants: {
@@ -211,7 +211,7 @@ const LeaderboardPodium = React.forwardRef<
               {/* Name */}
               <span
                 className={cn(
-                  "max-w-[110px] sm:max-w-[130px] truncate text-center font-bold text-slate-900",
+                  "max-w-[85px] sm:max-w-[130px] truncate text-center font-bold text-slate-900",
                   textSize
                 )}
                 title={displayName}
@@ -235,9 +235,9 @@ const LeaderboardPodium = React.forwardRef<
               <div
                 aria-hidden="true"
                 className={cn(
-                  "mt-2 w-24 sm:w-28 rounded-t-lg transition",
-                  size === "sm" && "w-20",
-                  size === "lg" && "w-32",
+                  "mt-2 w-20 sm:w-28 rounded-t-lg transition",
+                  size === "sm" && "w-16 sm:w-20",
+                  size === "lg" && "w-24 sm:w-32",
                   podiumHeight,
                   config.bg,
                   medalStyle === "modern" && "rounded-t-2xl shadow-xs"

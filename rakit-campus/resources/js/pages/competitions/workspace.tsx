@@ -1,6 +1,7 @@
 import { formatWhatsAppUrl } from '@/components/competitions/ApplyCompetitionTeamModal';
 import { getCompetitionCover } from '@/lib/competition-cover';
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
@@ -123,6 +124,7 @@ export default function CompetitionWorkspace({
     canManageGitHub = false,
     myPendingInvitation,
 }: Props) {
+    const { t, locale } = useLocale();
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
         if (typeof window !== 'undefined') {
@@ -754,9 +756,9 @@ export default function CompetitionWorkspace({
                 )}
 
                 {/* 1. WORKSPACE HEADER — APPLE iOS HIG BENTO CONTEXT CARD (CLEAN & LESS TEXT) */}
-                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-                    <div className="flex items-center gap-4 min-w-0">
-                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                <div className="bg-white rounded-3xl p-4.5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                        <div className="size-14 sm:size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
                             <img
                                 src="/images/mascot/mascot-trophy.png"
                                 alt="Mascot Trophy"
@@ -812,12 +814,12 @@ export default function CompetitionWorkspace({
                                 {participation.is_formation_locked ? (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                                         <Lock className="size-3" />
-                                        <span>Terkunci</span>
+                                        <span>{t('workspace.locked_formation', 'Terkunci')}</span>
                                     </span>
                                 ) : (
                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
                                         <span className="size-1.5 rounded-full bg-emerald-500" />
-                                        <span>Aktif</span>
+                                        <span>{t('workspace.active_formation', 'Aktif')}</span>
                                     </span>
                                 )}
 
@@ -828,7 +830,7 @@ export default function CompetitionWorkspace({
                                             : 'bg-slate-50 text-slate-600 border-slate-200'
                                     }`}>
                                         <Clock className="size-3" />
-                                        <span>{daysLeft > 0 ? `${daysLeft} Hari` : 'Hari Ini!'}</span>
+                                        <span>{daysLeft > 0 ? `${daysLeft} ${t('common.days_left', 'Hari')}` : t('common.today', 'Hari Ini!')}</span>
                                     </span>
                                 )}
                             </div>
@@ -847,7 +849,7 @@ export default function CompetitionWorkspace({
                                 title="Website Resmi Penyelenggara"
                             >
                                 <Globe className="size-3.5 text-slate-500" />
-                                <span className="hidden sm:inline">Web Resmi</span>
+                                <span className="hidden sm:inline">{t('workspace.official_web', 'Web Resmi')}</span>
                             </a>
                         )}
 
@@ -861,7 +863,7 @@ export default function CompetitionWorkspace({
                                 title="Portal Pendaftaran Resmi"
                             >
                                 <ExternalLink className="size-3.5 text-slate-500" />
-                                <span className="hidden sm:inline">Portal</span>
+                                <span className="hidden sm:inline">{t('workspace.reg_portal', 'Portal')}</span>
                             </a>
                         )}
 
@@ -888,7 +890,7 @@ export default function CompetitionWorkspace({
                                         type="button"
                                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 hover:text-slate-900 transition shadow-2xs cursor-pointer"
                                     >
-                                        <span>Kelola</span>
+                                        <span>{t('workspace.manage_team', 'Kelola')}</span>
                                         <ChevronDown className="size-3 text-slate-400 shrink-0" />
                                     </button>
                                 </DropdownMenuTrigger>
@@ -898,7 +900,7 @@ export default function CompetitionWorkspace({
                                         className="cursor-pointer gap-2 text-xs font-semibold text-slate-700 px-3 py-2 rounded-xl hover:bg-slate-100"
                                     >
                                         <Sparkles className="size-3.5 text-indigo-600" />
-                                        <span>Update Tahapan Seleksi</span>
+                                        <span>{locale === 'en' ? 'Update Selection Stage' : 'Update Tahapan Seleksi'}</span>
                                     </DropdownMenuItem>
 
                                     {(isMentor || isAdmin) && participation.formation_status !== 'approved' && (
@@ -909,7 +911,7 @@ export default function CompetitionWorkspace({
                                                 className="cursor-pointer gap-2 text-xs font-bold text-emerald-700 px-3 py-2 rounded-xl hover:bg-emerald-50"
                                             >
                                                 <ShieldCheck className="size-3.5 text-emerald-600" />
-                                                <span>Setujui Formasi Tim</span>
+                                                <span>{locale === 'en' ? 'Approve Formation' : 'Setujui Formasi Tim'}</span>
                                             </DropdownMenuItem>
                                         </>
                                     )}
@@ -922,7 +924,7 @@ export default function CompetitionWorkspace({
                                                 className="cursor-pointer gap-2 text-xs font-semibold text-rose-700 px-3 py-2 rounded-xl hover:bg-rose-50"
                                             >
                                                 <Lock className="size-3.5 text-rose-600" />
-                                                <span>Kunci Formasi Tim</span>
+                                                <span>{locale === 'en' ? 'Lock Team Formation' : 'Kunci Formasi Tim'}</span>
                                             </DropdownMenuItem>
                                         </>
                                     )}
@@ -940,7 +942,7 @@ export default function CompetitionWorkspace({
                                 title="Susun otomatis rencana tugas dengan AI"
                             >
                                 <Sparkles className="size-3.5 text-indigo-600" />
-                                <span>{aiGenerating ? 'Menyusun...' : 'Susun AI'}</span>
+                                <span>{aiGenerating ? t('common.loading', 'Menyusun...') : t('workspace.generate_ai', 'Susun AI')}</span>
                             </button>
                         )}
 
@@ -952,60 +954,62 @@ export default function CompetitionWorkspace({
                                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
                             >
                                 <Plus className="size-3.5" />
-                                <span>Tugas</span>
+                                <span>{t('workspace.add_task', 'Tugas')}</span>
                             </button>
                         )}
                     </div>
                 </div>
 
                 {/* 2. APPLE iOS SEGMENTED CONTROL TABS (CLEAN & LESS TEXT) */}
-                <div className="flex items-center justify-between gap-3 overflow-x-auto no-scrollbar py-0.5">
-                    <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm">
-                        {[
-                            { id: 'overview', label: 'Ikhtisar', icon: Users },
-                            { id: 'kanban', label: 'Tugas', icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
-                            { id: 'github', label: 'GitHub', icon: GitBranch, badge: githubRepo ? 'Aktif' : null },
-                            { id: 'applicants', label: 'Pelamar', icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount}` : null },
-                            { id: 'documents', label: 'Berkas', icon: FileText, count: participation.documents?.length || 0 },
-                            { id: 'history', label: 'Riwayat', icon: History, count: participation.status_histories?.length || 0 },
-                        ].map((tab) => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+                        <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm">
+                            {[
+                                { id: 'overview', label: t('workspace.tabs.overview', 'Ikhtisar'), icon: Users },
+                                { id: 'kanban', label: t('workspace.tabs.kanban', 'Tugas'), icon: FolderKanban, count: participation.team?.tasks?.length || 0 },
+                                { id: 'github', label: t('workspace.tabs.github', 'GitHub'), icon: GitBranch, badge: githubRepo ? (locale === 'en' ? 'Active' : 'Aktif') : null },
+                                { id: 'applicants', label: t('workspace.tabs.applicants', 'Pelamar'), icon: UserPlus, count: incomingApplications.length, badge: pendingAppsCount > 0 ? `${pendingAppsCount}` : null },
+                                { id: 'documents', label: t('workspace.tabs.documents', 'Berkas'), icon: FileText, count: participation.documents?.length || 0 },
+                                { id: 'history', label: t('workspace.tabs.history', 'Riwayat'), icon: History, count: participation.status_histories?.length || 0 },
+                            ].map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
 
-                            return (
-                                <button
-                                    key={tab.id}
-                                    type="button"
-                                    onClick={() => setActiveTab(tab.id as any)}
-                                    className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
-                                        isActive
-                                            ? 'bg-white text-slate-900 shadow-xs'
-                                            : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
-                                    }`}
-                                >
-                                    <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
-                                    <span>{tab.label}</span>
-                                    {typeof tab.count === 'number' && (
-                                        <span className={`text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full min-w-[18px] text-center ${
-                                            isActive ? 'bg-slate-900 text-white' : 'bg-slate-200/80 text-slate-700'
-                                        }`}>
-                                            {tab.count}
-                                        </span>
-                                    )}
-                                    {tab.badge && (
-                                        <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500 text-white">
-                                            {tab.badge}
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => setActiveTab(tab.id as any)}
+                                        className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 ${
+                                            isActive
+                                                ? 'bg-white text-slate-900 shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                        }`}
+                                    >
+                                        <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                        <span>{tab.label}</span>
+                                        {typeof tab.count === 'number' && (
+                                            <span className={`text-[10px] font-mono font-medium px-1.5 py-0.2 rounded-full min-w-[18px] text-center ${
+                                                isActive ? 'bg-slate-900 text-white' : 'bg-slate-200/80 text-slate-700'
+                                            }`}>
+                                                {tab.count}
+                                            </span>
+                                        )}
+                                        {tab.badge && (
+                                            <span className="text-[9px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                                {tab.badge}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
 
                     {participation.team_id && (
                         <Link
                             href={`/ai-workspace?team_id=${participation.team_id}&assistant=competition`}
-                            className="shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs hover:shadow transition"
+                            className="self-end sm:self-auto shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-xs hover:shadow transition active:scale-95"
                         >
                             <Sparkles className="size-3.5" />
                             <span>AI Workspace</span>
@@ -2519,6 +2523,35 @@ export default function CompetitionWorkspace({
                             </div>
                         </div>
 
+                        {/* Mobile Column Segmented Control (Visible only on mobile/tablet) */}
+                        <div className="lg:hidden flex items-center gap-1 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto no-scrollbar border border-slate-200/60 shadow-2xs">
+                            {[
+                                { key: 'all', label: 'Semua', count: participation.team?.tasks?.length || 0 },
+                                { key: 'todo', label: 'Todo', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'todo').length },
+                                { key: 'in_progress', label: 'Proses', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_progress').length },
+                                { key: 'in_review', label: 'Review', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_review').length },
+                                { key: 'completed', label: 'Selesai', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length },
+                            ].map((mc) => (
+                                <button
+                                    key={mc.key}
+                                    type="button"
+                                    onClick={() => setMobileKanbanCol(mc.key as any)}
+                                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap shrink-0 active:scale-95 ${
+                                        mobileKanbanCol === mc.key
+                                            ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                                            : 'text-slate-600 hover:text-slate-900'
+                                    }`}
+                                >
+                                    <span>{mc.label}</span>
+                                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${
+                                        mobileKanbanCol === mc.key ? 'bg-slate-900 text-white' : 'bg-slate-300/70 text-slate-700'
+                                    }`}>
+                                        {mc.count}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+
                         {/* 4-Column Board */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
                             {(
@@ -3081,47 +3114,49 @@ export default function CompetitionWorkspace({
                             <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-5">
                                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-slate-100">
                                     {/* Left: Quick Folder Filter Chips (Apple HIG Segmented Slider) */}
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                        <button
-                                            type="button"
-                                            onClick={() => setSelectedDocFolder('all')}
-                                            className={`text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                                                selectedDocFolder === 'all'
-                                                    ? 'bg-slate-900 text-white shadow-xs'
-                                                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                            }`}
-                                        >
-                                            <FolderArchive className="size-3.5" />
-                                            <span>Semua ({allDocs.length})</span>
-                                        </button>
+                                    <div className="w-full lg:w-auto overflow-x-auto no-scrollbar -mx-1 px-1 sm:mx-0 sm:px-0">
+                                        <div className="flex items-center gap-1.5 flex-nowrap lg:flex-wrap pb-1">
+                                            <button
+                                                type="button"
+                                                onClick={() => setSelectedDocFolder('all')}
+                                                className={`text-xs font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
+                                                    selectedDocFolder === 'all'
+                                                        ? 'bg-slate-900 text-white shadow-xs'
+                                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                                }`}
+                                            >
+                                                <FolderArchive className="size-3.5" />
+                                                <span>Semua ({allDocs.length})</span>
+                                            </button>
 
-                                        {DOC_FOLDERS.map((f) => {
-                                            const fCount = getFolderDocCount(f.key);
-                                            const isFSelected = selectedDocFolder === f.key;
-                                            return (
-                                                <button
-                                                    key={f.key}
-                                                    type="button"
-                                                    onClick={() => setSelectedDocFolder(f.key)}
-                                                    className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 ${
-                                                        isFSelected
-                                                            ? 'bg-indigo-600 text-white shadow-xs font-bold'
-                                                            : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
-                                                    }`}
-                                                >
-                                                    {isFSelected ? <FolderOpen className="size-3" /> : <Folder className="size-3" />}
-                                                    <span>{f.label}</span>
-                                                    <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isFSelected ? 'bg-indigo-700 text-white' : 'bg-slate-200/70 text-slate-600'}`}>
-                                                        {fCount}
-                                                    </span>
-                                                </button>
-                                            );
-                                        })}
+                                            {DOC_FOLDERS.map((f) => {
+                                                const fCount = getFolderDocCount(f.key);
+                                                const isFSelected = selectedDocFolder === f.key;
+                                                return (
+                                                    <button
+                                                        key={f.key}
+                                                        type="button"
+                                                        onClick={() => setSelectedDocFolder(f.key)}
+                                                        className={`text-xs font-semibold px-2.5 py-1.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 ${
+                                                            isFSelected
+                                                                ? 'bg-indigo-600 text-white shadow-xs font-bold'
+                                                                : 'bg-slate-50 hover:bg-slate-100 text-slate-600 border border-slate-200/80'
+                                                        }`}
+                                                    >
+                                                        {isFSelected ? <FolderOpen className="size-3" /> : <Folder className="size-3" />}
+                                                        <span>{f.label}</span>
+                                                        <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-full ${isFSelected ? 'bg-indigo-700 text-white' : 'bg-slate-200/70 text-slate-600'}`}>
+                                                            {fCount}
+                                                        </span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
 
                                     {/* Right: Search + View Mode Switcher + Upload */}
-                                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                                        <div className="relative w-full sm:w-56">
+                                    <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap w-full lg:w-auto">
+                                        <div className="relative flex-1 sm:w-56">
                                             <Search className="size-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                                             <input
                                                 type="text"
@@ -3182,7 +3217,7 @@ export default function CompetitionWorkspace({
                                                     }
                                                     setDocModalOpen(true);
                                                 }}
-                                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer"
+                                                className="w-full sm:w-auto justify-center inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-bold transition shadow-2xs shrink-0 cursor-pointer"
                                             >
                                                 <Upload className="size-3.5" />
                                                 <span>{selectedDocFolder !== 'all' ? `Unggah ke Folder` : `Unggah Berkas`}</span>

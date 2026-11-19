@@ -6,6 +6,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './hooks/use-appearance';
+import { initializeLocale } from './hooks/use-locale';
 import { GlobalJigsawLoader, checkJigsawTrigger } from './components/jigsaw-loading-screen';
 
 // Globally suppress top progress bar for Jigsaw flows and clean up #nprogress
@@ -73,3 +74,6 @@ createInertiaApp({
 
 // This will set light / dark mode on load...
 initializeTheme();
+
+// Initialize bilingual language setting on load...
+initializeLocale();

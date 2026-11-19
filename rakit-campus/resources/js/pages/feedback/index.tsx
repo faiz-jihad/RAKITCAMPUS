@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
+import { useLocale } from '@/hooks/use-locale';
 import { type SharedData } from '@/types';
 import { useState } from 'react';
 import {
@@ -51,6 +52,7 @@ export default function FeedbackIndex({
     defaultUrl = '',
 }: Props) {
     const { auth } = usePage<SharedData>().props;
+    const { t, locale } = useLocale();
 
     const [activeTab, setActiveTab] = useState<'bug_report' | 'suggestion' | 'history'>(
         defaultType === 'bug_report' ? 'bug_report' : 'suggestion'
@@ -134,9 +136,9 @@ export default function FeedbackIndex({
 
             <div className="space-y-6 pt-1 max-w-5xl mx-auto pb-20">
                 {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
-                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-                    <div className="flex items-center gap-4">
-                        <div className="size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-3.5 sm:gap-4">
+                        <div className="size-14 sm:size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
                             <img
                                 src="/images/mascot/mascot-happy.png"
                                 alt="Sahabat RAKIT Aspirasi"
@@ -146,13 +148,15 @@ export default function FeedbackIndex({
                         <div>
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
                                 <Sparkles className="size-3 text-indigo-600" />
-                                <span>Pusat Aspirasi & Bantuan Platform</span>
+                                <span>{locale === 'en' ? 'Help Center & Platform Voice' : 'Pusat Aspirasi & Bantuan Platform'}</span>
                             </div>
                             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                                Suara Komunitas & Laporan Sistem
+                                {locale === 'en' ? 'Community Voice & System Feedback' : 'Suara Komunitas & Laporan Sistem'}
                             </h1>
                             <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
-                                Bantu kami menyempurnakan platform. Sampaikan ide fitur baru atau laporkan kendala teknis agar dapat segera diperbaiki tim pengembang.
+                                {locale === 'en'
+                                    ? 'Help us improve the platform. Share new feature ideas or report technical issues so our engineering team can address them promptly.'
+                                    : 'Bantu kami menyempurnakan platform. Sampaikan ide fitur baru atau laporkan kendala teknis agar dapat segera diperbaiki tim pengembang.'}
                             </p>
                         </div>
                     </div>
@@ -163,71 +167,73 @@ export default function FeedbackIndex({
                             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer active:scale-95"
                         >
                             <ArrowLeft className="size-3.5" />
-                            <span>Kembali ke Dashboard</span>
+                            <span>{locale === 'en' ? 'Back to Dashboard' : 'Kembali ke Dashboard'}</span>
                         </Link>
                     </div>
                 </div>
 
                 {/* 2. SEGMENTED NAVIGATION CONTROL (Apple HIG) */}
-                <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto text-xs font-semibold shadow-2xs">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setActiveTab('bug_report');
-                            setSubmittedTicket(null);
-                        }}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
-                            activeTab === 'bug_report'
-                                ? 'bg-white text-rose-600 shadow-2xs font-extrabold'
-                                : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                        <Bug className="size-3.5" />
-                        <span>Lapor Kendala / Bug</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setActiveTab('suggestion');
-                            setSubmittedTicket(null);
-                        }}
-                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
-                            activeTab === 'suggestion'
-                                ? 'bg-white text-indigo-600 shadow-2xs font-extrabold'
-                                : 'text-slate-600 hover:text-slate-900'
-                        }`}
-                    >
-                        <Lightbulb className="size-3.5" />
-                        <span>Saran & Ide Fitur</span>
-                    </button>
-
-                    {auth?.user && (
+                <div className="overflow-x-auto no-scrollbar -mx-3.5 px-3.5 sm:mx-0 sm:px-0">
+                    <div className="flex items-center gap-1.5 bg-slate-200/60 p-1.5 rounded-2xl text-xs font-semibold shadow-2xs w-max sm:w-full">
                         <button
                             type="button"
                             onClick={() => {
-                                setActiveTab('history');
+                                setActiveTab('bug_report');
                                 setSubmittedTicket(null);
                             }}
-                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer ${
-                                activeTab === 'history'
-                                    ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                                activeTab === 'bug_report'
+                                    ? 'bg-white text-rose-600 shadow-2xs font-extrabold'
                                     : 'text-slate-600 hover:text-slate-900'
                             }`}
                         >
-                            <Clock className="size-3.5" />
-                            <span>Riwayat Tiket Saya</span>
-                            {myFeedbacks.length > 0 && (
-                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
-                                    activeTab === 'history'
-                                        ? 'bg-slate-100 text-slate-900'
-                                        : 'bg-slate-300 text-slate-700'
-                                }`}>
-                                    {myFeedbacks.length}
-                                </span>
-                            )}
+                            <Bug className="size-3.5" />
+                            <span>{t('feedback.type_bug', 'Lapor Kendala / Bug')}</span>
                         </button>
-                    )}
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setActiveTab('suggestion');
+                                setSubmittedTicket(null);
+                            }}
+                            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                                activeTab === 'suggestion'
+                                    ? 'bg-white text-indigo-600 shadow-2xs font-extrabold'
+                                    : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                        >
+                            <Lightbulb className="size-3.5" />
+                            <span>{t('feedback.type_suggestion', 'Saran & Ide Fitur')}</span>
+                        </button>
+
+                        {auth?.user && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setActiveTab('history');
+                                    setSubmittedTicket(null);
+                                }}
+                                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs transition-all cursor-pointer whitespace-nowrap shrink-0 ${
+                                    activeTab === 'history'
+                                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
+                                        : 'text-slate-600 hover:text-slate-900'
+                                }`}
+                            >
+                                <Clock className="size-3.5" />
+                                <span>{t('feedback.tabs.history', 'Riwayat Tiket Saya')}</span>
+                                {myFeedbacks.length > 0 && (
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-black ${
+                                        activeTab === 'history'
+                                            ? 'bg-slate-100 text-slate-900'
+                                            : 'bg-slate-300 text-slate-700'
+                                    }`}>
+                                        {myFeedbacks.length}
+                                    </span>
+                                )}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* 3. SUCCESS RECEIPT BANNER */}

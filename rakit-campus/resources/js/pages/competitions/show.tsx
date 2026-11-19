@@ -5,6 +5,7 @@ import SeoHead from '@/components/seo/SeoHead';
 import TrackCompetitionModal from '@/components/competitions/TrackCompetitionModal';
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { getCompetitionCover } from '@/lib/competition-cover';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -73,6 +74,7 @@ export default function CompetitionShow({
     campusStudents = [],
     myAllocations = [],
 }: Props) {
+    const { t, locale } = useLocale();
     const [bookmarked, setBookmarked] = useState(initialBookmarked);
     const [trackModalOpen, setTrackModalOpen] = useState(false);
     const [stageModalOpen, setStageModalOpen] = useState(false);
@@ -246,7 +248,7 @@ export default function CompetitionShow({
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white border border-slate-200/90 text-xs font-semibold text-slate-700 hover:text-blue-600 hover:border-blue-200 shadow-2xs transition"
                     >
                         <ArrowLeft className="size-3.5" />
-                        <span>Kembali ke Competition Hub</span>
+                        <span>{locale === 'en' ? 'Back to Competition Hub' : 'Kembali ke Competition Hub'}</span>
                     </Link>
 
                     <div className="flex items-center gap-2">
@@ -256,24 +258,24 @@ export default function CompetitionShow({
                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                             >
                                 <ShieldCheck className="size-3.5" />
-                                <span>Verifikasi & Publikasikan</span>
+                                <span>{locale === 'en' ? 'Verify & Publish' : 'Verifikasi & Publikasikan'}</span>
                             </button>
                         )}
 
                         <button
                             onClick={handleShare}
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-2xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 shadow-2xs transition cursor-pointer"
-                            title="Bagikan Tautan"
+                            title={t('common.share', 'Bagikan')}
                         >
                             {copiedShare ? (
                                 <>
                                     <Check className="size-3.5 text-emerald-600" />
-                                    <span className="text-emerald-700 font-bold">Tersalin!</span>
+                                    <span className="text-emerald-700 font-bold">{t('common.copied', 'Tersalin!')}</span>
                                 </>
                             ) : (
                                 <>
                                     <Share2 className="size-3.5 text-slate-500" />
-                                    <span>Bagikan</span>
+                                    <span>{t('common.share', 'Bagikan')}</span>
                                 </>
                             )}
                         </button>
@@ -287,7 +289,7 @@ export default function CompetitionShow({
                             }`}
                         >
                             <Bookmark className={`size-3.5 ${bookmarked ? 'fill-current text-rose-600' : ''}`} />
-                            <span>{bookmarked ? 'Tersimpan' : 'Simpan'}</span>
+                            <span>{bookmarked ? (locale === 'en' ? 'Saved' : 'Tersimpan') : (locale === 'en' ? 'Save' : 'Simpan')}</span>
                         </button>
                     </div>
                 </div>
@@ -350,10 +352,14 @@ export default function CompetitionShow({
                         </div>
                         <div>
                             <p className="text-xs sm:text-sm font-extrabold text-slate-900">
-                                Pembedaan Pendaftaran Resmi & Manajemen Tim RAKIT Campus
+                                {locale === 'en'
+                                    ? 'Distinction: Official Competition Registration vs RAKIT Campus Team Management'
+                                    : 'Pembedaan Pendaftaran Resmi & Manajemen Tim RAKIT Campus'}
                             </p>
                             <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed max-w-2xl">
-                                Pendaftaran resmi kompetisi dikelola di portal resmi penyelenggara. RAKIT Campus digunakan mahasiswa untuk menemukan rekan tim lintas prodi, sinkronisasi berkas karya, dan pencatatan poin portofolio kampus terverifikasi.
+                                {locale === 'en'
+                                    ? 'Official competition registration is handled on the organizer\'s portal. RAKIT Campus is used by students to form cross-major teams, synchronize submission files, and verify academic credit/portfolio points.'
+                                    : 'Pendaftaran resmi kompetisi dikelola di portal resmi penyelenggara. RAKIT Campus digunakan mahasiswa untuk menemukan rekan tim lintas prodi, sinkronisasi berkas karya, dan pencatatan poin portofolio kampus terverifikasi.'}
                             </p>
                         </div>
                     </div>
@@ -362,9 +368,9 @@ export default function CompetitionShow({
                             href={competition.registration_url}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shrink-0 self-start sm:self-auto shadow-2xs active:scale-95"
+                            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl text-xs font-bold transition shrink-0 w-full sm:w-auto shadow-2xs active:scale-95 text-center"
                         >
-                            <span>Buka Portal Resmi</span>
+                            <span>{locale === 'en' ? 'Open Official Portal' : 'Buka Portal Resmi'}</span>
                             <ExternalLink className="size-3.5" />
                         </a>
                     )}
@@ -378,7 +384,7 @@ export default function CompetitionShow({
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
                         {/* Bento Tile 1: 4:5 Full-Bleed Artwork Poster (4 cols) */}
                         <div className="lg:col-span-4 flex flex-col">
-                            <div className="relative rounded-3xl overflow-hidden bg-slate-950 aspect-[4/5] border border-slate-200/80 shadow-xs flex flex-col justify-between p-5 group w-full h-full min-h-[380px]">
+                            <div className="relative rounded-3xl overflow-hidden bg-slate-950 aspect-[16/10] sm:aspect-[4/5] border border-slate-200/80 shadow-xs flex flex-col justify-between p-5 group w-full h-full min-h-[260px] sm:min-h-[380px]">
                                 <img
                                     src={coverUrl}
                                     alt={competition.name}
@@ -457,7 +463,7 @@ export default function CompetitionShow({
                         </div>
 
                         {/* Bento Tile 2: Master Identity & Primary Action Deck (8 cols) */}
-                        <div className="lg:col-span-8 flex flex-col justify-between bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
+                        <div className="lg:col-span-8 flex flex-col justify-between bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-8 shadow-xs">
                             <div className="space-y-4">
                                 {/* Header Tags */}
                                 <div className="flex flex-wrap items-center gap-2">

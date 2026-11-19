@@ -1,5 +1,7 @@
 import HubGatewayModal from '@/components/gateway/HubGatewayModal';
 import { NotificationBell } from '@/components/notification-bell';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
+import { useLocale } from '@/hooks/use-locale';
 import { playNotificationChime, sendBrowserNotification } from '@/lib/push-notifications';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -56,6 +58,7 @@ export default function AppLayout({
     const page = usePage<SharedData>();
     const auth = page.props.auth as any;
     const user = auth?.user;
+    const { t, locale } = useLocale();
     const url = page.url || '';
     const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer' || user?.campus?.role === 'lecturer');
     const isAdmin = Boolean(
@@ -252,14 +255,16 @@ export default function AppLayout({
 
             <NotificationBell />
 
+            <LanguageSwitcher />
+
             {user ? (
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
                             type="button"
                             className="p-0.5 rounded-full hover:ring-2 hover:ring-blue-400/40 transition cursor-pointer group focus:outline-none"
-                            title={user.name || 'Menu Profil'}
-                            aria-label="Menu Profil"
+                            title={user.name || (locale === 'en' ? 'Profile Menu' : 'Menu Profil')}
+                            aria-label={locale === 'en' ? 'Profile Menu' : 'Menu Profil'}
                         >
                             <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-slate-900 text-white font-bold text-xs flex items-center justify-center ring-1 ring-slate-200 shadow-2xs overflow-hidden">
                                 {user.avatar ? (
@@ -298,7 +303,7 @@ export default function AppLayout({
                                     </div>
                                     <div className="mt-1 flex items-center gap-1">
                                         <span className="text-[9px] font-bold text-blue-700 bg-blue-100/80 px-1.5 py-0.2 rounded capitalize">
-                                            {user.role || 'Mahasiswa'}
+                                            {user.role || (locale === 'en' ? 'Student' : 'Mahasiswa')}
                                         </span>
                                         {user.campus && (
                                             <span className="text-[9px] text-slate-400 truncate">
@@ -317,7 +322,7 @@ export default function AppLayout({
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
                                 >
                                     <User className="size-4 text-slate-400" />
-                                    <span>Profil & Keahlian</span>
+                                    <span>{t('nav.profile', 'Profil & Keahlian')}</span>
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
@@ -326,7 +331,16 @@ export default function AppLayout({
                                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
                                 >
                                     <KeyRound className="size-4 text-slate-400" />
-                                    <span>Keamanan Sandi</span>
+                                    <span>{t('nav.security', 'Keamanan Sandi')}</span>
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                                <Link
+                                    href="/settings/appearance"
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                >
+                                    <Palette className="size-4 text-slate-400" />
+                                    <span>{t('nav.appearance', 'Tema & Tampilan')}</span>
                                 </Link>
                             </DropdownMenuItem>
                             {!isAdminArea && !isAdmin && (
@@ -338,9 +352,9 @@ export default function AppLayout({
                                         >
                                             <Bot className="size-4 text-blue-600" />
                                             <div className="flex-1 flex items-center justify-between">
-                                                <span>AI Workspace</span>
+                                                <span>{t('nav.ai_workspace', 'AI Workspace')}</span>
                                                 <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                                    Kopilot
+                                                    {locale === 'en' ? 'Copilot' : 'Kopilot'}
                                                 </span>
                                             </div>
                                         </Link>
@@ -352,7 +366,7 @@ export default function AppLayout({
                                         >
                                             <MessageSquare className="size-4 text-blue-600" />
                                             <div className="flex-1 flex items-center justify-between">
-                                                <span>Bantuan & Lapor Kendala</span>
+                                                <span>{t('nav.feedback', 'Bantuan & Aspirasi')}</span>
                                                 <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
                                                     Feedback
                                                 </span>
@@ -374,7 +388,7 @@ export default function AppLayout({
                                         >
                                             <ShieldCheck className="size-4 text-rose-600" />
                                             <div className="flex-1 flex items-center justify-between">
-                                                <span>Panel Administrator</span>
+                                                <span>{t('nav.admin_panel', 'Panel Administrator')}</span>
                                                 <span className="text-[9px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded">
                                                     Admin
                                                 </span>
@@ -395,7 +409,7 @@ export default function AppLayout({
                                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-bold text-rose-600 hover:text-rose-700 hover:bg-rose-50 transition cursor-pointer text-left"
                             >
                                 <LogOut className="size-4 text-rose-600 shrink-0" />
-                                <span>Keluar dari Akun</span>
+                                <span>{t('nav.logout', 'Keluar dari Akun')}</span>
                             </Link>
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -405,7 +419,7 @@ export default function AppLayout({
                     href="/login"
                     className="px-3.5 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
                 >
-                    Masuk
+                    {t('nav.login', 'Masuk')}
                 </Link>
             )}
         </div>
@@ -503,7 +517,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Ringkasan
+                                    {t('nav.summary', 'Ringkasan')}
                                 </Link>
                                 <Link
                                     href="/admin/students"
@@ -513,7 +527,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Mahasiswa
+                                    {t('nav.students', 'Mahasiswa')}
                                 </Link>
                                 <Link
                                     href="/admin/competitions"
@@ -523,7 +537,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Kompetisi
+                                    {t('nav.competitions', 'Kompetisi')}
                                 </Link>
                                 <Link
                                     href="/leaderboard/admin"
@@ -533,7 +547,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Leaderboard
+                                    {t('nav.ranking', 'Leaderboard')}
                                 </Link>
                                 <Link
                                     href="/admin/notifications"
@@ -543,7 +557,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Notifikasi
+                                    {t('nav.notifications', 'Notifikasi')}
                                 </Link>
                                 <Link
                                     href="/admin/feedback"
@@ -553,7 +567,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Saran & Masukan
+                                    {t('nav.feedback', 'Saran & Masukan')}
                                 </Link>
                             </nav>
                         ) : isCompetitionHub ? (
@@ -566,7 +580,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Dashboard
+                                    {t('nav.dashboard', 'Dashboard')}
                                 </Link>
                                 <Link
                                     href="/competitions?tab=explore"
@@ -576,7 +590,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Eksplor Lomba
+                                    {t('nav.explore', 'Eksplor Lomba')}
                                 </Link>
                                 <Link
                                     href="/competitions?tab=teams"
@@ -586,7 +600,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Cari Tim
+                                    {t('nav.find_team', 'Cari Tim')}
                                 </Link>
                                 <Link
                                     href="/competitions?tab=categories"
@@ -596,7 +610,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Kategori
+                                    {t('competitions.browse.all_categories', 'Kategori')}
                                 </Link>
                                 <Link
                                     href="/competitions?tab=my_competitions"
@@ -606,7 +620,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Lomba Saya
+                                    {t('nav.my_competitions', 'Lomba Saya')}
                                 </Link>
                                 <Link
                                     href="/competition-workspace"
@@ -616,7 +630,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Workspace
+                                    {t('workspace.team_workspace', 'Workspace')}
                                 </Link>
                                 <Link
                                     href="/leaderboard?hub=competition"
@@ -626,7 +640,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Leaderboard
+                                    {t('nav.leaderboard', 'Leaderboard')}
                                 </Link>
                                 {isAdmin && (
                                     <Link
@@ -638,7 +652,7 @@ export default function AppLayout({
                                         }`}
                                     >
                                         <ShieldCheck className="size-3.5" />
-                                        <span>Panel Admin</span>
+                                        <span>{t('nav.admin_panel', 'Panel Admin')}</span>
                                     </Link>
                                 )}
                                 {isLecturer && (
@@ -651,7 +665,7 @@ export default function AppLayout({
                                         }`}
                                     >
                                         <GraduationCap className="size-3.5" />
-                                        <span>Kelas Bimbingan</span>
+                                        <span>{locale === 'en' ? 'Mentoring Class' : 'Kelas Bimbingan'}</span>
                                     </Link>
                                 )}
                             </nav>
@@ -665,7 +679,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Dashboard
+                                    {t('nav.dashboard', 'Dashboard')}
                                 </Link>
                                 <Link
                                     href="/classes"
@@ -675,7 +689,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Ruang Kelas
+                                    {locale === 'en' ? 'Classroom' : 'Ruang Kelas'}
                                 </Link>
                                 <Link
                                     href="/projects"
@@ -685,7 +699,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Proyek
+                                    {t('nav.projects', 'Proyek')}
                                 </Link>
                                 <Link
                                     href="/workspace"
@@ -695,7 +709,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Workspace
+                                    {t('workspace.team_workspace', 'Workspace')}
                                 </Link>
                                 <Link
                                     href="/leaderboard?hub=project"
@@ -705,7 +719,7 @@ export default function AppLayout({
                                             : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
                                     }`}
                                 >
-                                    Leaderboard
+                                    {t('nav.leaderboard', 'Leaderboard')}
                                 </Link>
                                 {isAdmin && (
                                     <Link
@@ -784,7 +798,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Ringkasan</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.summary', 'Ringkasan')}</span>
                             </Link>
 
                             {/* 2. Verifikasi Mahasiswa */}
@@ -803,7 +817,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Mahasiswa</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.students', 'Mahasiswa')}</span>
                             </Link>
 
                             {/* 3. Kelola Lomba */}
@@ -822,7 +836,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Kompetisi</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.competitions', 'Kompetisi')}</span>
                             </Link>
 
                             {/* 4. Aturan Leaderboard */}
@@ -841,7 +855,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Poin</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('common.points', 'Poin')}</span>
                             </Link>
 
                             {/* 5. Monitoring Notifikasi */}
@@ -860,7 +874,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Notifikasi</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.notifications', 'Notifikasi')}</span>
                             </Link>
 
                             {/* 6. Saran & Masukan */}
@@ -879,7 +893,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Masukan</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('feedback.title', 'Masukan')}</span>
                             </Link>
                         </>
                     ) : isCompetitionHub ? (
@@ -900,7 +914,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.dashboard', 'Dashboard')}</span>
                             </Link>
 
                             {/* 2. Eksplor Lomba */}
@@ -923,7 +937,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Eksplor</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.explore', 'Eksplor')}</span>
                             </Link>
 
                             {/* 2. Cari Tim */}
@@ -940,7 +954,7 @@ export default function AppLayout({
                                         url.includes('tab=teams') ? 'stroke-[2.25] text-blue-600' : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Cari Tim</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.find_team', 'Cari Tim')}</span>
                             </Link>
 
                             {/* 3. Lomba Saya */}
@@ -959,7 +973,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Lomba Saya</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.my_competitions', 'Lomba Saya')}</span>
                             </Link>
 
                             {/* 4. Workspace Tim */}
@@ -978,7 +992,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('workspace.team_workspace', 'Workspace')}</span>
                             </Link>
 
                             {/* 5. Leaderboard */}
@@ -997,7 +1011,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.ranking', 'Peringkat')}</span>
                             </Link>
                         </>
                     ) : (
@@ -1018,7 +1032,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Dashboard</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.dashboard', 'Dashboard')}</span>
                             </Link>
 
                             {/* 2. Ruang Kelas */}
@@ -1037,7 +1051,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Kelas</span>
+                                <span className="text-[10px] leading-none tracking-tight">{locale === 'en' ? 'Classes' : 'Kelas'}</span>
                             </Link>
 
                             {/* 3. Proyek Kelas */}
@@ -1056,7 +1070,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Proyek</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.projects', 'Proyek')}</span>
                             </Link>
 
                             {/* 4. Workspace */}
@@ -1075,7 +1089,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('workspace.team_workspace', 'Workspace')}</span>
                             </Link>
 
                             {/* 5. Leaderboard */}
@@ -1094,7 +1108,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Peringkat</span>
+                                <span className="text-[10px] leading-none tracking-tight">{t('nav.ranking', 'Peringkat')}</span>
                             </Link>
                         </>
                     )}
