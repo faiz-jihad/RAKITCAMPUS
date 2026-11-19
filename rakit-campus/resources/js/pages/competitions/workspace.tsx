@@ -60,7 +60,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import GitHubContributionMonitor from '@/components/github/GitHubContributionMonitor';
 
 interface Props {
@@ -131,45 +131,6 @@ export default function CompetitionWorkspace({
     });
 
     const [processingAppId, setProcessingAppId] = useState<number | null>(null);
-    const [processingAction, setProcessingAction] = useState<'accept' | 'reject' | null>(null);
-
-    // Kanban Task Detail Modal State
-    const [selectedKanbanTask, setSelectedKanbanTask] = useState<any>(null);
-    const [taskDetailSaving, setTaskDetailSaving] = useState(false);
-    const [taskEditForm, setTaskEditForm] = useState({
-        title: '',
-        description: '',
-        status: 'todo',
-        priority: 'medium',
-        due_on: '',
-        assignee_id: '',
-    });
-
-    useEffect(() => {
-        if (selectedKanbanTask) {
-            setTaskEditForm({
-                title: selectedKanbanTask.title || '',
-                description: selectedKanbanTask.description || '',
-                status: selectedKanbanTask.status || 'todo',
-                priority: selectedKanbanTask.priority || 'medium',
-                due_on: selectedKanbanTask.due_on ? selectedKanbanTask.due_on.slice(0, 10) : '',
-                assignee_id: selectedKanbanTask.assignee_id ? String(selectedKanbanTask.assignee_id) : (selectedKanbanTask.assignee?.id ? String(selectedKanbanTask.assignee.id) : ''),
-            });
-        }
-    }, [selectedKanbanTask]);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            const params = new URLSearchParams(window.location.search);
-            const taskIdParam = params.get('task_id');
-            if (taskIdParam && participation.team?.tasks) {
-                const matched = participation.team.tasks.find((t: any) => String(t.id) === String(taskIdParam));
-                if (matched) {
-                    setSelectedKanbanTask(matched);
-                }
-            }
-        }
-    }, [participation.team?.tasks]);
 
     // MinSatu Roles & Applicants State
     const [newRoleName, setNewRoleName] = useState('');
@@ -434,20 +395,17 @@ export default function CompetitionWorkspace({
 
         if (confirm(confirmMsg)) {
             setProcessingAppId(appId);
-            setProcessingAction(action);
             router.post(
                 `/competitions/teams/${participation.id}/applications/${appId}/respond`,
                 { action },
                 {
                     preserveScroll: true,
-                    preserveState: false,
+                    preserveState: true,
                     onSuccess: () => {
                         setActiveTab('applicants');
-                        setDismissedFlash(false);
                     },
                     onFinish: () => {
                         setProcessingAppId(null);
-                        setProcessingAction(null);
                     },
                 }
             );
@@ -946,7 +904,6 @@ export default function CompetitionWorkspace({
                                 <span>Tambah Tugas</span>
                             </button>
                         )}
-
                     </div>
                 </div>
 
@@ -1144,7 +1101,6 @@ export default function CompetitionWorkspace({
                                     </div>
                                 </div>
 
-
                                 {/* CARD 2: ACTIVE TASKS STREAM (SPRINT PULSE) */}
                                 <div className="bg-white rounded-xl border border-slate-200/90 shadow-2xs overflow-hidden">
                                     <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between gap-3">
@@ -1310,8 +1266,6 @@ export default function CompetitionWorkspace({
                                             type="button"
                                             onClick={() => setActiveTab('documents')}
                                             className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-2xs cursor-pointer"
-
-
                                         >
                                             <span>Kelola Berkas</span>
                                             <span>&rarr;</span>
@@ -2138,26 +2092,19 @@ export default function CompetitionWorkspace({
                                                             <>
                                                                 <button
                                                                     type="button"
-                                                                    disabled={processingAppId === app.id}
+                                                                    disabled={processingAppId !== null}
                                                                     onClick={() => handleRespondApplication(app.id, 'reject')}
-                                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                                                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-rose-50 hover:text-rose-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                                                 >
-                                                                    {processingAppId === app.id && processingAction === 'reject' ? (
-                                                                        <>
-                                                                            <Loader2 className="size-3.5 animate-spin" />
-                                                                            <span>Menolak...</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <span>Tolak</span>
-                                                                    )}
+                                                                    Tolak
                                                                 </button>
                                                                 <button
                                                                     type="button"
-                                                                    disabled={processingAppId === app.id}
+                                                                    disabled={processingAppId !== null}
                                                                     onClick={() => handleRespondApplication(app.id, 'accept')}
                                                                     className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                                                 >
-                                                                    {processingAppId === app.id && processingAction === 'accept' ? (
+                                                                    {processingAppId === app.id ? (
                                                                         <>
                                                                             <Loader2 className="size-3.5 animate-spin" />
                                                                             <span>Memproses...</span>
@@ -2353,11 +2300,9 @@ export default function CompetitionWorkspace({
                                                         key={task.id}
                                                         draggable={canManageTasks}
                                                         onDragStart={(e) => handleDragStart(e, task.id, col.key)}
-                                                        onClick={() => setSelectedKanbanTask(task)}
-                                                        className={`bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs hover:border-blue-400 hover:shadow-xs transition flex flex-col gap-2 cursor-pointer select-none group/card ${
+                                                        className={`bg-white rounded-xl p-3 border border-slate-200/90 shadow-2xs hover:border-blue-300 transition flex flex-col gap-2 cursor-grab active:cursor-grabbing select-none ${
                                                             isBeingDragged ? 'opacity-40' : ''
                                                         }`}
-                                                        title="Klik untuk melihat detail atau mengubah tugas"
                                                     >
                                                         <div className="flex items-center justify-between gap-1">
                                                             <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0 ${
@@ -4328,32 +4273,25 @@ export default function CompetitionWorkspace({
                                         <>
                                             <button
                                                 type="button"
-                                                disabled={processingAppId === app.id}
+                                                disabled={processingAppId !== null}
                                                 onClick={() => {
                                                     handleRespondApplication(app.id, 'reject');
                                                     setSelectedApplicantModal(null);
                                                 }}
-                                                className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                                                className="px-3.5 py-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-700 text-slate-600 text-xs font-semibold transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                {processingAppId === app.id && processingAction === 'reject' ? (
-                                                    <>
-                                                        <Loader2 className="size-3.5 animate-spin" />
-                                                        <span>Menolak...</span>
-                                                    </>
-                                                ) : (
-                                                    <span>Tolak Lamaran</span>
-                                                )}
+                                                Tolak Lamaran
                                             </button>
                                             <button
                                                 type="button"
-                                                disabled={processingAppId === app.id}
+                                                disabled={processingAppId !== null}
                                                 onClick={() => {
                                                     handleRespondApplication(app.id, 'accept');
                                                     setSelectedApplicantModal(null);
                                                 }}
                                                 className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
                                             >
-                                                {processingAppId === app.id && processingAction === 'accept' ? (
+                                                {processingAppId === app.id ? (
                                                     <>
                                                         <Loader2 className="size-3.5 animate-spin" />
                                                         <span>Memproses...</span>
@@ -4377,330 +4315,6 @@ export default function CompetitionWorkspace({
                     </div>
                 );
             })()}
-
-            {/* MODAL: DETAIL & EDIT TUGAS KANBAN */}
-            {selectedKanbanTask && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in"
-                    onClick={() => setSelectedKanbanTask(null)}
-                >
-                    <div
-                        className="w-full max-w-lg p-5 sm:p-6 border border-slate-200 shadow-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white space-y-4"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {/* Header */}
-                        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
-                            <div className="space-y-1 min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                                        selectedKanbanTask.status === 'completed'
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                            : selectedKanbanTask.status === 'in_progress'
-                                            ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                            : selectedKanbanTask.status === 'in_review'
-                                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                            : 'bg-slate-100 text-slate-700 border border-slate-200'
-                                    }`}>
-                                        {selectedKanbanTask.status === 'completed' ? 'Selesai' : selectedKanbanTask.status === 'in_progress' ? 'Sedang Dikerjakan' : selectedKanbanTask.status === 'in_review' ? 'Review & Ulasan' : 'Belum Dimulai'}
-                                    </span>
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
-                                        selectedKanbanTask.priority === 'urgent'
-                                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                            : selectedKanbanTask.priority === 'high'
-                                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                                            : 'bg-slate-100 text-slate-600 border border-slate-200'
-                                    }`}>
-                                        Prioritas {selectedKanbanTask.priority}
-                                    </span>
-                                </div>
-                                <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-                                    Detail Tugas Tim
-                                </h3>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setSelectedKanbanTask(null)}
-                                className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer"
-                            >
-                                <X className="size-4" />
-                            </button>
-                        </div>
-
-                        {/* Quick Status Action Bar */}
-                        {isMember && (
-                            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
-                                <span className="text-xs font-bold text-slate-700">Aksi Cepat Status:</span>
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                    {selectedKanbanTask.status !== 'in_progress' && (
-                                        <button
-                                            type="button"
-                                            disabled={taskDetailSaving}
-                                            onClick={() => {
-                                                setTaskDetailSaving(true);
-                                                router.patch(
-                                                    route('competitions.tasks.update', [participation.id, selectedKanbanTask.id]),
-                                                    { status: 'in_progress' },
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: false,
-                                                        onSuccess: () => setSelectedKanbanTask(null),
-                                                        onFinish: () => setTaskDetailSaving(false),
-                                                    }
-                                                );
-                                            }}
-                                            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-                                        >
-                                            Mulai Kerjakan
-                                        </button>
-                                    )}
-                                    {selectedKanbanTask.status !== 'in_review' && selectedKanbanTask.status !== 'completed' && (
-                                        <button
-                                            type="button"
-                                            disabled={taskDetailSaving}
-                                            onClick={() => {
-                                                setTaskDetailSaving(true);
-                                                router.patch(
-                                                    route('competitions.tasks.update', [participation.id, selectedKanbanTask.id]),
-                                                    { status: 'in_review' },
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: false,
-                                                        onSuccess: () => setSelectedKanbanTask(null),
-                                                        onFinish: () => setTaskDetailSaving(false),
-                                                    }
-                                                );
-                                            }}
-                                            className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-                                        >
-                                            Minta Review
-                                        </button>
-                                    )}
-                                    {selectedKanbanTask.status !== 'completed' && (
-                                        <button
-                                            type="button"
-                                            disabled={taskDetailSaving}
-                                            onClick={() => {
-                                                setTaskDetailSaving(true);
-                                                router.patch(
-                                                    route('competitions.tasks.update', [participation.id, selectedKanbanTask.id]),
-                                                    { status: 'completed' },
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: false,
-                                                        onSuccess: () => setSelectedKanbanTask(null),
-                                                        onFinish: () => setTaskDetailSaving(false),
-                                                    }
-                                                );
-                                            }}
-                                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-                                        >
-                                            Tandai Selesai
-                                        </button>
-                                    )}
-                                    {selectedKanbanTask.status === 'completed' && (
-                                        <button
-                                            type="button"
-                                            disabled={taskDetailSaving}
-                                            onClick={() => {
-                                                setTaskDetailSaving(true);
-                                                router.patch(
-                                                    route('competitions.tasks.update', [participation.id, selectedKanbanTask.id]),
-                                                    { status: 'in_progress' },
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: false,
-                                                        onSuccess: () => setSelectedKanbanTask(null),
-                                                        onFinish: () => setTaskDetailSaving(false),
-                                                    }
-                                                );
-                                            }}
-                                            className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold transition cursor-pointer disabled:opacity-50"
-                                        >
-                                            Buka Kembali Tugas
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Edit Form */}
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                setTaskDetailSaving(true);
-                                router.patch(
-                                    route('competitions.tasks.update', [participation.id, selectedKanbanTask.id]),
-                                    {
-                                        title: taskEditForm.title,
-                                        description: taskEditForm.description,
-                                        status: taskEditForm.status,
-                                        priority: taskEditForm.priority,
-                                        due_on: taskEditForm.due_on || null,
-                                        assignee_id: taskEditForm.assignee_id ? parseInt(taskEditForm.assignee_id, 10) : null,
-                                    },
-                                    {
-                                        preserveScroll: true,
-                                        preserveState: false,
-                                        onSuccess: () => setSelectedKanbanTask(null),
-                                        onFinish: () => setTaskDetailSaving(false),
-                                    }
-                                );
-                            }}
-                            className="space-y-3.5 text-xs"
-                        >
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">
-                                    Judul Tugas <span className="text-rose-500">*</span>
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    disabled={!canManageTasks}
-                                    value={taskEditForm.title}
-                                    onChange={(e) => setTaskEditForm((prev) => ({ ...prev, title: e.target.value }))}
-                                    placeholder="Judul tugas..."
-                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 font-semibold"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-800 mb-1">
-                                    Deskripsi & Instruksi Pengerjaan
-                                </label>
-                                <textarea
-                                    rows={3}
-                                    disabled={!canManageTasks}
-                                    value={taskEditForm.description}
-                                    onChange={(e) => setTaskEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Tambahkan detail atau instruksi pengerjaan tugas..."
-                                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-70 resize-none leading-relaxed"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                                        Status Kolom Papan
-                                    </label>
-                                    <select
-                                        disabled={!canManageTasks}
-                                        value={taskEditForm.status}
-                                        onChange={(e) => setTaskEditForm((prev) => ({ ...prev, status: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                                    >
-                                        <option value="todo">Belum Dimulai (To Do)</option>
-                                        <option value="in_progress">Sedang Dikerjakan (In Progress)</option>
-                                        <option value="in_review">Review & Evaluasi (Review)</option>
-                                        <option value="completed">Selesai (Completed)</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                                        Tingkat Prioritas
-                                    </label>
-                                    <select
-                                        disabled={!canManageTasks}
-                                        value={taskEditForm.priority}
-                                        onChange={(e) => setTaskEditForm((prev) => ({ ...prev, priority: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer capitalize"
-                                    >
-                                        <option value="low">Rendah (Low)</option>
-                                        <option value="medium">Sedang (Medium)</option>
-                                        <option value="high">Tinggi (High)</option>
-                                        <option value="urgent">Mendesak (Urgent)</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                                        Penanggung Jawab (PIC)
-                                    </label>
-                                    <select
-                                        disabled={!canManageTasks}
-                                        value={taskEditForm.assignee_id}
-                                        onChange={(e) => setTaskEditForm((prev) => ({ ...prev, assignee_id: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                                    >
-                                        <option value="">Belum Ditugaskan</option>
-                                        {participation.team?.members?.map((m: any) => (
-                                            <option key={m.user_id} value={m.user_id}>
-                                                {m.user?.name || 'Mahasiswa'} {m.permission === 'leader' ? '(Ketua)' : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-800 mb-1">
-                                        Tenggat Waktu Pengerjaan
-                                    </label>
-                                    <input
-                                        type="date"
-                                        disabled={!canManageTasks}
-                                        value={taskEditForm.due_on}
-                                        onChange={(e) => setTaskEditForm((prev) => ({ ...prev, due_on: e.target.value }))}
-                                        className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Footer Buttons */}
-                            <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
-                                {canManageTasks ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            if (confirm(`Hapus tugas "${selectedKanbanTask.title}"?`)) {
-                                                router.delete(
-                                                    route('competitions.tasks.destroy', [participation.id, selectedKanbanTask.id]),
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: false,
-                                                        onSuccess: () => setSelectedKanbanTask(null),
-                                                    }
-                                                );
-                                            }
-                                        }}
-                                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 px-3 py-2 rounded-xl transition text-xs font-semibold cursor-pointer inline-flex items-center gap-1.5"
-                                    >
-                                        <Trash2 className="size-3.5" />
-                                        <span>Hapus Tugas</span>
-                                    </button>
-                                ) : <div />}
-
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={() => setSelectedKanbanTask(null)}
-                                        className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition cursor-pointer"
-                                    >
-                                        Tutup
-                                    </button>
-                                    {canManageTasks && (
-                                        <button
-                                            type="submit"
-                                            disabled={taskDetailSaving}
-                                            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-xs disabled:opacity-50 flex items-center gap-1.5"
-                                        >
-                                            {taskDetailSaving ? (
-                                                <>
-                                                    <Loader2 className="size-3.5 animate-spin" />
-                                                    <span>Menyimpan...</span>
-                                                </>
-                                            ) : (
-                                                <span>Simpan Perubahan</span>
-                                            )}
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </AppLayout>
     );
 }

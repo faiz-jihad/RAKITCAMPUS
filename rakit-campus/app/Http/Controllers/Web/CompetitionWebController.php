@@ -2081,14 +2081,32 @@ class CompetitionWebController extends Controller
     {
         $user = $request->user();
         $participation = $this->resolveParticipation($participationId, ['team']);
-        $isAuthorized = $participation->team && ($participation->team->hasMember($user) || $participation->team->leader_id === $user->id || $user->role === 'admin' || (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin()));
-        if (!$isAuthorized) { abort(403, 'Anda tidak memiliki akses ke tugas tim ini.'); }
+
+        $isAuthorized = $participation->team && (
+            $participation->team->hasMember($user) ||
+            $participation->team->leader_id === $user->id ||
+            $user->role === 'admin' ||
+            (method_exists($user, 'isPlatformAdmin') && $user->isPlatformAdmin())
+        );
+
+        if (!$isAuthorized) {
+            abort(403, 'Hanya anggota tim yang dapat mengubah status tugas.');
+        }
+
         $task = Task::where('team_id', $participation->team->id)->findOrFail($taskId);
-        $validated = $request->validate(['title' => ['sometimes', 'string', 'max:255'], 'description' => ['nullable', 'string'], 'status' => ['sometimes', Rule::enum(TaskStatus::class)], 'priority' => ['sometimes', Rule::enum(TaskPriority::class)], 'due_on' => ['nullable', 'date'], 'assignee_id' => ['nullable', 'exists:users,id']]);
-        if (isset($validated['status'])) { if ($validated['status'] === TaskStatus::Completed->value && $task->status !== TaskStatus::Completed->value) { $validated['completed_at'] = now(); } elseif ($validated['status'] !== TaskStatus::Completed->value) { $validated['completed_at'] = null; } }
-        $task->update($validated);
-        return back()->with('success', 'Tugas berhasil diperbarui.');
+
+        $validated = $request->validate([
+            'status' => ['required', Rule::enum(TaskStatus::class)],
+        ]);
+
+        $task->update([
+            'status' => $validated['status'],
+            'completed_at' => $validated['status'] === TaskStatus::Completed->value ? now() : null,
+        ]);
+
+        return back()->with('success', 'Status tugas berhasil diperbarui.');
     }
+
     public function deleteTask(Request $request, int $participationId, int $taskId): RedirectResponse
     {
         $user = $request->user();
@@ -2103,7 +2121,7 @@ class CompetitionWebController extends Controller
 
         return back()->with('success', 'Tugas berhasil dihapus dari papan.');
     }
-
+    
     public function generateTasksWithAi(Request $request, int|string $participationId): RedirectResponse
     {
         $user = $request->user();
@@ -2144,7 +2162,7 @@ class CompetitionWebController extends Controller
                 $track
             );
 
-            return back()->with('success', "âœ¨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda!");
+            return back()->with('success', "✨ {$result['count']} tugas persiapan berhasil disusun otomatis oleh AI untuk tim Anda!");
         } catch (\Throwable $e) {
             return back()->with('error', 'Gagal menyusun tugas AI: ' . $e->getMessage());
         }
@@ -2562,25 +2580,10 @@ class CompetitionWebController extends Controller
 
         $application = Application::with(['user.profile', 'role', 'recruitment'])->findOrFail($applicationId);
 
-        if ($application->status !== ApplicationStatus::Pending) {
-            $statusLabel = $application->status === ApplicationStatus::Accepted ? 'diterima' : 'ditolak';
-            return back()->with('info', "Lamaran ini sudah diproses sebelumnya ({$statusLabel}).");
-        }
-
         $validated = $request->validate([
             'action' => ['required', 'in:accept,reject'],
             'decision_note' => ['nullable', 'string', 'max:500'],
         ]);
-
-        if ($validated['action'] === 'accept' && $team->members()->where('user_id', $application->user_id)->where('status', 'active')->exists()) {
-            $application->update([
-                'status' => ApplicationStatus::Accepted,
-                'decided_by' => $user->id,
-                'decided_at' => now(),
-                'decision_note' => 'Mahasiswa sudah menjadi anggota aktif.',
-            ]);
-            return back()->with('info', "Mahasiswa {$application->user->name} sudah menjadi anggota aktif tim ini.");
-        }
 
         try {
             DB::transaction(function () use ($validated, $application, $team, $user) {
