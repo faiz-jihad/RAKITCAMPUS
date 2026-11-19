@@ -22,6 +22,7 @@ import {
     Kanban,
     Loader2,
     Paperclip,
+    Play,
     Plus,
     RefreshCw,
     Send,
@@ -319,7 +320,7 @@ export default function AiWorkspaceIndex({
     );
     const [messages, setMessages] = useState<MessageItem[]>(initialMessages || []);
     const [inputMessage, setInputMessage] = useState('');
-    const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
+    const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; size: number } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -329,7 +330,7 @@ export default function AiWorkspaceIndex({
 
     // Executing action state
     const [executingActionId, setExecutingActionId] = useState<string | null>(null);
-    const [executedActions, setExecutedActions] = useState<Record<string, { success: boolean; message: string }>>({});
+    const [executedActions, setExecutedActions] = useState<Record<string, { success: boolean; message: string; link?: string }>>({});
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -541,9 +542,17 @@ export default function AiWorkspaceIndex({
             setAttachedFile({
                 name: file.name,
                 content: content.slice(0, 150000),
+                size: file.size,
             });
         };
         reader.readAsText(file);
+    };
+
+    const handleRemoveFile = () => {
+        setAttachedFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     // Share Session with Team
@@ -970,7 +979,7 @@ export default function AiWorkspaceIndex({
                                                                 <button
                                                                     type="button"
                                                                     disabled={isExecuting}
-                                                                    onClick={() => handleExecuteAgenticAction(action, actionKey)}
+                                                                    onClick={() => handleExecuteAction(action, actionKey)}
                                                                     className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0 active:scale-95"
                                                                 >
                                                                     {isExecuting ? (

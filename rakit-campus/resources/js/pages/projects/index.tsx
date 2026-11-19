@@ -397,7 +397,7 @@ export default function ProjectIndex({
                             actionHref={!(search || category || status) && !isLecturer ? "/projects/create" : undefined}
                         />
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-2">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-4">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
                                 return (
@@ -405,202 +405,233 @@ export default function ProjectIndex({
                                         key={proj.id}
                                         className="group relative pt-6 transition-all duration-300"
                                     >
-                                        {/* 1. FOLDER TAB (Kuping Tab Map di Kiri Atas - Polos Tanpa Ikon/Teks Tertutup) */}
-                                        <div className="absolute top-0 left-0 w-32 sm:w-36 h-7.5 rounded-t-xl bg-blue-800 border-t border-x border-blue-400/40 shadow-xs z-0" />
-
-                                        {/* 2. INNER DOCUMENT PAPER (Menyembul keluar saat folder dibuka saat di-hover) */}
-                                        <div className="absolute inset-x-3.5 top-2.5 h-12 rounded-t-xl bg-amber-100 shadow-md border border-amber-300/80 transition-all duration-300 ease-out transform group-hover:-translate-y-5 group-hover:rotate-[-0.5deg] z-10 pointer-events-none overflow-hidden">
-                                            {/* Garis-garis representasi dokumen dalam folder (Kuning Manila / Cream) */}
-                                            <div className="flex items-center gap-2 px-3.5 pt-2.5 opacity-90">
-                                                <div className="w-10 h-1.5 rounded-full bg-amber-400" />
-                                                <div className="w-16 h-1.5 rounded-full bg-amber-300" />
-                                                <div className="w-8 h-1.5 rounded-full bg-amber-200" />
-                                            </div>
-                                        </div>
-
-                                        {/* 3. FOLDER BODY (Badan Folder Berwarna Biru, Teks & Ikon Putih) */}
-                                        <div className="relative z-20 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 text-white rounded-2xl rounded-tl-none p-5 sm:p-6 shadow-md border border-blue-400/40 transition-all duration-300 ease-out group-hover:shadow-2xl group-hover:border-blue-300 group-hover:translate-y-0.5 flex flex-col justify-between min-h-[340px]">
-                                            <div>
-                                                {/* Top Bar Dalam Folder: Kategori, Kelas / Jalur & Status Rekrutmen */}
-                                                <div className="flex items-center justify-between gap-2 mb-3">
-                                                    <div className="flex items-center gap-1.5 truncate">
-                                                        <span className="text-[11px] font-black tracking-wider uppercase text-blue-200 truncate">
-                                                            {proj.category.replace('_', ' ')}
-                                                        </span>
-                                                        {proj.academic_class ? (
-                                                            <>
-                                                                <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
-                                                                    <GraduationCap className="size-3 text-blue-200 shrink-0" />
-                                                                    <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
-                                                                </span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
-                                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-100 truncate">
-                                                                    <Compass className="size-3 text-blue-200 shrink-0" />
-                                                                    <span>Mandiri</span>
-                                                                </span>
-                                                            </>
-                                                        )}
-                                                    </div>
-
-                                                    {proj.status === 'recruiting' ? (
-                                                        <div className="inline-flex items-center gap-1.5 text-white bg-white/20 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shrink-0 border border-white/25">
-                                                            <UserPlus className="size-3.5 text-white" />
-                                                            <span>Rekrutmen</span>
-                                                        </div>
-                                                    ) : proj.status === 'in_progress' ? (
-                                                        <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
-                                                            <Clock className="size-3.5 text-blue-200" />
-                                                            <span>Sedang Berjalan</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
-                                                            <CheckCircle2 className="size-3.5 text-blue-200" />
-                                                            <span>Selesai</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Title */}
-                                                <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
-                                                    <h3 className="text-base sm:text-lg font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
-                                                        {proj.title}
-                                                    </h3>
-                                                </Link>
-
-                                                {/* Description */}
-                                                <p className="text-xs text-blue-100 mt-2 line-clamp-2 leading-relaxed min-h-[34px]">
-                                                    {proj.short_description}
-                                                </p>
-
-                                                {/* Integrated Recruitment Strip / Team Status */}
-                                                <div className="mt-3.5 pt-3 border-t border-white/15 min-h-[52px] flex flex-col justify-center">
-                                                    {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 ? (
-                                                        <div>
-                                                            <div className="flex items-center justify-between text-[11px] mb-1.5">
-                                                                <span className="font-bold text-white">Dibutuhkan:</span>
-                                                                <span className="text-[10px] font-bold text-blue-100 bg-white/20 px-2 py-0.5 rounded-full">{openRoles.length} Posisi Terbuka</span>
-                                                            </div>
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {openRoles.slice(0, 2).map((r, rIdx) => (
-                                                                    <span
-                                                                        key={rIdx}
-                                                                        className="text-[10px] font-semibold bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20 truncate max-w-[150px]"
-                                                                    >
-                                                                        {r}
-                                                                    </span>
-                                                                ))}
-                                                                {openRoles.length > 2 && (
-                                                                    <span className="text-[10px] font-medium text-blue-200 self-center px-1">
-                                                                        +{openRoles.length - 2} lagi
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center justify-between text-[11px] py-1">
-                                                            <span className="font-medium text-blue-100">Susunan Tim:</span>
-                                                            <span className="text-[10px] font-semibold text-white bg-white/20 px-2 py-0.5 rounded-md border border-white/20">
-                                                                Tim Lengkap
-                                                            </span>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Tech Stack Chips */}
-                                                {proj.tech_stack && proj.tech_stack.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                                                        {proj.tech_stack.slice(0, 4).map((tech, i) => (
-                                                            <span
-                                                                key={i}
-                                                                className="text-[10px] font-medium bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/10"
-                                                            >
-                                                                {tech}
-                                                            </span>
-                                                        ))}
-                                                        {proj.tech_stack.length > 4 && (
-                                                            <span className="text-[10px] text-blue-200 font-medium self-center px-0.5">
-                                                                +{proj.tech_stack.length - 4}
-                                                            </span>
-                                                        )}
-                                                    </div>
-                                                )}
+                                        {/* 3D FLOATING JIGSAW PIECE WRAPPER (Melayang bersamaan saat di-hover) */}
+                                        <div className="relative transition-all duration-300 ease-out group-hover:-translate-y-2">
+                                            {/* 1. 3D JIGSAW CONNECTOR TAB (Kuping/Tonjolan Sambungan Puzzle 3D di Atas) */}
+                                            <div className="absolute -top-[21px] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                                                <svg
+                                                    viewBox="0 0 76 24"
+                                                    className="w-[76px] h-[24px] overflow-visible drop-shadow-[0_-3px_6px_rgba(29,78,216,0.35)]"
+                                                    fill="none"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                >
+                                                    <defs>
+                                                        <linearGradient id={`jigsaw-tab-${proj.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
+                                                            <stop offset="0%" stopColor="#3B82F6" />
+                                                            <stop offset="100%" stopColor="#2563EB" />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    {/* Badan Tonjolan Puzzle */}
+                                                    <path
+                                                        d="M 0 24 C 14 24 18 19 20 14 C 13 8 16 0 38 0 C 60 0 63 8 56 14 C 58 19 62 24 76 24 Z"
+                                                        fill={`url(#jigsaw-tab-${proj.id})`}
+                                                    />
+                                                    {/* Kilau Specular 3D Tepi Atas */}
+                                                    <path
+                                                        d="M 3 23 C 15 23 18 19 21 14 C 15 8 18 1.5 38 1.5 C 58 1.5 61 8 55 14 C 58 19 61 23 73 23"
+                                                        stroke="rgba(255,255,255,0.65)"
+                                                        strokeWidth="1.6"
+                                                        strokeLinecap="round"
+                                                    />
+                                                    {/* Pin / Socket Connector Dot 3D */}
+                                                    <circle cx="38" cy="11" r="3" fill="#1D4ED8" stroke="rgba(255,255,255,0.4)" strokeWidth="1" />
+                                                </svg>
                                             </div>
 
-                                            {/* Card Footer */}
-                                            <div className="pt-3.5 mt-3.5 border-t border-white/15 flex items-center justify-between gap-2 text-xs">
-                                                <div className="flex items-center gap-1.5 text-white">
-                                                    <Users className="size-3.5 text-blue-200" />
-                                                    <span className="font-bold text-white text-xs">
-                                                        {proj.team?.members?.length || 1} Anggota
-                                                    </span>
+                                            {/* 2. 3D SOLID JIGSAW BODY (Badan Kepingan Puzzle dengan Bevel & Ketebalan 3D) */}
+                                            <div className="relative z-10 bg-gradient-to-br from-blue-600 via-blue-600 to-blue-700 text-white rounded-2xl p-5 sm:p-6 shadow-[0_12px_28px_-6px_rgba(37,99,235,0.28),_0_4px_12px_rgba(15,23,42,0.08)] group-hover:shadow-[0_24px_44px_-8px_rgba(37,99,235,0.42),_0_10px_20px_rgba(15,23,42,0.14)] border-t border-l border-r border-blue-400/50 border-b-[5px] border-b-blue-900/80 group-hover:border-blue-300 flex flex-col justify-between min-h-[340px] overflow-hidden transition-all duration-300">
+                                                {/* Lekukan Jigsaw Socket di Tepi Kanan */}
+                                                <div className="absolute -right-0.5 top-1/2 -translate-y-1/2 w-3.5 h-10 rounded-l-full bg-blue-950/25 border-l border-y border-white/20 shadow-[inset_2px_0_5px_rgba(0,0,0,0.35)] pointer-events-none" />
+
+                                                {/* Watermark Kepingan Puzzle Transparan */}
+                                                <div className="absolute right-3 bottom-3 opacity-[0.06] pointer-events-none text-white select-none">
+                                                    <svg viewBox="0 0 100 100" className="size-24" fill="currentColor">
+                                                        <path d="M 0 0 L 100 0 L 100 36 C 100 39 104 40 109 40 C 118 39 122 31 122 50 C 122 69 118 61 109 60 C 104 60 100 61 100 64 L 100 100 L 64 100 C 61 100 60 104 60 109 C 61 118 69 122 50 122 C 31 122 39 118 40 109 C 40 104 39 100 36 100 L 0 100 Z" />
+                                                    </svg>
                                                 </div>
 
-                                                <div className="flex items-center gap-1.5 shrink-0">
-                                                    {proj.status === 'recruiting' && !isLecturer && (
-                                                        proj.is_member ? (
-                                                            proj.can_access_workspace ? (
-                                                                <Link
-                                                                    href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
-                                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition"
-                                                                    title="Buka Workspace Tim Proyek"
-                                                                >
-                                                                    <FolderKanban className="size-3 text-white" />
-                                                                    <span>Workspace</span>
-                                                                </Link>
+                                                <div>
+                                                    {/* Top Bar Dalam Kepingan Jigsaw: Kategori, Kelas / Jalur & Status Rekrutmen */}
+                                                    <div className="flex items-center justify-between gap-2 mb-3">
+                                                        <div className="flex items-center gap-1.5 truncate">
+                                                            <span className="text-[11px] font-black tracking-wider uppercase text-blue-200 truncate">
+                                                                {proj.category.replace('_', ' ')}
+                                                            </span>
+                                                            {proj.academic_class ? (
+                                                                <>
+                                                                    <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-white truncate" title={proj.academic_class.name}>
+                                                                        <GraduationCap className="size-3 text-blue-200 shrink-0" />
+                                                                        <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
+                                                                    </span>
+                                                                </>
                                                             ) : (
-                                                                <span className="text-[11px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-md border border-white/30">
-                                                                    Tim Anda
+                                                                <>
+                                                                    <span className="text-blue-300 text-xs shrink-0 font-sans mx-0.5">|</span>
+                                                                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-100 truncate">
+                                                                        <Compass className="size-3 text-blue-200 shrink-0" />
+                                                                        <span>Mandiri</span>
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        {proj.status === 'recruiting' ? (
+                                                            <div className="inline-flex items-center gap-1.5 text-white bg-white/20 px-2.5 py-1 rounded-full text-[11px] font-bold tracking-tight shrink-0 border border-white/25">
+                                                                <UserPlus className="size-3.5 text-white" />
+                                                                <span>Rekrutmen</span>
+                                                            </div>
+                                                        ) : proj.status === 'in_progress' ? (
+                                                            <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
+                                                                <Clock className="size-3.5 text-blue-200" />
+                                                                <span>Sedang Berjalan</span>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="inline-flex items-center gap-1.5 text-blue-100 text-[11px] font-medium tracking-tight shrink-0">
+                                                                <CheckCircle2 className="size-3.5 text-blue-200" />
+                                                                <span>Selesai</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Title */}
+                                                    <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
+                                                        <h3 className="text-base sm:text-lg font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
+                                                            {proj.title}
+                                                        </h3>
+                                                    </Link>
+
+                                                    {/* Description */}
+                                                    <p className="text-xs text-blue-100 mt-2 line-clamp-2 leading-relaxed min-h-[34px]">
+                                                        {proj.short_description}
+                                                    </p>
+
+                                                    {/* Integrated Recruitment Strip / Team Status */}
+                                                    <div className="mt-3.5 pt-3 border-t border-white/15 min-h-[52px] flex flex-col justify-center">
+                                                        {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 ? (
+                                                            <div>
+                                                                <div className="flex items-center justify-between text-[11px] mb-1.5">
+                                                                    <span className="font-bold text-white">Dibutuhkan:</span>
+                                                                    <span className="text-[10px] font-bold text-blue-100 bg-white/20 px-2 py-0.5 rounded-full">{openRoles.length} Posisi Terbuka</span>
+                                                                </div>
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {openRoles.slice(0, 2).map((r, rIdx) => (
+                                                                        <span
+                                                                            key={rIdx}
+                                                                            className="text-[10px] font-semibold bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20 truncate max-w-[150px]"
+                                                                        >
+                                                                            {r}
+                                                                        </span>
+                                                                    ))}
+                                                                    {openRoles.length > 2 && (
+                                                                        <span className="text-[10px] font-medium text-blue-200 self-center px-1">
+                                                                            +{openRoles.length - 2} lagi
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-between text-[11px] py-1">
+                                                                <span className="font-medium text-blue-100">Susunan Tim:</span>
+                                                                <span className="text-[10px] font-semibold text-white bg-white/20 px-2 py-0.5 rounded-md border border-white/20">
+                                                                    Tim Lengkap
                                                                 </span>
-                                                            )
-                                                        ) : proj.has_applied ? (
-                                                            <span className="text-[11px] font-medium text-blue-100 bg-white/15 px-2 py-1 rounded-md border border-white/20">
-                                                                Sudah Melamar
-                                                            </span>
-                                                        ) : isGuest ? (
-                                                            proj.has_open_recruitment !== false && (
-                                                                <Link
-                                                                    href="/login"
-                                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition"
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    {/* Tech Stack Chips */}
+                                                    {proj.tech_stack && proj.tech_stack.length > 0 && (
+                                                        <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                                            {proj.tech_stack.slice(0, 4).map((tech, i) => (
+                                                                <span
+                                                                    key={i}
+                                                                    className="text-[10px] font-medium bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/10"
+                                                                >
+                                                                    {tech}
+                                                                </span>
+                                                            ))}
+                                                            {proj.tech_stack.length > 4 && (
+                                                                <span className="text-[10px] text-blue-200 font-medium self-center px-0.5">
+                                                                    +{proj.tech_stack.length - 4}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Card Footer */}
+                                                <div className="pt-3.5 mt-3.5 border-t border-white/15 flex items-center justify-between gap-2 text-xs">
+                                                    <div className="flex items-center gap-1.5 text-white">
+                                                        <Users className="size-3.5 text-blue-200" />
+                                                        <span className="font-bold text-white text-xs">
+                                                            {proj.team?.members?.length || 1} Anggota
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-1.5 shrink-0">
+                                                        {proj.status === 'recruiting' && !isLecturer && (
+                                                            proj.is_member ? (
+                                                                proj.can_access_workspace ? (
+                                                                    <Link
+                                                                        href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition"
+                                                                        title="Buka Workspace Tim Proyek"
+                                                                    >
+                                                                        <FolderKanban className="size-3 text-white" />
+                                                                        <span>Workspace</span>
+                                                                    </Link>
+                                                                ) : (
+                                                                    <span className="text-[11px] font-bold text-white bg-white/20 px-2.5 py-1 rounded-md border border-white/30">
+                                                                        Tim Anda
+                                                                    </span>
+                                                                )
+                                                            ) : proj.has_applied ? (
+                                                                <span className="text-[11px] font-medium text-blue-100 bg-white/15 px-2 py-1 rounded-md border border-white/20">
+                                                                    Sudah Melamar
+                                                                </span>
+                                                            ) : isGuest ? (
+                                                                proj.has_open_recruitment !== false && (
+                                                                    <Link
+                                                                        href="/login"
+                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition"
+                                                                    >
+                                                                        <Send className="size-3 text-blue-700" />
+                                                                        <span>Lamar</span>
+                                                                    </Link>
+                                                                )
+                                                            ) : proj.can_apply ? (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => openJoinModal(proj)}
+                                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition cursor-pointer"
                                                                 >
                                                                     <Send className="size-3 text-blue-700" />
-                                                                    <span>Lamar</span>
-                                                                </Link>
+                                                                    <span>Lamar Posisi</span>
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-[11px] font-medium text-blue-200">
+                                                                    {proj.has_open_recruitment === false
+                                                                        ? 'Rekrutmen Tutup'
+                                                                        : proj.has_capacity === false
+                                                                        ? 'Penuh'
+                                                                        : proj.is_class_restricted
+                                                                        ? 'Khusus Kelas'
+                                                                        : proj.has_active_in_scope
+                                                                        ? 'Sudah Punya Tim'
+                                                                        : 'Tidak Memenuhi Syarat'}
+                                                                </span>
                                                             )
-                                                        ) : proj.can_apply ? (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => openJoinModal(proj)}
-                                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition cursor-pointer"
-                                                            >
-                                                                <Send className="size-3 text-blue-700" />
-                                                                <span>Lamar Posisi</span>
-                                                            </button>
-                                                        ) : (
-                                                            <span className="text-[11px] font-medium text-blue-200">
-                                                                {proj.has_open_recruitment === false
-                                                                    ? 'Rekrutmen Tutup'
-                                                                    : proj.has_capacity === false
-                                                                    ? 'Penuh'
-                                                                    : proj.is_class_restricted
-                                                                    ? 'Khusus Kelas'
-                                                                    : proj.has_active_in_scope
-                                                                    ? 'Sudah Punya Tim'
-                                                                    : 'Tidak Memenuhi Syarat'}
-                                                            </span>
-                                                        )
-                                                    )}
+                                                        )}
 
-                                                    <Link
-                                                        href={`/projects/${proj.slug || proj.id}`}
-                                                        className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-extrabold transition shadow-xs duration-150 active:scale-95"
-                                                    >
-                                                        <span>Detail</span>
-                                                        <ArrowRight className="size-3 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
-                                                    </Link>
+                                                        <Link
+                                                            href={`/projects/${proj.slug || proj.id}`}
+                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-extrabold transition shadow-xs duration-150 active:scale-95"
+                                                        >
+                                                            <span>Detail</span>
+                                                            <ArrowRight className="size-3 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
+                                                        </Link>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
