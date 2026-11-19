@@ -173,7 +173,7 @@ export default function LeaderboardIndex({
     rules = [],
     canManage = false,
 }: Props) {
-    const { t, locale } = useLocale();
+    const { t, locale, isEn } = useLocale();
     const [search, setSearch] = useState(searchQuery || '');
     const [rulesModalOpen, setRulesModalOpen] = useState(false);
 

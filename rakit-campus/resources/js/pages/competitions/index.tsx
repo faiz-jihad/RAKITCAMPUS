@@ -2293,75 +2293,85 @@ export default function CompetitionIndex({
                                         onAction={() => setActiveTab('explore')}
                                     />
                                 ) : (
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                                         {savedCompetitions.map((comp) => (
                                             <div
                                                 key={comp.id}
-                                                className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all flex flex-col justify-between gap-4 group"
+                                                className="rounded-[28px] sm:rounded-[32px] bg-white p-5 sm:p-6 border border-slate-100 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-xl hover:border-slate-200/80 transition-all duration-300 flex flex-col justify-between gap-5 group"
                                             >
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-2">
+                                                <div className="space-y-3.5">
+                                                    {/* Top Row: Category Pill + Saved Badge & Bookmark Toggle */}
+                                                    <div className="flex items-center justify-between gap-2">
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 px-2.5 py-0.5 bg-blue-50 border border-blue-200/60 rounded-full">
+                                                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-tight bg-indigo-50 text-indigo-700 border border-indigo-100/70 uppercase">
                                                                 {comp.category?.replace('_', ' ') || 'KOMPETISI'}
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/60 text-slate-600 uppercase">
+                                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200/60 uppercase">
                                                                 SAVED
                                                             </span>
                                                         </div>
                                                         <button
                                                             type="button"
                                                             onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                            className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 cursor-pointer"
+                                                            className="size-8 rounded-full bg-rose-50 hover:bg-rose-100 border border-rose-200/80 text-rose-600 flex items-center justify-center transition-colors cursor-pointer"
                                                             title={isEn ? 'Remove from Saved' : 'Hapus dari Simpanan'}
                                                         >
-                                                            <Bookmark className="w-3.5 h-3.5 fill-current" />
+                                                            <Bookmark className="size-3.5 fill-current" />
                                                         </button>
                                                     </div>
-                                                    <Link href={`/competitions/${comp.slug || comp.id}`}>
-                                                        <h4 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                            {comp.name}
-                                                        </h4>
-                                                    </Link>
-                                                    <p className="text-xs text-slate-400 mt-0.5">{comp.organizer}</p>
 
-                                                    <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                                                        <div>
-                                                            <span className="text-[10px] text-slate-400 block">{isEn ? 'Registration Deadline' : 'Batas Pendaftaran'}</span>
-                                                            <span className={`font-bold text-[11px] ${comp.is_urgent ? 'text-rose-600' : 'text-slate-800'}`}>
-                                                                {comp.registration_deadline
-                                                                    ? new Date(comp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
-                                                                          day: 'numeric',
-                                                                          month: 'short',
-                                                                          year: 'numeric',
-                                                                      })
-                                                                    : (isEn ? 'Open' : 'Terbuka')}
+                                                    {/* Sub-heading Organizer & Title */}
+                                                    <div>
+                                                        <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 truncate">
+                                                            {comp.organizer || (isEn ? 'Official Organizer' : 'Penyelenggara')}
+                                                        </span>
+                                                        <Link href={`/competitions/${comp.slug || comp.id}`}>
+                                                            <h4 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-snug tracking-tight line-clamp-2">
+                                                                {comp.name}
+                                                            </h4>
+                                                        </Link>
+                                                    </div>
+
+                                                    {/* Metadata Chips */}
+                                                    <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                                                        {comp.registration_deadline && (
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-100">
+                                                                <Calendar className="size-3 text-slate-400 shrink-0" />
+                                                                <span className={comp.is_urgent ? 'text-rose-600 font-bold' : ''}>
+                                                                    {new Date(comp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
+                                                                        day: 'numeric',
+                                                                        month: 'short',
+                                                                        year: 'numeric',
+                                                                    })}
+                                                                </span>
                                                             </span>
-                                                        </div>
+                                                        )}
                                                         {comp.is_urgent && (
-                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
                                                                 {isEn ? 'Closing Soon' : 'Segera Tutup'}
                                                             </span>
                                                         )}
                                                     </div>
                                                 </div>
 
-                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                                                {/* Bottom Row: iOS Action Buttons */}
+                                                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2.5">
                                                     <button
                                                         type="button"
                                                         onClick={() => {
                                                             setSelectedTrackComp(comp);
                                                             setTrackModalOpen(true);
                                                         }}
-                                                        className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex-1 text-center"
+                                                        className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition shadow-xs cursor-pointer flex-1 text-center"
                                                     >
                                                         {isEn ? 'Join Now' : 'Ikuti Sekarang'}
                                                     </button>
                                                     <Link
                                                         href={`/competitions/${comp.slug || comp.id}`}
-                                                        className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold transition"
+                                                        className="px-4 py-2 rounded-full border border-slate-200 bg-white hover:bg-slate-900 hover:text-white hover:border-slate-900 text-slate-800 text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 shrink-0"
                                                     >
-                                                        {isEn ? 'Details →' : 'Detail ↗'}
+                                                        <span>{isEn ? 'Details' : 'Detail'}</span>
+                                                        <ArrowRight className="size-3" />
                                                     </Link>
                                                 </div>
                                             </div>
@@ -2621,57 +2631,120 @@ export default function CompetitionIndex({
                 {/* ========================================================= */}
                 {activeTab === 'recommendations' && (
                     <div className="space-y-6">
-                        <div className="pb-3 border-b border-slate-200/80">
-                            <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                {isEn ? 'AI Recommendations' : 'Rekomendasi'}
-                            </h2>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/70">
+                            <div>
+                                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">
+                                    {isEn ? 'AI Recommendations' : 'Rekomendasi Kompetisi'}
+                                </h2>
+                                <p className="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
+                                    {isEn ? 'Personalized competitions matched to your skills and interests' : 'Lomba pilihan yang dipersonalisasi sesuai minat dan keahlianmu'}
+                                </p>
+                            </div>
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/60 text-xs font-bold w-fit shadow-2xs">
+                                <Sparkles className="size-3.5 text-blue-600" />
+                                <span>{isEn ? 'Smart Matching Engine' : 'AI Matcher Aktif'}</span>
+                            </div>
                         </div>
 
                         {recommendedCompetitions && recommendedCompetitions.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                                {recommendedCompetitions.map((comp, idx) => (
-                                    <div
-                                        key={comp.id}
-                                        onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
-                                        className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:border-blue-400 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-3 group"
-                                    >
-                                        <div>
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                                                    {comp.category?.replace('_', ' ') || (isEn ? 'HACKATHON' : 'HACKATHON')}
-                                                </span>
-                                                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                                                    {idx === 0 ? (isEn ? '98% Match' : '98% Relevan') : (isEn ? `${95 - idx * 4}% Match` : `${95 - idx * 4}% Relevan`)}
-                                                </span>
+                                {recommendedCompetitions.map((comp, idx) => {
+                                    const matchPercent = idx === 0 ? 98 : Math.max(75, 95 - idx * 4);
+                                    const levelLabel = comp.level
+                                        ? (isEn
+                                            ? (comp.level === 'Nasional' ? 'National' : comp.level === 'Internasional' ? 'International' : comp.level === 'Regional' ? 'Regional' : 'University')
+                                            : comp.level)
+                                        : (isEn ? 'National' : 'Nasional');
+
+                                    return (
+                                        <div
+                                            key={comp.id}
+                                            onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
+                                            className="rounded-[28px] sm:rounded-[32px] bg-white p-5 sm:p-6 border border-slate-100 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-xl hover:border-slate-200/80 transition-all duration-300 flex flex-col justify-between gap-5 group cursor-pointer active:scale-[0.99]"
+                                        >
+                                            <div className="space-y-3.5">
+                                                {/* Top Row: iOS Category Tag & Relevance KPI Badge */}
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-tight bg-indigo-50 text-indigo-700 border border-indigo-100/70 uppercase">
+                                                        {comp.category?.replace('_', ' ') || 'HACKATHON'}
+                                                    </span>
+
+                                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 text-xs font-bold shadow-2xs">
+                                                        <span className="size-4 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                                                            <ArrowUpRight className="size-2.5 stroke-[3]" />
+                                                        </span>
+                                                        <span>{isEn ? `${matchPercent}% Match` : `${matchPercent}% Relevan`}</span>
+                                                    </div>
+                                                </div>
+
+                                                {/* Content: Sub-heading Organizer & Main Title */}
+                                                <div>
+                                                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1 truncate">
+                                                        {comp.organizer || (isEn ? 'Official Organizer' : 'Penyelenggara')}
+                                                    </span>
+                                                    <h3 className="text-base sm:text-lg font-black text-slate-900 group-hover:text-blue-600 transition-colors leading-snug tracking-tight line-clamp-2">
+                                                        {comp.name}
+                                                    </h3>
+                                                </div>
+
+                                                {/* Metadata Chips: Deadline, Team Capacity, Prize */}
+                                                <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-slate-500">
+                                                    {comp.registration_deadline && (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-100">
+                                                            <Calendar className="size-3 text-slate-400 shrink-0" />
+                                                            <span>
+                                                                {new Date(comp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
+                                                                    day: 'numeric',
+                                                                    month: 'short',
+                                                                    year: 'numeric',
+                                                                })}
+                                                            </span>
+                                                        </span>
+                                                    )}
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 text-[11px] font-medium border border-slate-100">
+                                                        <Users className="size-3 text-slate-400 shrink-0" />
+                                                        <span>
+                                                            {comp.min_team_size && comp.max_team_size
+                                                                ? comp.min_team_size === comp.max_team_size
+                                                                    ? comp.min_team_size === 1
+                                                                        ? (isEn ? 'Individual' : 'Individu')
+                                                                        : `${comp.min_team_size} ${isEn ? 'People' : 'Orang'}`
+                                                                    : `${comp.min_team_size}-${comp.max_team_size} ${isEn ? 'People' : 'Orang'}`
+                                                                : (isEn ? 'Team' : 'Tim')}
+                                                        </span>
+                                                    </span>
+                                                    {comp.prize_info && (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100/80 truncate max-w-[180px]" title={comp.prize_info}>
+                                                            <Trophy className="size-3 text-amber-500 shrink-0" />
+                                                            <span className="truncate">{comp.prize_info}</span>
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
 
-                                            <h3 className="text-base font-bold text-slate-900 group-hover:text-blue-600 transition leading-snug">
-                                                {comp.name}
-                                            </h3>
-                                            <p className="text-xs font-semibold text-slate-400 mt-0.5">{comp.organizer}</p>
-                                        </div>
+                                            {/* Bottom Row: Scope Level Tag & iOS Pill Action Button */}
+                                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                                                <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-bold tracking-tight bg-slate-100 text-slate-700 border border-slate-200/60 uppercase">
+                                                    {levelLabel}
+                                                </span>
 
-                                        <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
-                                            <span className="text-slate-500 font-medium">{comp.level ? (isEn ? (comp.level === 'Nasional' ? 'National' : comp.level === 'Internasional' ? 'International' : comp.level === 'Regional' ? 'Regional' : 'University') : comp.level) : (isEn ? 'National' : 'Nasional')}</span>
-                                            <span className="font-bold text-blue-600">{isEn ? 'Details →' : 'Detail ↗'}</span>
+                                                <div className="px-4 py-1.5 rounded-full border border-slate-200 bg-white group-hover:bg-slate-900 group-hover:text-white group-hover:border-slate-900 text-slate-800 text-xs font-bold shadow-2xs transition-all duration-200 flex items-center gap-1.5">
+                                                    <span>{isEn ? 'Details' : 'Detail'}</span>
+                                                    <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
-                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <AnimatedIcon name="sparkles" size={56} className="mx-auto mb-3" />
-                                <h3 className="text-sm font-bold text-slate-900">
-                                    {isEn ? 'No Recommendations Yet' : 'Belum Ada Rekomendasi'}
-                                </h3>
-                                <Link
-                                    href="/settings/profile"
-                                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
-                                >
-                                    <span>{isEn ? 'Complete Profile' : 'Lengkapi Profil'}</span>
-                                    <ArrowRight className="w-3.5 h-3.5" />
-                                </Link>
-                            </div>
+                            <EmptyState
+                                icon={Sparkles}
+                                title={isEn ? "No recommendations yet" : "Belum ada rekomendasi"}
+                                description={isEn ? "Complete your profile skills and interests to get personalized AI competition recommendations." : "Lengkapi minat dan keahlian di profil untuk mendapatkan rekomendasi lomba yang cocok."}
+                                actionLabel={isEn ? "Complete Profile" : "Lengkapi Profil"}
+                                actionHref="/settings/profile"
+                            />
                         )}
                     </div>
                 )}
