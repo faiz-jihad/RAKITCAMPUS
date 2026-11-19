@@ -38,6 +38,7 @@ import {
     Puzzle,
     Settings,
     ShieldCheck,
+    Sparkles,
     Trophy,
     User,
     Users,
