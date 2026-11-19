@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -82,6 +83,7 @@ export default function WorkspaceShow({
     canManageGitHub = false,
     myPendingInvitation,
 }: Props) {
+    const { t, locale, isEn } = useLocale();
     const [mainTab, setMainTab] = useState<'kanban' | 'github'>(() => {
         if (typeof window !== 'undefined') {
             const params = new URLSearchParams(window.location.search);
@@ -675,17 +677,17 @@ export default function WorkspaceShow({
     };
 
     const columns = [
-        { key: 'todo', label: 'Belum Dikerjakan (To-Do)', colorDot: 'bg-slate-400', badgeColor: 'bg-slate-100 text-slate-700 border border-slate-200' },
-        { key: 'in_progress', label: 'Sedang Dikerjakan (In Progress)', colorDot: 'bg-blue-600', badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200' },
-        { key: 'in_review', label: 'Ulasan & QA (In Review)', colorDot: 'bg-blue-400', badgeColor: 'bg-blue-50/70 text-blue-800 border border-blue-200/60' },
-        { key: 'completed', label: 'Selesai (Done)', colorDot: 'bg-slate-900', badgeColor: 'bg-blue-600 text-white' },
+        { key: 'todo', label: isEn ? 'To Do' : 'Belum Dikerjakan (To-Do)', colorDot: 'bg-slate-400', badgeColor: 'bg-slate-100 text-slate-700 border border-slate-200' },
+        { key: 'in_progress', label: isEn ? 'In Progress' : 'Sedang Dikerjakan (In Progress)', colorDot: 'bg-blue-600', badgeColor: 'bg-blue-50 text-blue-700 border border-blue-200' },
+        { key: 'in_review', label: isEn ? 'In Review' : 'Ulasan & QA (In Review)', colorDot: 'bg-blue-400', badgeColor: 'bg-blue-50/70 text-blue-800 border border-blue-200/60' },
+        { key: 'completed', label: isEn ? 'Done' : 'Selesai (Done)', colorDot: 'bg-slate-900', badgeColor: 'bg-blue-600 text-white' },
     ];
 
     const priorityBadge: Record<string, { label: string; cls: string; dot: string }> = {
-        urgent: { label: 'Urgent', cls: 'bg-slate-900 text-white border-slate-900', dot: 'bg-white' },
-        high: { label: 'Tinggi', cls: 'bg-blue-100 text-blue-800 border-blue-300', dot: 'bg-blue-600' },
-        medium: { label: 'Menengah', cls: 'bg-blue-50 text-blue-700 border-blue-200', dot: 'bg-blue-500' },
-        low: { label: 'Rendah', cls: 'bg-slate-100 text-slate-600 border-slate-200', dot: 'bg-slate-400' },
+        urgent: { label: 'Urgent', cls: 'bg-rose-50 text-rose-700 border border-rose-200/70', dot: 'bg-rose-500' },
+        high: { label: isEn ? 'High' : 'Tinggi', cls: 'bg-amber-50 text-amber-700 border border-amber-200/70', dot: 'bg-amber-600' },
+        medium: { label: isEn ? 'Medium' : 'Menengah', cls: 'bg-indigo-50 text-indigo-700 border border-indigo-200/70', dot: 'bg-indigo-500' },
+        low: { label: isEn ? 'Low' : 'Rendah', cls: 'bg-slate-100 text-slate-600 border border-slate-200/70', dot: 'bg-slate-400' },
     };
 
     const filterTasks = (list: any[]) => {
@@ -1279,7 +1281,7 @@ export default function WorkspaceShow({
                                                         {/* Priority Chip & Actions */}
                                                         <div className="flex items-center justify-between gap-1.5 min-w-0">
                                                             <span
-                                                                className={`inline-flex items-center text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${priority.cls}`}
+                                                                className={`inline-flex items-center text-[10px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${priority.cls}`}
                                                             >
                                                                 <span>{priority.label}</span>
                                                             </span>

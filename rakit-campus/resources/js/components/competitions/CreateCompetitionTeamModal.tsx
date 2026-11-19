@@ -1,4 +1,5 @@
 import { router, usePage } from '@inertiajs/react';
+import { useLocale } from '@/hooks/use-locale';
 import {
     AlertCircle,
     ArrowLeft,
@@ -68,6 +69,7 @@ export default function CreateCompetitionTeamModal({
     preselectedCompId = null,
     initialMode,
 }: Props) {
+    const { t, locale, isEn } = useLocale();
     const { auth } = usePage<any>().props;
     const currentUser = auth?.user;
 
@@ -312,28 +314,28 @@ export default function CreateCompetitionTeamModal({
                         <div>
                             <h3 className="text-base font-bold text-slate-900">
                                 {mode === 'choice'
-                                    ? 'Mulai Bentuk Tim Kompetisi'
+                                    ? (isEn ? 'Create Competition Team' : 'Mulai Bentuk Tim Kompetisi')
                                     : mode === 'existing'
-                                    ? 'Pilih Lomba & Bentuk Tim'
+                                    ? (isEn ? 'Choose Contest & Form Team' : 'Pilih Lomba & Bentuk Tim')
                                     : step === 2
-                                    ? 'Langkah 2: Lengkapi Data Lomba Baru'
-                                    : 'Langkah 3: Atur Tim Kompetisi'}
+                                    ? (isEn ? 'Step 2: Contest Details' : 'Langkah 2: Lengkapi Data Lomba Baru')
+                                    : (isEn ? 'Step 3: Setup Team' : 'Langkah 3: Atur Tim Kompetisi')}
                             </h3>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                {mode === 'choice'
-                                    ? 'Tentukan apakah lomba sudah ada di platform atau ingin mendaftarkan lomba baru.'
-                                    : mode === 'existing'
-                                    ? 'Pilih lomba yang masih membuka pendaftaran dan tentukan nama tim Anda.'
-                                    : step === 2
-                                    ? 'Isi ketentuan lengkap lomba dan unggah poster lomba (maksimal 5 gambar).'
-                                    : 'Beri nama tim dan tentukan peran rekan yang dicari.'}
-                            </p>
+                            {mode !== 'choice' && (
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    {mode === 'existing'
+                                        ? (isEn ? 'Select an active competition and enter your team name.' : 'Pilih lomba yang masih membuka pendaftaran dan tentukan nama tim Anda.')
+                                        : step === 2
+                                        ? (isEn ? 'Fill in contest details and upload poster.' : 'Isi ketentuan lengkap lomba dan unggah poster lomba (maksimal 5 gambar).')
+                                        : (isEn ? 'Name your team and specify roles needed.' : 'Beri nama tim dan tentukan peran rekan yang dicari.')}
+                                </p>
+                            )}
                         </div>
                     </div>
                     <button
                         onClick={onClose}
                         className="text-slate-400 hover:text-slate-600 p-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer"
-                        title="Tutup"
+                        title={isEn ? "Close" : "Tutup"}
                     >
                         <X className="size-4" />
                     </button>
@@ -342,20 +344,20 @@ export default function CreateCompetitionTeamModal({
                 {/* Step Breadcrumb Pills (When beyond step 1) */}
                 {mode !== 'choice' && (
                     <div className="flex items-center gap-1.5 mt-3 mb-4 text-[11px] font-semibold text-slate-500">
-                        <span className="text-blue-600 font-bold">1. Pilih Jalur</span>
+                        <span className="text-blue-600 font-bold">1. {isEn ? 'Choose Path' : 'Pilih Jalur'}</span>
                         <span>›</span>
                         {mode === 'existing' ? (
-                            <span className="text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-md">
-                                2. Pilih Lomba & Tim
+                            <span className="text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-full">
+                                2. {isEn ? 'Select Contest & Team' : 'Pilih Lomba & Tim'}
                             </span>
                         ) : (
                             <>
-                                <span className={step === 2 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-md' : 'text-slate-400'}>
-                                    2. Ketentuan & Poster
+                                <span className={step === 2 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-full' : 'text-slate-400'}>
+                                    2. {isEn ? 'Details & Poster' : 'Ketentuan & Poster'}
                                 </span>
                                 <span>›</span>
-                                <span className={step === 3 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-md' : 'text-slate-400'}>
-                                    3. Bentuk Tim
+                                <span className={step === 3 ? 'text-slate-900 font-bold bg-slate-100 px-2.5 py-0.5 rounded-full' : 'text-slate-400'}>
+                                    3. {isEn ? 'Assemble Team' : 'Bentuk Tim'}
                                 </span>
                             </>
                         )}
@@ -374,10 +376,6 @@ export default function CreateCompetitionTeamModal({
                 {/* ========================================================= */}
                 {mode === 'choice' && (
                     <div className="py-4 space-y-3">
-                        <div className="text-xs font-bold text-slate-700 mb-2">
-                            Apakah kompetisi yang ingin Anda ikuti sudah ada di platform?
-                        </div>
-
                         {/* Card Option 1: Existing Competition */}
                         <div
                             onClick={() => {
@@ -385,28 +383,28 @@ export default function CreateCompetitionTeamModal({
                                 setStep(2);
                                 setErrorMsg(null);
                             }}
-                            className="p-4 rounded-2xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/20 transition cursor-pointer group shadow-2xs"
+                            className="p-4 rounded-2xl border border-slate-200/90 hover:border-blue-500 bg-white hover:bg-blue-50/20 transition cursor-pointer group shadow-2xs"
                         >
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="size-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100 group-hover:scale-105 transition-transform">
-                                        <Trophy className="size-4.5" />
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3.5 min-w-0">
+                                    <div className="size-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100/80 group-hover:scale-105 transition-transform shadow-2xs">
+                                        <Trophy className="size-5" />
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
-                                                Ikuti Lomba yang Sudah Ada di Platform
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                                                {isEn ? 'Choose from Catalog' : 'Pilih dari Katalog Lomba'}
                                             </h4>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                                                {openCompetitions.length} Aktif
+                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80">
+                                                {openCompetitions.length} {isEn ? 'Active' : 'Aktif'}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                            Pilih dari daftar kompetisi terverifikasi yang pendaftarannya masih dibuka, lalu langsung bentuk tim Anda.
+                                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                            {isEn ? 'Browse verified competitions and immediately form your team.' : 'Pilih kompetisi terverifikasi dan langsung bentuk tim Anda.'}
                                         </p>
                                     </div>
                                 </div>
-                                <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition shrink-0 mt-2" />
+                                <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition shrink-0 ml-2" />
                             </div>
                         </div>
 
@@ -417,38 +415,38 @@ export default function CreateCompetitionTeamModal({
                                 setStep(2);
                                 setErrorMsg(null);
                             }}
-                            className="p-4 rounded-2xl border border-slate-200 hover:border-blue-500 bg-white hover:bg-blue-50/20 transition cursor-pointer group shadow-2xs"
+                            className="p-4 rounded-2xl border border-slate-200/90 hover:border-blue-500 bg-white hover:bg-blue-50/20 transition cursor-pointer group shadow-2xs"
                         >
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="flex items-start gap-3">
-                                    <div className="size-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200 group-hover:scale-105 transition-transform">
-                                        <Plus className="size-4.5 text-blue-600" />
+                            <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-3.5 min-w-0">
+                                    <div className="size-11 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100/80 group-hover:scale-105 transition-transform shadow-2xs">
+                                        <Plus className="size-5" />
                                     </div>
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition">
-                                                Lomba Belum Ada? Daftarkan Lomba Baru
+                                    <div className="min-w-0">
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <h4 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
+                                                {isEn ? 'Register New Contest' : 'Daftarkan Lomba Baru'}
                                             </h4>
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-                                                Baru & Unggah Poster
+                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200/80">
+                                                {isEn ? 'New Contest' : 'Lomba Baru'}
                                             </span>
                                         </div>
-                                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                            Punya info lomba dari luar kampus? Lengkapi data resmi lomba, unggah poster/gambar lomba, kemudian langsung bentuk tim Anda.
+                                        <p className="text-xs text-slate-500 mt-0.5 truncate">
+                                            {isEn ? 'Upload external contest info and poster, then assemble your team.' : 'Unggah info & poster lomba luar kampus, lalu susun formasi tim.'}
                                         </p>
                                     </div>
                                 </div>
-                                <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition shrink-0 mt-2" />
+                                <ArrowRight className="size-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition shrink-0 ml-2" />
                             </div>
                         </div>
 
-                        <div className="pt-3 flex justify-end">
+                        <div className="pt-2 flex justify-end">
                             <button
                                 type="button"
                                 onClick={onClose}
                                 className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
                             >
-                                Batal
+                                {isEn ? 'Cancel' : 'Batal'}
                             </button>
                         </div>
                     </div>

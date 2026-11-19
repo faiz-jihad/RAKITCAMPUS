@@ -273,16 +273,9 @@ export default function LeaderboardIndex({
                             />
                         </div>
                         <div>
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1">
-                                <Award className="size-3 text-amber-600" />
-                                <span>{t('leaderboard.tag', 'Hall of Fame & Podium Nasional')}</span>
-                            </div>
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
                                 {t('leaderboard.title', 'Klasemen & Peringkat RAKIT Campus')}
                             </h1>
-                            <p className="text-xs text-slate-500 mt-1 max-w-xl">
-                                {t('leaderboard.subtitle', 'Panggung prestasi mahasiswa, kontributor proyek teraktif, dan tim juara kompetisi terverifikasi se-Indonesia.')}
-                            </p>
                         </div>
                     </div>
 

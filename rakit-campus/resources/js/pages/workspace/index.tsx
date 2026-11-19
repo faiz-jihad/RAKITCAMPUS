@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
@@ -13,22 +14,24 @@ interface Props {
     teams: any[];
 }
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Workspace Tim', href: '/workspace' },
-];
-
 export default function WorkspaceIndex({ teams }: Props) {
+    const { t, locale, isEn } = useLocale();
+
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: isEn ? 'Team Workspace' : 'Workspace Tim', href: '/workspace' },
+    ];
+
     return (
         <AppLayout breadcrumbs={breadcrumbs} activeTab="task">
-            <Head title="Workspace Tim & Kanban — RAKIT Campus" />
+            <Head title={isEn ? 'Team Workspace & Kanban — RAKIT Campus' : 'Workspace Tim & Kanban — RAKIT Campus'} />
 
             <div className="space-y-6">
                 {/* Header Row */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                            Workspace Proyek
+                            {isEn ? 'Project Workspace' : 'Workspace Proyek'}
                         </h1>
                     </div>
                 </div>
@@ -39,16 +42,16 @@ export default function WorkspaceIndex({ teams }: Props) {
                         <div className="size-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 border border-blue-200/80">
                             <Kanban className="size-6" />
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900">Belum Ada Tim Proyek Aktif</h3>
+                        <h3 className="text-sm font-bold text-slate-900">{isEn ? 'No Active Project Teams' : 'Belum Ada Tim Proyek Aktif'}</h3>
                         <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
-                            Kelola papan kanban tugas proyek Anda bersama tim secara terstruktur.
+                            {isEn ? 'Manage your project task kanban board with your team in a structured way.' : 'Kelola papan kanban tugas proyek Anda bersama tim secara terstruktur.'}
                         </p>
                         <div className="flex flex-wrap justify-center gap-2.5">
                             <Link
                                 href="/projects"
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-2xs"
                             >
-                                Jelajahi Proyek
+                                {isEn ? 'Explore Projects' : 'Jelajahi Proyek'}
                             </Link>
                         </div>
                     </div>
@@ -200,7 +203,7 @@ export default function WorkspaceIndex({ teams }: Props) {
                                             href={`/projects/${t.project.id}`}
                                             className="text-xs text-slate-500 hover:text-blue-600 font-semibold transition"
                                         >
-                                            Detail Proyek
+                                            {isEn ? 'Project Details' : 'Detail Proyek'}
                                         </Link>
                                     ) : (
                                         <span />
@@ -211,7 +214,7 @@ export default function WorkspaceIndex({ teams }: Props) {
                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-slate-900 hover:bg-blue-600 text-white rounded-lg text-xs font-bold shadow-2xs group-hover:bg-blue-600 group-hover:shadow-[0_0_12px_rgba(37,99,235,0.4)] transition"
                                     >
                                         <Kanban className="size-3.5" />
-                                        <span>Buka Workspace Tim</span>
+                                        <span>{isEn ? 'Open Team Workspace' : 'Buka Workspace Tim'}</span>
                                         <ArrowRight className="size-3" />
                                     </Link>
                                 </div>

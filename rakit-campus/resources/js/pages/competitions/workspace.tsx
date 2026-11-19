@@ -125,6 +125,24 @@ export default function CompetitionWorkspace({
     myPendingInvitation,
 }: Props) {
     const { t, locale, isEn } = useLocale();
+
+    const stageLabels: Record<string, { id: string; en: string }> = {
+        recruiting: { id: 'Pembentukan Tim', en: 'Team Formation' },
+        drafting: { id: 'Penyusunan Proposal', en: 'Proposal Drafting' },
+        review: { id: 'Review Dosen', en: 'Advisor Review' },
+        registered: { id: 'Terdaftar Resmi', en: 'Officially Registered' },
+        semifinal: { id: 'Semifinal / Karya', en: 'Semifinals / Work' },
+        final: { id: 'Finalis & Presentasi', en: 'Finalist & Presentation' },
+        winner: { id: 'Pemenang / Juara', en: 'Winner / Champion' },
+        archived: { id: 'Selesai / Arsip', en: 'Completed / Archive' },
+    };
+    const getStageLabel = (stageKey: string) => {
+        if (stageLabels[stageKey]) {
+            return isEn ? stageLabels[stageKey].en : stageLabels[stageKey].id;
+        }
+        return selectionStages?.[stageKey]?.label || stageKey;
+    };
+
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
         if (typeof window !== 'undefined') {
@@ -639,22 +657,22 @@ export default function CompetitionWorkspace({
 
     // Folder Categories for File Explorer UI
     const DOC_FOLDERS = [
-        { key: 'proposal', label: 'Proposal & Makalah', desc: 'Latar belakang ide, analisis inovasi, & perancangan', formats: 'PDF, DOCX, ZIP', icon: FileText, color: 'text-blue-600 bg-blue-50 border-blue-200' },
-        { key: 'pitch_deck', label: 'Pitch Deck & Slide', desc: 'Slide presentasi karya untuk juri & kurasi', formats: 'PDF, PPTX, URL', icon: Briefcase, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
-        { key: 'video_demo', label: 'Video Demo & Media', desc: 'Video demonstrasi produk / teaser karya', formats: 'YouTube, Drive, MP4', icon: Globe, color: 'text-violet-600 bg-violet-50 border-violet-200' },
-        { key: 'repo_url', label: 'Kode & Repositori Git', desc: 'Tautan GitHub atau kode sumber proyek', formats: 'GitHub, GitLab, ZIP', icon: GitBranch, color: 'text-slate-700 bg-slate-100 border-slate-200' },
-        { key: 'poster', label: 'Poster & Infografis', desc: 'Desain poster publikasi dan infografis kompetisi', formats: 'PNG, JPG, PDF', icon: ImageIcon, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
-        { key: 'registration_proof', label: 'Bukti Administrasi', desc: 'KTM, surat tugas, bukti registrasi resmi', formats: 'PDF, JPG, PNG', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 border-amber-200' },
+        { key: 'proposal', label: isEn ? 'Proposal & Paper' : 'Proposal & Makalah', desc: isEn ? 'Idea background, innovation analysis, and system architecture' : 'Latar belakang ide, analisis inovasi, & perancangan', formats: 'PDF, DOCX, ZIP', icon: FileText, color: 'text-blue-600 bg-blue-50 border-blue-200' },
+        { key: 'pitch_deck', label: isEn ? 'Pitch Deck & Slides' : 'Pitch Deck & Slide', desc: isEn ? 'Presentation slides for jury and showcase curation' : 'Slide presentasi karya untuk juri & kurasi', formats: 'PDF, PPTX, URL', icon: Briefcase, color: 'text-indigo-600 bg-indigo-50 border-indigo-200' },
+        { key: 'video_demo', label: isEn ? 'Demo Video & Media' : 'Video Demo & Media', desc: isEn ? 'Product demonstration video / project teaser' : 'Video demonstrasi produk / teaser karya', formats: 'YouTube, Drive, MP4', icon: Globe, color: 'text-violet-600 bg-violet-50 border-violet-200' },
+        { key: 'repo_url', label: isEn ? 'Code & Git Repository' : 'Kode & Repositori Git', desc: isEn ? 'GitHub link or project source code archive' : 'Tautan GitHub atau kode sumber proyek', formats: 'GitHub, GitLab, ZIP', icon: GitBranch, color: 'text-slate-700 bg-slate-100 border-slate-200' },
+        { key: 'poster', label: isEn ? 'Poster & Infographics' : 'Poster & Infografis', desc: isEn ? 'Publication poster design and contest infographic' : 'Desain poster publikasi dan infografis kompetisi', formats: 'PNG, JPG, PDF', icon: ImageIcon, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
+        { key: 'registration_proof', label: isEn ? 'Administrative Proof' : 'Bukti Administrasi', desc: isEn ? 'Student ID card, assignment letter, official registration proof' : 'KTM, surat tugas, bukti registrasi resmi', formats: 'PDF, JPG, PNG', icon: ShieldCheck, color: 'text-amber-600 bg-amber-50 border-amber-200' },
     ];
 
     // Standard Deliverables List
     const deliverableTemplates = [
-        { key: 'proposal', label: 'Proposal / Makalah Proyek', desc: 'Dokumen latar belakang, analisis inovasi, dan perancangan' },
-        { key: 'pitch_deck', label: 'Pitch Deck / Presentasi', desc: 'Slide ringkas presentasi karya untuk juri' },
-        { key: 'video_demo', label: 'Video Demo / Teaser', desc: 'Tautan video demonstrasi produk atau prototype berjalan' },
-        { key: 'repo_url', label: 'Repositori Kode / Git', desc: 'Tautan GitHub/GitLab kode sumber proyek' },
-        { key: 'poster', label: 'Poster Publikasi / Infografis', desc: 'Desain visual ringkasan karya kompetisi' },
-        { key: 'registration_proof', label: 'Bukti Pendaftaran Resmi', desc: 'Kartu peserta atau screenshot konfirmasi portal penyelenggara' },
+        { key: 'proposal', label: isEn ? 'Project Proposal / Paper' : 'Proposal / Makalah Proyek', desc: isEn ? 'Background, innovation analysis, and system design' : 'Dokumen latar belakang, analisis inovasi, dan perancangan' },
+        { key: 'pitch_deck', label: isEn ? 'Pitch Deck / Presentation' : 'Pitch Deck / Presentasi', desc: isEn ? 'Concise pitch presentation slides for jury evaluation' : 'Slide ringkas presentasi karya untuk juri' },
+        { key: 'video_demo', label: isEn ? 'Demo Video / Teaser' : 'Video Demo / Teaser', desc: isEn ? 'Demonstration video link or working prototype walkthrough' : 'Tautan video demonstrasi produk atau prototype berjalan' },
+        { key: 'repo_url', label: isEn ? 'Code Repository / Git' : 'Repositori Kode / Git', desc: isEn ? 'GitHub/GitLab repository link of the project' : 'Tautan GitHub/GitLab kode sumber proyek' },
+        { key: 'poster', label: isEn ? 'Publication Poster / Infographic' : 'Poster Publikasi / Infografis', desc: isEn ? 'Visual summary design of competition entry' : 'Desain visual ringkasan karya kompetisi' },
+        { key: 'registration_proof', label: isEn ? 'Official Registration Proof' : 'Bukti Pendaftaran Resmi', desc: isEn ? 'Contestant pass or confirmation screenshot from organizer portal' : 'Kartu peserta atau screenshot konfirmasi portal penyelenggara' },
     ];
 
     const pendingAppsCount = incomingApplications.filter((a: any) => a.status === 'pending').length;
@@ -844,10 +862,10 @@ export default function CompetitionWorkspace({
                                             ? 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200/80 cursor-pointer'
                                             : 'bg-slate-100 text-slate-700 border border-slate-200 cursor-default'
                                     }`}
-                                    title="Tahapan Seleksi Kompetisi"
+                                    title={isEn ? 'Competition Selection Stage' : 'Tahapan Seleksi Kompetisi'}
                                 >
                                     <span className="size-1.5 rounded-full bg-indigo-600" />
-                                    <span>{selectionStages[participation.stage]?.label || participation.stage}</span>
+                                    <span>{getStageLabel(participation.stage)}</span>
                                     {(isLeader || isMentor || isAdmin) && <PenLine className="size-2.5 text-indigo-600" />}
                                 </button>
 
@@ -1075,12 +1093,12 @@ export default function CompetitionWorkspace({
                     const remainingTasks = highlightedTask ? activeTasksList.filter((t: any) => t.id !== highlightedTask.id) : activeTasksList;
 
                     const deliverableItems = [
-                        { key: 'proposal', label: 'Proposal & Makalah Proyek', desc: 'Latar belakang ide, analisis inovasi, & perancangan' },
-                        { key: 'pitch_deck', label: 'Pitch Deck & Slide Presentasi', desc: 'Slide ringkas presentasi karya untuk evaluasi juri' },
-                        { key: 'video_demo', label: 'Video Demo / Pitching Karya', desc: 'Tautan rekaman demonstrasi sistem atau prototipe' },
-                        { key: 'repo_url', label: 'Repositori Kode & Git', desc: 'Tautan GitHub atau kode sumber proyek kompetisi' },
-                        { key: 'poster', label: 'Poster Publikasi / Infografis', desc: 'Desain visual ringkasan poster karya' },
-                        { key: 'registration_proof', label: 'Bukti Pendaftaran & Administrasi', desc: 'Kartu tanda peserta atau verifikasi pendaftaran' },
+                        { key: 'proposal', label: isEn ? 'Project Proposal & Paper' : 'Proposal & Makalah Proyek', desc: isEn ? 'Idea background, innovation analysis, and system architecture' : 'Latar belakang ide, analisis inovasi, & perancangan' },
+                        { key: 'pitch_deck', label: isEn ? 'Pitch Deck & Presentation Slides' : 'Pitch Deck & Slide Presentasi', desc: isEn ? 'Concise pitch presentation slides for jury evaluation' : 'Slide ringkas presentasi karya untuk evaluasi juri' },
+                        { key: 'video_demo', label: isEn ? 'Demo Video / Pitching' : 'Video Demo / Pitching Karya', desc: isEn ? 'Recorded system demo or prototype walkthrough' : 'Tautan rekaman demonstrasi sistem atau prototipe' },
+                        { key: 'repo_url', label: isEn ? 'Code Repository & Git' : 'Repositori Kode & Git', desc: isEn ? 'GitHub repository link or project source code' : 'Tautan GitHub atau kode sumber proyek kompetisi' },
+                        { key: 'poster', label: isEn ? 'Publication Poster / Infographic' : 'Poster Publikasi / Infografis', desc: isEn ? 'Visual infographic poster summary of the project' : 'Desain visual ringkasan poster karya' },
+                        { key: 'registration_proof', label: isEn ? 'Registration Proof & Admin' : 'Bukti Pendaftaran & Administrasi', desc: isEn ? 'Participant verification or official registration proof' : 'Kartu tanda peserta atau verifikasi pendaftaran' },
                     ];
 
                     // Slicing Bento Data & Constants
@@ -1094,7 +1112,9 @@ export default function CompetitionWorkspace({
                         const d = new Date(monday);
                         d.setDate(monday.getDate() + i);
                         const isToday = d.toDateString() === todayDate.toDateString();
-                        const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+                        const dayNames = isEn
+                            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                            : ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
                         return {
                             dayName: dayNames[d.getDay()],
                             dateNumber: d.getDate(),
@@ -1121,10 +1141,10 @@ export default function CompetitionWorkspace({
                     // Bar Chart Data (Image 1 Card 5)
                     const maxTaskCount = Math.max(1, totalTasks);
                     const taskBars = [
-                        { label: 'Todo', count: todoTasks, pct: Math.round((todoTasks / maxTaskCount) * 100) },
-                        { label: 'Proses', count: inProgressTasks, pct: Math.round((inProgressTasks / maxTaskCount) * 100) },
-                        { label: 'Review', count: reviewTasks, pct: Math.round((reviewTasks / maxTaskCount) * 100) },
-                        { label: 'Selesai', count: completedTasks, pct: Math.round((completedTasks / maxTaskCount) * 100), isPrimary: true },
+                        { label: isEn ? 'Todo' : 'Todo', count: todoTasks, pct: Math.round((todoTasks / maxTaskCount) * 100) },
+                        { label: isEn ? 'In Progress' : 'Proses', count: inProgressTasks, pct: Math.round((inProgressTasks / maxTaskCount) * 100) },
+                        { label: isEn ? 'Review' : 'Review', count: reviewTasks, pct: Math.round((reviewTasks / maxTaskCount) * 100) },
+                        { label: isEn ? 'Done' : 'Selesai', count: completedTasks, pct: Math.round((completedTasks / maxTaskCount) * 100), isPrimary: true },
                     ];
 
                     return (
@@ -1140,13 +1160,13 @@ export default function CompetitionWorkspace({
                                             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
                                                 {readinessScore}%
                                             </div>
-                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Kesiapan Tim</p>
+                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{isEn ? 'Team Readiness' : 'Kesiapan Tim'}</p>
                                         </div>
                                         <div className="text-right">
                                             <div className="text-2xl sm:text-3xl font-extrabold text-emerald-600 tracking-tight font-sans">
                                                 {taskPercentage}%
                                             </div>
-                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">Tugas Tuntas</p>
+                                            <p className="text-[11px] font-semibold text-slate-400 mt-0.5">{isEn ? 'Tasks Completed' : 'Tugas Tuntas'}</p>
                                         </div>
                                     </div>
 
@@ -1193,41 +1213,43 @@ export default function CompetitionWorkspace({
                                     <div className="flex items-center justify-center gap-3 pt-1 text-[11px] font-medium text-slate-500">
                                         <span className="inline-flex items-center gap-1.5">
                                             <span className="size-2 rounded-full bg-indigo-500" />
-                                            <span>Skor Lomba</span>
+                                            <span>{isEn ? 'Contest Score' : 'Skor Lomba'}</span>
                                         </span>
                                         <span className="inline-flex items-center gap-1.5">
                                             <span className="size-2 rounded-full bg-emerald-500" />
-                                            <span>Sprint Tugas</span>
+                                            <span>{isEn ? 'Task Sprint' : 'Sprint Tugas'}</span>
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* CARD 2: Sprint & Tahapan Seleksi (Image 1 Card 2) */}
+                                {/* CARD 2: Sprint & Tahapan Seleksi */}
                                 <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
                                     <div className="space-y-2">
                                         <div className="flex items-center justify-between gap-2">
                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200/80">
-                                                Sprint: {selectionStages[participation.stage]?.label || participation.stage}
+                                                Sprint: {getStageLabel(participation.stage)}
                                             </span>
                                             {(isLeader || isMentor || isAdmin) && (
                                                 <button
                                                     type="button"
                                                     onClick={() => setStageModalOpen(true)}
                                                     className="text-slate-400 hover:text-indigo-600 transition p-1"
-                                                    title="Perbarui Tahapan"
+                                                    title={isEn ? 'Update Stage' : 'Perbarui Tahapan'}
                                                 >
                                                     <PenLine className="size-3.5" />
                                                 </button>
                                             )}
                                         </div>
                                         <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                                            Fokus Tahapan Saat Ini
+                                            {isEn ? 'Current Phase Focus' : 'Fokus Tahapan Saat Ini'}
                                         </p>
                                         <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-                                            Validasi Solusi & Kelengkapan Karya
+                                            {isEn ? 'Solution Validation & Deliverable Readiness' : 'Validasi Solusi & Kelengkapan Karya'}
                                         </h3>
                                         <p className="text-xs text-slate-500 line-clamp-2">
-                                            Optimasi berkas kompetisi, mockups, dan persiapan submission juri.
+                                            {isEn
+                                                ? 'Optimization of contest files, mockups, and jury submission preparation.'
+                                                : 'Optimasi berkas kompetisi, mockups, dan persiapan submission juri.'}
                                         </p>
                                     </div>
 
@@ -1240,20 +1262,22 @@ export default function CompetitionWorkspace({
                                         ) : (
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                <span>Formasi Terbuka</span>
+                                                <span>{isEn ? 'Open Formation' : 'Formasi Terbuka'}</span>
                                             </span>
                                         )}
                                         <span className="text-[11px] font-mono text-slate-400">
-                                            {participation.competition?.level || 'Nasional'}
+                                            {participation.competition?.level || (isEn ? 'National' : 'Nasional')}
                                         </span>
                                     </div>
                                 </div>
 
-                                {/* CARD 3: Hitung Mundur & Deadline (Image 1 Card 1) */}
+                                {/* CARD 3: Hitung Mundur & Deadline */}
                                 <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
                                     <div>
                                         <div className="flex items-center justify-between text-slate-400 mb-1">
-                                            <span className="text-[11px] font-semibold uppercase tracking-wider">Sisa Waktu Pendaftaran</span>
+                                            <span className="text-[11px] font-semibold uppercase tracking-wider">
+                                                {isEn ? 'Registration Time Left' : 'Sisa Waktu Pendaftaran'}
+                                            </span>
                                             <Clock className="size-4 text-slate-400" />
                                         </div>
                                         <div className="flex items-baseline gap-1.5 mt-2">
@@ -1262,32 +1286,34 @@ export default function CompetitionWorkspace({
                                             }`}>
                                                 {daysLeft !== null ? (daysLeft > 0 ? daysLeft : 0) : '—'}
                                             </span>
-                                            <span className="text-base sm:text-lg font-bold text-slate-400">Hari</span>
+                                            <span className="text-base sm:text-lg font-bold text-slate-400">{isEn ? 'Days' : 'Hari'}</span>
                                         </div>
                                         <div className="mt-3">
                                             {daysLeft !== null && daysLeft <= 7 ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
                                                     <Clock className="size-3 text-rose-600" />
-                                                    <span>Mendekati Batas Akhir</span>
+                                                    <span>{isEn ? 'Approaching Deadline' : 'Mendekati Batas Akhir'}</span>
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                     <TrendingUp className="size-3 text-emerald-600" />
-                                                    <span>Fase Optimal Sprint</span>
+                                                    <span>{isEn ? 'Optimal Sprint Phase' : 'Fase Optimal Sprint'}</span>
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
-                                        <span className="truncate">Tenggat: <strong className="text-slate-800 font-semibold">{formattedDeadline}</strong></span>
+                                        <span className="truncate">{isEn ? 'Deadline:' : 'Tenggat:'} <strong className="text-slate-800 font-semibold">{formattedDeadline}</strong></span>
                                     </div>
                                 </div>
 
-                                {/* CARD 4: Kapasitas Berkas Donut (Image 1 Card 9) */}
+                                {/* CARD 4: Kapasitas Berkas Donut */}
                                 <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between">
                                     <div className="flex items-center justify-between text-slate-400 mb-1">
-                                        <span className="text-[11px] font-semibold uppercase tracking-wider">Kapasitas Berkas Cloud</span>
+                                        <span className="text-[11px] font-semibold uppercase tracking-wider">
+                                            {isEn ? 'Cloud Storage' : 'Kapasitas Berkas Cloud'}
+                                        </span>
                                         <HardDrive className="size-4 text-slate-400" />
                                     </div>
 
@@ -1312,18 +1338,18 @@ export default function CompetitionWorkspace({
                                             <span className="text-sm font-extrabold text-slate-900 leading-tight">
                                                 {storageQuota?.used_mb || 0} MB
                                             </span>
-                                            <span className="text-[9px] text-slate-400 font-medium">Terpakai</span>
+                                            <span className="text-[9px] text-slate-400 font-medium">{isEn ? 'Used' : 'Terpakai'}</span>
                                         </div>
                                     </div>
 
                                     <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1">
                                         <span className="inline-flex items-center gap-1">
                                             <span className="size-2 rounded-full bg-orange-500" />
-                                            <span>Pakai: {storageQuota?.used_mb || 0} MB</span>
+                                            <span>{isEn ? 'Used:' : 'Pakai:'} {storageQuota?.used_mb || 0} MB</span>
                                         </span>
                                         <span className="inline-flex items-center gap-1">
                                             <span className="size-2 rounded-full bg-slate-300" />
-                                            <span>Sisa: {storageQuota?.remaining_mb || 100} MB</span>
+                                            <span>{isEn ? 'Remaining:' : 'Sisa:'} {storageQuota?.remaining_mb || 100} MB</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1339,10 +1365,10 @@ export default function CompetitionWorkspace({
                                         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                                             <div className="flex items-center gap-2">
                                                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                                    Tim Kolaborasi: {participation.team?.name || 'Alba'}
+                                                    {isEn ? 'Collaboration Team:' : 'Tim Kolaborasi:'} {participation.team?.name || 'Alba'}
                                                 </h3>
                                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                                                    {membersCount} / {capacity} Anggota
+                                                    {membersCount} / {capacity} {isEn ? 'Members' : 'Anggota'}
                                                 </span>
                                             </div>
 
@@ -1355,7 +1381,7 @@ export default function CompetitionWorkspace({
                                                         className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition cursor-pointer"
                                                     >
                                                         <UserPlus className="size-3" />
-                                                        <span>Rekrut</span>
+                                                        <span>{isEn ? 'Recruit' : 'Rekrut'}</span>
                                                     </button>
                                                 )}
                                                 {participation.team_id && (
@@ -1396,13 +1422,13 @@ export default function CompetitionWorkspace({
                                                                         {member.user?.name}
                                                                     </span>
                                                                     {isLeaderUser && (
-                                                                        <span title="Ketua Tim">
+                                                                        <span title={isEn ? 'Team Lead' : 'Ketua Tim'}>
                                                                             <Award className="size-3 text-amber-500 shrink-0" />
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                                 <span className="text-[10px] text-slate-500 font-medium block truncate">
-                                                                    {member.role_name || (isLeaderUser ? 'Ketua Tim' : 'Anggota')}
+                                                                    {member.role_name || (isLeaderUser ? (isEn ? 'Team Lead' : 'Ketua Tim') : (isEn ? 'Member' : 'Anggota'))}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1424,7 +1450,7 @@ export default function CompetitionWorkspace({
                                                                     type="button"
                                                                     onClick={() => handleWithdrawMember(member.user_id, member.user?.name)}
                                                                     className="p-1.5 rounded-xl bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 transition cursor-pointer"
-                                                                    title="Keluarkan Anggota"
+                                                                    title={isEn ? 'Remove Member' : 'Keluarkan Anggota'}
                                                                 >
                                                                     <UserMinus className="size-3" />
                                                                 </button>
@@ -1446,9 +1472,9 @@ export default function CompetitionWorkspace({
                                                     </div>
                                                     <div className="min-w-0">
                                                         <span className="text-xs font-semibold text-slate-700 block">
-                                                            Slot Terbuka ({capacity - membersCount} lagi)
+                                                            {isEn ? 'Open Slot' : 'Slot Terbuka'} ({capacity - membersCount} {isEn ? 'left' : 'lagi'})
                                                         </span>
-                                                        <span className="text-[10px] text-slate-400">Undang rekan kampus</span>
+                                                        <span className="text-[10px] text-slate-400">{isEn ? 'Invite campus peers' : 'Undang rekan kampus'}</span>
                                                     </div>
                                                 </button>
                                             )}
@@ -1467,12 +1493,12 @@ export default function CompetitionWorkspace({
                                             </div>
                                             <div className="min-w-0 space-y-0.5">
                                                 <p className="text-xs font-bold text-slate-900">
-                                                    Sahabat RAKIT: Sinergi Kolaborasi
+                                                    {isEn ? 'RAKIT Companion: Collaboration Synergy' : 'Sahabat RAKIT: Sinergi Kolaborasi'}
                                                 </p>
                                                 <p className="text-[11px] text-slate-600 line-clamp-2">
                                                     {readinessScore >= 80
-                                                        ? 'Luar biasa! Skor kesiapan tim Anda sangat tinggi untuk tahap penjurian!'
-                                                        : 'Lengkapi berkas wajib proposal dan selesaikan tugas prioritas pekan ini agar tim Anda siap unggul!'}
+                                                        ? (isEn ? 'Outstanding! Your team readiness score is high for the evaluation phase!' : 'Luar biasa! Skor kesiapan tim Anda sangat tinggi untuk tahap penjurian!')
+                                                        : (isEn ? 'Complete the required proposal files and finish priority sprint tasks this week!' : 'Lengkapi berkas wajib proposal dan selesaikan tugas prioritas pekan ini agar tim Anda siap unggul!')}
                                                 </p>
                                             </div>
                                         </div>
@@ -1481,7 +1507,7 @@ export default function CompetitionWorkspace({
                                             onClick={() => setActiveTab('kanban')}
                                             className="shrink-0 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
                                         >
-                                            Papan Sprint
+                                            {isEn ? 'Sprint Board' : 'Papan Sprint'}
                                         </button>
                                     </div>
                                 </div>
@@ -1493,14 +1519,14 @@ export default function CompetitionWorkspace({
                                         <div className="flex items-center justify-between mb-2">
                                             <div>
                                                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">
-                                                    Distribusi Tugas Tim
+                                                    {isEn ? 'Team Task Distribution' : 'Distribusi Tugas Tim'}
                                                 </span>
                                                 <div className="flex items-baseline gap-2 mt-0.5">
                                                     <span className="text-xl sm:text-2xl font-extrabold text-slate-900">
                                                         {completedTasks}
                                                     </span>
                                                     <span className="text-xs text-slate-400 font-medium">
-                                                        dari {totalTasks} tugas selesai ({taskPercentage}%)
+                                                        {isEn ? `of ${totalTasks} tasks completed (${taskPercentage}%)` : `dari ${totalTasks} tugas selesai (${taskPercentage}%)`}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1541,14 +1567,14 @@ export default function CompetitionWorkspace({
                                         <div className="flex items-center justify-between mb-2.5">
                                             <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
                                                 <Calendar className="size-3.5 text-slate-400" />
-                                                <span>Linimasa Pekan Ini</span>
+                                                <span>{isEn ? 'Weekly Timeline' : 'Linimasa Pekan Ini'}</span>
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() => setActiveTab('kanban')}
                                                 className="text-[11px] font-semibold text-indigo-600 hover:text-indigo-800 transition inline-flex items-center gap-0.5"
                                             >
-                                                <span>Semua Tugas</span>
+                                                <span>{isEn ? 'All Tasks' : 'Semua Tugas'}</span>
                                                 <ChevronRight className="size-3" />
                                             </button>
                                         </div>
@@ -1587,10 +1613,12 @@ export default function CompetitionWorkspace({
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                                                Tugas Prioritas & Progres Kerja
+                                                {isEn ? 'Priority Tasks & Work Progress' : 'Tugas Prioritas & Progres Kerja'}
                                             </h3>
                                             <p className="text-[11px] text-slate-400">
-                                                {totalTasks > 0 ? `${taskPercentage}% selesai (${completedTasks}/${totalTasks} tugas)` : 'Belum ada tugas dibuat'}
+                                                {totalTasks > 0
+                                                    ? (isEn ? `${taskPercentage}% completed (${completedTasks}/${totalTasks} tasks)` : `${taskPercentage}% selesai (${completedTasks}/${totalTasks} tugas)`)
+                                                    : (isEn ? 'No tasks created yet' : 'Belum ada tugas dibuat')}
                                             </p>
                                         </div>
 
@@ -1602,7 +1630,7 @@ export default function CompetitionWorkspace({
                                                     className="inline-flex items-center gap-1 px-3 py-1 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition cursor-pointer"
                                                 >
                                                     <Plus className="size-3" />
-                                                    <span>Tugas</span>
+                                                    <span>{isEn ? 'Task' : 'Tugas'}</span>
                                                 </button>
                                             )}
                                             <button
@@ -1610,7 +1638,7 @@ export default function CompetitionWorkspace({
                                                 onClick={() => setActiveTab('kanban')}
                                                 className="inline-flex items-center gap-1 px-3 py-1 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
                                             >
-                                                <span>Papan Kanban</span>
+                                                <span>{isEn ? 'Kanban Board' : 'Papan Kanban'}</span>
                                                 <ChevronRight className="size-3" />
                                             </button>
                                         </div>
@@ -1622,9 +1650,9 @@ export default function CompetitionWorkspace({
                                                 <FolderKanban className="size-5" />
                                             </div>
                                             <div className="max-w-sm mx-auto">
-                                                <p className="text-xs font-bold text-slate-700">Papan tugas tim masih kosong</p>
+                                                <p className="text-xs font-bold text-slate-700">{isEn ? 'Team task board is empty' : 'Papan tugas tim masih kosong'}</p>
                                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                                    Breakdown pekerjaan kompetisi menjadi tugas konkret atau generate otomatis dengan AI.
+                                                    {isEn ? 'Break down competition milestones into concrete tasks or generate them automatically with AI.' : 'Breakdown pekerjaan kompetisi menjadi tugas konkret atau generate otomatis dengan AI.'}
                                                 </p>
                                             </div>
                                             <div className="flex items-center justify-center gap-2 pt-1">
@@ -1635,7 +1663,7 @@ export default function CompetitionWorkspace({
                                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer"
                                                     >
                                                         <Plus className="size-3.5" />
-                                                        <span>Buat Tugas Pertama</span>
+                                                        <span>{isEn ? 'Create First Task' : 'Buat Tugas Pertama'}</span>
                                                     </button>
                                                 )}
                                                 {isMember && (
@@ -1645,25 +1673,25 @@ export default function CompetitionWorkspace({
                                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer"
                                                     >
                                                         <Sparkles className="size-3.5 text-blue-600" />
-                                                        <span>Susun Roadmap AI</span>
+                                                        <span>{isEn ? 'Generate AI Roadmap' : 'Susun Roadmap AI'}</span>
                                                     </button>
                                                 )}
                                             </div>
                                         </div>
                                     ) : (
                                         <div className="space-y-3">
-                                            {/* Featured Focus Task (Image 2 Club Meeting style) */}
+                                            {/* Featured Focus Task (Apple HIG Sleek Pill) */}
                                             {highlightedTask && (
                                                 <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                                     <div className="min-w-0 space-y-1">
                                                         <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-100/90 text-indigo-700 border border-indigo-200/60 flex items-center gap-1">
                                                                 <Zap className="size-3 text-indigo-600" />
-                                                                <span>Fokus Utama</span>
+                                                                <span>{isEn ? 'Main Focus' : 'Fokus Utama'}</span>
                                                             </span>
                                                             {highlightedTask.due_on && (
                                                                 <span className="text-[10px] font-mono text-slate-500">
-                                                                    Tenggat: {new Date(highlightedTask.due_on).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                                    {isEn ? 'Deadline:' : 'Tenggat:'} {new Date(highlightedTask.due_on).toLocaleDateString(isEn ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
                                                                 </span>
                                                             )}
                                                         </div>
@@ -1686,7 +1714,9 @@ export default function CompetitionWorkspace({
                                                             }}
                                                             className="text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 px-3 py-1.5 rounded-xl transition cursor-pointer"
                                                         >
-                                                            {highlightedTask.status === 'in_progress' ? 'Tandai Selesai' : 'Mulai Kerjakan'}
+                                                            {highlightedTask.status === 'in_progress'
+                                                                ? (isEn ? 'Mark as Done' : 'Tandai Selesai')
+                                                                : (isEn ? 'Start Task' : 'Mulai Kerjakan')}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -1696,10 +1726,10 @@ export default function CompetitionWorkspace({
                                             <div className="divide-y divide-slate-100 rounded-2xl border border-slate-100 overflow-hidden">
                                                 {remainingTasks.map((task: any) => {
                                                     const statusMeta: Record<string, { label: string; color: string }> = {
-                                                        in_progress: { label: 'Sedang Berjalan', color: 'text-blue-700 bg-blue-50 border-blue-200' },
-                                                        in_review: { label: 'Review', color: 'text-purple-700 bg-purple-50 border-purple-200' },
-                                                        todo: { label: 'Belum Mulai', color: 'text-slate-700 bg-slate-100 border-slate-200' },
-                                                        completed: { label: 'Selesai', color: 'text-emerald-700 bg-emerald-50 border-emerald-200' },
+                                                        in_progress: { label: isEn ? 'In Progress' : 'Sedang Berjalan', color: 'text-blue-700 bg-blue-50 border-blue-200/70' },
+                                                        in_review: { label: isEn ? 'Review' : 'Review', color: 'text-purple-700 bg-purple-50 border-purple-200/70' },
+                                                        todo: { label: isEn ? 'Todo' : 'Belum Mulai', color: 'text-slate-700 bg-slate-100 border-slate-200/70' },
+                                                        completed: { label: isEn ? 'Done' : 'Selesai', color: 'text-emerald-700 bg-emerald-50 border-emerald-200/70' },
                                                     };
                                                     const s = statusMeta[task.status] || statusMeta.todo;
 
@@ -1709,7 +1739,7 @@ export default function CompetitionWorkspace({
                                                             className="p-3 sm:px-4 flex items-center justify-between gap-3 hover:bg-slate-50/70 transition"
                                                         >
                                                             <div className="flex items-center gap-2.5 min-w-0">
-                                                                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border shrink-0 ${s.color}`}>
+                                                                <span className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-full border shrink-0 ${s.color}`}>
                                                                     {s.label}
                                                                 </span>
                                                                 <span className="text-xs font-semibold text-slate-900 truncate">
@@ -1748,10 +1778,10 @@ export default function CompetitionWorkspace({
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <h3 className="text-sm sm:text-base font-bold text-slate-900">
-                                                Kelengkapan Berkas & Karya
+                                                {isEn ? 'Deliverables & Submissions' : 'Kelengkapan Berkas & Karya'}
                                             </h3>
                                             <p className="text-[11px] text-slate-400">
-                                                {totalDocs} dari 6 berkas wajib siap
+                                                {isEn ? `${totalDocs} of 6 mandatory files ready` : `${totalDocs} dari 6 berkas wajib siap`}
                                             </p>
                                         </div>
                                         <button
@@ -1759,7 +1789,7 @@ export default function CompetitionWorkspace({
                                             onClick={() => setActiveTab('documents')}
                                             className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition inline-flex items-center gap-1"
                                         >
-                                            <span>Kelola</span>
+                                            <span>{isEn ? 'Manage' : 'Kelola'}</span>
                                             <ChevronRight className="size-3" />
                                         </button>
                                     </div>
@@ -1793,7 +1823,7 @@ export default function CompetitionWorkspace({
 
                                                     <div className="flex items-center justify-between pt-1 border-t border-slate-200/50">
                                                         <span className={`text-[10px] font-semibold ${isUploaded ? 'text-emerald-700' : 'text-slate-400'}`}>
-                                                            {isUploaded ? 'Siap Seleksi' : 'Belum Ada'}
+                                                            {isUploaded ? (isEn ? 'Ready for Jury' : 'Siap Seleksi') : (isEn ? 'Not Uploaded' : 'Belum Ada')}
                                                         </span>
                                                         {isUploaded ? (
                                                             <div className="flex items-center gap-1.5">
@@ -1803,7 +1833,7 @@ export default function CompetitionWorkspace({
                                                                         target="_blank"
                                                                         rel="noreferrer"
                                                                         className="p-1 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 transition"
-                                                                        title="Buka Tautan"
+                                                                        title={isEn ? 'Open Link' : 'Buka Tautan'}
                                                                     >
                                                                         <ExternalLink className="size-3" />
                                                                     </a>
@@ -1812,7 +1842,7 @@ export default function CompetitionWorkspace({
                                                                     <a
                                                                         href={`/competition-workspace/${participation.competition?.slug || participation.id}/documents/${matchedDoc.id}/download`}
                                                                         className="p-1 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 transition"
-                                                                        title="Unduh Berkas"
+                                                                        title={isEn ? 'Download File' : 'Unduh Berkas'}
                                                                     >
                                                                         <Download className="size-3" />
                                                                     </a>
@@ -1830,7 +1860,7 @@ export default function CompetitionWorkspace({
                                                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white border border-slate-200 hover:border-slate-300 text-[10px] font-semibold text-slate-700 transition cursor-pointer"
                                                             >
                                                                 <Upload className="size-2.5" />
-                                                                <span>Unggah</span>
+                                                                <span>{isEn ? 'Upload' : 'Unggah'}</span>
                                                             </button>
                                                         )}
                                                     </div>
@@ -1848,23 +1878,25 @@ export default function CompetitionWorkspace({
                                         </div>
                                         <div className="min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <h4 className="text-sm font-bold text-slate-900">Repositori & Integrasi GitHub</h4>
+                                                <h4 className="text-sm font-bold text-slate-900">{isEn ? 'GitHub Repository & Integration' : 'Repositori & Integrasi GitHub'}</h4>
                                                 {githubRepo ? (
                                                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
                                                         <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                                        <span>Terhubung</span>
+                                                        <span>{isEn ? 'Connected' : 'Terhubung'}</span>
                                                     </span>
                                                 ) : (
                                                     <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
-                                                        Belum Terhubung
+                                                        {isEn ? 'Not Connected' : 'Belum Terhubung'}
                                                     </span>
                                                 )}
                                             </div>
                                             <p className="text-xs text-slate-500 mt-0.5 truncate">
                                                 {githubRepo ? (
-                                                    <span>Repositori: <strong className="font-mono text-slate-800 font-semibold">{githubRepo.full_name}</strong> ({githubRepo.default_branch || 'main'})</span>
+                                                    <span>{isEn ? 'Repository:' : 'Repositori:'} <strong className="font-mono text-slate-800 font-semibold">{githubRepo.full_name}</strong> ({githubRepo.default_branch || 'main'})</span>
                                                 ) : (
-                                                    'Pantau commit, pull request, dan riwayat kode tim secara real-time untuk transparansi karya.'
+                                                    isEn
+                                                        ? 'Monitor team commits, pull requests, and codebase history in real time for project transparency.'
+                                                        : 'Pantau commit, pull request, dan riwayat kode tim secara real-time untuk transparansi karya.'
                                                 )}
                                             </p>
                                         </div>
@@ -1880,7 +1912,7 @@ export default function CompetitionWorkspace({
                                                         rel="noreferrer"
                                                         className="px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 transition inline-flex items-center gap-1.5"
                                                     >
-                                                        <span>Buka GitHub</span>
+                                                        <span>{isEn ? 'Open GitHub' : 'Buka GitHub'}</span>
                                                         <ExternalLink className="size-3" />
                                                     </a>
                                                 )}
@@ -1889,7 +1921,7 @@ export default function CompetitionWorkspace({
                                                     onClick={() => setActiveTab('github')}
                                                     className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1"
                                                 >
-                                                    <span>Monitoring Kode</span>
+                                                    <span>{isEn ? 'Code Monitor' : 'Monitoring Kode'}</span>
                                                     <ChevronRight className="size-3" />
                                                 </button>
                                             </>
@@ -1899,7 +1931,7 @@ export default function CompetitionWorkspace({
                                                 onClick={() => setActiveTab('github')}
                                                 className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1"
                                             >
-                                                <span>Hubungkan GitHub Tim</span>
+                                                <span>{isEn ? 'Connect Team GitHub' : 'Hubungkan GitHub Tim'}</span>
                                                 <ChevronRight className="size-3" />
                                             </button>
                                         )}
@@ -1916,10 +1948,10 @@ export default function CompetitionWorkspace({
                                                 </div>
                                                 <div>
                                                     <h4 className="text-sm font-bold text-slate-900">
-                                                        Rekomendasi Rekan Tim & Talent Matchmaking
+                                                        {isEn ? 'Team Recommendations & Talent Matchmaking' : 'Rekomendasi Rekan Tim & Talent Matchmaking'}
                                                     </h4>
                                                     <p className="text-[11px] text-slate-400">
-                                                        Kandidat mahasiswa yang cocok dengan kebutuhan peran tim Anda
+                                                        {isEn ? 'Students matching your team vacancy criteria' : 'Kandidat mahasiswa yang cocok dengan kebutuhan peran tim Anda'}
                                                     </p>
                                                 </div>
                                             </div>
@@ -1928,7 +1960,7 @@ export default function CompetitionWorkspace({
                                                 onClick={() => setActiveTab('applicants')}
                                                 className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition inline-flex items-center gap-1"
                                             >
-                                                <span>Lihat Talent Radar</span>
+                                                <span>{isEn ? 'View Talent Radar' : 'Lihat Talent Radar'}</span>
                                                 <ChevronRight className="size-3" />
                                             </button>
                                         </div>
@@ -1945,7 +1977,7 @@ export default function CompetitionWorkspace({
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="font-bold text-slate-900 truncate">{u.name}</span>
                                                                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                                                                    {cand.final_score}% Cocok
+                                                                    {cand.final_score}% {isEn ? 'Match' : 'Cocok'}
                                                                 </span>
                                                             </div>
                                                             <p className="text-[11px] text-slate-500 line-clamp-2">{cand.explanation}</p>
@@ -1957,7 +1989,7 @@ export default function CompetitionWorkspace({
                                                                 onClick={() => openInviteModalForCandidate(cand)}
                                                                 className="w-full py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-[11px] font-semibold transition cursor-pointer"
                                                             >
-                                                                Undang ke Tim
+                                                                {isEn ? 'Invite to Team' : 'Undang ke Tim'}
                                                             </button>
                                                         )}
                                                     </div>
@@ -1978,17 +2010,19 @@ export default function CompetitionWorkspace({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-blue-50/80 via-indigo-50/50 to-white p-5 sm:p-6 rounded-2xl border border-blue-200/80 shadow-2xs">
                             <div>
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[10px] font-black uppercase tracking-wider text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-md border border-blue-200">
-                                        Perekrutan Anggota Tim
+                                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100/90 text-blue-700 border border-blue-200">
+                                        {isEn ? 'Team Member Recruitment' : 'Perekrutan Anggota Tim'}
                                     </span>
                                     <span className="text-xs text-slate-400">•</span>
                                     <span className="text-xs font-semibold text-slate-500">Team Matchmaking</span>
                                 </div>
                                 <h2 className="text-base sm:text-lg font-black text-slate-900">
-                                    Rekrut Rekan & Kelola Pelamar Tim
+                                    {isEn ? 'Recruit Peers & Manage Applicants' : 'Rekrut Rekan & Kelola Pelamar Tim'}
                                 </h2>
                                 <p className="text-xs text-slate-600 mt-0.5 leading-relaxed max-w-2xl">
-                                    Ketua tim dapat mengundang mahasiswa secara langsung dengan persetujuan mereka, membuka lowongan posisi, atau meninjau berkas pelamar yang masuk.
+                                    {isEn
+                                        ? 'Team leaders can invite students directly with their consent, open role vacancies, or review incoming applicant profiles.'
+                                        : 'Ketua tim dapat mengundang mahasiswa secara langsung dengan persetujuan mereka, membuka lowongan posisi, atau meninjau berkas pelamar yang masuk.'}
                                 </p>
                             </div>
 
@@ -1999,7 +2033,7 @@ export default function CompetitionWorkspace({
                                     className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer self-start sm:self-auto shrink-0"
                                 >
                                     <UserPlus className="size-4" />
-                                    <span>+ Rekrut / Undang Mahasiswa</span>
+                                    <span>{isEn ? '+ Recruit / Invite Student' : '+ Rekrut / Undang Mahasiswa'}</span>
                                 </button>
                             )}
                         </div>
@@ -2010,7 +2044,7 @@ export default function CompetitionWorkspace({
                                 <div>
                                     <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <Briefcase className="size-4 text-blue-600 shrink-0" />
-                                        <span>Posisi / Peran Dicari ({recruitmentRoles.length})</span>
+                                        <span>{isEn ? 'Open Roles & Positions Needed' : 'Posisi / Peran Dicari'} ({recruitmentRoles.length})</span>
                                     </h3>
                                 </div>
 
@@ -2021,7 +2055,7 @@ export default function CompetitionWorkspace({
                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer self-start sm:self-auto shrink-0 shadow-2xs"
                                     >
                                         <Plus className="size-3.5" />
-                                        <span>Tambah Posisi</span>
+                                        <span>{isEn ? 'Add Role' : 'Tambah Posisi'}</span>
                                     </button>
                                 )}
                             </div>
@@ -2109,8 +2143,8 @@ export default function CompetitionWorkspace({
                                                 <div className="flex items-start justify-between gap-2">
                                                     <div className="min-w-0 flex-1">
                                                         <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
-                                                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 mt-1 shrink-0">
-                                                            {r.slots} Slot Terbuka
+                                                        <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 mt-1 shrink-0">
+                                                            {r.slots} {isEn ? 'Open Slots' : 'Slot Terbuka'}
                                                         </span>
                                                     </div>
                                                     {isLeader && !participation.is_formation_locked && (
@@ -2118,7 +2152,7 @@ export default function CompetitionWorkspace({
                                                             type="button"
                                                             onClick={() => handleDeleteRecruitmentRole(r.id)}
                                                             className="text-slate-400 hover:text-rose-600 p-1 rounded transition shrink-0 cursor-pointer"
-                                                            title="Hapus lowongan"
+                                                            title={isEn ? "Delete role" : "Hapus lowongan"}
                                                         >
                                                             <Trash2 className="size-3.5" />
                                                         </button>
@@ -2214,10 +2248,10 @@ export default function CompetitionWorkspace({
                                                         <span className="text-xs font-bold text-slate-900 truncate">
                                                             {inv.invitee?.name || 'Mahasiswa'}
                                                         </span>
-                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0">
-                                                            Posisi: {inv.role_name}
+                                                        <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 shrink-0">
+                                                            {isEn ? 'Role:' : 'Posisi:'} {inv.role_name}
                                                         </span>
-                                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                                                             inv.status === 'accepted'
                                                                 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                 : inv.status === 'declined'
@@ -2227,12 +2261,12 @@ export default function CompetitionWorkspace({
                                                                 : 'bg-amber-50 text-amber-800 border border-amber-200'
                                                         }`}>
                                                             {inv.status === 'accepted'
-                                                                ? 'Resmi Bergabung'
+                                                                ? (isEn ? 'Joined' : 'Resmi Bergabung')
                                                                 : inv.status === 'declined'
-                                                                ? 'Ditolak'
+                                                                ? (isEn ? 'Declined' : 'Ditolak')
                                                                 : inv.status === 'cancelled'
-                                                                ? 'Dibatalkan'
-                                                                : 'Menunggu Persetujuan'}
+                                                                ? (isEn ? 'Cancelled' : 'Dibatalkan')
+                                                                : (isEn ? 'Awaiting Approval' : 'Menunggu Persetujuan')}
                                                         </span>
                                                     </div>
 
@@ -2349,17 +2383,17 @@ export default function CompetitionWorkspace({
                                                                 >
                                                                     {applicant?.name || 'Mahasiswa'}
                                                                 </button>
-                                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
-                                                                    Posisi: {app.role_name || 'Anggota Tim'}
+                                                                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200 shrink-0">
+                                                                    {isEn ? 'Role:' : 'Posisi:'} {app.role_name || (isEn ? 'Team Member' : 'Anggota Tim')}
                                                                 </span>
-                                                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
+                                                                <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full shrink-0 ${
                                                                     app.status === 'accepted'
                                                                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                                         : app.status === 'rejected'
                                                                         ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                                                         : 'bg-amber-50 text-amber-700 border border-amber-200'
                                                                 }`}>
-                                                                    {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
+                                                                    {app.status === 'accepted' ? (isEn ? 'Accepted' : 'Diterima') : app.status === 'rejected' ? (isEn ? 'Rejected' : 'Ditolak') : (isEn ? 'Pending Review' : 'Menunggu Review')}
                                                                 </span>
                                                             </div>
                                                             <p className="text-xs text-slate-500 mt-0.5 truncate">
@@ -2524,7 +2558,7 @@ export default function CompetitionWorkspace({
                                         type="text"
                                         value={kanbanSearch}
                                         onChange={(e) => setKanbanSearch(e.target.value)}
-                                        placeholder="Cari kartu tugas..."
+                                        placeholder={isEn ? "Search task cards..." : "Cari kartu tugas..."}
                                         className="pl-8 pr-6 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 w-40 sm:w-52"
                                     />
                                     {kanbanSearch && (
@@ -2541,7 +2575,7 @@ export default function CompetitionWorkspace({
                                 <div className="flex items-center gap-1 bg-white border border-slate-200 rounded-lg p-0.5 text-[11px] font-semibold text-slate-600">
                                     <span className="px-1.5 text-slate-400 flex items-center gap-1">
                                         <Filter className="size-3" />
-                                        <span className="text-[10px]">Prioritas:</span>
+                                        <span className="text-[10px]">{isEn ? 'Priority:' : 'Prioritas:'}</span>
                                     </span>
                                     {['all', 'urgent', 'high', 'medium', 'low'].map((p) => (
                                         <button
@@ -2554,25 +2588,25 @@ export default function CompetitionWorkspace({
                                                     : 'hover:bg-slate-100 text-slate-600'
                                             }`}
                                         >
-                                            {p === 'all' ? 'Semua' : p}
+                                            {p === 'all' ? (isEn ? 'All' : 'Semua') : p}
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
                             <div className="text-[11px] text-slate-500 font-medium self-end sm:self-auto">
-                                Total: <strong className="text-slate-800">{participation.team?.tasks?.length || 0}</strong> tugas • Selesai: <strong className="text-emerald-700 font-bold">{(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}</strong>
+                                Total: <strong className="text-slate-800">{participation.team?.tasks?.length || 0}</strong> {isEn ? 'tasks • Completed:' : 'tugas • Selesai:'} <strong className="text-emerald-700 font-bold">{(participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length}</strong>
                             </div>
                         </div>
 
                         {/* Mobile Column Segmented Control (Visible only on mobile/tablet) */}
                         <div className="lg:hidden flex items-center gap-1 bg-slate-200/60 p-1.5 rounded-2xl overflow-x-auto no-scrollbar border border-slate-200/60 shadow-2xs">
                             {[
-                                { key: 'all', label: 'Semua', count: participation.team?.tasks?.length || 0 },
-                                { key: 'todo', label: 'Todo', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'todo').length },
-                                { key: 'in_progress', label: 'Proses', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_progress').length },
-                                { key: 'in_review', label: 'Review', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_review').length },
-                                { key: 'completed', label: 'Selesai', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length },
+                                { key: 'all', label: isEn ? 'All' : 'Semua', count: participation.team?.tasks?.length || 0 },
+                                { key: 'todo', label: isEn ? 'To Do' : 'Todo', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'todo').length },
+                                { key: 'in_progress', label: isEn ? 'In Progress' : 'Proses', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_progress').length },
+                                { key: 'in_review', label: isEn ? 'Review' : 'Review', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'in_review').length },
+                                { key: 'completed', label: isEn ? 'Completed' : 'Selesai', count: (participation.team?.tasks || []).filter((t: any) => t.status === 'completed').length },
                             ].map((mc) => (
                                 <button
                                     key={mc.key}
@@ -2598,10 +2632,10 @@ export default function CompetitionWorkspace({
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 items-stretch">
                             {(
                                 [
-                                    { key: 'todo', label: 'Belum Dimulai', dot: 'bg-slate-400' },
-                                    { key: 'in_progress', label: 'Sedang Dikerjakan', dot: 'bg-blue-500' },
-                                    { key: 'in_review', label: 'Review & Ulasan', dot: 'bg-amber-500' },
-                                    { key: 'completed', label: 'Selesai', dot: 'bg-emerald-500' },
+                                    { key: 'todo', label: isEn ? 'To Do' : 'Belum Dimulai', dot: 'bg-slate-400' },
+                                    { key: 'in_progress', label: isEn ? 'In Progress' : 'Sedang Dikerjakan', dot: 'bg-blue-500' },
+                                    { key: 'in_review', label: isEn ? 'Review' : 'Review & Ulasan', dot: 'bg-amber-500' },
+                                    { key: 'completed', label: isEn ? 'Completed' : 'Selesai', dot: 'bg-emerald-500' },
                                 ] as const
                             ).map((col) => {
                                 const colTasks = (participation.team?.tasks || []).filter((t: any) => {
@@ -2657,7 +2691,7 @@ export default function CompetitionWorkspace({
                                                     className="flex-1 min-h-[80px] flex flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-slate-300 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition cursor-pointer"
                                                 >
                                                     <Plus className="size-4 shrink-0" />
-                                                    <span className="text-[10px] font-semibold">Tambah kartu</span>
+                                                    <span className="text-[10px] font-semibold">{isEn ? 'Add card' : 'Tambah kartu'}</span>
                                                 </button>
                                             )}
 
@@ -2674,14 +2708,14 @@ export default function CompetitionWorkspace({
                                                         }`}
                                                     >
                                                         <div className="flex items-center justify-between gap-1">
-                                                            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded shrink-0 ${
+                                                            <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0 ${
                                                                 task.priority === 'urgent'
-                                                                    ? 'bg-rose-50 text-rose-700'
+                                                                    ? 'bg-rose-50 text-rose-700 border-rose-200/60'
                                                                     : task.priority === 'high'
-                                                                    ? 'bg-amber-50 text-amber-800'
-                                                                    : 'bg-slate-100 text-slate-600'
+                                                                    ? 'bg-amber-50 text-amber-800 border-amber-200/60'
+                                                                    : 'bg-slate-100 text-slate-600 border-slate-200/60'
                                                             }`}>
-                                                                {task.priority}
+                                                                {task.priority === 'urgent' ? (isEn ? 'Urgent' : 'Urgent') : task.priority === 'high' ? (isEn ? 'High' : 'Tinggi') : task.priority === 'low' ? (isEn ? 'Low' : 'Rendah') : (isEn ? 'Medium' : 'Menengah')}
                                                             </span>
 
                                                             <div className="flex items-center gap-1 shrink-0">
@@ -2705,7 +2739,7 @@ export default function CompetitionWorkspace({
                                                                             e.stopPropagation();
                                                                             handleDeleteTask(task.id, task.title);
                                                                         }}
-                                                                        title="Hapus tugas ini"
+                                                                        title={isEn ? "Delete this task" : "Hapus tugas ini"}
                                                                         className="p-1 text-slate-300 hover:text-rose-600 hover:bg-rose-50 rounded transition cursor-pointer"
                                                                     >
                                                                         <Trash2 className="size-3" />
@@ -4493,17 +4527,17 @@ export default function CompetitionWorkspace({
                                             <h3 className="text-lg font-bold text-slate-900 truncate">
                                                 {applicant?.name || 'Mahasiswa'}
                                             </h3>
-                                            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">
-                                                Posisi: {app.role_name || 'Anggota Tim'}
+                                            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                                {isEn ? 'Role:' : 'Posisi:'} {app.role_name || (isEn ? 'Team Member' : 'Anggota Tim')}
                                             </span>
-                                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+                                            <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
                                                 app.status === 'accepted'
                                                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                                                     : app.status === 'rejected'
                                                     ? 'bg-rose-50 text-rose-700 border border-rose-200'
                                                     : 'bg-amber-50 text-amber-700 border border-amber-200'
                                             }`}>
-                                                {app.status === 'accepted' ? 'Diterima' : app.status === 'rejected' ? 'Ditolak' : 'Menunggu Review'}
+                                                {app.status === 'accepted' ? (isEn ? 'Accepted' : 'Diterima') : app.status === 'rejected' ? (isEn ? 'Rejected' : 'Ditolak') : (isEn ? 'Pending Review' : 'Menunggu Review')}
                                             </span>
                                         </div>
 

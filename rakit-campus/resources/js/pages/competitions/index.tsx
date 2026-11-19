@@ -1179,7 +1179,7 @@ export default function CompetitionIndex({
                                 </button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5.5">
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
                                 {catalogCompetitions.map((comp) => {
                                     const isSaved = bookmarkedIds.includes(comp.id);
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
@@ -1218,10 +1218,10 @@ export default function CompetitionIndex({
                                         <div
                                             key={comp.id}
                                             onClick={() => router.get(`/competitions/${comp.slug || comp.id}`)}
-                                            className={`relative aspect-[3/4.4] sm:aspect-[3/4.25] w-full rounded-[28px] sm:rounded-[32px] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none ${
+                                            className={`relative aspect-[3/4.6] sm:aspect-[3/4.3] w-full rounded-2xl sm:rounded-[28px] overflow-hidden border transition-all duration-300 cursor-pointer flex flex-col justify-between group select-none ${
                                                 isClosed
                                                     ? 'border-white/10 opacity-80'
-                                                    : 'border-white/15 shadow-md hover:shadow-2xl hover:-translate-y-1.5'
+                                                    : 'border-white/15 shadow-sm hover:shadow-xl hover:-translate-y-1'
                                             }`}
                                         >
                                             {/* Full-bleed Cover Background Poster */}
@@ -1234,76 +1234,65 @@ export default function CompetitionIndex({
                                             />
 
                                             {/* Soft Top Vignette for Floating Controls */}
-                                            <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none" />
+                                            <div className="absolute inset-x-0 top-0 h-20 sm:h-28 bg-gradient-to-b from-black/60 via-black/20 to-transparent pointer-events-none" />
 
                                             {/* Deep Frosted Dark Gradient Overlay for Bottom Content */}
-                                            <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent pointer-events-none" />
+                                            <div className="absolute inset-x-0 bottom-0 h-3/5 sm:h-3/5 bg-gradient-to-t from-slate-950 via-slate-950/85 to-transparent pointer-events-none" />
 
                                             {/* Top Floating Controls: Price/Status Pill & Circular Bookmark */}
-                                            <div className="relative z-10 p-3.5 sm:p-4 flex items-center justify-between gap-2">
-                                                <div className="px-3.5 py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-white text-xs sm:text-sm font-bold tracking-tight shadow-md max-w-[72%] truncate">
+                                            <div className="relative z-10 p-2.5 sm:p-4 flex items-center justify-between gap-1.5 sm:gap-2">
+                                                <div className="px-2.5 py-1 sm:px-3.5 sm:py-1.5 rounded-full bg-black/45 backdrop-blur-md border border-white/20 text-white text-[10px] sm:text-xs font-bold tracking-tight shadow-md max-w-[72%] truncate">
                                                     {topPillText}
                                                 </div>
 
                                                 <button
                                                     type="button"
                                                     onClick={(e) => handleToggleBookmark(e, comp.id)}
-                                                    className={`size-9 sm:size-10 rounded-full backdrop-blur-md flex items-center justify-center transition cursor-pointer shadow-md shrink-0 ${
+                                                    className={`size-7 sm:size-9 rounded-full backdrop-blur-md flex items-center justify-center transition cursor-pointer shadow-md shrink-0 ${
                                                         isSaved
                                                             ? 'bg-rose-500 text-white shadow-rose-500/30'
                                                             : 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
                                                     }`}
                                                     title={isSaved ? (isEn ? 'Remove Saved' : 'Hapus Simpanan') : (isEn ? 'Save Competition' : 'Simpan Lomba')}
                                                 >
-                                                    <Bookmark className={`size-4 sm:size-4.5 ${isSaved ? 'fill-current' : ''}`} />
+                                                    <Bookmark className={`size-3.5 sm:size-4 ${isSaved ? 'fill-current' : ''}`} />
                                                 </button>
                                             </div>
 
-                                            {/* Middle Floating Carousel Pagination Dots */}
-                                            <div className="relative z-10 flex justify-center -mb-2">
-                                                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-black/35 backdrop-blur-md border border-white/10 shadow-xs">
-                                                    <span className="w-4 h-1.5 rounded-full bg-white"></span>
-                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
-                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
-                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
-                                                    <span className="size-1.5 rounded-full bg-white/40"></span>
-                                                </div>
-                                            </div>
-
                                             {/* Bottom Info Section */}
-                                            <div className="relative z-10 p-4 sm:p-5 pt-0 flex flex-col gap-2.5 sm:gap-3">
+                                            <div className="relative z-10 p-2.5 sm:p-4.5 pt-0 flex flex-col gap-1.5 sm:gap-2.5">
                                                 {/* Title & Level Rating */}
-                                                <div className="flex items-center justify-between gap-2">
-                                                    <h3 className="text-base sm:text-lg font-bold text-white tracking-tight line-clamp-1 group-hover:text-blue-200 transition-colors">
+                                                <div className="flex items-center justify-between gap-1.5">
+                                                    <h3 className="text-xs sm:text-base font-bold text-white tracking-tight line-clamp-1 group-hover:text-blue-200 transition-colors">
                                                         {comp.name}
                                                     </h3>
-                                                    <div className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm font-bold shrink-0 ml-1">
-                                                        <Star className="size-3.5 sm:size-4 fill-amber-400 text-amber-400" />
+                                                    <div className="flex items-center gap-0.5 sm:gap-1 text-amber-400 text-[10px] sm:text-xs font-bold shrink-0 ml-1">
+                                                        <Star className="size-3 sm:size-3.5 fill-amber-400 text-amber-400" />
                                                         <span className="text-white/95">{comp.level ? (isEn ? (comp.level === 'Nasional' ? 'National' : comp.level === 'Internasional' ? 'International' : comp.level === 'Regional' ? 'Regional' : 'University') : comp.level) : (isEn ? 'National' : 'Nasional')}</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Organizer with MapPin */}
-                                                <div className="flex items-center gap-1.5 text-xs sm:text-[13px] text-white/80 line-clamp-1 -mt-1">
-                                                    <MapPin className="size-3.5 sm:size-4 text-white/70 shrink-0" />
+                                                <div className="flex items-center gap-1 text-[10px] sm:text-xs text-white/80 line-clamp-1 -mt-0.5 sm:-mt-1">
+                                                    <MapPin className="size-3 sm:size-3.5 text-white/70 shrink-0" />
                                                     <span className="truncate">{comp.organizer || (isEn ? 'Verified Organizer' : 'Penyelenggara Terverifikasi')}</span>
                                                     {comp.format && (
-                                                        <span className="text-white/50 text-[11px] shrink-0">• {comp.format}</span>
+                                                        <span className="text-white/50 text-[9px] sm:text-[11px] shrink-0 hidden xs:inline">• {comp.format}</span>
                                                     )}
                                                 </div>
 
-                                                {/* 3 Specs Row */}
-                                                <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2.5 border-t border-white/10 text-[11px] sm:text-xs text-white/85">
-                                                    <div className="flex items-center gap-1.5 truncate" title={isEn ? `Team Size: ${teamLabel}` : `Ukuran Tim: ${teamLabel}`}>
-                                                        <Users className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                {/* Specs Row */}
+                                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1 pt-1.5 sm:pt-2 border-t border-white/10 text-[9px] sm:text-xs text-white/85">
+                                                    <div className="flex items-center gap-1 truncate" title={isEn ? `Team Size: ${teamLabel}` : `Ukuran Tim: ${teamLabel}`}>
+                                                        <Users className="size-3 sm:size-3.5 text-white/60 shrink-0" />
                                                         <span className="truncate">{teamLabel}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 truncate" title={isEn ? `Category: ${comp.category?.replace('_', ' ') || 'General'}` : `Kategori: ${comp.category?.replace('_', ' ') || 'Umum'}`}>
-                                                        <Trophy className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                    <div className="hidden sm:flex items-center gap-1 truncate" title={isEn ? `Category: ${comp.category?.replace('_', ' ') || 'General'}` : `Kategori: ${comp.category?.replace('_', ' ') || 'Umum'}`}>
+                                                        <Trophy className="size-3.5 text-white/60 shrink-0" />
                                                         <span className="truncate capitalize">{comp.category?.replace('_', ' ') || 'Umum'}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 truncate" title={`Deadline: ${formattedDeadline}`}>
-                                                        <Calendar className="size-3.5 sm:size-4 text-white/60 shrink-0" />
+                                                    <div className="flex items-center gap-1 truncate justify-end sm:justify-start" title={`Deadline: ${formattedDeadline}`}>
+                                                        <Calendar className="size-3 sm:size-3.5 text-white/60 shrink-0" />
                                                         <span className="truncate">{isClosed ? (isEn ? 'Closed' : 'Selesai') : formattedDeadline}</span>
                                                     </div>
                                                 </div>
@@ -1315,9 +1304,9 @@ export default function CompetitionIndex({
                                                         e.stopPropagation();
                                                         router.get(`/competitions/${comp.slug || comp.id}`);
                                                     }}
-                                                    className="w-full py-2.5 sm:py-3 px-4 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-200 cursor-pointer active:scale-[0.99] group/btn"
+                                                    className="w-full py-1.5 sm:py-2.5 px-3 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-[11px] sm:text-xs flex items-center justify-center gap-1.5 shadow-md transition-all duration-200 cursor-pointer active:scale-[0.98] group/btn"
                                                 >
-                                                    <FileText className="size-4 text-slate-900 group-hover/btn:text-blue-600 transition-colors" />
+                                                    <FileText className="size-3 sm:size-3.5 text-slate-900 group-hover/btn:text-blue-600 transition-colors" />
                                                     <span>{t('competitions.view_detail', 'Detail Lomba')}</span>
                                                 </button>
                                             </div>
@@ -2309,7 +2298,7 @@ export default function CompetitionIndex({
                                         </button>
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
                                         {savedCompetitions.map((comp) => (
                                             <div
                                                 key={comp.id}
@@ -2318,10 +2307,10 @@ export default function CompetitionIndex({
                                                 <div>
                                                     <div className="flex items-center justify-between mb-2">
                                                         <div className="flex items-center gap-1.5">
-                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 px-2 py-0.5 bg-blue-50 rounded-md">
+                                                            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 px-2.5 py-0.5 bg-blue-50 border border-blue-200/60 rounded-full">
                                                                 {comp.category?.replace('_', ' ') || 'KOMPETISI'}
                                                             </span>
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 uppercase">
+                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200/60 text-slate-600 uppercase">
                                                                 SAVED
                                                             </span>
                                                         </div>
@@ -2355,7 +2344,7 @@ export default function CompetitionIndex({
                                                             </span>
                                                         </div>
                                                         {comp.is_urgent && (
-                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
+                                                            <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
                                                                 {isEn ? 'Closing Soon' : 'Segera Tutup'}
                                                             </span>
                                                         )}
