@@ -245,6 +245,11 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         Route::post('/notifications/send-test', [AdminNotificationWebController::class, 'sendTestEmail'])->name('admin.notifications.send-test');
         Route::post('/notifications/retry/{id}', [AdminNotificationWebController::class, 'retryLog'])->name('admin.notifications.retry');
 
+        // Admin Teams Management & Deletion
+        Route::get('/teams', [AdminWebController::class, 'teams'])->name('admin.teams');
+        Route::delete('/teams/{id}', [AdminWebController::class, 'destroyTeam'])->name('admin.teams.destroy');
+        Route::patch('/teams/{id}/restore', [AdminWebController::class, 'restoreTeam'])->name('admin.teams.restore');
+
         // Admin Competitions Management & Deadline/Active Period Controls
         Route::get('/competitions', [AdminCompetitionWebController::class, 'index'])->name('admin.competitions.index');
         Route::post('/competitions', [AdminCompetitionWebController::class, 'store'])->name('admin.competitions.store');
