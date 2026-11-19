@@ -88,6 +88,9 @@ export default function CompetitionDashboard({
     const pendingInvites = receivedInvitations.filter((i: any) => i.status === 'pending');
     const primaryTeam = myCompetitionTeams && myCompetitionTeams.length > 0 ? myCompetitionTeams[0] : null;
     const featuredCompetition = upcomingCompetitions && upcomingCompetitions.length > 0 ? upcomingCompetitions[0] : null;
+    const primaryTask = myTasks && myTasks.length > 0 ? myTasks[0] : null;
+    const primaryTaskWorkspaceUrl = primaryTask?.workspace_url
+        || (primaryTeam?.workspace_url ? `${primaryTeam.workspace_url}?tab=kanban` : '/competition-workspace?tab=kanban');
 
     // Helper for team initials avatar
     const getInitials = (name?: string) => {
@@ -334,6 +337,7 @@ export default function CompetitionDashboard({
                                     )}
                                 </div>
 
+
                                 {/* Team & Competition Name */}
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 sm:gap-5">
                                     <div className="flex-1 min-w-0">
@@ -346,7 +350,7 @@ export default function CompetitionDashboard({
                                             </span>
                                         </div>
 
-                                        {primaryTeam.competition?.name && (
+                                {primaryTeam.competition?.name && (
                                             <p className="text-xs sm:text-[13px] font-bold text-amber-800 line-clamp-1 mb-1">
                                                 {primaryTeam.competition.name}
                                             </p>

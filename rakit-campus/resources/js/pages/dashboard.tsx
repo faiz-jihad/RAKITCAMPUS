@@ -2516,13 +2516,7 @@ export default function Dashboard({
                                     Tugas Prioritas
                                 </h2>
                             </div>
-                            <Link
-                                href="/workspace"
-                                className="text-xs font-semibold text-blue-600 hover:underline transition flex items-center gap-1"
-                            >
-                                <span>Buka Workspace Tim</span>
-                                <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
+                            <Link href={primaryTeam ? (primaryTeam.is_competition ? `/competition-workspace/${primaryTeam.slug || primaryTeam.id}?tab=kanban` : `/workspace/${primaryTeam.id}?tab=tasks`) : '/workspace'} className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"><span>Buka Workspace Tim</span><ArrowRight className="w-3.5 h-3.5" /></Link>
                         </div>
 
                         {myTasks && myTasks.length > 0 ? (
@@ -2538,7 +2532,7 @@ export default function Dashboard({
                                         >
                                             <div className="min-w-0 flex-1">
                                                 <Link
-                                                    href="/workspace"
+                                                    href={task.workspace_url || '/workspace'}
                                                     className="text-xs font-semibold text-slate-900 group-hover:text-blue-600 transition block truncate"
                                                 >
                                                     {task.title}
