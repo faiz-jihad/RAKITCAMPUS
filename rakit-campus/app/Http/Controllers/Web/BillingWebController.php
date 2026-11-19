@@ -268,6 +268,31 @@ class BillingWebController extends Controller
             }
         });
 
-        return redirect()->route('pricing')->with('success', 'Pembayaran berhasil! Paket ' . $order->plan_label . ' Anda telah aktif.');
+        $planLabel = $order->metadata['plan_label'] ?? match ($order->plan_type) {
+            'ai_pass' => 'AI Pass',
+            'pro_monthly' => 'RAKIT Pro',
+            'semester_pass' => 'RAKIT Semester',
+            'team_pass' => 'RAKIT Team',
+            default => 'Paket Berlangganan',
+        };
+
+        return redirect()->route('pricing')->with([
+            'success' => 'Pembayaran berhasil! Paket ' . $planLabel . ' Anda telah aktif.',
+            'payment_success' => true,
+            'activated_order' => [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'plan_name' => $planLabel,
+                'plan_type' => $order->plan_type,
+                'amount' => $order->amount,
+                'bonus_credits' => match ($order->plan_type) {
+                    'ai_pass' => 25,
+                    'pro_monthly' => 100,
+                    'semester_pass' => 300,
+                    'team_pass' => 200,
+                    default => 0,
+                },
+            ],
+        ]);
     }
 }

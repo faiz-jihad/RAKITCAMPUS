@@ -5,11 +5,17 @@ import {
     ArrowRight,
     Check,
     CheckCircle2,
+    Crown,
     HelpCircle,
+    PartyPopper,
     QrCode,
+    ShieldCheck,
+    Sparkles,
+    Trophy,
     X,
+    Zap,
 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface Plan {
     id: string;
@@ -54,7 +60,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 export default function PricingPage({ plans, activeSubscription, myOrders, myTeams }: Props) {
-    const { auth } = usePage().props as any;
+    const { auth, flash } = usePage().props as any;
     const user = auth?.user;
 
     const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -62,6 +68,27 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [createdOrder, setCreatedOrder] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
+    const [activatedPlanInfo, setActivatedPlanInfo] = useState<any>(null);
+
+    useEffect(() => {
+        if (
+            flash?.payment_success ||
+            flash?.activated_order ||
+            (flash?.success && String(flash.success).includes('Pembayaran berhasil'))
+        ) {
+            setActivatedPlanInfo(
+                flash?.activated_order || {
+                    plan_name: activeSubscription?.plan_type
+                        ? activeSubscription.plan_type.replace('_', ' ').toUpperCase()
+                        : 'RAKIT Pro',
+                    bonus_credits: activeSubscription?.ai_credits_bonus || 100,
+                    order_number: myOrders?.[0]?.order_number || 'RKT-SUCCESS',
+                }
+            );
+            setIsCelebrationOpen(true);
+        }
+    }, [flash, activeSubscription]);
 
     const getXsrfToken = () => {
         const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -389,6 +416,126 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                             >
                                 Batalkan Transaksi
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* CELEBRATION SUCCESS POP-UP CARD (Apple iOS Style Animation) */}
+            {isCelebrationOpen && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
+                    <div className="relative max-w-md w-full">
+                        {/* Confetti Particles (Floating Animation Effect) */}
+                        <div className="absolute -top-12 -left-8 size-4 rounded-full bg-blue-500/80 blur-[0.5px] animate-bounce duration-700 pointer-events-none" />
+                        <div className="absolute -top-8 -right-6 size-3.5 rounded-full bg-amber-400/90 blur-[0.5px] animate-pulse duration-500 pointer-events-none" />
+                        <div className="absolute top-1/2 -left-10 size-3 rounded-full bg-emerald-400/80 animate-ping duration-1000 pointer-events-none" />
+                        <div className="absolute top-1/3 -right-12 size-4 rounded-full bg-purple-500/80 blur-[0.5px] animate-bounce duration-1000 pointer-events-none" />
+                        <div className="absolute -bottom-6 -left-6 size-3.5 rounded-full bg-rose-400/80 animate-pulse duration-700 pointer-events-none" />
+                        <div className="absolute -bottom-8 -right-8 size-4 rounded-full bg-indigo-500/80 animate-bounce duration-500 pointer-events-none" />
+
+                        {/* Pop-up Card */}
+                        <div className="bg-white rounded-[36px] p-7 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.3)] border border-slate-200/90 relative text-center space-y-6 overflow-hidden animate-in zoom-in-95 duration-300">
+                            {/* Close Button */}
+                            <button
+                                type="button"
+                                onClick={() => setIsCelebrationOpen(false)}
+                                className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer z-10"
+                            >
+                                <X className="size-4" />
+                            </button>
+
+                            {/* Ambient Top Glow */}
+                            <div className="absolute -top-24 left-1/2 -translate-x-1/2 size-48 bg-gradient-to-b from-blue-400/20 to-transparent rounded-full blur-2xl pointer-events-none" />
+
+                            {/* Squircle Celebration Icon */}
+                            <div className="relative pt-2">
+                                <div className="size-20 sm:size-22 rounded-[28px] bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 ring-8 ring-blue-500/10 mx-auto transition-transform hover:scale-105 duration-300">
+                                    <Sparkles className="size-10 sm:size-11 text-amber-300 animate-pulse" />
+                                </div>
+                                <div className="absolute bottom-0 right-1/2 translate-x-10 size-7 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-md">
+                                    <Check className="size-4 stroke-[3]" />
+                                </div>
+                            </div>
+
+                            {/* Header Information */}
+                            <div className="space-y-2">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-black tracking-wider uppercase shadow-2xs">
+                                    <CheckCircle2 className="size-3 text-emerald-600" />
+                                    <span>PEMBAYARAN TERKONFIRMASI</span>
+                                </span>
+
+                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
+                                    Selamat! {activatedPlanInfo?.plan_name || 'RAKIT Pro'} Aktif
+                                </h3>
+
+                                <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
+                                    Hak akses prioritas dan booster AI telah aktif seketika pada akun Anda.
+                                </p>
+                            </div>
+
+                            {/* Unlocked Benefits Bento */}
+                            <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 text-left space-y-2.5">
+                                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                    Manfaat yang Terbuka:
+                                </div>
+                                <div className="grid grid-cols-1 gap-2 text-xs">
+                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
+                                        <div className="size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                                            <Zap className="size-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="font-bold text-slate-900">+{activatedPlanInfo?.bonus_credits || 100} Sesi AI Ekstra</span>
+                                            <p className="text-[10px] text-slate-400">Langsung aktif di AI Workspace</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
+                                        <div className="size-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                                            <Crown className="size-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="font-bold text-slate-900">Badge PRO Resmi</span>
+                                            <p className="text-[10px] text-slate-400">Terpasang di profil &amp; portofolio Anda</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
+                                        <div className="size-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                                            <ShieldCheck className="size-4" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <span className="font-bold text-slate-900">Fitur Living Proposal &amp; ATS</span>
+                                            <p className="text-[10px] text-slate-400">Analisis proposal &amp; ekspor PDF terbuka</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Order Ref */}
+                            {activatedPlanInfo?.order_number && (
+                                <p className="text-[10px] text-slate-400 font-mono">
+                                    ID Transaksi: {activatedPlanInfo.order_number}
+                                </p>
+                            )}
+
+                            {/* Call to Actions */}
+                            <div className="space-y-2 pt-1">
+                                <Link
+                                    href="/ai-workspace"
+                                    className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
+                                >
+                                    <span>Buka AI Workspace Sekarang</span>
+                                    <ArrowRight className="size-3.5" />
+                                </Link>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCelebrationOpen(false)}
+                                    className="w-full py-2.5 rounded-full text-slate-500 hover:text-slate-800 text-xs font-semibold text-center transition"
+                                >
+                                    Selesai &amp; Tetap di Halaman Ini
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

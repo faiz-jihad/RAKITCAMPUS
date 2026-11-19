@@ -54,6 +54,8 @@ class HandleInertiaRequests extends Middleware
                 'warning' => $request->session()->get('warning'),
                 'error' => $request->session()->get('error'),
                 'status' => $request->session()->get('status'),
+                'payment_success' => $request->session()->get('payment_success'),
+                'activated_order' => $request->session()->get('activated_order'),
                 'feedback_success' => $request->session()->get('feedback_success'),
                 'feedback_ticket' => $request->session()->get('feedback_ticket'),
             ],
