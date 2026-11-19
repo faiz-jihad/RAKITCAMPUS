@@ -135,28 +135,20 @@ export default function FeedbackIndex({
             <Head title="Pusat Aspirasi & Laporan Kendala — RAKIT Campus" />
 
             <div className="space-y-6 pt-1 max-w-5xl mx-auto pb-20">
-                {/* 1. TOP HERO CONTEXT CARD (Apple HIG Bento Squircle Card) */}
-                <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
-                    <div className="flex items-center gap-3.5 sm:gap-4">
-                        <div className="size-14 sm:size-16 rounded-2xl bg-indigo-50/80 border border-indigo-200/60 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
-                            <img
-                                src="/images/mascot/mascot-happy.png"
-                                alt="Sahabat RAKIT Aspirasi"
-                                className="w-full h-full object-contain drop-shadow-xs select-none pointer-events-none transform hover:scale-105 transition"
-                            />
+                {/* 1. TOP HERO CONTEXT CARD (Apple HIG Minimal) */}
+                <div className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="size-10 sm:size-11 rounded-2xl bg-slate-900 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                            <MessageSquare className="size-5" />
                         </div>
                         <div>
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
-                                <Sparkles className="size-3 text-indigo-600" />
-                                <span>{locale === 'en' ? 'Help Center & Platform Voice' : 'Pusat Aspirasi & Bantuan Platform'}</span>
-                            </div>
-                            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                                {locale === 'en' ? 'Community Voice & System Feedback' : 'Suara Komunitas & Laporan Sistem'}
+                            <h1 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight">
+                                {locale === 'en' ? 'Feedback & Support' : 'Masukan & Kendala'}
                             </h1>
-                            <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
+                            <p className="text-xs text-slate-500 mt-0.5">
                                 {locale === 'en'
-                                    ? 'Help us improve the platform. Share new feature ideas or report technical issues so our engineering team can address them promptly.'
-                                    : 'Bantu kami menyempurnakan platform. Sampaikan ide fitur baru atau laporkan kendala teknis agar dapat segera diperbaiki tim pengembang.'}
+                                    ? 'Share suggestions or report technical issues.'
+                                    : 'Sampaikan saran pengembangan atau laporkan kendala teknis.'}
                             </p>
                         </div>
                     </div>
@@ -287,23 +279,20 @@ export default function FeedbackIndex({
                 {/* TAB 1: LAPOR KENDALA / BUG */}
                 {activeTab === 'bug_report' && (
                     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div className="bg-rose-50/50 border-b border-rose-100/80 p-5 sm:p-6 flex items-center justify-between">
+                        <div className="bg-rose-50/50 border-b border-rose-100/80 p-4 sm:p-5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center shadow-2xs">
-                                    <Bug className="size-5" />
+                                <div className="size-9 rounded-xl bg-rose-600 text-white flex items-center justify-center shadow-2xs">
+                                    <Bug className="size-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
-                                        Formulir Laporan Kendala & Bug Sistem
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                                        Lapor Kendala
                                     </h2>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        Jelaskan kendala selengkap mungkin agar tim teknis dapat mereproduksi dan memperbaikinya.
+                                        Jelaskan kendala atau error yang terjadi secara ringkas.
                                     </p>
                                 </div>
                             </div>
-                            <span className="hidden sm:inline-block text-[10px] font-extrabold text-rose-700 bg-rose-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                                Prioritas Tim
-                            </span>
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
@@ -457,23 +446,20 @@ export default function FeedbackIndex({
                 {/* TAB 2: SARAN & IDE FITUR */}
                 {activeTab === 'suggestion' && (
                     <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-                        <div className="bg-indigo-50/50 border-b border-indigo-100/80 p-5 sm:p-6 flex items-center justify-between">
+                        <div className="bg-indigo-50/50 border-b border-indigo-100/80 p-4 sm:p-5 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="size-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
-                                    <Lightbulb className="size-5" />
+                                <div className="size-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-2xs">
+                                    <Lightbulb className="size-4" />
                                 </div>
                                 <div>
-                                    <h2 className="text-sm sm:text-base font-extrabold text-slate-900">
-                                        Kotak Aspirasi & Ide Pengembangan
+                                    <h2 className="text-sm sm:text-base font-bold text-slate-900">
+                                        Saran Fitur Baru
                                     </h2>
                                     <p className="text-xs text-slate-500 mt-0.5">
-                                        Bagikan usulan fitur baru, kenyamanan navigasi, atau alur kolaborasi tim yang ideal.
+                                        Bagikan ide fitur atau usulan perbaikan antarmuka.
                                     </p>
                                 </div>
                             </div>
-                            <span className="hidden sm:inline-block text-[10px] font-extrabold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider">
-                                Aspirasi
-                            </span>
                         </div>
 
                         <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5">
