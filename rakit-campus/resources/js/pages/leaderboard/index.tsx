@@ -223,7 +223,7 @@ export default function LeaderboardIndex({
         if (change === null || change === undefined) {
             return (
                 <span className="inline-flex items-center text-[10px] font-black px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
-                    BARU
+                    {isEn ? 'NEW' : 'BARU'}
                 </span>
             );
         }
@@ -244,7 +244,7 @@ export default function LeaderboardIndex({
             );
         }
         return (
-            <span className="inline-flex items-center text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md" title="Posisi tetap">
+            <span className="inline-flex items-center text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md" title={isEn ? "No change" : "Posisi tetap"}>
                 <Minus className="size-3" />
             </span>
         );

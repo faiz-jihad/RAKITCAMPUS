@@ -70,6 +70,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import React, { useState, useEffect } from 'react';
 import GitHubContributionMonitor from '@/components/github/GitHubContributionMonitor';
+import ContextualGuideTooltip from '@/components/onboarding/ContextualGuideTooltip';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Props {
     participation: any;
@@ -2870,6 +2872,13 @@ export default function CompetitionWorkspace({
 
                     return (
                         <div className="space-y-6">
+                            {/* Contextual Guide: Submission */}
+                            <ContextualGuideTooltip
+                                guideKey="guide_submission"
+                                title={isEn ? "Submit Deliverables" : "Unggah Berkas Lomba"}
+                                description={isEn ? "Upload and manage required competition submissions and proposals for jury review." : "Unggah dan kelola proposal serta berkas seleksi lomba untuk ditinjau juri."}
+                            />
+
                             {/* 1. TOP BENTO SUMMARY GRID (3 WIDGETS) */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
                                 {/* Bento Widget 1: Storage Used Circular Ring Gauge (Inspired by Image 1 "Storage used") */}
@@ -3092,10 +3101,10 @@ export default function CompetitionWorkspace({
                                                         {count > 0 ? (
                                                             <>
                                                                 <CheckCircle2 className="size-3 text-emerald-600" />
-                                                                <span>{count} Berkas</span>
+                                                                <span>{count} {isEn ? 'Files' : 'Berkas'}</span>
                                                             </>
                                                         ) : (
-                                                            <span>Kosong</span>
+                                                            <span>{isEn ? 'Empty' : 'Kosong'}</span>
                                                         )}
                                                     </span>
                                                 </div>
@@ -3334,7 +3343,7 @@ export default function CompetitionWorkspace({
                                                                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                                                                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                                                                     }`}>
-                                                                        {doc.status === 'approved' ? 'Disetujui' : doc.status === 'revision_required' ? 'Perlu Revisi' : 'Menunggu Kurasi'}
+                                                                        {doc.status === 'approved' ? (isEn ? 'Approved' : 'Disetujui') : doc.status === 'revision_required' ? (isEn ? 'Revision Needed' : 'Perlu Revisi') : (isEn ? 'Pending Review' : 'Menunggu Kurasi')}
                                                                     </span>
                                                                     {folderInfo && (
                                                                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-50 text-slate-600 border border-slate-200">
@@ -3343,7 +3352,7 @@ export default function CompetitionWorkspace({
                                                                     )}
                                                                 </div>
                                                                 <p className="text-[11px] text-slate-400 mt-1">
-                                                                    Diunggah oleh <strong className="text-slate-600 font-medium">{doc.uploader?.name || 'Anggota Tim'}</strong> • {new Date(doc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                                    {isEn ? 'Uploaded by' : 'Diunggah oleh'} <strong className="text-slate-600 font-medium">{doc.uploader?.name || (isEn ? 'Team Member' : 'Anggota Tim')}</strong> • {new Date(doc.created_at).toLocaleDateString(isEn ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                                 </p>
                                                                 {doc.feedback && (
                                                                     <div className="mt-2 p-2.5 rounded-xl bg-amber-50/90 border border-amber-200 text-[11px] text-amber-900 flex items-start gap-2">
@@ -3509,48 +3518,24 @@ export default function CompetitionWorkspace({
                                         </div>
                                     )
                                 ) : (
-                                    <div className="text-center py-12 px-4 bg-slate-50/70 rounded-3xl border border-dashed border-slate-200">
-                                        <div className="size-16 rounded-3xl bg-white border border-slate-200/80 shadow-xs mx-auto mb-3.5 flex items-center justify-center p-2">
-                                            <img
-                                                src="/images/mascot/mascot-sleep.png"
-                                                alt="Folder Kosong"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        </div>
-                                        <p className="text-sm font-bold text-slate-800">
-                                            {selectedDocFolder === 'all'
-                                                ? (docSearchQuery ? 'Tidak ada berkas yang sesuai dengan pencarian' : 'Belum Ada Berkas yang Diunggah')
-                                                : `Folder "${activeFolderObj?.label}" Masih Kosong`}
-                                        </p>
-                                        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-                                            {selectedDocFolder === 'all'
-                                                ? 'Tarik file langsung ke folder di atas atau klik tombol untuk mengunggah dokumen baru.'
-                                                : `Tarik file langsung ke folder ini atau klik tombol di bawah untuk menambahkan ${activeFolderObj?.label.toLowerCase() || 'berkas'}.`}
-                                        </p>
-                                        {canManageTasks && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    if (selectedDocFolder !== 'all' && activeFolderObj) {
-                                                        docForm.setData('required_document_key', activeFolderObj.key);
-                                                        docForm.setData('name', activeFolderObj.label);
-                                                    } else {
-                                                        docForm.setData('required_document_key', 'proposal');
-                                                        docForm.setData('name', 'Proposal / Makalah Proyek');
-                                                    }
-                                                    setDocModalOpen(true);
-                                                }}
-                                                className="mt-4 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold transition shadow-xs cursor-pointer"
-                                            >
-                                                <Upload className="size-3.5" />
-                                                <span>
-                                                    {selectedDocFolder === 'all'
-                                                        ? 'Unggah Berkas Baru'
-                                                        : `Unggah ke Folder ${activeFolderObj?.label}`}
-                                                </span>
-                                            </button>
-                                        )}
-                                    </div>
+                                    <EmptyState
+                                        icon={FileText}
+                                        title={selectedDocFolder === 'all'
+                                            ? (docSearchQuery ? (isEn ? "No matching files" : "Berkas tidak ditemukan") : (isEn ? "No files uploaded yet" : "Belum ada berkas terunggah"))
+                                            : (isEn ? `No files in ${activeFolderObj?.label}` : `Belum ada berkas di ${activeFolderObj?.label}`)}
+                                        description={isEn ? "Upload and manage required deliverables for jury evaluation." : "Unggah proposal dan dokumen seleksi tim untuk penilaian juri."}
+                                        actionLabel={canManageTasks ? (selectedDocFolder === 'all' ? (isEn ? "Upload Deliverable" : "Unggah Berkas") : (isEn ? `Upload to ${activeFolderObj?.label}` : `Unggah ke Folder ${activeFolderObj?.label}`)) : undefined}
+                                        onAction={canManageTasks ? () => {
+                                            if (selectedDocFolder !== 'all' && activeFolderObj) {
+                                                docForm.setData('required_document_key', activeFolderObj.key);
+                                                docForm.setData('name', activeFolderObj.label);
+                                            } else {
+                                                docForm.setData('required_document_key', 'proposal');
+                                                docForm.setData('name', 'Proposal / Makalah Proyek');
+                                            }
+                                            setDocModalOpen(true);
+                                        } : undefined}
+                                    />
                                 )}
                             </div>
                         </div>

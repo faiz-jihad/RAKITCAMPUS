@@ -23,6 +23,9 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useLocale } from '@/hooks/use-locale';
+import ContextualGuideTooltip from '@/components/onboarding/ContextualGuideTooltip';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface ProjectItem {
     id: number;
@@ -97,6 +100,7 @@ export default function ProjectIndex({
     isGuest = false,
 }: Props) {
     const { flash, errors: pageErrors } = usePage().props as any;
+    const { t, isEn } = useLocale();
     const [scope, setScope] = useState<'all' | 'independent' | 'academic'>(filters.scope || 'all');
     const [search, setSearch] = useState(filters.search || '');
     const [category, setCategory] = useState(filters.category || '');
@@ -247,6 +251,13 @@ export default function ProjectIndex({
                         </div>
                     )}
 
+                    {/* Contextual Guide: Projects */}
+                    <ContextualGuideTooltip
+                        guideKey="guide_projects"
+                        title={isEn ? "Collaborative Projects" : "Proyek Kolaborasi"}
+                        description={isEn ? "Start with an idea or find student projects to collaborate on." : "Mulai dengan sebuah ide atau temukan proyek mahasiswa untuk berkolaborasi."}
+                    />
+
                     {/* Segmented Filter Tabs: Semua Proyek | Proyek Mandiri & Terbuka | Kelas Perkuliahan */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="inline-flex p-1 bg-slate-100/90 rounded-xl border border-slate-200/80 shadow-2xs self-start overflow-x-auto max-w-full">
@@ -377,30 +388,14 @@ export default function ProjectIndex({
 
                     {/* Projects Grid */}
                     {projects.data.length === 0 ? (
-                        <div className="bg-white rounded-xl border border-slate-200/80 p-8 text-center max-w-lg mx-auto flex flex-col items-center">
-                            <div className="size-12 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center mb-3 shadow-2xs">
-                                <FolderKanban className="size-6" />
-                            </div>
-                            <h3 className="text-sm font-bold text-slate-900">
-                                Tidak Ada Proyek yang Ditemukan
-                            </h3>
-                            <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                                {search || category || status
-                                    ? 'Coba sesuaikan kata kunci atau reset filter untuk menampilkan proyek lainnya.'
-                                    : isLecturer
-                                    ? 'Belum ada proyek mahasiswa terdaftar di kelas Anda.'
-                                    : 'Belum ada proyek terdaftar di kelas. Mulai dengan membuat proyek baru.'}
-                            </p>
-                            {!isLecturer && (
-                                <Link
-                                    href="/projects/create"
-                                    className="mt-4 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition"
-                                >
-                                    <Plus className="size-3.5" />
-                                    <span>Buat Proyek Pertama</span>
-                                </Link>
-                            )}
-                        </div>
+                        <EmptyState
+                            icon={FolderKanban}
+                            title={search || category || status ? (isEn ? "No projects found" : "Proyek tidak ditemukan") : (isEn ? "No projects yet" : "Belum ada proyek")}
+                            description={search || category || status ? (isEn ? "Try adjusting your filters or search query." : "Coba sesuaikan filter atau kata kunci pencarian.") : (isEn ? "Start with an idea." : "Wujudkan idemu menjadi nyata.")}
+                            actionLabel={search || category || status ? (isEn ? "Reset Filter" : "Reset Filter") : (!isLecturer ? (isEn ? "Create project" : "Buat proyek") : undefined)}
+                            onAction={search || category || status ? handleReset : undefined}
+                            actionHref={!(search || category || status) && !isLecturer ? "/projects/create" : undefined}
+                        />
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-2">
                             {projects.data.map((proj) => {

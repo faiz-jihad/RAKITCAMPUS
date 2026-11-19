@@ -9,6 +9,7 @@ import {
     Kanban,
     Users,
 } from 'lucide-react';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Props {
     teams: any[];
@@ -38,23 +39,13 @@ export default function WorkspaceIndex({ teams }: Props) {
 
                 {/* Teams Grid */}
                 {teams.length === 0 ? (
-                    <div className="p-10 text-center rounded-xl bg-white border border-slate-200/80 max-w-lg mx-auto w-full shadow-2xs">
-                        <div className="size-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-3 border border-blue-200/80">
-                            <Kanban className="size-6" />
-                        </div>
-                        <h3 className="text-sm font-bold text-slate-900">{isEn ? 'No Active Project Teams' : 'Belum Ada Tim Proyek Aktif'}</h3>
-                        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-5 leading-relaxed">
-                            {isEn ? 'Manage your project task kanban board with your team in a structured way.' : 'Kelola papan kanban tugas proyek Anda bersama tim secara terstruktur.'}
-                        </p>
-                        <div className="flex flex-wrap justify-center gap-2.5">
-                            <Link
-                                href="/projects"
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition shadow-2xs"
-                            >
-                                {isEn ? 'Explore Projects' : 'Jelajahi Proyek'}
-                            </Link>
-                        </div>
-                    </div>
+                    <EmptyState
+                        icon={Kanban}
+                        title={isEn ? "No team yet" : "Belum ada tim"}
+                        description={isEn ? "Build something together." : "Wujudkan karya kolaboratif bersama tim."}
+                        actionLabel={isEn ? "Find a team" : "Cari tim"}
+                        actionHref="/competitions?tab=recruitment"
+                    />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
                         {teams.map((t: any) => (

@@ -45,6 +45,7 @@ import {
     Zap,
 } from 'lucide-react';
 import { useState } from 'react';
+import GettingStartedWidget from '@/components/onboarding/GettingStartedWidget';
 
 interface Props {
     isPublic?: boolean;
@@ -434,22 +435,22 @@ export default function Dashboard({
     // ==========================================
     if (isUserAdmin) {
         return (
-            <AppLayout activeTab="dashboard" title="Admin Dashboard — RAKIT Campus">
+            <AppLayout activeTab="dashboard" title={isEn ? "Admin Dashboard — RAKIT Campus" : "Dashboard Admin — RAKIT Campus"}>
                 {/* 1. HEADER ROW */}
                 <section className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-200/80 mb-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1.5">
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-slate-900 text-white">
                                 <ShieldCheck className="size-3.5 text-blue-400" />
-                                <span>{user.role === 'platform_admin' ? 'Super Admin Platform' : 'Admin Kampus'}</span>
+                                <span>{user.role === 'platform_admin' ? (isEn ? 'Platform Super Admin' : 'Super Admin Platform') : (isEn ? 'Campus Admin' : 'Admin Kampus')}</span>
                             </span>
-                            <span className="text-xs text-slate-500 font-medium">{user.campus || 'Kampus Anda'}</span>
+                            <span className="text-xs text-slate-500 font-medium">{user.campus || (isEn ? 'Your Campus' : 'Kampus Anda')}</span>
                         </div>
                         <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-                            Pusat Kendali Administrator
+                            {isEn ? 'Administrator Control Center' : 'Pusat Kendali Administrator'}
                         </h1>
                         <p className="text-xs text-slate-500 mt-0.5">
-                            Manajemen verifikasi mahasiswa, pengawasan kompetisi, dan tata kelola ekosistem kampus.
+                            {isEn ? 'Student verification, competition monitoring, and campus ecosystem governance.' : 'Manajemen verifikasi mahasiswa, pengawasan kompetisi, dan tata kelola ekosistem kampus.'}
                         </p>
                     </div>
 
@@ -459,7 +460,7 @@ export default function Dashboard({
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                         >
                             <MessageSquare className="size-3.5 text-blue-600" />
-                            <span>Saran & Masukan</span>
+                            <span>{isEn ? 'Feedback' : 'Saran & Masukan'}</span>
                             {(adminStats?.pending_feedback ?? 0) > 0 && (
                                 <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800">
                                     {adminStats?.pending_feedback}
@@ -471,21 +472,21 @@ export default function Dashboard({
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition"
                         >
                             <Plus className="size-3.5" />
-                            <span>Tambah Kompetisi</span>
+                            <span>{isEn ? 'Add Competition' : 'Tambah Kompetisi'}</span>
                         </Link>
                         <Link
                             href="/admin/students"
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                         >
                             <Users className="size-3.5 text-slate-500" />
-                            <span>Verifikasi Mahasiswa</span>
+                            <span>{isEn ? 'Student Verification' : 'Verifikasi Mahasiswa'}</span>
                         </Link>
                         <Link
                             href="/admin/notifications"
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold shadow-2xs transition"
                         >
                             <Mail className="size-3.5 text-slate-500" />
-                            <span>Uji Email</span>
+                            <span>{isEn ? 'Test Email' : 'Uji Email'}</span>
                         </Link>
                     </div>
                 </section>
@@ -1081,12 +1082,12 @@ export default function Dashboard({
         const pendingProposalsCount = stats?.pending_proposals_count ?? pendingProposals.length;
 
         return (
-            <AppLayout activeTab="dashboard" title="Dashboard Dosen Pengampu — RakitCampus">
+            <AppLayout activeTab="dashboard" title={isEn ? "Lecturer Dashboard — RakitCampus" : "Dashboard Dosen Pengampu — RakitCampus"}>
                 {/* 1. HEADER ROW DOSEN */}
                 <section className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 sm:pb-5 border-b border-slate-200/80 mb-5 sm:mb-6">
                     <div>
                         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
-                            Selamat Datang, {user?.name}
+                            {isEn ? `Welcome, ${user?.name}` : `Selamat Datang, ${user?.name}`}
                         </h1>
                     </div>
 
@@ -1096,14 +1097,14 @@ export default function Dashboard({
                             className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer"
                         >
                             <GraduationCap className="w-4 h-4 shrink-0" />
-                            <span className="truncate">Kelola Ruang Kelas</span>
+                            <span className="truncate">{isEn ? 'Manage Classes' : 'Kelola Ruang Kelas'}</span>
                         </Link>
                         <Link
                             href="/projects"
                             className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-white hover:bg-slate-50 hover:border-slate-300 active:scale-95 text-slate-700 border border-slate-200/90 text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all duration-150 cursor-pointer"
                         >
                             <FolderKanban className="w-4 h-4 text-slate-400 shrink-0" />
-                            <span className="truncate">Eksplorasi Proyek</span>
+                            <span className="truncate">{isEn ? 'Explore Projects' : 'Eksplorasi Proyek'}</span>
                         </Link>
                     </div>
                 </section>
@@ -1134,7 +1135,7 @@ export default function Dashboard({
                         <div>
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                    Persetujuan Tim
+                                    {isEn ? 'Team Approvals' : 'Persetujuan Tim'}
                                 </span>
                                 <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                                     <ShieldCheck className="size-4 text-blue-600" />
@@ -1172,7 +1173,7 @@ export default function Dashboard({
                                             {totalApprovalsPending > 0 ? totalApprovalsPending : `${approvalCompletionRate}%`}
                                         </span>
                                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
-                                            {totalApprovalsPending > 0 ? 'ANTREAN TIM' : 'TERTINJAU'}
+                                            {totalApprovalsPending > 0 ? (isEn ? 'TEAM QUEUE' : 'ANTREAN TIM') : (isEn ? 'REVIEWED' : 'TERTINJAU')}
                                         </span>
                                     </div>
                                 </div>
@@ -1181,16 +1182,16 @@ export default function Dashboard({
                             <div className="mt-2 text-left">
                                 <div className="flex items-center justify-between text-xs">
                                     <span className={`font-bold ${totalApprovalsPending > 0 ? 'text-amber-700' : 'text-slate-900'}`}>
-                                        {totalApprovalsPending > 0 ? `${totalApprovalsPending} Tim Menunggu Keputusan` : 'Semua Formasi Disetujui'}
+                                        {totalApprovalsPending > 0 ? (isEn ? `${totalApprovalsPending} Teams Awaiting Decision` : `${totalApprovalsPending} Tim Menunggu Keputusan`) : (isEn ? 'All Formations Approved' : 'Semua Formasi Disetujui')}
                                     </span>
                                     <span className="text-[11px] text-slate-400 font-medium">
-                                        {totalApprovalsHandled} Selesai
+                                        {totalApprovalsHandled} {isEn ? 'Handled' : 'Selesai'}
                                     </span>
                                 </div>
                                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                     {totalApprovalsPending > 0
-                                        ? 'Mahasiswa telah memenuhi kuota formasi kelompok dan menunggu persetujuan Anda.'
-                                        : 'Belum ada pengajuan formasi kelompok baru yang tertunda.'}
+                                        ? (isEn ? 'Students have reached team capacity and are awaiting your approval.' : 'Mahasiswa telah memenuhi kuota formasi kelompok dan menunggu persetujuan Anda.')
+                                        : (isEn ? 'No pending group formation requests.' : 'Belum ada pengajuan formasi kelompok baru yang tertunda.')}
                                 </p>
                             </div>
                         </div>
@@ -1200,7 +1201,7 @@ export default function Dashboard({
                                 href="#persetujuan-tim"
                                 className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
                             >
-                                <span>Tinjau Ajuan Formasi</span>
+                                <span>{isEn ? 'Review Team Formations' : 'Tinjau Ajuan Formasi'}</span>
                                 <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                             </a>
                         </div>
@@ -1213,7 +1214,7 @@ export default function Dashboard({
                             <div>
                                 <div className="flex items-center justify-between mb-3">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Kelas Diampu
+                                        {isEn ? 'Taught Classes' : 'Kelas Diampu'}
                                     </span>
                                     <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                                         <GraduationCap className="size-4 text-blue-600" />
@@ -1227,21 +1228,21 @@ export default function Dashboard({
                                                 {stats?.taught_classes_count ?? taughtClasses.length}
                                             </span>
                                             <span className="text-xs font-bold text-slate-500">
-                                                Kelas Kuliah Aktif
+                                                {isEn ? 'Active Courses' : 'Kelas Kuliah Aktif'}
                                             </span>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-2 mt-2">
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
                                                 <Users className="size-3 text-blue-600" />
-                                                <span>{stats?.total_students_count ?? 0} Mahasiswa</span>
+                                                <span>{stats?.total_students_count ?? 0} {isEn ? 'Students' : 'Mahasiswa'}</span>
                                             </span>
                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold border border-slate-200">
                                                 <FolderKanban className="size-3 text-slate-500" />
-                                                <span>{stats?.total_guided_projects_count ?? guidedProjects.length} Tim Proyek</span>
+                                                <span>{stats?.total_guided_projects_count ?? guidedProjects.length} {isEn ? 'Project Teams' : 'Tim Proyek'}</span>
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-                                            Manajemen silabus, anggota kelas, dan supervisi pembentukan tim capstone.
+                                            {isEn ? 'Syllabus management, class members, and supervision of capstone team formation.' : 'Manajemen silabus, anggota kelas, dan supervisi pembentukan tim capstone.'}
                                         </p>
                                     </div>
 
@@ -1263,7 +1264,7 @@ export default function Dashboard({
                                                             </span>
                                                         </div>
                                                         <span className="text-[11px] text-slate-400 block mt-0.5">
-                                                            {cls.students_count || 0} Mahasiswa <span className="text-slate-300 mx-1">|</span> {cls.projects_count || 0} Kelompok
+                                                            {cls.students_count || 0} {isEn ? 'Students' : 'Mahasiswa'} <span className="text-slate-300 mx-1">|</span> {cls.projects_count || 0} {isEn ? 'Teams' : 'Kelompok'}
                                                         </span>
                                                     </div>
                                                     <ArrowRight className="size-3 text-slate-400 group-hover/cls:text-blue-600 group-hover/cls:translate-x-0.5 transition-all shrink-0" />
@@ -1275,12 +1276,12 @@ export default function Dashboard({
                             </div>
 
                             <div className="mt-4 pt-3.5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                <span className="text-xs text-slate-400">Total {stats?.taught_classes_count ?? taughtClasses.length} ruang kelas aktif semester ini</span>
+                                <span className="text-xs text-slate-400">{isEn ? `Total ${stats?.taught_classes_count ?? taughtClasses.length} active classes this semester` : `Total ${stats?.taught_classes_count ?? taughtClasses.length} ruang kelas aktif semester ini`}</span>
                                 <Link
                                     href="/classes"
                                     className="text-xs font-bold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1.5 transition group cursor-pointer self-start sm:self-auto"
                                 >
-                                    <span>Buka Manajemen Kelas</span>
+                                    <span>{isEn ? 'Open Class Management' : 'Buka Manajemen Kelas'}</span>
                                     <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                 </Link>
                             </div>
@@ -1293,7 +1294,7 @@ export default function Dashboard({
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                            Proyek Bimbingan
+                                            {isEn ? 'Guided Projects' : 'Proyek Bimbingan'}
                                         </span>
                                         <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                                             <FolderKanban className="size-4 text-blue-600" />
@@ -1305,14 +1306,14 @@ export default function Dashboard({
                                             {stats?.total_guided_projects_count ?? guidedProjects.length}
                                         </span>
                                         <span className="text-xs font-semibold text-slate-500">
-                                            Tim Proyek
+                                            {isEn ? 'Project Teams' : 'Tim Proyek'}
                                         </span>
                                     </div>
 
                                     {/* Progress Bar Rata-rata Proyek */}
                                     <div className="mt-3 space-y-1.5">
                                         <div className="flex items-center justify-between text-xs">
-                                            <span className="text-slate-500 font-medium text-[11px]">Rata-rata Progres Tim</span>
+                                            <span className="text-slate-500 font-medium text-[11px]">{isEn ? 'Average Team Progress' : 'Rata-rata Progres Tim'}</span>
                                             <span className="text-slate-900 font-bold text-xs">{avgGuidedProgress}%</span>
                                         </div>
                                         <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
@@ -1329,11 +1330,11 @@ export default function Dashboard({
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-200/70'
                                                 : 'text-slate-600 bg-slate-50 border-slate-100'
                                         }`}>
-                                            {readyProjectsCount} Siap Evaluasi / Lomba
+                                            {readyProjectsCount} {isEn ? 'Ready for Evaluation / Contest' : 'Siap Evaluasi / Lomba'}
                                         </span>
                                         <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
                                             <span className="text-slate-300">|</span>
-                                            <span>{stats?.completed_tasks_count ?? 0} Tugas Selesai</span>
+                                            <span>{stats?.completed_tasks_count ?? 0} {isEn ? 'Tasks Completed' : 'Tugas Selesai'}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -1343,7 +1344,7 @@ export default function Dashboard({
                                         href="/projects"
                                         className="w-full text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
                                     >
-                                        <span>Tinjau Progres Proyek</span>
+                                        <span>{isEn ? 'Review Project Progress' : 'Tinjau Progres Proyek'}</span>
                                         <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                     </Link>
                                 </div>
@@ -1354,7 +1355,7 @@ export default function Dashboard({
                                 <div>
                                     <div className="flex items-center justify-between mb-3">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                            Proposal Masuk
+                                            {isEn ? 'Incoming Proposals' : 'Proposal Masuk'}
                                         </span>
                                         <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-100">
                                             <FileCheck className="size-4 text-blue-600" />
@@ -1366,7 +1367,7 @@ export default function Dashboard({
                                             {pendingProposalsCount}
                                         </span>
                                         <span className="text-xs font-semibold text-slate-500">
-                                            Menunggu Persetujuan
+                                            {isEn ? 'Pending Review' : 'Menunggu Persetujuan'}
                                         </span>
                                     </div>
 
@@ -1375,16 +1376,16 @@ export default function Dashboard({
                                         <div className="flex items-center gap-2">
                                             <div className={`size-2 rounded-full ${pendingProposalsCount > 0 ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
                                             <span className="font-semibold text-slate-700 text-[11px]">
-                                                {pendingProposalsCount > 0 ? `${pendingProposalsCount} Perlu Ditinjau` : 'Semua Proposal Selesai'}
+                                                {pendingProposalsCount > 0 ? (isEn ? `${pendingProposalsCount} Need Review` : `${pendingProposalsCount} Perlu Ditinjau`) : (isEn ? 'All Proposals Done' : 'Semua Proposal Selesai')}
                                             </span>
                                         </div>
                                         <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/70">
-                                            {approvedProposalsCount} Disetujui
+                                            {approvedProposalsCount} {isEn ? 'Approved' : 'Disetujui'}
                                         </span>
                                     </div>
 
                                     <p className="text-xs text-slate-500 mt-2 line-clamp-1 leading-relaxed">
-                                        Living Proposal mahasiswa kelas menunggu tinjauan dan arahan.
+                                        {isEn ? 'Student living proposals in your class waiting for evaluation.' : 'Living Proposal mahasiswa kelas menunggu tinjauan dan arahan.'}
                                     </p>
                                 </div>
 
@@ -1393,7 +1394,7 @@ export default function Dashboard({
                                         href="/projects?category=academic"
                                         className="w-full text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center justify-between transition group cursor-pointer"
                                     >
-                                        <span>Tinjau Living Proposal</span>
+                                        <span>{isEn ? 'Review Living Proposals' : 'Tinjau Living Proposal'}</span>
                                         <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                     </Link>
                                 </div>
@@ -2334,6 +2335,12 @@ export default function Dashboard({
                     </Link>
                 </div>
             </div>
+
+            {/* GETTING STARTED & MINIMAL ONBOARDING WIDGET */}
+            <GettingStartedWidget
+                hasProjects={Boolean(recentProjects && recentProjects.length > 0)}
+                hasTeam={Boolean((stats?.my_teams_count && stats.my_teams_count > 0) || (myTeams && myTeams.length > 0))}
+            />
 
             {/* FLASH & ERROR BANNERS */}
             {flash?.success && (

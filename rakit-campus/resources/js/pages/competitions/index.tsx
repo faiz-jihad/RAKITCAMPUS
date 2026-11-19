@@ -58,6 +58,8 @@ import {
     Zap,
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
+import ContextualGuideTooltip from '@/components/onboarding/ContextualGuideTooltip';
+import EmptyState from '@/components/ui/EmptyState';
 
 interface Competition {
     id: number;
@@ -675,6 +677,13 @@ export default function CompetitionIndex({
                 {/* ========================================================= */}
                 {activeTab === 'explore' && (
                     <div className="space-y-6 sm:space-y-8">
+                        {/* Contextual Guide: Competitions */}
+                        <ContextualGuideTooltip
+                            guideKey="guide_competitions"
+                            title={isEn ? "Competition Catalog" : "Katalog Kompetisi"}
+                            description={isEn ? "Filter competitions by your interests and find your next challenge." : "Filter lomba berdasarkan minat dan temukan tantangan barumu."}
+                        />
+
                         {/* BENTO SHOWCASE GRID: 4 Cohesive Tiles */}
                         {spotlightComp && (
                             <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4 items-stretch">
@@ -1165,19 +1174,13 @@ export default function CompetitionIndex({
 
                         {/* COMPETITION CATALOG */}
                         {catalogCompetitions.length === 0 ? (
-                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                <AnimatedIcon name="search" size={56} className="mx-auto mb-3" />
-                                <h3 className="text-sm font-bold text-slate-900">
-                                    {t('competitions.no_competitions', 'Tidak Ada Kompetisi')}
-                                </h3>
-                                <button
-                                    type="button"
-                                    onClick={handleResetExploreFilter}
-                                    className="mt-3 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
-                                >
-                                    {t('competitions.reset_filter', 'Reset Filter')}
-                                </button>
-                            </div>
+                            <EmptyState
+                                icon={Trophy}
+                                title={isEn ? "No competitions found" : "Kompetisi tidak ditemukan"}
+                                description={isEn ? "Try adjusting your filter or search query." : "Coba sesuaikan filter atau kata kunci pencarian."}
+                                actionLabel={t('competitions.reset_filter', 'Reset Filter')}
+                                onAction={handleResetExploreFilter}
+                            />
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 md:gap-5">
                                 {catalogCompetitions.map((comp) => {
@@ -1360,6 +1363,13 @@ export default function CompetitionIndex({
                 {/* ========================================================= */}
                 {activeTab === 'teams' && (
                     <div className="space-y-6">
+                        {/* Contextual Guide: Teams */}
+                        <ContextualGuideTooltip
+                            guideKey="guide_teams"
+                            title={isEn ? "Build Your Team" : "Bentuk Tim & Rekrutmen"}
+                            description={isEn ? "Find student peers with complementary skills or recruit members for your team." : "Temukan rekan mahasiswa dengan keahlian komplementer atau rekrut anggota tim."}
+                        />
+
                         {/* Segmented Switcher: Cari Tim vs Radar Rekrutmen */}
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/80">
                             <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl self-start border border-slate-200/80">
@@ -2211,22 +2221,13 @@ export default function CompetitionIndex({
                         {myLifecycleFilter === 'applications' && (
                             <div>
                                 {myApplications.length === 0 ? (
-                                    <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <AnimatedIcon name="rocket" size={56} className="mx-auto mb-3" />
-                                        <h3 className="text-sm font-bold text-slate-900">
-                                            Belum Ada Pengajuan Tim
-                                        </h3>
-                                        <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                            Anda belum mengajukan diri ke tim yang sedang merekrut anggota di tab Cari Tim.
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveTab('teams')}
-                                            className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
-                                        >
-                                            Cari Tim Rekan
-                                        </button>
-                                    </div>
+                                    <EmptyState
+                                        icon={Users}
+                                        title={isEn ? "No team applications yet" : "Belum ada pengajuan tim"}
+                                        description={isEn ? "Build something together. Apply to teams recruiting on the Teams tab." : "Bangun karya bersama. Ajukan diri ke tim yang membuka rekrutmen."}
+                                        actionLabel={isEn ? "Find a team" : "Cari tim"}
+                                        onAction={() => setActiveTab('teams')}
+                                    />
                                 ) : (
                                     <div className="space-y-3">
                                         {myApplications.map((app) => (
@@ -2284,19 +2285,13 @@ export default function CompetitionIndex({
                         {myLifecycleFilter === 'saved' && (
                             <div>
                                 {savedCompetitions.length === 0 ? (
-                                    <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                        <AnimatedIcon name="target" size={56} className="mx-auto mb-3" />
-                                        <h3 className="text-sm font-bold text-slate-900">
-                                            {isEn ? 'No Saved Competitions Yet' : 'Belum Ada Kompetisi Tersimpan'}
-                                        </h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveTab('explore')}
-                                            className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
-                                        >
-                                            {isEn ? 'Explore Competitions' : 'Eksplor Lomba'}
-                                        </button>
-                                    </div>
+                                    <EmptyState
+                                        icon={Trophy}
+                                        title={isEn ? "No competitions yet" : "Belum ada kompetisi tersimpan"}
+                                        description={isEn ? "Find your next challenge and bookmark competitions to track here." : "Temukan tantangan berikutnya dan simpan lomba untuk dipantau di sini."}
+                                        actionLabel={isEn ? "Explore competitions" : "Jelajahi kompetisi"}
+                                        onAction={() => setActiveTab('explore')}
+                                    />
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
                                         {savedCompetitions.map((comp) => (
@@ -2387,22 +2382,13 @@ export default function CompetitionIndex({
 
                                     if (filteredParticipations.length === 0 && (myLifecycleFilter !== 'all' || savedCompetitions.length === 0)) {
                                         return (
-                                            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
-                                                <AnimatedIcon name="target" size={56} className="mx-auto mb-3" />
-                                                <h3 className="text-sm font-bold text-slate-900">
-                                                    {isEn ? 'No Competitions in This Stage Yet' : 'Belum Ada Lomba di Tahap Ini'}
-                                                </h3>
-                                                <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                                    {isEn ? 'Find competition opportunities and assemble your team on the explore tab.' : 'Temukan peluang kompetisi dan mulai rancang tim Anda di halaman eksplorasi.'}
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('explore')}
-                                                    className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
-                                                >
-                                                    {isEn ? 'Explore Competitions' : 'Eksplor Lomba'}
-                                                </button>
-                                            </div>
+                                            <EmptyState
+                                                icon={Trophy}
+                                                title={isEn ? "No competitions in this stage yet" : "Belum ada lomba di tahap ini"}
+                                                description={isEn ? "Find your next challenge and track your progress here." : "Temukan tantangan berikutnya dan pantau progresmu di sini."}
+                                                actionLabel={isEn ? "Explore competitions" : "Jelajahi kompetisi"}
+                                                onAction={() => setActiveTab('explore')}
+                                            />
                                         );
                                     }
 
