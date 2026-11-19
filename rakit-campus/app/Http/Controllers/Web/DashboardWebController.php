@@ -797,10 +797,41 @@ class DashboardWebController extends Controller
         // 2. User's pending tasks across all teams
         $myTasks = Task::where('assignee_id', $user->id)
             ->whereIn('status', [TaskStatus::Todo, TaskStatus::InProgress, TaskStatus::InReview])
-            ->with(['team:id,name', 'milestone:id,title'])
+            ->with([
+                'team:id,name,type',
+                'team.project:id,title,slug',
+                'team.participations.competition:id,slug,name',
+                'milestone:id,title',
+            ])
             ->latest('updated_at')
             ->take(6)
-            ->get();
+            ->get()
+            ->map(function ($task) {
+                $participation = $task->team?->participations?->first();
+                $slug = $participation?->competition?->slug ?: $participation?->id;
+                $project = $task->team?->project;
+
+                $workspaceUrl = '/workspace';
+                if ($task->team?->type === TeamType::Competition || $participation) {
+                    $workspaceUrl = $slug ? "/competition-workspace/{$slug}?tab=kanban&task_id={$task->id}" : "/competition-workspace?tab=kanban";
+                } elseif ($project) {
+                    $workspaceUrl = "/workspace/{$project->slug}?tab=tasks&task_id={$task->id}";
+                } elseif ($task->team_id) {
+                    $workspaceUrl = "/workspace/{$task->team_id}?tab=tasks&task_id={$task->id}";
+                }
+
+                return [
+                    'id' => $task->id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => is_object($task->status) ? $task->status->value : (string) $task->status,
+                    'priority' => is_object($task->priority) ? $task->priority->value : (string) $task->priority,
+                    'due_date' => $task->due_on?->toISOString(),
+                    'due_on' => $task->due_on?->translatedFormat('d M Y') ?? 'Minggu Ini',
+                    'team' => $task->team ? ['id' => $task->team->id, 'name' => $task->team->name] : null,
+                    'workspace_url' => $workspaceUrl,
+                ];
+            });
 
         // 3. Open recruiting projects eligible for discovery (flat payload, zero 404 links)
         $recommendedProjects = $this->openRecruitingProjectsPayload($profile, $user, 4);
@@ -1200,10 +1231,25 @@ class DashboardWebController extends Controller
         $myCompetitionTasks = Task::where('assignee_id', $user->id)
             ->whereIn('team_id', $competitionTeamIds)
             ->whereIn('status', [TaskStatus::Todo, TaskStatus::InProgress, TaskStatus::InReview])
-            ->with(['team:id,name'])
+            ->with(['team:id,name', 'team.participations.competition:id,slug,name'])
             ->latest('updated_at')
             ->take(6)
-            ->get();
+            ->get()
+            ->map(function ($task) {
+                $participation = $task->team?->participations?->first();
+                $slug = $participation?->competition?->slug ?: $participation?->id;
+                return [
+                    'id' => $task->id,
+                    'team_id' => $task->team_id,
+                    'title' => $task->title,
+                    'description' => $task->description,
+                    'status' => is_object($task->status) ? $task->status->value : (string) $task->status,
+                    'priority' => is_object($task->priority) ? $task->priority->value : (string) $task->priority,
+                    'due_on' => $task->due_on?->translatedFormat('d M Y') ?? 'Minggu Ini',
+                    'team' => $task->team ? ['id' => $task->team->id, 'name' => $task->team->name] : null,
+                    'workspace_url' => $slug ? "/competition-workspace/{$slug}?tab=kanban&task_id={$task->id}" : "/competition-workspace?tab=kanban",
+                ];
+            });
 
         // 5. Activity logs from competition teams
         $recentActivities = ActivityLog::whereIn('team_id', $competitionTeamIds)
