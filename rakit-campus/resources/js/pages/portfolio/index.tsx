@@ -2,11 +2,15 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
 import {
+    ArrowRight,
     Award,
     CheckCircle2,
+    Crown,
+    Download,
     ExternalLink,
     FolderKanban,
     Globe,
+    Lock,
     Plus,
     ShieldCheck,
     Sparkles,
@@ -22,6 +26,8 @@ interface Props {
     portfolioItems: any[];
     completedProjects: any[];
     profile: any;
+    isPro?: boolean;
+    activeSubscription?: any;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -35,14 +41,25 @@ export default function PortfolioIndex({
     portfolioItems: initialItems,
     completedProjects,
     profile,
+    isPro = false,
+    activeSubscription = null,
 }: Props) {
     const [items, setItems] = useState(initialItems);
     const [isAddModalOpen, setAddModalOpen] = useState(false);
+    const [isProModalOpen, setIsProModalOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [url, setUrl] = useState('');
     const [kind, setKind] = useState('link');
     const [description, setDescription] = useState('');
     const [submitting, setSubmitting] = useState(false);
+
+    const handleAtsExport = () => {
+        if (!isPro) {
+            setIsProModalOpen(true);
+            return;
+        }
+        window.print();
+    };
 
     const getXsrfToken = () => {
         const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
@@ -112,22 +129,45 @@ export default function PortfolioIndex({
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 relative z-10 flex flex-col gap-8">
                     {/* Header */}
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-200/80 pb-5">
-                        <h1 className="text-2xl font-bold tracking-tight text-[#0E121B]">
-                            Rekam Jejak & Portofolio
-                        </h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-bold tracking-tight text-[#0E121B]">
+                                Rekam Jejak & Portofolio
+                            </h1>
+                            {isPro && (
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold shadow-2xs">
+                                    <Crown className="size-3.5 text-blue-600" />
+                                    <span>Verified Pro</span>
+                                </span>
+                            )}
+                        </div>
 
-                        {profile?.slug && profile?.portfolio_public && (
-                            <a
-                                href={`/p/${profile.slug}`}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition self-start md:self-auto"
+                        <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+                            <button
+                                type="button"
+                                onClick={handleAtsExport}
+                                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition shadow-xs cursor-pointer ${
+                                    isPro
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
+                                }`}
                             >
-                                <Globe className="size-3.5" />
-                                <span>Buka Portofolio Publik</span>
-                                <ExternalLink className="size-3" />
-                            </a>
-                        )}
+                                {isPro ? <Download className="size-3.5" /> : <Lock className="size-3.5 text-amber-500" />}
+                                <span>Ekspor PDF (ATS-Ready)</span>
+                            </button>
+
+                            {profile?.slug && profile?.portfolio_public && (
+                                <a
+                                    href={`/p/${profile.slug}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-semibold shadow-xs transition"
+                                >
+                                    <Globe className="size-3.5" />
+                                    <span>Buka Portofolio Publik</span>
+                                    <ExternalLink className="size-3" />
+                                </a>
+                            )}
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -439,6 +479,49 @@ export default function PortfolioIndex({
                                     </button>
                                 </div>
                             </form>
+                        </div>
+                    </div>
+                )}
+
+                {/* ATS Export Pro Paywall Modal */}
+                {isProModalOpen && (
+                    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                        <div className="bg-white rounded-[32px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95">
+                            <button
+                                type="button"
+                                onClick={() => setIsProModalOpen(false)}
+                                className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+                            >
+                                <X className="size-4" />
+                            </button>
+                            <div className="text-center space-y-2">
+                                <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 mx-auto flex items-center justify-center shadow-xs">
+                                    <Crown className="size-7" />
+                                </div>
+                                <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                                    Ekspor PDF ATS-Ready
+                                </h3>
+                                <p className="text-xs text-slate-600 leading-relaxed">
+                                    Fitur ekspor dokumen portofolio standar industri (ATS-friendly) dengan sertifikasi rekam jejak kampus tersedia untuk pengguna <strong>RAKIT Pro</strong> dan <strong>RAKIT Semester</strong>.
+                                </p>
+                            </div>
+
+                            <div className="space-y-2 pt-2">
+                                <Link
+                                    href="/pricing"
+                                    className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-2"
+                                >
+                                    <span>Upgrade Mulai Rp 29.000</span>
+                                    <ArrowRight className="size-3.5" />
+                                </Link>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsProModalOpen(false)}
+                                    className="w-full py-2.5 rounded-full text-slate-500 hover:text-slate-800 text-xs font-medium transition cursor-pointer"
+                                >
+                                    Nanti Saja
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}

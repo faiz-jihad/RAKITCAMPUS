@@ -154,4 +154,20 @@ class Team extends Model
 
         return $count >= $this->capacity;
     }
+
+    public function subscriptions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\TeamSubscription::class);
+    }
+
+    public function activeSubscription(): ?\App\Models\TeamSubscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest()
+            ->first();
+    }
 }

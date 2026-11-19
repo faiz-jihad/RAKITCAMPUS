@@ -41,6 +41,8 @@ class PortfolioWebController extends Controller
             ->get();
 
         $profile = $user->profile()->with('skills')->first();
+        $activeSubscription = $user->activeSubscription();
+        $isPro = $user->isPro();
 
         return Inertia::render('portfolio/index', [
             'achievements' => $achievements,
@@ -48,6 +50,8 @@ class PortfolioWebController extends Controller
             'portfolioItems' => $portfolioItems,
             'completedProjects' => $completedProjects,
             'profile' => $profile,
+            'isPro' => $isPro,
+            'activeSubscription' => $activeSubscription,
         ]);
     }
 

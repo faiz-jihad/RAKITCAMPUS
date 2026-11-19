@@ -14,6 +14,7 @@ import {
     ChevronRight,
     Clock,
     Copy,
+    Crown,
     ExternalLink,
     FileCode,
     FileText,
@@ -54,6 +55,10 @@ interface QuotaInfo {
     period_expires_at: string | null;
     reset_in_seconds: number | null;
     is_exhausted: boolean;
+    plan_name?: string;
+    is_pro?: boolean;
+    tier_label?: string;
+    has_bonus?: boolean;
 }
 
 interface SessionItem {
@@ -320,6 +325,7 @@ export default function AiWorkspaceIndex({
     const [successToast, setSuccessToast] = useState<string | null>(null);
     const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
     const [isShared, setIsShared] = useState(activeSession?.session_type === 'shared');
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
     // Executing action state
     const [executingActionId, setExecutingActionId] = useState<string | null>(null);
@@ -357,7 +363,7 @@ export default function AiWorkspaceIndex({
             return;
         }
         if (quotaInfo?.is_exhausted) {
-            alert('Kuota AI tim Anda sudah habis (10/10 percakapan). Kuota akan direset otomatis setelah periode 5 hari berakhir.');
+            setIsUpgradeModalOpen(true);
             return;
         }
 
@@ -389,7 +395,7 @@ export default function AiWorkspaceIndex({
                 return;
             }
             if (quotaInfo?.is_exhausted) {
-                alert('Kuota AI tim Anda sudah habis (10/10 percakapan).');
+                setIsUpgradeModalOpen(true);
                 return;
             }
 
@@ -699,7 +705,9 @@ export default function AiWorkspaceIndex({
                             }`}>
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">{t('ai_workspace.quota_label', 'Kuota:')}</span>
+                                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                                            {quotaInfo.plan_name && quotaInfo.plan_name !== 'Free' ? quotaInfo.plan_name : t('ai_workspace.quota_label', 'Kuota:')}
+                                        </span>
                                         <span className="tabular-nums font-bold text-slate-900">
                                             {quotaInfo.quota_used}/{quotaInfo.quota_limit} {locale === 'en' ? 'sessions' : 'sesi'}
                                         </span>
@@ -716,6 +724,17 @@ export default function AiWorkspaceIndex({
                                 <span className="text-[11px] text-slate-400 shrink-0">
                                     ({quotaInfo.quota_remaining} {t('ai_workspace.sessions_remaining', 'tersisa')})
                                 </span>
+
+                                {quotaInfo.is_exhausted && (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsUpgradeModalOpen(true)}
+                                        className="ml-1 px-3 py-1 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-[10px] font-bold shadow-xs transition cursor-pointer flex items-center gap-1"
+                                    >
+                                        <Crown className="size-3" />
+                                        <span>Upgrade</span>
+                                    </button>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1350,6 +1369,50 @@ export default function AiWorkspaceIndex({
                     </div>
                 </div>
             </div>
+
+            {/* AI Paywall & Quota Exhausted Modal */}
+            {isUpgradeModalOpen && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[32px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95">
+                        <button
+                            type="button"
+                            onClick={() => setIsUpgradeModalOpen(false)}
+                            className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+                        >
+                            <X className="size-4" />
+                        </button>
+                        <div className="text-center space-y-2">
+                            <div className="size-14 rounded-2xl bg-blue-50 border border-blue-200 text-blue-600 mx-auto flex items-center justify-center shadow-xs">
+                                <Crown className="size-7" />
+                            </div>
+                            <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                                Kuota AI Telah Mencapai Batas
+                            </h3>
+                            <p className="text-xs text-slate-600 leading-relaxed">
+                                Sesi AI tim Anda saat ini telah habis ({quotaInfo?.quota_used}/{quotaInfo?.quota_limit} sesi).
+                                Tambah kuota instan mulai <strong>Rp 15.000 (AI Pass)</strong> atau langganan <strong>RAKIT Pro (Rp 29.000/bln)</strong> untuk 100 sesi percakapan.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2 pt-2">
+                            <Link
+                                href="/pricing"
+                                className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-md flex items-center justify-center gap-2"
+                            >
+                                <span>Buka Paket & Kuota Tambahan</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+                            <button
+                                type="button"
+                                onClick={() => setIsUpgradeModalOpen(false)}
+                                className="w-full py-2.5 rounded-full text-slate-500 hover:text-slate-800 text-xs font-medium transition cursor-pointer"
+                            >
+                                Nanti Saja
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AppLayout>
     );
 }

@@ -55,7 +55,7 @@ class AiWorkspaceController extends Controller
         }
 
         // Get quota info
-        $quotaInfo = $activeTeam ? $this->quotaService->getQuotaInfo($activeTeam) : null;
+        $quotaInfo = $activeTeam ? $this->quotaService->getQuotaInfo($activeTeam, $user) : null;
 
         // Get sessions for this team
         $sessions = [];
@@ -159,12 +159,16 @@ class AiWorkspaceController extends Controller
                   ->orWhereHas('members', fn($m) => $m->where('user_id', $user->id));
             })->firstOrFail();
 
-        // Reserve quota (atomic, with idempotency key)
+        // Reserve quota (atomic, with idempotency key and user subscription bonus)
         $idempotencyKey = Str::uuid()->toString();
-        $reserved = $this->quotaService->reserveQuota($team, $idempotencyKey);
+        $reserved = $this->quotaService->reserveQuota($team, $idempotencyKey, $user);
 
         if (!$reserved) {
-            return back()->withErrors(['quota' => 'Kuota AI tim sudah habis. Quota akan reset setelah periode berakhir.']);
+            $quotaInfo = $this->quotaService->getQuotaInfo($team, $user);
+            return back()->withErrors([
+                'quota' => 'Kuota AI Anda telah habis (' . $quotaInfo['quota_used'] . '/' . $quotaInfo['quota_limit'] . '). Silakan ambil AI Pass atau langganan RAKIT Pro untuk menambah kuota.',
+                'upgrade_required' => true,
+            ]);
         }
 
         try {
@@ -455,7 +459,7 @@ class AiWorkspaceController extends Controller
                   ->orWhereHas('members', fn($m) => $m->where('user_id', $user->id));
             })->firstOrFail();
 
-        return response()->json($this->quotaService->getQuotaInfo($team));
+        return response()->json($this->quotaService->getQuotaInfo($team, $user));
     }
 
     /**

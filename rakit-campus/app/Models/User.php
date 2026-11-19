@@ -233,4 +233,32 @@ class User extends Authenticatable implements MustVerifyEmail
             'academic_class_id'
         )->withPivot(['student_number', 'status', 'enrolled_at'])->withTimestamps();
     }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(\App\Models\UserSubscription::class);
+    }
+
+    public function activeSubscription(): ?\App\Models\UserSubscription
+    {
+        return $this->subscriptions()
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->latest()
+            ->first();
+    }
+
+    public function isPro(): bool
+    {
+        $sub = $this->activeSubscription();
+        return $sub !== null && in_array($sub->plan_type, ['pro_monthly', 'semester_pass']);
+    }
+
+    public function hasAiAccess(): bool
+    {
+        $sub = $this->activeSubscription();
+        return $sub !== null;
+    }
 }
