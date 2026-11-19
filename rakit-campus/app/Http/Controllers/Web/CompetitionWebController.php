@@ -143,7 +143,7 @@ class CompetitionWebController extends Controller
         } elseif ($sort === 'latest') {
             $query->latest('created_at');
         } else {
-            $query->orderByRaw('CASE WHEN registration_deadline >= NOW() THEN 0 ELSE 1 END')
+            $query->orderByRaw('CASE WHEN registration_deadline >= ? THEN 0 ELSE 1 END', [now()->toDateTimeString()])
                   ->orderBy('registration_deadline', 'asc');
         }
 
@@ -152,6 +152,7 @@ class CompetitionWebController extends Controller
         // Team Recruitment Flow: Open recruiting competition teams
         $recruitingQuery = CompetitionParticipation::where('is_formation_locked', false)
             ->whereIn('stage', ['recruiting', 'team_formation'])
+            ->whereHas('team')
             ->whereHas('competition', function ($q) use ($user) {
                 $q->visibleTo($user)
                   ->whereNotIn('competitions.status', [
@@ -203,7 +204,10 @@ class CompetitionWebController extends Controller
             });
         }
 
-        $openRecruitingTeams = $recruitingQuery->get()->map(function ($part) use ($user) {
+        $openRecruitingTeams = $recruitingQuery->get()
+            ->filter(fn ($part) => $part->competition && $part->team)
+            ->values()
+            ->map(function ($part) use ($user) {
             $team = $part->team;
             $myApplication = null;
             if ($user && $team && $team->recruitment) {

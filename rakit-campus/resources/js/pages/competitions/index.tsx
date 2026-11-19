@@ -451,8 +451,10 @@ export default function CompetitionIndex({
     };
 
     const filteredRadarCandidates = useMemo(() => {
-        return radarCandidates.filter((cand: any) => {
+        return (radarCandidates || []).filter((cand: any) => {
+            if (!cand) return false;
             const student = cand.user || cand;
+            if (!student) return false;
             const personaMatch = radarPersonaFilter === 'all' || cand.persona === radarPersonaFilter;
             if (!personaMatch) return false;
 
@@ -461,7 +463,7 @@ export default function CompetitionIndex({
             const name = (student.name || '').toLowerCase();
             const study = (student.study_program || '').toLowerCase();
             const campus = (student.campus_name || student.campus?.name || '').toLowerCase();
-            const skills = (cand.matched_skills || cand.skills || []).map((s: any) => (typeof s === 'string' ? s.toLowerCase() : (s.name || '').toLowerCase()));
+            const skills = (cand.matched_skills || cand.skills || []).map((s: any) => (typeof s === 'string' ? s.toLowerCase() : (s?.name || '').toLowerCase()));
 
             return name.includes(q) || study.includes(q) || campus.includes(q) || skills.some((s: string) => s.includes(q));
         });
@@ -488,6 +490,13 @@ export default function CompetitionIndex({
 
     // Team Recruitment Detail Modal State
     const [detailTeam, setDetailTeam] = useState<RecruitingTeam | null>(null);
+
+    // Guarded valid recruiting teams (prevents runtime crashes from null relations)
+    const validRecruitingTeams = useMemo(() => {
+        return (openRecruitingTeams || []).filter(
+            (part): part is RecruitingTeam => Boolean(part && part.competition && part.team)
+        );
+    }, [openRecruitingTeams]);
 
     // Team Recruitment Apply Modal State
     const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -578,15 +587,17 @@ export default function CompetitionIndex({
     };
 
     const openApplyModal = (part: RecruitingTeam) => {
+        const comp = part.competition || {};
+        const team = part.team || {};
         setSelectedTeamData({
             participationId: part.id,
-            teamName: part.team?.name || 'Tim Kompetisi',
-            competitionName: part.competition.name,
-            organizer: part.competition.organizer,
-            leaderName: part.team?.leader?.name,
+            teamName: team.name || 'Tim Kompetisi',
+            competitionName: comp.name || 'Kompetisi',
+            organizer: comp.organizer || 'Penyelenggara',
+            leaderName: team.leader?.name || 'Ketua Tim',
             isMember: part.is_member,
             isLeader: part.is_leader,
-            roles: part.team?.recruitment?.roles || [],
+            roles: team.recruitment?.roles || [],
         });
         setApplyModalOpen(true);
     };
@@ -858,7 +869,7 @@ export default function CompetitionIndex({
                                                     {t('competitions.find_teammates_card', 'Cari Rekan Tim')}
                                                 </h3>
                                                 <span className="text-[11px] text-slate-500">
-                                                    {openRecruitingTeams.length} {t('competitions.teams_open_slots', 'tim aktif membuka lowongan peran')}
+                                                    {validRecruitingTeams.length} {t('competitions.teams_open_slots', 'tim aktif membuka lowongan peran')}
                                                 </span>
                                             </div>
                                         </div>
@@ -868,15 +879,18 @@ export default function CompetitionIndex({
                                     </div>
 
                                     <div className="flex items-center gap-2 flex-wrap mt-3">
-                                        {openRecruitingTeams.slice(0, 3).map((team: any) => (
-                                            <span
-                                                key={team.id}
-                                                className="px-3 py-1 rounded-full bg-white border border-indigo-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
-                                            >
-                                                {team.name}
-                                            </span>
-                                        ))}
-                                        {openRecruitingTeams.length === 0 && (
+                                        {validRecruitingTeams.slice(0, 3).map((part: any) => {
+                                            const teamName = part.team?.name || part.competition?.name || 'Tim';
+                                            return (
+                                                <span
+                                                    key={part.id || teamName}
+                                                    className="px-3 py-1 rounded-full bg-white border border-indigo-200/80 text-[11px] font-semibold text-slate-800 shadow-2xs truncate max-w-[200px]"
+                                                >
+                                                    {teamName}
+                                                </span>
+                                            );
+                                        })}
+                                        {validRecruitingTeams.length === 0 && (
                                             <span className="text-xs text-slate-500 italic">{t('competitions.no_teams_recruiting', 'Belum ada tim yang membuka lowongan')}</span>
                                         )}
                                     </div>
@@ -1385,7 +1399,7 @@ export default function CompetitionIndex({
                                     <Users className="size-3.5 text-blue-600" />
                                     <span>Tim Membuka Rekrutmen</span>
                                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-50 text-blue-700 font-bold">
-                                        {openRecruitingTeams.length}
+                                        {validRecruitingTeams.length}
                                     </span>
                                 </button>
                                 <button
@@ -1475,7 +1489,7 @@ export default function CompetitionIndex({
                         </div>
 
                         {/* RECRUITING TEAMS GRID */}
-                        {openRecruitingTeams.length === 0 ? (
+                        {validRecruitingTeams.length === 0 ? (
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <AnimatedIcon name="team" size={56} className="mx-auto mb-3" />
                                 <h4 className="text-sm font-bold text-slate-900">
@@ -1495,11 +1509,11 @@ export default function CompetitionIndex({
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
-                                {openRecruitingTeams.map((part) => {
-                                    const comp = part.competition;
-                                    const team = part.team;
-                                    const roles = team?.recruitment?.roles || [];
-                                    const membersCount = team?.members_count || 1;
+                                {validRecruitingTeams.map((part) => {
+                                    const comp = part.competition || {};
+                                    const team = part.team || {};
+                                    const roles = team.recruitment?.roles || [];
+                                    const membersCount = team.members_count || 1;
                                     const maxCap = comp.max_team_size || 3;
                                     const emptySlots = Math.max(0, maxCap - membersCount);
                                     const formattedDeadline = comp.registration_deadline
@@ -1511,19 +1525,19 @@ export default function CompetitionIndex({
 
                                     // Build member list for stacked avatars
                                     const memberAvatars: Array<{ name: string; avatar: string | null; role: string }> = [];
-                                    if (team?.leader) {
+                                    if (team.leader) {
                                         memberAvatars.push({
-                                            name: team.leader.name,
+                                            name: team.leader.name || 'Ketua Tim',
                                             avatar: team.leader.avatar || null,
                                             role: 'Ketua Tim',
                                         });
                                     }
-                                    if (Array.isArray(team?.members)) {
+                                    if (Array.isArray(team.members)) {
                                         team.members.forEach((m: any) => {
-                                            if (m.user_id !== team?.leader?.id && m.name) {
+                                            if (m && m.user_id !== team.leader?.id && (m.name || m.user?.name)) {
                                                 memberAvatars.push({
-                                                    name: m.name,
-                                                    avatar: m.avatar,
+                                                    name: m.name || m.user?.name || 'Anggota',
+                                                    avatar: m.avatar || m.user?.avatar || null,
                                                     role: m.role_name || 'Anggota',
                                                 });
                                             }
@@ -1531,17 +1545,17 @@ export default function CompetitionIndex({
                                     }
                                     if (memberAvatars.length === 0) {
                                         memberAvatars.push({
-                                            name: team?.name || 'Tim',
+                                            name: team.name || 'Tim',
                                             avatar: null,
                                             role: 'Tim',
                                         });
                                     }
 
                                     const descText =
-                                        team?.recruitment?.description ||
-                                        team?.description ||
-                                        `Mencari rekan tim untuk ${comp.name}. Terbuka peran: ${
-                                            roles.map((r: any) => r.name).join(', ') || 'Anggota Tim'
+                                        team.recruitment?.description ||
+                                        team.description ||
+                                        `Mencari rekan tim untuk ${comp.name || 'kompetisi'}. Terbuka peran: ${
+                                            roles.map((r: any) => r?.name).filter(Boolean).join(', ') || 'Anggota Tim'
                                         }.`;
 
                                     const avatarPalette = [
@@ -1573,15 +1587,15 @@ export default function CompetitionIndex({
                                                 {/* Team Name & Competition Badge */}
                                                 <div>
                                                     <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
-                                                        {team.name}
+                                                        {team.name || 'Tim'}
                                                     </h3>
                                                     <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                                         <div
                                                             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold max-w-full truncate"
-                                                            title={`Target Kompetisi: ${comp.name}`}
+                                                            title={`Target Kompetisi: ${comp.name || 'Kompetisi'}`}
                                                         >
                                                             <Trophy className="size-3 text-amber-500 shrink-0" />
-                                                            <span className="truncate">{comp.name}</span>
+                                                            <span className="truncate">{comp.name || 'Kompetisi'}</span>
                                                         </div>
                                                         {comp.category && (
                                                             <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
@@ -2751,250 +2765,262 @@ export default function CompetitionIndex({
             </div>
 
             {/* TEAM RECRUITMENT DETAIL MODAL */}
-            {detailTeam && (
-                <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
-                    <div className="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-7 shadow-xl border border-slate-200/90 relative my-6 space-y-5">
-                        {/* Header */}
-                        <div className="flex items-start justify-between gap-4">
-                            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-                                {detailTeam.competition.name}
-                            </h2>
-                            <button
-                                type="button"
-                                onClick={() => setDetailTeam(null)}
-                                className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer shrink-0"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
+            {detailTeam && (() => {
+                const dtComp = detailTeam.competition || {};
+                const dtTeam = detailTeam.team || {};
+                const dtRoles = dtTeam.recruitment?.roles || [];
+                const dtMembersCount = dtTeam.members_count || 1;
+                const dtMaxCap = dtComp.max_team_size || 3;
+                const dtEmptySlots = Math.max(0, dtMaxCap - dtMembersCount);
 
-                        {/* Top 3-Column Metadata Box */}
-                        <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                            <div>
-                                <span className="text-xs text-slate-400 font-medium block">
-                                    Penyelenggara
-                                </span>
-                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
-                                    {detailTeam.competition.organizer || 'Penyelenggara Resmi'}
-                                </span>
+                return (
+                    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+                        <div className="bg-white rounded-2xl max-w-4xl w-full p-5 sm:p-7 shadow-xl border border-slate-200/90 relative my-6 space-y-5">
+                            {/* Header */}
+                            <div className="flex items-start justify-between gap-4">
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
+                                    {dtComp.name || 'Detail Tim'}
+                                </h2>
+                                <button
+                                    type="button"
+                                    onClick={() => setDetailTeam(null)}
+                                    className="p-2 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer shrink-0"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
                             </div>
-                            <div>
-                                <span className="text-xs text-slate-400 font-medium block">
-                                    Deadline
-                                </span>
-                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
-                                    {detailTeam.competition.registration_deadline
-                                        ? new Date(detailTeam.competition.registration_deadline).toLocaleDateString('id-ID', {
-                                              day: 'numeric',
-                                              month: 'short',
-                                              year: 'numeric',
-                                          })
-                                        : 'Terbuka'}
-                                </span>
-                            </div>
-                            <div>
-                                <span className="text-xs text-slate-400 font-medium block">
-                                    Format
-                                </span>
-                                <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
-                                    {detailTeam.competition.competition_type || 'Umum'}
-                                </span>
-                            </div>
-                        </div>
 
-                        {/* Two Columns */}
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-                            {/* Left Column (7 cols): Deskripsi tim & File link */}
-                            <div className="md:col-span-7 space-y-5">
-                                <div className="space-y-1.5">
-                                    <h4 className="text-xs font-bold text-slate-900">
-                                        Deskripsi Tim
-                                    </h4>
-                                    <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed font-medium">
-                                        {detailTeam.team.description ||
-                                            'Mencari rekan tim untuk berkolaborasi dan berkompetisi bersama.'}
-                                    </div>
+                            {/* Top 3-Column Metadata Box */}
+                            <div className="bg-white rounded-xl p-4 sm:p-5 border border-slate-200 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div>
+                                    <span className="text-xs text-slate-400 font-medium block">
+                                        Penyelenggara
+                                    </span>
+                                    <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                        {dtComp.organizer || 'Penyelenggara Resmi'}
+                                    </span>
                                 </div>
+                                <div>
+                                    <span className="text-xs text-slate-400 font-medium block">
+                                        Deadline
+                                    </span>
+                                    <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                        {dtComp.registration_deadline
+                                            ? new Date(dtComp.registration_deadline).toLocaleDateString('id-ID', {
+                                                  day: 'numeric',
+                                                  month: 'short',
+                                                  year: 'numeric',
+                                              })
+                                            : 'Terbuka'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="text-xs text-slate-400 font-medium block">
+                                        Format
+                                    </span>
+                                    <span className="text-sm font-bold text-slate-900 mt-0.5 block truncate">
+                                        {dtComp.competition_type || 'Umum'}
+                                    </span>
+                                </div>
+                            </div>
 
-                                <div className="space-y-2">
-                                    <h4 className="text-xs font-bold text-slate-900">
-                                        Tautan Resmi
-                                    </h4>
+                            {/* Two Columns */}
+                            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                                {/* Left Column (7 cols): Deskripsi tim & File link */}
+                                <div className="md:col-span-7 space-y-5">
+                                    <div className="space-y-1.5">
+                                        <h4 className="text-xs font-bold text-slate-900">
+                                            Deskripsi Tim
+                                        </h4>
+                                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-700 leading-relaxed font-medium">
+                                            {dtTeam.description ||
+                                                'Mencari rekan tim untuk berkolaborasi dan berkompetisi bersama.'}
+                                        </div>
+                                    </div>
 
                                     <div className="space-y-2">
-                                        {detailTeam.competition.official_url && (
-                                            <a
-                                                href={detailTeam.competition.official_url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
-                                            >
-                                                <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                    <span>Website & Pedoman</span>
-                                                    <ArrowUpRight className="w-3.5 h-3.5" />
-                                                </span>
-                                                <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
-                                                    {detailTeam.competition.official_url.replace(/^https?:\/\//, '')}
-                                                </span>
-                                            </a>
-                                        )}
+                                        <h4 className="text-xs font-bold text-slate-900">
+                                            Tautan Resmi
+                                        </h4>
 
-                                        {detailTeam.competition.registration_url && (
-                                            <a
-                                                href={detailTeam.competition.registration_url}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
-                                            >
-                                                <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
-                                                    <span>Portal Registrasi</span>
-                                                    <ArrowUpRight className="w-3.5 h-3.5" />
-                                                </span>
-                                                <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
-                                                    {detailTeam.competition.registration_url.replace(/^https?:\/\//, '')}
-                                                </span>
-                                            </a>
-                                        )}
-
-                                        <Link
-                                            href={`/competitions/${detailTeam.competition.slug || detailTeam.competition.id}`}
-                                            className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
-                                        >
-                                            <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1.5">
-                                                <FileText className="w-3.5 h-3.5 text-slate-500" />
-                                                <span>Detail Lengkap</span>
-                                            </span>
-                                            <span className="text-blue-600 font-semibold text-[11px] flex items-center gap-0.5">
-                                                Buka <ArrowUpRight className="w-3 h-3" />
-                                            </span>
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Right Column (5 cols): Formasi Card */}
-                            <div className="md:col-span-5 bg-blue-50/60 rounded-2xl p-5 border border-blue-100 space-y-4">
-                                <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
-                                    <Users className="w-4 h-4 text-blue-600" />
-                                    <span>Formasi Tim</span>
-                                </div>
-
-                                <div>
-                                    <div className="flex items-baseline gap-1.5">
-                                        <span className="text-3xl font-black text-blue-600">
-                                            {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)}
-                                        </span>
-                                        <span className="text-xs text-slate-600 font-bold">
-                                            slot kosong
-                                        </span>
-                                    </div>
-
-                                    <div className="mt-2.5 flex items-center gap-1.5">
-                                        {Array.from({ length: detailTeam.team.members_count }).map((_, idx) => (
-                                            <div
-                                                key={`f-${idx}`}
-                                                className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
-                                            >
-                                                <User className="w-3 h-3 fill-current" />
-                                            </div>
-                                        ))}
-                                        {Array.from({
-                                            length: Math.max(
-                                                0,
-                                                (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count
-                                            ),
-                                        }).map((_, idx) => (
-                                            <div
-                                                key={`e-${idx}`}
-                                                className="w-6 h-6 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
-                                            >
-                                                <User className="w-2.5 h-2.5" />
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <span className="text-[11px] text-blue-700 font-semibold block mt-1.5">
-                                        {detailTeam.team.members_count}/{detailTeam.competition.max_team_size || 3} terisi
-                                    </span>
-                                </div>
-
-                                {/* Peran Dibutuhkan */}
-                                <div className="space-y-1">
-                                    <span className="text-xs font-bold text-slate-700 block">
-                                        Posisi Dicari
-                                    </span>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {detailTeam.team.recruitment?.roles && detailTeam.team.recruitment.roles.length > 0 ? (
-                                            detailTeam.team.recruitment.roles.map((r) => (
-                                                <span
-                                                    key={r.id}
-                                                    className="px-2 py-0.5 rounded-md bg-white text-slate-800 text-[11px] font-semibold shadow-2xs border border-slate-100"
-                                                >
-                                                    {r.name}
-                                                </span>
-                                            ))
-                                        ) : (
-                                            <span className="px-2 py-0.5 rounded-md bg-white text-slate-600 text-[11px] font-medium shadow-2xs border border-slate-100">
-                                                Terbuka semua role
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Ketua Tim */}
-                                <div className="pt-2 border-t border-blue-200/60">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                                            {detailTeam.team.leader?.name ? detailTeam.team.leader.name.charAt(0) : 'M'}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <div className="text-xs font-bold text-slate-900 truncate">
-                                                {detailTeam.team.leader?.name || 'Ketua Tim'}
-                                            </div>
-                                            <Link
-                                                href={`/competitions/${detailTeam.competition.slug || detailTeam.competition.id}`}
-                                                className="text-[10px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
-                                            >
-                                                <span>Lihat halaman lomba</span>
-                                                <ArrowUpRight className="w-2.5 h-2.5" />
-                                            </Link>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* CTA: Ajukan Diri or Already Member Status */}
-                                <div className="pt-1">
-                                    {detailTeam.is_member || detailTeam.is_leader ? (
                                         <div className="space-y-2">
-                                            <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 text-center flex items-center justify-center gap-1.5">
-                                                <CheckCircle2 className="size-4 text-emerald-600" />
-                                                <span>Anda Sudah Bergabung dalam Tim Ini</span>
-                                            </div>
-                                            <Link
-                                                href={`/workspace/${detailTeam.team.id}`}
-                                                className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold text-center block transition shadow-2xs"
-                                            >
-                                                Buka Workspace Tim
-                                            </Link>
+                                            {dtComp.official_url && (
+                                                <a
+                                                    href={dtComp.official_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                                >
+                                                    <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                        <span>Website & Pedoman</span>
+                                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                                    </span>
+                                                    <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
+                                                        {dtComp.official_url.replace(/^https?:\/\//, '')}
+                                                    </span>
+                                                </a>
+                                            )}
+
+                                            {dtComp.registration_url && (
+                                                <a
+                                                    href={dtComp.registration_url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group"
+                                                >
+                                                    <span className="font-bold text-blue-600 group-hover:underline flex items-center gap-1">
+                                                        <span>Portal Registrasi</span>
+                                                        <ArrowUpRight className="w-3.5 h-3.5" />
+                                                    </span>
+                                                    <span className="text-slate-400 text-[11px] truncate max-w-[180px]">
+                                                        {dtComp.registration_url.replace(/^https?:\/\//, '')}
+                                                    </span>
+                                                </a>
+                                            )}
+
+                                            {(dtComp.slug || dtComp.id) && (
+                                                <Link
+                                                    href={`/competitions/${dtComp.slug || dtComp.id}`}
+                                                    className="p-3 rounded-xl border border-slate-200/90 flex items-center justify-between hover:border-blue-500 transition text-xs group bg-slate-50/50"
+                                                >
+                                                    <span className="font-bold text-slate-700 group-hover:text-blue-600 flex items-center gap-1.5">
+                                                        <FileText className="w-3.5 h-3.5 text-slate-500" />
+                                                        <span>Detail Lengkap</span>
+                                                    </span>
+                                                    <span className="text-blue-600 font-semibold text-[11px] flex items-center gap-0.5">
+                                                        Buka <ArrowUpRight className="w-3 h-3" />
+                                                    </span>
+                                                </Link>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const teamToApply = detailTeam;
-                                                setDetailTeam(null);
-                                                openApplyModal(teamToApply);
-                                            }}
-                                            className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
-                                        >
-                                            Ajukan Diri ke Tim
-                                        </button>
-                                    )}
+                                    </div>
+                                </div>
+
+                                {/* Right Column (5 cols): Formasi Card */}
+                                <div className="md:col-span-5 bg-blue-50/60 rounded-2xl p-5 border border-blue-100 space-y-4">
+                                    <div className="flex items-center gap-1.5 text-xs font-bold text-blue-900">
+                                        <Users className="w-4 h-4 text-blue-600" />
+                                        <span>Formasi Tim</span>
+                                    </div>
+
+                                    <div>
+                                        <div className="flex items-baseline gap-1.5">
+                                            <span className="text-3xl font-black text-blue-600">
+                                                {dtEmptySlots}
+                                            </span>
+                                            <span className="text-xs text-slate-600 font-bold">
+                                                slot kosong
+                                            </span>
+                                        </div>
+
+                                        <div className="mt-2.5 flex items-center gap-1.5">
+                                            {Array.from({ length: dtMembersCount }).map((_, idx) => (
+                                                <div
+                                                    key={`f-${idx}`}
+                                                    className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shrink-0"
+                                                >
+                                                    <User className="w-3 h-3 fill-current" />
+                                                </div>
+                                            ))}
+                                            {Array.from({
+                                                length: dtEmptySlots,
+                                            }).map((_, idx) => (
+                                                <div
+                                                    key={`e-${idx}`}
+                                                    className="w-6 h-6 rounded-full border-2 border-dashed border-blue-400 text-blue-500 flex items-center justify-center shrink-0"
+                                                >
+                                                    <User className="w-2.5 h-2.5" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <span className="text-[11px] text-blue-700 font-semibold block mt-1.5">
+                                            {dtMembersCount}/{dtMaxCap} terisi
+                                        </span>
+                                    </div>
+
+                                    {/* Peran Dibutuhkan */}
+                                    <div className="space-y-1">
+                                        <span className="text-xs font-bold text-slate-700 block">
+                                            Posisi Dicari
+                                        </span>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {dtRoles.length > 0 ? (
+                                                dtRoles.map((r) => (
+                                                    <span
+                                                        key={r.id}
+                                                        className="px-2 py-0.5 rounded-md bg-white text-slate-800 text-[11px] font-semibold shadow-2xs border border-slate-100"
+                                                    >
+                                                        {r.name}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="px-2 py-0.5 rounded-md bg-white text-slate-600 text-[11px] font-medium shadow-2xs border border-slate-100">
+                                                    Terbuka semua role
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Ketua Tim */}
+                                    <div className="pt-2 border-t border-blue-200/60">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                                                {dtTeam.leader?.name ? dtTeam.leader.name.charAt(0) : 'M'}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <div className="text-xs font-bold text-slate-900 truncate">
+                                                    {dtTeam.leader?.name || 'Ketua Tim'}
+                                                </div>
+                                                {(dtComp.slug || dtComp.id) && (
+                                                    <Link
+                                                        href={`/competitions/${dtComp.slug || dtComp.id}`}
+                                                        className="text-[10px] font-semibold text-blue-600 hover:underline flex items-center gap-0.5"
+                                                    >
+                                                        <span>Lihat halaman lomba</span>
+                                                        <ArrowUpRight className="w-2.5 h-2.5" />
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* CTA: Ajukan Diri or Already Member Status */}
+                                    <div className="pt-1">
+                                        {detailTeam.is_member || detailTeam.is_leader ? (
+                                            <div className="space-y-2">
+                                                <div className="w-full py-2.5 px-3 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 text-center flex items-center justify-center gap-1.5">
+                                                    <CheckCircle2 className="size-4 text-emerald-600" />
+                                                    <span>Anda Sudah Bergabung dalam Tim Ini</span>
+                                                </div>
+                                                {dtTeam.id && (
+                                                    <Link
+                                                        href={`/workspace/${dtTeam.id}`}
+                                                        className="w-full py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold text-center block transition shadow-2xs"
+                                                    >
+                                                        Buka Workspace Tim
+                                                    </Link>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    const teamToApply = detailTeam;
+                                                    setDetailTeam(null);
+                                                    openApplyModal(teamToApply);
+                                                }}
+                                                className="w-full py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition cursor-pointer"
+                                            >
+                                                Ajukan Diri ke Tim
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                );
+            })()}
 
             {/* RADAR REKRUTMEN INVITATION MODAL */}
             {radarInviteModalOpen && selectedRadarCandidate && (

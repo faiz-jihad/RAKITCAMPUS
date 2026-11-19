@@ -88,7 +88,7 @@ class AdminCompetitionWebController extends Controller
         ];
 
         $competitions = $query
-            ->orderByRaw('CASE WHEN registration_deadline >= NOW() THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN registration_deadline >= ? THEN 0 ELSE 1 END', [now()->toDateTimeString()])
             ->orderBy('registration_deadline', 'asc')
             ->orderBy('id', 'desc')
             ->paginate(15)

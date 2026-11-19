@@ -4024,16 +4024,16 @@ export default function Welcome() {
                 id="feedback"
                 className="py-12 sm:py-20 lg:py-24 relative bg-slate-50 border-t border-slate-200/80"
             >
-                <div className="max-w-3xl mx-auto px-3.5 sm:px-6 relative z-10">
+                <div className="max-w-2xl mx-auto px-4 sm:px-6 relative z-10">
                     <div
                         ref={ctaCardRef}
-                        className={`bg-white rounded-2xl p-4 sm:p-8 md:p-10 border shadow-xs transition-colors duration-200 ${
+                        className={`bg-white rounded-3xl p-6 sm:p-9 md:p-10 border shadow-[0_4px_24px_rgba(0,0,0,0.03)] transition-colors duration-200 ${
                             feedbackType === 'bug_report' ? 'border-rose-200/90' : 'border-slate-200/80'
                         }`}
                     >
                         <div ref={ctaContentRef}>
-                            {/* Toggle Switch: Saran & Ide vs Lapor Kendala */}
-                            <div className="flex p-1 bg-slate-100 rounded-xl max-w-sm sm:max-w-md mx-auto mb-6 sm:mb-8">
+                            {/* Toggle Switch: Saran vs Bug Report */}
+                            <div className="flex p-1 bg-slate-100 rounded-xl max-w-xs sm:max-w-sm mx-auto mb-6 border border-slate-200/60">
                                 <button
                                     type="button"
                                     onClick={() => {
@@ -4042,14 +4042,14 @@ export default function Welcome() {
                                             setFeedbackCategory('saran_fitur');
                                         }
                                     }}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                                         feedbackType === 'suggestion'
                                             ? 'bg-white text-blue-700 shadow-xs'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
                                     <Lightbulb className="size-3.5 text-amber-500" />
-                                    <span>Saran & Ide Fitur</span>
+                                    <span>Saran & Ide</span>
                                 </button>
                                 <button
                                     type="button"
@@ -4057,65 +4057,50 @@ export default function Welcome() {
                                         setFeedbackType('bug_report');
                                         setFeedbackCategory('kendala_bug');
                                     }}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-bold transition cursor-pointer ${
                                         feedbackType === 'bug_report'
                                             ? 'bg-white text-rose-700 shadow-xs'
                                             : 'text-slate-600 hover:text-slate-900'
                                     }`}
                                 >
                                     <Bug className="size-3.5 text-rose-600" />
-                                    <span>Lapor Kendala / Bug</span>
+                                    <span>Lapor Kendala</span>
                                 </button>
                             </div>
 
-                            {/* Header */}
-                            <div className="text-center max-w-xl mx-auto mb-6 sm:mb-8">
-                                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold mb-2">
-                                    {feedbackType === 'bug_report' ? (
-                                        <span className="bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full">
-                                            Pusat Laporan Kendala Teknis
-                                        </span>
-                                    ) : (
-                                        <span className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full">
-                                            Kotak Aspirasi & Masukan Pengguna
-                                        </span>
-                                    )}
-                                </div>
-                                <h2 className="text-xl xs:text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-                                    {feedbackType === 'bug_report'
-                                        ? 'Laporkan Kendala atau Error Sistem'
-                                        : 'Saran & Masukan Pengembangan'}
+                            {/* Header (Clean, minimal, zero-clutter) */}
+                            <div className="text-center max-w-lg mx-auto mb-6">
+                                <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">
+                                    {feedbackType === 'bug_report' ? 'Lapor Kendala' : 'Kirim Masukan'}
                                 </h2>
-                                <p className="text-xs sm:text-sm text-slate-500 mt-1.5 leading-relaxed">
+                                <p className="text-xs sm:text-sm text-slate-500 mt-1 leading-relaxed">
                                     {feedbackType === 'bug_report'
-                                        ? 'Menemukan tombol macet, error 500, atau kejanggalan tampilan? Laporkan agar tim teknis segera menanganinya.'
-                                        : 'Punya ide fitur baru atau saran desain antarmuka? Masukan Anda menjadi acuan roadmap RAKIT Campus.'}
+                                        ? 'Bantu kami menemukan kendala teknis agar dapat segera diperbaiki.'
+                                        : 'Bagikan ide fitur atau saran Anda untuk menyempurnakan platform.'}
                                 </p>
                             </div>
 
                             {feedbackSubmitted ? (
                                 <div className="py-8 text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
-                                    <div className={`size-14 rounded-2xl flex items-center justify-center mb-3 shadow-xs ${
+                                    <div className={`size-12 rounded-2xl flex items-center justify-center mb-3 shadow-xs ${
                                         feedbackType === 'bug_report'
                                             ? 'bg-rose-50 border border-rose-200 text-rose-600'
                                             : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
                                     }`}>
-                                        <CheckCircle2 className="size-7" />
+                                        <CheckCircle2 className="size-6" />
                                     </div>
-                                    <div className="inline-flex items-center gap-1.5 font-mono text-xs font-bold px-3 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200 mb-2">
-                                        Nomor Tiket: {feedbackTicketCode || '#TKT-BARU'}
+                                    <div className="inline-flex items-center gap-1.5 font-mono text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-800 border border-slate-200 mb-2">
+                                        Tiket: {feedbackTicketCode || '#TKT-BARU'}
                                     </div>
-                                    <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                        {feedbackType === 'bug_report'
-                                            ? 'Laporan Kendala Berhasil Diterima!'
-                                            : 'Terima Kasih atas Masukan Anda!'}
+                                    <h3 className="text-base font-bold text-slate-900">
+                                        {feedbackType === 'bug_report' ? 'Laporan Diterima' : 'Masukan Diterima'}
                                     </h3>
-                                    <p className="text-xs text-slate-500 mt-1.5 max-w-md leading-relaxed">
+                                    <p className="text-xs text-slate-500 mt-1 max-w-sm leading-relaxed">
                                         {feedbackType === 'bug_report'
-                                            ? 'Laporan kendala telah tercatat di server dan masuk antrean review tim teknis. Kami akan segera menginvestigasi issue ini.'
-                                            : 'Saran dan ide Anda telah berhasil tersimpan ke sistem kami untuk ditinjau oleh tim pengembang secara berkala.'}
+                                            ? 'Terima kasih atas laporan Anda. Tim teknis kami akan segera menginvestigasi.'
+                                            : 'Terima kasih! Masukan Anda telah tersimpan dan akan ditinjau secara berkala.'}
                                     </p>
-                                    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                                    <div className="mt-5 flex items-center justify-center gap-2">
                                         <button
                                             type="button"
                                             onClick={() => {
@@ -4124,16 +4109,16 @@ export default function Welcome() {
                                                 setFeedbackRating(null);
                                                 setFeedbackPageUrl('');
                                             }}
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
                                         >
-                                            <span>Kirim Laporan / Saran Baru</span>
                                             <Plus className="size-3.5" />
+                                            <span>Kirim Baru</span>
                                         </button>
                                         <Link
                                             href="/feedback"
-                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition cursor-pointer"
+                                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition cursor-pointer"
                                         >
-                                            <span>Buka Portal Tiket & Bantuan</span>
+                                            <span>Lihat Tiket</span>
                                             <ArrowRight className="size-3.5" />
                                         </Link>
                                     </div>
@@ -4143,14 +4128,14 @@ export default function Welcome() {
                                     {/* Jika Bug Report: Pilih Urgensi */}
                                     {feedbackType === 'bug_report' ? (
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-800 mb-1.5">
-                                                Tingkat Urgensi Kendala <span className="text-rose-500">*</span>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Tingkat Urgensi <span className="text-rose-500">*</span>
                                             </label>
                                             <div className="grid grid-cols-3 gap-2">
                                                 {[
-                                                    { id: 'low', label: 'Ringan', desc: 'Glitch tampilan / typo' },
-                                                    { id: 'medium', label: 'Sedang', desc: 'Fitur terganggu' },
-                                                    { id: 'high', label: 'Kritis', desc: 'Error 500 / Terblokir' },
+                                                    { id: 'low', label: 'Ringan', desc: 'Tampilan / Typo' },
+                                                    { id: 'medium', label: 'Sedang', desc: 'Fitur Terganggu' },
+                                                    { id: 'high', label: 'Kritis', desc: 'Error 500 / Macet' },
                                                 ].map((u) => (
                                                     <button
                                                         key={u.id}
@@ -4175,21 +4160,21 @@ export default function Welcome() {
                                     ) : (
                                         /* Jika Saran: Pilih Kategori Masukan */
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5 sm:mb-2">
-                                                Kategori Masukan
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                                                Kategori
                                             </label>
                                             <div className="flex flex-wrap gap-1.5 sm:gap-2">
                                                 {[
-                                                    { id: 'saran_fitur', label: 'Saran Fitur Baru' },
-                                                    { id: 'antarmuka_ui', label: 'Desain & Tampilan' },
-                                                    { id: 'performa', label: 'Kecepatan & Performa' },
+                                                    { id: 'saran_fitur', label: 'Fitur Baru' },
+                                                    { id: 'antarmuka_ui', label: 'Desain UI' },
+                                                    { id: 'performa', label: 'Performa' },
                                                     { id: 'lainnya', label: 'Lainnya' },
                                                 ].map((cat) => (
                                                     <button
                                                         key={cat.id}
                                                         type="button"
                                                         onClick={() => setFeedbackCategory(cat.id)}
-                                                        className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-[11px] sm:text-xs transition cursor-pointer ${
+                                                        className={`px-3 py-1.5 rounded-xl text-xs transition cursor-pointer ${
                                                             feedbackCategory === cat.id
                                                                 ? 'bg-blue-50 border border-blue-600 text-blue-700 font-semibold shadow-2xs'
                                                                 : 'bg-slate-50 border border-slate-200/80 text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
@@ -4205,61 +4190,61 @@ export default function Welcome() {
                                     {/* URL / Halaman Terkait (Hanya untuk Bug Report) */}
                                     {feedbackType === 'bug_report' && (
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">
-                                                Halaman atau URL Terkait <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                                Halaman Terkait <span className="text-slate-400 font-normal">(Opsional)</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 value={feedbackPageUrl}
                                                 onChange={(e) => setFeedbackPageUrl(e.target.value)}
-                                                placeholder="Contoh: /competition-workspace/... atau /projects/show/..."
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-rose-500 transition font-mono"
+                                                placeholder="Contoh: /competitions atau /projects/show/1"
+                                                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500 focus:border-rose-500 transition font-mono"
                                             />
                                         </div>
                                     )}
 
                                     {/* Nama & Email */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">
-                                                Nama Lengkap <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                                Nama <span className="text-slate-400 font-normal">(Opsional)</span>
                                             </label>
                                             <input
                                                 type="text"
                                                 value={feedbackName}
                                                 onChange={(e) => setFeedbackName(e.target.value)}
                                                 placeholder={auth?.user?.name || "Nama Anda"}
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1">
-                                                Email Kontak <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                                Email <span className="text-slate-400 font-normal">(Opsional)</span>
                                             </label>
                                             <input
                                                 type="email"
                                                 value={feedbackEmail}
                                                 onChange={(e) => setFeedbackEmail(e.target.value)}
                                                 placeholder={auth?.user?.email || "email@kampus.ac.id"}
-                                                className="w-full px-3 py-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
+                                                className="w-full px-3.5 py-2.5 bg-slate-50/70 border border-slate-200/80 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition"
                                             />
                                         </div>
                                     </div>
 
-                                    {/* Rating Pengalaman (Hanya untuk Saran / Masukan) */}
+                                    {/* Rating Pengalaman (Hanya untuk Saran) */}
                                     {feedbackType === 'suggestion' && (
                                         <div>
-                                            <label className="block text-xs font-medium text-slate-700 mb-1.5">
-                                                Penilaian Kepuasan Sistem <span className="text-slate-400 font-normal">(Opsional)</span>
+                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                                Rating <span className="text-slate-400 font-normal">(Opsional)</span>
                                             </label>
-                                            <div className="flex items-center gap-1.5">
+                                            <div className="flex items-center gap-1">
                                                 {[1, 2, 3, 4, 5].map((star) => (
                                                     <button
                                                         key={star}
                                                         type="button"
                                                         onClick={() => setFeedbackRating(feedbackRating === star ? null : star)}
-                                                        className="p-1.5 rounded-md hover:bg-slate-100 transition cursor-pointer text-slate-300 hover:text-amber-400"
-                                                        title={`${star} dari 5 bintang`}
+                                                        className="p-1 rounded-md hover:bg-slate-100 transition cursor-pointer text-slate-300 hover:text-amber-400"
+                                                        title={`${star} bintang`}
                                                     >
                                                         <Star
                                                             className={`size-4 transition ${(feedbackRating ?? 0) >= star
@@ -4270,8 +4255,8 @@ export default function Welcome() {
                                                     </button>
                                                 ))}
                                                 {feedbackRating && (
-                                                    <span className="text-[11px] font-semibold text-slate-600 ml-1.5">
-                                                        {feedbackRating} / 5 Bintang
+                                                    <span className="text-xs font-semibold text-slate-600 ml-1.5">
+                                                        {feedbackRating}/5
                                                     </span>
                                                 )}
                                             </div>
@@ -4281,11 +4266,8 @@ export default function Welcome() {
                                     {/* Pesan Masukan / Kendala */}
                                     <div>
                                         <div className="flex items-center justify-between mb-1">
-                                            <label className="block text-xs font-bold text-slate-800">
-                                                {feedbackType === 'bug_report'
-                                                    ? 'Rincian Kendala & Langkah Error'
-                                                    : 'Detail Saran & Ide Pengembangan'}{' '}
-                                                <span className="text-rose-500">*</span>
+                                            <label className="block text-xs font-semibold text-slate-800">
+                                                Pesan <span className="text-rose-500">*</span>
                                             </label>
                                             <span className="text-[10px] text-slate-400">
                                                 {feedbackMessage.length}/2000
@@ -4298,10 +4280,10 @@ export default function Welcome() {
                                             onChange={(e) => setFeedbackMessage(e.target.value)}
                                             placeholder={
                                                 feedbackType === 'bug_report'
-                                                    ? "Jelaskan apa yang sedang dilakukan, apa pesan error yang muncul, atau bagian mana yang tidak merespons..."
-                                                    : "Tuliskan pengalaman Anda menggunakan sistem, fitur baru yang Anda butuhkan, atau usulan penyempurnaan desain..."
+                                                    ? "Jelaskan kendala atau pesan error yang terjadi..."
+                                                    : "Tulis masukan, ide fitur, atau saran penyempurnaan Anda..."
                                             }
-                                            className={`w-full px-3 py-2 bg-slate-50 border rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 transition resize-none leading-relaxed ${
+                                            className={`w-full px-3.5 py-2.5 bg-slate-50/70 border rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 transition resize-none leading-relaxed ${
                                                 feedbackType === 'bug_report'
                                                     ? 'border-slate-200/80 focus:ring-rose-500 focus:border-rose-500'
                                                     : 'border-slate-200/80 focus:ring-blue-600 focus:border-blue-600'
@@ -4314,15 +4296,13 @@ export default function Welcome() {
 
                                     {/* Action Buttons */}
                                     <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-slate-100">
-                                        <p className="text-[10.5px] sm:text-[11px] text-slate-500">
-                                            {feedbackType === 'bug_report'
-                                                ? 'Laporan bug tercatat secara real-time di sistem dan segera diinvestigasi.'
-                                                : 'Setiap masukan ditinjau langsung oleh tim pengembang RAKIT Campus.'}
+                                        <p className="text-[11px] text-slate-400">
+                                            Ditinjau langsung oleh tim pengembang.
                                         </p>
                                         <button
                                             type="submit"
                                             disabled={submittingFeedback || feedbackMessage.trim().length < 5}
-                                            className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 sm:py-2 rounded-lg text-white text-xs font-bold shadow-2xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 w-full sm:w-auto ${
+                                            className={`inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-white text-xs font-semibold shadow-xs transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 w-full sm:w-auto ${
                                                 feedbackType === 'bug_report'
                                                     ? 'bg-rose-600 hover:bg-rose-700'
                                                     : 'bg-blue-600 hover:bg-blue-700'
@@ -4331,23 +4311,11 @@ export default function Welcome() {
                                             {submittingFeedback ? (
                                                 <>
                                                     <RotateCw className="size-3.5 animate-spin" />
-                                                    <span>
-                                                        {feedbackType === 'bug_report' ? 'Mengirim Laporan...' : 'Mengirim Masukan...'}
-                                                    </span>
+                                                    <span>Mengirim...</span>
                                                 </>
                                             ) : (
                                                 <>
-                                                    {feedbackType === 'bug_report' ? (
-                                                        <>
-                                                            <Bug className="size-3.5" />
-                                                            <span>Kirim Laporan Kendala</span>
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Lightbulb className="size-3.5" />
-                                                            <span>Kirim Saran & Ide</span>
-                                                        </>
-                                                    )}
+                                                    <span>{feedbackType === 'bug_report' ? 'Kirim Laporan' : 'Kirim Masukan'}</span>
                                                     <ArrowRight className="size-3.5" />
                                                 </>
                                             )}

@@ -30,7 +30,7 @@ class CompetitionController extends Controller
         $user = $request->user();
         $query = Competition::visibleTo($user)
             ->with(['sources', 'campus:id,name,slug'])
-            ->orderByRaw('CASE WHEN registration_deadline >= NOW() THEN 0 ELSE 1 END')
+            ->orderByRaw('CASE WHEN registration_deadline >= ? THEN 0 ELSE 1 END', [now()->toDateTimeString()])
             ->orderBy('registration_deadline', 'asc');
 
         if ($request->filled('category')) {
