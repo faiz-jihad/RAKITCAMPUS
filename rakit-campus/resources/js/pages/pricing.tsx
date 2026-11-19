@@ -156,86 +156,130 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
             />
 
             <div className="py-8 sm:py-12 px-4 sm:px-6 max-w-7xl mx-auto w-full space-y-10 sm:space-y-14">
-                {/* Header Section */}
-                <div className="text-center max-w-3xl mx-auto space-y-3.5">
-                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-                        Investasi Terjangkau untuk Prestasi Nyata
+                {/* Header Section: Clean Apple iOS & Less Text */}
+                <div className="text-center max-w-xl mx-auto space-y-2">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold tracking-wide">
+                        <Sparkles className="size-3 text-blue-600" />
+                        <span>Paket Mahasiswa</span>
+                    </span>
+                    <h1 className="text-3xl sm:text-5xl font-black tracking-tight text-slate-900">
+                        Investasi Prestasi
                     </h1>
-
-                    <p className="text-sm sm:text-base text-slate-600 font-medium leading-relaxed">
-                        Akses eksplorasi kompetisi, pembentukan tim, dan kolaborasi dasar tetap <strong>100% gratis</strong>. Upgrade saat Anda butuh booster AI untuk proposal, review juri, dan portofolio resmi.
+                    <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                        Mulai gratis untuk semua. Tingkatkan saat butuh akselerasi AI.
                     </p>
 
                     {/* Active Subscription Banner */}
                     {activeSubscription && (
-                        <div className="mt-4 inline-flex items-center gap-2.5 px-4 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-xs">
+                        <div className="mt-4 inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold shadow-xs">
                             <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                             <span>
-                                Anda sedang menggunakan paket aktif: <strong>{activeSubscription.plan_type.replace('_', ' ').toUpperCase()}</strong>
-                                {activeSubscription.expires_at ? ` (Aktif s/d ${new Date(activeSubscription.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })})` : ' (Aktif)'}
+                                Paket Aktif: <strong>{activeSubscription.plan_type.replace('_', ' ').toUpperCase()}</strong>
+                                {activeSubscription.expires_at ? ` (s/d ${new Date(activeSubscription.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })})` : ' (Aktif)'}
                             </span>
                         </div>
                     )}
                 </div>
 
                 {/* Plans Grid (Apple iOS Bento Style) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-stretch">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch">
                     {plans.slice(0, 4).map((plan) => {
                         const isCurrentActive = activeSubscription?.plan_type === plan.id;
+
+                        // Clean concise period formatting
+                        let periodLabel = '';
+                        if (plan.price > 0) {
+                            if (String(plan.period).includes('6 bulan') || plan.id === 'semester_pass') {
+                                periodLabel = '/6 bln';
+                            } else if (String(plan.period).includes('bulan')) {
+                                periodLabel = '/bln';
+                            } else if (String(plan.period).toLowerCase().includes('sekali')) {
+                                periodLabel = 'sekali bayar';
+                            } else {
+                                periodLabel = `/${plan.period}`;
+                            }
+                        }
+
+                        // Max 4 high-impact bullets for clean aesthetic
+                        const featuresList = (Array.isArray(plan.features) ? plan.features : []).slice(0, 4);
 
                         return (
                             <div
                                 key={plan.id}
-                                className={`rounded-[28px] sm:rounded-[32px] p-6 sm:p-7 transition-all duration-300 flex flex-col justify-between relative ${
+                                className={`rounded-[32px] p-6 sm:p-7 transition-all duration-300 flex flex-col justify-between relative ${
                                     plan.is_featured
                                         ? 'bg-white border-2 border-blue-600 shadow-[0_8px_32px_rgba(37,99,235,0.12)] ring-4 ring-blue-500/10'
-                                        : 'bg-white border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-lg hover:border-slate-300'
+                                        : 'bg-white border border-slate-200/90 shadow-[0_2px_12px_rgba(0,0,0,0.02)] hover:shadow-md hover:border-slate-300'
                                 }`}
                             >
                                 <div className="space-y-4">
-                                    <div>
-                                        <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                                    {/* Header Row: Title & Badge */}
+                                    <div className="flex items-center justify-between gap-1.5 min-h-[26px]">
+                                        <h3 className="text-lg font-bold text-slate-900 tracking-tight">
                                             {plan.name}
                                         </h3>
-                                        <p className="text-xs text-slate-500 mt-1 min-h-[32px] leading-relaxed">
-                                            {plan.tagline}
-                                        </p>
+                                        {plan.badge && (
+                                            <span
+                                                className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider shrink-0 ${
+                                                    plan.is_featured
+                                                        ? 'bg-blue-600 text-white shadow-2xs'
+                                                        : 'bg-amber-50 text-amber-800 border border-amber-200/70'
+                                                }`}
+                                            >
+                                                {plan.badge}
+                                            </span>
+                                        )}
                                     </div>
 
+                                    {/* Micro Tagline */}
+                                    {plan.tagline && (
+                                        <p className="text-xs text-slate-400 font-medium leading-relaxed">
+                                            {plan.tagline}
+                                        </p>
+                                    )}
+
                                     {/* Price Tag */}
-                                    <div className="pt-2 border-t border-slate-100">
+                                    <div className="pt-2 pb-1 border-t border-slate-100">
                                         <div className="flex items-baseline gap-1.5">
                                             <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
                                                 {plan.price === 0 ? 'Gratis' : formatRupiah(plan.price)}
                                             </span>
-                                            {plan.price > 0 && (
+                                            {periodLabel && (
                                                 <span className="text-xs font-semibold text-slate-400">
-                                                    /{plan.period}
+                                                    {periodLabel}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    {/* Features List */}
+                                    {/* Bite-sized Features List */}
                                     <div className="space-y-2.5 pt-3 border-t border-slate-100 text-xs">
-                                        {plan.features.map((feat, idx) => (
-                                            <div key={idx} className="flex items-start gap-2.5 text-slate-700">
-                                                <div className="size-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+                                        {featuresList.map((feat, idx) => (
+                                            <div key={idx} className="flex items-center gap-2.5 text-slate-700">
+                                                <div
+                                                    className={`size-4 rounded-full flex items-center justify-center shrink-0 ${
+                                                        plan.is_featured
+                                                            ? 'bg-blue-50 text-blue-600'
+                                                            : 'bg-emerald-50 text-emerald-600'
+                                                    }`}
+                                                >
                                                     <Check className="size-2.5 stroke-[3]" />
                                                 </div>
-                                                <span className="leading-snug">{feat}</span>
+                                                <span className="leading-snug text-xs font-medium text-slate-700">
+                                                    {feat}
+                                                </span>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
 
-                                {/* Action CTA Button */}
-                                <div className="pt-6 mt-6 border-t border-slate-100">
+                                {/* Action CTA Button: iOS Capsule */}
+                                <div className="pt-6 mt-4 border-t border-slate-100">
                                     {plan.price === 0 ? (
                                         <button
                                             type="button"
                                             disabled
-                                            className="w-full py-2.5 rounded-full bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed text-center"
+                                            className="w-full py-3 rounded-full bg-slate-100 text-slate-400 text-xs font-bold cursor-not-allowed text-center"
                                         >
                                             Paket Standar Aktif
                                         </button>
@@ -244,7 +288,7 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                                             type="button"
                                             disabled={isSubmitting || isCurrentActive}
                                             onClick={() => handleSelectPlan(plan)}
-                                            className={`w-full py-2.5 rounded-full text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                                            className={`w-full py-3 rounded-full text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
                                                 isCurrentActive
                                                     ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
                                                     : plan.is_featured
@@ -262,41 +306,69 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                     })}
                 </div>
 
-                {/* Team Pass Highlight Banner */}
+                {/* Team Pass Highlight Banner: Apple Pro Dark Bento */}
                 {plans.length > 4 && (
-                    <div className="rounded-[28px] sm:rounded-[32px] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
-                        <div className="space-y-2 max-w-xl text-center md:text-left">
-                            <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
-                                RAKIT Team — Rp 99.000 / tim
-                            </h3>
+                    <div className="rounded-[32px] p-6 sm:p-8 bg-slate-900 text-white border border-slate-800/80 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                        <div className="space-y-2.5 max-w-xl text-center md:text-left">
+                            <div className="flex items-center justify-center md:justify-start gap-2">
+                                <span className="text-[10px] font-black text-slate-900 bg-amber-400 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                                    1 Tim Lomba
+                                </span>
+                                <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                                    RAKIT Team
+                                </h3>
+                            </div>
                             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
-                                Shared pool 200 Kredit AI untuk seluruh anggota tim, Living Proposal AI bersama, dan fitur analitik progres proyek tim hingga masa kompetisi berakhir.
+                                Shared pool 200 Kredit AI dan Living Proposal terintegrasi untuk seluruh anggota tim lomba.
                             </p>
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-1 text-xs text-slate-300">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-200 text-xs font-medium">
+                                    <Check className="size-3 text-amber-400 shrink-0" />
+                                    <span>200 Kredit AI Bersama</span>
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-200 text-xs font-medium">
+                                    <Check className="size-3 text-amber-400 shrink-0" />
+                                    <span>Living Proposal AI</span>
+                                </div>
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-slate-200 text-xs font-medium">
+                                    <Check className="size-3 text-amber-400 shrink-0" />
+                                    <span>Prioritas Lomba</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 w-full md:w-auto">
-                            {myTeams && myTeams.length > 0 && (
-                                <select
-                                    value={selectedTeamId}
-                                    onChange={(e) => setSelectedTeamId(e.target.value)}
-                                    className="bg-white/10 border border-white/20 text-white rounded-xl px-3 py-2 text-xs font-semibold focus:outline-none focus:bg-white/20"
-                                >
-                                    {myTeams.map((t) => (
-                                        <option key={t.id} value={t.id} className="text-slate-900">
-                                            {t.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
+                        <div className="flex flex-col sm:flex-row md:flex-col items-center md:items-end gap-3 shrink-0 w-full md:w-auto">
+                            <div className="text-center md:text-right">
+                                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                                    Rp 99.000 <span className="text-xs text-slate-400 font-normal">/tim (3 bln)</span>
+                                </div>
+                                <span className="text-[11px] text-slate-400 font-medium">Hanya Rp 33.000/bln untuk 1 tim</span>
+                            </div>
 
-                            <button
-                                type="button"
-                                onClick={() => handleSelectPlan(plans[4])}
-                                className="w-full sm:w-auto px-6 py-3 rounded-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-black shadow-lg transition active:scale-95 cursor-pointer flex items-center justify-center gap-2"
-                            >
-                                <span>Aktifkan untuk Tim</span>
-                                <ArrowRight className="size-3.5 text-slate-900" />
-                            </button>
+                            <div className="flex items-center gap-2 w-full sm:w-auto">
+                                {myTeams && myTeams.length > 0 && (
+                                    <select
+                                        value={selectedTeamId}
+                                        onChange={(e) => setSelectedTeamId(e.target.value)}
+                                        className="bg-white/10 border border-white/20 text-white rounded-full px-3 py-2.5 text-xs font-semibold focus:outline-none focus:bg-white/20"
+                                    >
+                                        {myTeams.map((t) => (
+                                            <option key={t.id} value={t.id} className="text-slate-900">
+                                                {t.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                )}
+
+                                <button
+                                    type="button"
+                                    onClick={() => handleSelectPlan(plans[4])}
+                                    className="w-full sm:w-auto px-7 py-3 rounded-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold shadow-md transition active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                                >
+                                    <span>Beli untuk Tim</span>
+                                    <ArrowRight className="size-3.5 text-slate-900" />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
