@@ -43,6 +43,13 @@ class TeamAiQuotaService
         // 2. User-level subscription (AI Pass, Pro Monthly, Semester Pass)
         $targetUser = $user ?? $team->leader;
         if ($targetUser) {
+            if ($targetUser->isPlatformAdmin()) {
+                $hasBonus = true;
+                $isPro = true;
+                $baseLimit += 500;
+                $planNames[] = 'Admin VIP (500 Sesi)';
+            }
+
             $userSub = UserSubscription::where('user_id', $targetUser->id)
                 ->where('status', 'active')
                 ->where(function ($q) {

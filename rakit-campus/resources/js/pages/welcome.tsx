@@ -1956,12 +1956,23 @@ export default function Welcome() {
                         >
                             CARA KERJA
                         </a>
+                        <Link
+                            href="/pricing"
+                            className="hover-blur-text flex items-center cursor-pointer"
+                        >
+                            HARGA
+                        </Link>
                     </nav>
 
                     {/* White Rectangular Action Buttons (Adjacent with 4px gap) */}
-                    <div className="flex items-center gap-1 self-center">
+                    <div className="flex items-center gap-1.5 self-center">
                         {auth?.user ? (
                             <>
+                                {(auth.user as any)?.is_pro && (
+                                    <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black tracking-wider uppercase shadow-xs mr-1">
+                                        PRO
+                                    </span>
+                                )}
                                 <Link
                                     href="/dashboard"
                                     className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
@@ -2142,6 +2153,22 @@ export default function Welcome() {
                             ALUR KOLABORASI MAHASISWA
                         </span>
                     </a>
+
+                    <Link
+                        href="/pricing"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="group flex flex-col text-left cursor-pointer"
+                    >
+                        <span className="font-serif text-xl sm:text-2xl text-white font-normal tracking-[0.14em] uppercase group-hover-blur-text leading-tight flex items-center justify-between">
+                            <span>HARGA &amp; PAKET</span>
+                            <span className="text-[9px] font-sans px-2 py-0.5 rounded-full bg-blue-600 text-white font-bold tracking-normal uppercase">
+                                PRO
+                            </span>
+                        </span>
+                        <span className="text-[10px] sm:text-[11px] text-neutral-400 font-sans tracking-[0.12em] uppercase mt-1 group-hover-blur-subtext">
+                            INVESTASI TERJANGKAU &amp; BOOSTER AI
+                        </span>
+                    </Link>
                 </div>
 
                 {/* Bottom Actions */}
@@ -4014,6 +4041,150 @@ export default function Welcome() {
                 </div>
             </section>
 
+            {/* 8.5. Paket & Investasi Mahasiswa (Clean Apple iOS Bento Grid) */}
+            <section
+                id="pricing"
+                className="py-14 sm:py-24 bg-white border-t border-neutral-200/80 relative select-none"
+            >
+                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                    <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-2">
+                        <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+                            Investasi Terjangkau untuk Prestasi Nyata
+                        </h2>
+                        <p className="text-xs sm:text-sm text-slate-500 max-w-xl mx-auto">
+                            Akses eksplorasi kompetisi, cari tim, dan kolaborasi dasar 100% gratis. Tingkatkan ke Pro saat Anda butuh booster AI untuk proposal dan portofolio resmi.
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+                        {/* Plan 1: Free */}
+                        <div className="rounded-3xl p-6 bg-slate-50/70 border border-slate-200/80 flex flex-col justify-between">
+                            <div className="space-y-3">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900">Free</h3>
+                                    <p className="text-xs text-slate-500 mt-0.5">Eksplorasi lomba & kolaborasi tim dasar</p>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 pt-1">
+                                    Gratis <span className="text-xs text-slate-400 font-normal">/selamanya</span>
+                                </div>
+                                <div className="space-y-2 pt-3 border-t border-slate-200/60 text-xs text-slate-600">
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
+                                        <span>Eksplorasi kompetisi & proyek terbuka</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
+                                        <span>Buat & gabung tim kolaborasi</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
+                                        <span>Workspace dasar & papan Kanban</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
+                                        <span>Kuota AI standar (10 Sesi)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-6">
+                                <Link
+                                    href="/register"
+                                    className="w-full py-2.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 flex items-center justify-center transition"
+                                >
+                                    Mulai Gratis
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Plan 2: Pro Monthly (Featured) */}
+                        <div className="rounded-3xl p-6 bg-white border-2 border-blue-600 shadow-xl shadow-blue-500/10 flex flex-col justify-between relative ring-4 ring-blue-500/10">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-900">RAKIT Pro</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">Booster intensif kompetisi bulanan</p>
+                                    </div>
+                                    <span className="text-[9px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        Populer
+                                    </span>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-slate-900 pt-1">
+                                    Rp 29.000 <span className="text-xs text-slate-400 font-normal">/bulan</span>
+                                </div>
+                                <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-700">
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-blue-600 shrink-0" />
+                                        <span>Semua fitur Free</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-blue-600 shrink-0" />
+                                        <span>AI Workspace 100 prompt/bulan</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-blue-600 shrink-0" />
+                                        <span>Badge Profil "PRO" resmi di navbar & portofolio</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-blue-600 shrink-0" />
+                                        <span>Ekspor PDF Portofolio ATS-Ready</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-6">
+                                <Link
+                                    href="/pricing"
+                                    className="w-full py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
+                                >
+                                    <span>Pilih RAKIT Pro</span>
+                                    <ArrowRight className="size-3" />
+                                </Link>
+                            </div>
+                        </div>
+
+                        {/* Plan 3: RAKIT Team */}
+                        <div className="rounded-3xl p-6 bg-slate-900 text-white border border-slate-800 flex flex-col justify-between">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">RAKIT Team</h3>
+                                        <p className="text-xs text-slate-400 mt-0.5">Kolaborasi intensif 1 tim kompetisi</p>
+                                    </div>
+                                    <span className="text-[9px] font-black text-slate-900 bg-amber-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                        1 Tim
+                                    </span>
+                                </div>
+                                <div className="text-2xl sm:text-3xl font-black text-white pt-1">
+                                    Rp 99.000 <span className="text-xs text-slate-400 font-normal">/tim (3 bln)</span>
+                                </div>
+                                <div className="space-y-2 pt-3 border-t border-white/10 text-xs text-slate-300">
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-amber-400 shrink-0" />
+                                        <span>Shared pool 200 Kredit AI untuk seluruh anggota</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-amber-400 shrink-0" />
+                                        <span>Living Proposal & Pitch Assistant bersama</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Check className="size-3.5 text-amber-400 shrink-0" />
+                                        <span>Prioritas pendaftaran kompetisi kampus</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="pt-6">
+                                <Link
+                                    href="/pricing"
+                                    className="w-full py-2.5 rounded-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
+                                >
+                                    <span>Lihat Semua Paket</span>
+                                    <ArrowRight className="size-3" />
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* 9. Saran & Masukan Sistem */}
             <section
                 ref={ctaSectionRef}
@@ -4339,6 +4510,7 @@ export default function Welcome() {
                         <Link href="/competitions" className="hover:text-slate-900 transition">Competition Hub</Link>
                         <Link href="/matching" className="hover:text-slate-900 transition">Smart Matching</Link>
                         <Link href="/portfolio" className="hover:text-slate-900 transition">Portofolio</Link>
+                        <Link href="/pricing" className="text-blue-600 hover:text-blue-700 font-semibold transition">Paket & Biaya</Link>
                     </div>
 
                     <p className="text-xs text-slate-400">

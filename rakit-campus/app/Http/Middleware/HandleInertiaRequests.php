@@ -65,6 +65,12 @@ class HandleInertiaRequests extends Middleware
                     'is_platform_admin' => $user->isPlatformAdmin(),
                     'is_campus_admin' => $user->isCampusAdmin(),
                     'is_lecturer' => $user->isLecturer(),
+                    'is_pro' => $user->isPro(),
+                    'active_subscription' => ($sub = $user->activeSubscription()) ? [
+                        'plan_type' => $sub->plan_type,
+                        'expires_at' => $sub->expires_at?->toIso8601String(),
+                        'ai_credits_bonus' => $sub->ai_credits_bonus,
+                    ] : null,
                     'is_onboarded' => (bool) ($user->profile?->is_onboarded ?? false),
                     'unread_notifications_count' => app(\App\Contracts\Notifications\NotificationCounterInterface::class)->getUnreadCount($user),
                     'recent_notifications' => $user->notifications()

@@ -252,12 +252,18 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isPro(): bool
     {
+        if ($this->isPlatformAdmin()) {
+            return true;
+        }
         $sub = $this->activeSubscription();
         return $sub !== null && in_array($sub->plan_type, ['pro_monthly', 'semester_pass']);
     }
 
     public function hasAiAccess(): bool
     {
+        if ($this->isPlatformAdmin()) {
+            return true;
+        }
         $sub = $this->activeSubscription();
         return $sub !== null;
     }
