@@ -55,6 +55,114 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Leaderboard', href: '/leaderboard' },
 ];
 
+// Curated photos for Teams (collaborative squad, hackathon teamwork, discussions)
+const TEAM_PLACEHOLDER_PHOTOS = [
+    'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=250&q=80', // Tim berkolaborasi dengan laptop
+    'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=250&q=80', // Mahasiswa kerja kelompok
+    'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=250&q=80', // Sesi ide & brainstorming tim
+    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=250&q=80', // Tim kompak di meja diskusi
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=250&q=80', // Hackathon teamwork intensif
+    'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=250&q=80', // Squad tech developer di ruang kerja
+    'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=250&q=80', // Rekan tim solid & ceria
+    'https://images.unsplash.com/photo-1543269865-cbf427effbad?auto=format&fit=crop&w=250&q=80', // Diskusi proyek kelompok
+];
+
+// Curated photos for Projects (software code, modern UI dashboard, apps, tech devices)
+const PROJECT_PLACEHOLDER_PHOTOS = [
+    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=250&q=80', // Dashboard data & analitik modern
+    'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=250&q=80', // Kode pemrograman di layar laptop
+    'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=250&q=80', // Desain UI platform digital
+    'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=250&q=80', // Prototipe website & aplikasi interaktif
+    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=250&q=80', // Terminal AI & arsitektur sistem
+    'https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=250&q=80', // Antarmuka aplikasi smartphone modern
+    'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=250&q=80', // Perangkat IoT hardware & mikrokontroler
+    'https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&w=250&q=80', // Digital product & sistem inovasi perangkat lunak
+];
+
+function hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function getEntityVisual(item: any, activeHub: string, activeSubType?: string) {
+    if (!item) {
+        return {
+            url: 'https://ui-avatars.com/api/?name=RC&background=2563EB&color=fff&size=96&bold=true',
+            isTeam: false,
+            isProject: false,
+            isUser: true,
+            name: 'Peserta',
+            subtitle: '-',
+            entityLabel: 'Peserta',
+        };
+    }
+
+    // 1. Proyek (Karya / Aplikasi / Software)
+    if (item.project || activeSubType === 'projects') {
+        const proj = item.project || {};
+        const title = proj.title || 'Proyek Inovasi';
+        if (proj.cover_url) {
+            return {
+                url: proj.cover_url,
+                isTeam: false,
+                isProject: true,
+                isUser: false,
+                name: title,
+                subtitle: proj.category ? `Kategori: ${proj.category}` : 'Proyek Inovasi',
+                entityLabel: 'Proyek Inovasi',
+            };
+        }
+        const key = String(proj.id || title);
+        const index = hashString(key) % PROJECT_PLACEHOLDER_PHOTOS.length;
+        return {
+            url: PROJECT_PLACEHOLDER_PHOTOS[index],
+            isTeam: false,
+            isProject: true,
+            isUser: false,
+            name: title,
+            subtitle: proj.category ? `Kategori: ${proj.category}` : 'Proyek Inovasi',
+            entityLabel: 'Proyek Inovasi',
+        };
+    }
+
+    // 2. Tim Kompetisi (Kelompok / Squad)
+    if (item.team || activeSubType === 'teams') {
+        const team = item.team || {};
+        const teamName = team.name || 'Tim Kompetisi';
+        const key = String(team.id || teamName);
+        const index = hashString(key) % TEAM_PLACEHOLDER_PHOTOS.length;
+        return {
+            url: team.avatar || TEAM_PLACEHOLDER_PHOTOS[index],
+            isTeam: true,
+            isProject: false,
+            isUser: false,
+            name: teamName,
+            subtitle: team.competition_name || 'Kompetisi Nasional',
+            entityLabel: 'Tim Kompetisi',
+        };
+    }
+
+    // 3. Mahasiswa / Pengguna (Individu)
+    const user = item.user || {};
+    const userName = user.name || 'Mahasiswa';
+    const seed = encodeURIComponent(String(user.id || userName));
+    const randomUserPhoto = `https://i.pravatar.cc/150?u=${seed}`;
+
+    return {
+        url: user.avatar || randomUserPhoto,
+        isTeam: false,
+        isProject: false,
+        isUser: true,
+        name: userName,
+        subtitle: user.campus_name || 'Perguruan Tinggi',
+        entityLabel: 'Mahasiswa',
+    };
+}
+
 export default function LeaderboardIndex({
     activeHub,
     activePeriod,
@@ -152,28 +260,44 @@ export default function LeaderboardIndex({
             />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-20">
-                {/* 1. TOP HERO HEADER */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-1">
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                            Klasemen & Peringkat RAKIT Campus
-                        </h1>
+                {/* 1. TOP HERO HEADER with Mascot Trophy (Apple HIG Bento Context Card) */}
+                <div className="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5">
+                    <div className="flex items-center gap-4">
+                        <div className="size-16 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-center justify-center p-2.5 shrink-0 shadow-2xs">
+                            <img
+                                src="/images/mascot/mascot-trophy.png"
+                                alt="Mascot Champion Trophy"
+                                className="w-full h-full object-contain drop-shadow-sm select-none pointer-events-none transform hover:scale-105 transition"
+                            />
+                        </div>
+                        <div>
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200/80 text-[10px] font-bold text-amber-800 uppercase tracking-wider mb-1">
+                                <Award className="size-3 text-amber-600" />
+                                <span>Hall of Fame & Podium Nasional</span>
+                            </div>
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
+                                Klasemen & Peringkat RAKIT Campus
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-1 max-w-xl">
+                                Panggung prestasi mahasiswa, kontributor proyek teraktif, dan tim juara kompetisi terverifikasi se-Indonesia.
+                            </p>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-start md:self-auto flex-wrap">
+                    <div className="flex items-center gap-2.5 self-start md:self-auto flex-wrap">
                         <button
                             type="button"
                             onClick={() => setRulesModalOpen(true)}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
+                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition cursor-pointer"
                         >
-                            <Info className="size-3.5 text-blue-600" />
+                            <Info className="size-3.5 text-indigo-600" />
                             <span>Aturan Poin</span>
                         </button>
 
                         {canManage && (
                             <Link
                                 href="/leaderboard/admin"
-                                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
                             >
                                 <Shield className="size-3.5" />
                                 <span>Kelola Leaderboard</span>
@@ -182,53 +306,38 @@ export default function LeaderboardIndex({
                     </div>
                 </div>
 
-                {/* 2. MAIN HUB TABS & CONTROLS BAR */}
-                <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs space-y-4">
-                    {/* Primary Hub Switcher (Overall vs Project vs Competition) */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-                        <div className="flex items-center gap-1.5 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5">
-                            <button
-                                type="button"
-                                onClick={() => handleSwitchHub('overall')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                                    activeHub === 'overall'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                }`}
-                            >
-                                <Trophy className="size-3.5" />
-                                <span>Klasemen RAKIT (Overall)</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleSwitchHub('project')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                                    activeHub === 'project'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                }`}
-                            >
-                                <FolderKanban className="size-3.5" />
-                                <span>Project Hub</span>
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={() => handleSwitchHub('competition')}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap cursor-pointer ${
-                                    activeHub === 'competition'
-                                        ? 'bg-blue-600 text-white shadow-xs'
-                                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                }`}
-                            >
-                                <Award className="size-3.5" />
-                                <span>Competition Hub</span>
-                            </button>
+                {/* 2. MAIN HUB TABS & CONTROLS BAR (Apple iOS Segmented Control) */}
+                <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs space-y-4">
+                    {/* Primary Hub Switcher */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div className="bg-slate-200/60 p-1.5 rounded-2xl inline-flex items-center gap-1 border border-slate-200/60 shadow-2xs backdrop-blur-sm overflow-x-auto no-scrollbar">
+                            {[
+                                { id: 'overall', label: 'Klasemen Utama', icon: Trophy },
+                                { id: 'project', label: 'Project Hub', icon: FolderKanban },
+                                { id: 'competition', label: 'Competition Hub', icon: Award },
+                            ].map((tab) => {
+                                const Icon = tab.icon;
+                                const isActive = activeHub === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        type="button"
+                                        onClick={() => handleSwitchHub(tab.id as any)}
+                                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition cursor-pointer whitespace-nowrap ${
+                                            isActive
+                                                ? 'bg-white text-slate-900 font-bold shadow-xs'
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                                        }`}
+                                    >
+                                        <Icon className={`size-3.5 ${isActive ? 'text-indigo-600' : 'text-slate-400'}`} />
+                                        <span>{tab.label}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        {/* Period Filter (Weekly / Monthly / All-Time) */}
-                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 self-start sm:self-auto">
+                        {/* Period Filter (Apple Segmented Pill) */}
+                        <div className="bg-slate-100/90 p-1 rounded-xl inline-flex items-center gap-1 shrink-0 self-start sm:self-auto border border-slate-200/50">
                             {[
                                 { id: 'weekly', label: '7 Hari' },
                                 { id: 'monthly', label: 'Bulan Ini' },
@@ -238,9 +347,9 @@ export default function LeaderboardIndex({
                                     key={p.id}
                                     type="button"
                                     onClick={() => handleSwitchPeriod(p.id)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                                         activePeriod === p.id
-                                            ? 'bg-white text-slate-900 shadow-2xs'
+                                            ? 'bg-white text-slate-900 font-bold shadow-2xs'
                                             : 'text-slate-500 hover:text-slate-800'
                                     }`}
                                 >
@@ -252,17 +361,16 @@ export default function LeaderboardIndex({
 
                     {/* Sub-type Filters & Search Row */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                        {/* Sub-type selector for Project or Competition Hub */}
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-2 flex-wrap">
                             {activeHub === 'project' && (
                                 <>
                                     <button
                                         type="button"
                                         onClick={() => handleSwitchSubType('projects')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                             leaderboard.sub_type === 'projects'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                : 'text-slate-500 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 shadow-2xs'
+                                                : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
                                         Peringkat Proyek
@@ -270,10 +378,10 @@ export default function LeaderboardIndex({
                                     <button
                                         type="button"
                                         onClick={() => handleSwitchSubType('contributors')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                             leaderboard.sub_type === 'contributors'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                : 'text-slate-500 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 shadow-2xs'
+                                                : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
                                         Kontributor Teraktif
@@ -286,10 +394,10 @@ export default function LeaderboardIndex({
                                     <button
                                         type="button"
                                         onClick={() => handleSwitchSubType('students')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                             leaderboard.sub_type === 'students'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                : 'text-slate-500 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 shadow-2xs'
+                                                : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
                                         Peringkat Mahasiswa
@@ -297,10 +405,10 @@ export default function LeaderboardIndex({
                                     <button
                                         type="button"
                                         onClick={() => handleSwitchSubType('teams')}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                                        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
                                             leaderboard.sub_type === 'teams'
-                                                ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                                : 'text-slate-500 hover:bg-slate-50'
+                                                ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200/80 shadow-2xs'
+                                                : 'text-slate-500 hover:bg-slate-100'
                                         }`}
                                     >
                                         Peringkat Tim
@@ -310,7 +418,7 @@ export default function LeaderboardIndex({
 
                             {activeHub === 'overall' && (
                                 <span className="text-xs text-slate-500 font-medium">
-                                    Periode: <strong className="text-slate-700">{leaderboard.period_label}</strong> · {leaderboard.total_participants} peserta aktif
+                                    Periode: <strong className="text-slate-800 font-semibold">{leaderboard.period_label}</strong> · {leaderboard.total_participants} peserta aktif
                                 </span>
                             )}
                         </div>
@@ -323,25 +431,29 @@ export default function LeaderboardIndex({
                                 placeholder="Cari nama / kampus..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 transition"
+                                className="w-full pl-9 pr-3.5 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-600 transition"
                             />
                         </form>
                     </div>
                 </div>
 
-                {/* 3. TOP 3 PODIUM SECTION (Only when 2 or more entries exist) */}
+                {/* 3. TOP 3 PODIUM SECTION */}
                 {leaderboard.top_three && leaderboard.top_three.length >= 2 && !search && (
                     <div className="space-y-6 pt-2">
                         {/* Interactive Visual Olympic Podium */}
-                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/90 shadow-2xs flex flex-col items-center justify-center">
+                        <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col items-center justify-center">
                             <LeaderboardPodium
-                                rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => ({
-                                    userId: String(item.user?.id || item.team?.id || item.project?.id || idx + 1),
-                                    userName: item.user?.name || item.team?.name || item.project?.title || `Peserta #${item.rank || idx + 1}`,
-                                    rank: (item.rank || idx + 1) as 1 | 2 | 3,
-                                    value: item.points || 0,
-                                    avatarUrl: item.user?.avatar || (item.user?.name ? `https://ui-avatars.com/api/?name=${encodeURIComponent(item.user.name)}&background=2563EB&color=fff` : null),
-                                }))}
+                                rankings={leaderboard.top_three.slice(0, 3).map((item: any, idx: number) => {
+                                    const v = getEntityVisual(item, activeHub, leaderboard.sub_type);
+                                    return {
+                                        userId: String(item.user?.id || item.team?.id || item.project?.id || idx + 1),
+                                        userName: v.name,
+                                        rank: (item.rank || idx + 1) as 1 | 2 | 3,
+                                        value: item.points || 0,
+                                        avatarUrl: v.url,
+                                        entityType: v.isProject ? ('project' as const) : v.isTeam ? ('team' as const) : ('user' as const),
+                                    };
+                                })}
                                 size="default"
                                 medalStyle="modern"
                                 showValue={true}
@@ -349,176 +461,197 @@ export default function LeaderboardIndex({
                             />
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* 2nd Place (Silver) */}
-                        {leaderboard.top_three[1] && (
-                            <div className="order-2 md:order-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200 shadow-2xs">
-                                        #2
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[1].rank_change)}
-                                </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                            {/* 2nd Place (Silver) */}
+                            {leaderboard.top_three[1] && (() => {
+                                const item2 = leaderboard.top_three[1];
+                                const v2 = getEntityVisual(item2, activeHub, leaderboard.sub_type);
+                                return (
+                                    <div className="order-2 md:order-1 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between items-center text-center relative overflow-hidden group">
+                                        <div className="absolute top-4 left-4">
+                                            <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold text-xs flex items-center justify-center border border-slate-200">
+                                                #2
+                                            </span>
+                                        </div>
+                                        <div className="absolute top-4 right-4">
+                                            {renderRankChange(item2.rank_change)}
+                                        </div>
 
-                                <div className="mt-4 flex flex-col items-center">
-                                    <div className="size-16 rounded-full bg-slate-100 border-2 border-slate-300 flex items-center justify-center text-slate-700 font-black text-lg shadow-xs mb-3 overflow-hidden">
-                                        {leaderboard.top_three[1].user?.avatar ? (
-                                            <img src={leaderboard.top_three[1].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[1].user?.name?.slice(0, 2).toUpperCase() || 'P2'
-                                        )}
+                                        <div className="mt-4 flex flex-col items-center">
+                                            <div className={`size-16 ${v2.isProject ? 'rounded-2xl' : 'rounded-full'} bg-slate-100 border-2 border-slate-200 flex items-center justify-center text-slate-700 font-black text-lg shadow-xs mb-3 overflow-hidden relative ring-2 ring-white`}>
+                                                <img
+                                                    src={v2.url}
+                                                    alt={v2.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v2.name)}&background=64748B&color=fff&size=96&bold=true`;
+                                                    }}
+                                                />
+                                            </div>
+                                            <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1" title={v2.name}>
+                                                {v2.name}
+                                            </h3>
+                                            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                                                {v2.subtitle}
+                                            </p>
+                                            {item2.badge && (
+                                                <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {item2.badge.name}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                            <Zap className="size-4 text-amber-500 fill-amber-500" />
+                                            <span className="text-xl font-extrabold text-slate-900 font-mono">
+                                                {item2.points.toLocaleString()}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-400">pts</span>
+                                        </div>
                                     </div>
-                                    <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[1].user?.name || leaderboard.top_three[1].team?.name || leaderboard.top_three[1].project?.title}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                        {leaderboard.top_three[1].user?.campus_name || leaderboard.top_three[1].team?.competition_name || leaderboard.top_three[1].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[1].badge && (
-                                        <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                            {leaderboard.top_three[1].badge.name}
-                                        </span>
-                                    )}
-                                </div>
+                                );
+                            })()}
 
-                                <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
-                                    <Zap className="size-4 text-amber-500 fill-amber-500" />
-                                    <span className="text-xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[1].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
-                                </div>
-                            </div>
-                        )}
+                            {/* 1st Place (Gold Champion) */}
+                            {leaderboard.top_three[0] && (() => {
+                                const item1 = leaderboard.top_three[0];
+                                const v1 = getEntityVisual(item1, activeHub, leaderboard.sub_type);
+                                return (
+                                    <div className="order-1 md:order-2 bg-gradient-to-b from-amber-50/80 via-white to-white rounded-3xl p-6 border-2 border-amber-300 shadow-sm flex flex-col justify-between items-center text-center relative overflow-hidden group">
+                                        <div className="absolute top-4 left-4">
+                                            <span className="px-3 py-1 rounded-full bg-amber-400 text-amber-950 font-extrabold text-xs flex items-center gap-1 shadow-2xs">
+                                                <Trophy className="size-3.5 shrink-0" />
+                                                <span>Peringkat 1</span>
+                                            </span>
+                                        </div>
+                                        <div className="absolute top-4 right-4">
+                                            {renderRankChange(item1.rank_change)}
+                                        </div>
 
-                        {/* 1st Place (Gold Champion) */}
-                        {leaderboard.top_three[0] && (
-                            <div className="order-1 md:order-2 bg-gradient-to-b from-amber-50/70 via-white to-white rounded-2xl p-6 border-2 border-amber-300 shadow-xs flex flex-col justify-between items-center text-center relative overflow-hidden group">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2.5 py-0.5 rounded-lg bg-amber-400 text-amber-950 font-black text-xs flex items-center gap-1 shadow-2xs">
-                                        <Trophy className="size-3 shrink-0" />
-                                        <span>Peringkat 1</span>
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[0].rank_change)}
-                                </div>
+                                        <div className="mt-5 flex flex-col items-center">
+                                            <div className={`size-20 ${v1.isProject ? 'rounded-2xl' : 'rounded-full'} bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-amber-900 font-black text-2xl shadow-sm mb-3 overflow-hidden relative ring-4 ring-amber-100`}>
+                                                <img
+                                                    src={v1.url}
+                                                    alt={v1.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v1.name)}&background=D97706&color=fff&size=96&bold=true`;
+                                                    }}
+                                                />
+                                            </div>
+                                            <h3 className="font-extrabold text-base text-slate-900 line-clamp-1" title={v1.name}>
+                                                {v1.name}
+                                            </h3>
+                                            <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 font-medium">
+                                                {v1.subtitle}
+                                            </p>
+                                            {item1.badge && (
+                                                <span className="mt-2 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                                                    {item1.badge.name}
+                                                </span>
+                                            )}
+                                        </div>
 
-                                <div className="mt-5 flex flex-col items-center">
-                                    <div className="size-20 rounded-full bg-amber-100 border-4 border-amber-300 flex items-center justify-center text-amber-900 font-black text-2xl shadow-sm mb-3 overflow-hidden">
-                                        {leaderboard.top_three[0].user?.avatar ? (
-                                            <img src={leaderboard.top_three[0].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[0].user?.name?.slice(0, 2).toUpperCase() || 'P1'
-                                        )}
+                                        <div className="mt-5 pt-3 border-t border-amber-100 w-full flex items-center justify-center gap-1.5">
+                                            <Sparkles className="size-4 text-amber-500" />
+                                            <span className="text-2xl font-extrabold text-slate-900 font-mono">
+                                                {item1.points.toLocaleString()}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-400">pts</span>
+                                        </div>
                                     </div>
-                                    <h3 className="font-black text-base text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[0].user?.name || leaderboard.top_three[0].team?.name || leaderboard.top_three[0].project?.title}
-                                    </h3>
-                                    <p className="text-xs text-slate-500 mt-0.5 line-clamp-1 font-medium">
-                                        {leaderboard.top_three[0].user?.campus_name || leaderboard.top_three[0].team?.competition_name || leaderboard.top_three[0].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[0].badge && (
-                                        <span className="mt-2 text-[11px] font-black px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200">
-                                            {leaderboard.top_three[0].badge.name}
-                                        </span>
-                                    )}
-                                </div>
+                                );
+                            })()}
 
-                                <div className="mt-5 pt-3 border-t border-amber-100 w-full flex items-center justify-center gap-1.5">
-                                    <Sparkles className="size-4 text-amber-500" />
-                                    <span className="text-2xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[0].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
-                                </div>
-                            </div>
-                        )}
+                            {/* 3rd Place (Bronze) */}
+                            {leaderboard.top_three[2] && (() => {
+                                const item3 = leaderboard.top_three[2];
+                                const v3 = getEntityVisual(item3, activeHub, leaderboard.sub_type);
+                                return (
+                                    <div className="order-3 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between items-center text-center relative overflow-hidden group">
+                                        <div className="absolute top-4 left-4">
+                                            <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200">
+                                                #3
+                                            </span>
+                                        </div>
+                                        <div className="absolute top-4 right-4">
+                                            {renderRankChange(item3.rank_change)}
+                                        </div>
 
-                        {/* 3rd Place (Bronze) */}
-                        {leaderboard.top_three[2] && (
-                            <div className="order-3 bg-white rounded-2xl p-5 border border-slate-200 shadow-2xs flex flex-col justify-between items-center text-center relative overflow-hidden group hover:border-slate-300 transition">
-                                <div className="absolute top-3 left-3">
-                                    <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-800 font-bold text-xs flex items-center justify-center border border-amber-200 shadow-2xs">
-                                        #3
-                                    </span>
-                                </div>
-                                <div className="absolute top-3 right-3">
-                                    {renderRankChange(leaderboard.top_three[2].rank_change)}
-                                </div>
+                                        <div className="mt-4 flex flex-col items-center">
+                                            <div className={`size-16 ${v3.isProject ? 'rounded-2xl' : 'rounded-full'} bg-amber-50 border-2 border-amber-200 flex items-center justify-center text-amber-800 font-black text-lg shadow-xs mb-3 overflow-hidden relative ring-2 ring-white`}>
+                                                <img
+                                                    src={v3.url}
+                                                    alt={v3.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v3.name)}&background=B45309&color=fff&size=96&bold=true`;
+                                                    }}
+                                                />
+                                            </div>
+                                            <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1" title={v3.name}>
+                                                {v3.name}
+                                            </h3>
+                                            <p className="text-xs text-slate-400 mt-0.5 line-clamp-1">
+                                                {v3.subtitle}
+                                            </p>
+                                            {item3.badge && (
+                                                <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
+                                                    {item3.badge.name}
+                                                </span>
+                                            )}
+                                        </div>
 
-                                <div className="mt-4 flex flex-col items-center">
-                                    <div className="size-16 rounded-full bg-amber-50 border-2 border-amber-200 flex items-center justify-center text-amber-800 font-black text-lg shadow-xs mb-3 overflow-hidden">
-                                        {leaderboard.top_three[2].user?.avatar ? (
-                                            <img src={leaderboard.top_three[2].user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                        ) : (
-                                            leaderboard.top_three[2].user?.name?.slice(0, 2).toUpperCase() || 'P3'
-                                        )}
+                                        <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
+                                            <Zap className="size-4 text-amber-500 fill-amber-500" />
+                                            <span className="text-xl font-extrabold text-slate-900 font-mono">
+                                                {item3.points.toLocaleString()}
+                                            </span>
+                                            <span className="text-xs font-semibold text-slate-400">pts</span>
+                                        </div>
                                     </div>
-                                    <h3 className="font-extrabold text-sm text-slate-900 line-clamp-1">
-                                        {leaderboard.top_three[2].user?.name || leaderboard.top_three[2].team?.name || leaderboard.top_three[2].project?.title}
-                                    </h3>
-                                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
-                                        {leaderboard.top_three[2].user?.campus_name || leaderboard.top_three[2].team?.competition_name || leaderboard.top_three[2].project?.category}
-                                    </p>
-                                    {leaderboard.top_three[2].badge && (
-                                        <span className="mt-2 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
-                                            {leaderboard.top_three[2].badge.name}
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="mt-4 pt-3 border-t border-slate-100 w-full flex items-center justify-center gap-1.5">
-                                    <Zap className="size-4 text-amber-500 fill-amber-500" />
-                                    <span className="text-xl font-black text-slate-900 font-mono">
-                                        {leaderboard.top_three[2].points.toLocaleString()}
-                                    </span>
-                                    <span className="text-xs font-semibold text-slate-400">pts</span>
-                                </div>
-                            </div>
-                        )}
+                                );
+                            })()}
                         </div>
                     </div>
                 )}
 
-                {/* 4. CURRENT LOGGED IN USER CONTEXT BANNER */}
+                {/* 4. CURRENT LOGGED IN USER CONTEXT BANNER (Apple Squircle Dark Context Hub) */}
                 {userContext && (
-                    <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-3.5">
-                            <div className="size-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center font-black text-lg text-white shrink-0">
+                    <div className="bg-slate-950 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative overflow-hidden">
+                        <div className="flex items-center gap-4">
+                            <div className="size-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center font-extrabold text-xl text-white shrink-0 shadow-xs">
                                 #{userContext.rank}
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-blue-200">Posisi Peringkat Anda</span>
+                                    <span className="text-xs font-semibold text-indigo-300">Posisi Peringkat Anda</span>
                                     {renderRankChange(userContext.rank_change)}
                                 </div>
-                                <h4 className="text-base font-extrabold text-white mt-0.5">
+                                <h4 className="text-base sm:text-lg font-extrabold text-white mt-0.5">
                                     {userContext.points.toLocaleString()} Total Poin Terverifikasi
                                 </h4>
                                 {userContext.points_to_next > 0 && (
-                                    <p className="text-xs text-blue-200/90 mt-0.5 flex items-center gap-1.5">
-                                        <TrendingUp className="size-3.5 shrink-0 text-blue-300" />
+                                    <p className="text-xs text-slate-400 mt-0.5 flex items-center gap-1.5">
+                                        <TrendingUp className="size-3.5 shrink-0 text-emerald-400" />
                                         <span>
-                                            Butuh <strong>{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!
+                                            Butuh <strong className="text-white">{userContext.points_to_next} poin lagi</strong> untuk menyalip peringkat #{userContext.next_target_rank}!
                                         </span>
                                     </p>
                                 )}
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+                        <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
                             <Link
                                 href="/projects"
-                                className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold transition border border-white/10"
+                                className="px-4 py-2 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold transition border border-white/10"
                             >
                                 Kembangkan Proyek
                             </Link>
                             <Link
                                 href="/competitions"
-                                className="px-3.5 py-1.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-white text-xs font-bold transition shadow-2xs"
+                                className="px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition shadow-xs"
                             >
                                 Ikuti Kompetisi
                             </Link>
@@ -526,10 +659,10 @@ export default function LeaderboardIndex({
                     </div>
                 )}
 
-                {/* 5. RANKED TABLE LIST */}
-                <div className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
-                    <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-2">
-                        <h3 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
+                {/* 5. RANKED TABLE LIST (Apple HIG Squircle List) */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    <div className="px-6 py-4.5 border-b border-slate-100 flex items-center justify-between gap-2">
+                        <h3 className="font-extrabold text-sm sm:text-base text-slate-900 flex items-center gap-2">
                             <span>Daftar Lengkap Peringkat</span>
                             <span className="text-xs font-normal text-slate-400">({leaderboard.rankings.length} data)</span>
                         </h3>
@@ -548,20 +681,21 @@ export default function LeaderboardIndex({
                         <div className="divide-y divide-slate-100 overflow-x-auto">
                             {leaderboard.rankings.map((item: any, idx: number) => {
                                 const isMe = item.user?.is_current_user || item.is_my_team || item.is_my_project;
+                                const v = getEntityVisual(item, activeHub, leaderboard.sub_type);
 
                                 return (
                                     <div
                                         key={idx}
                                         className={`flex items-center justify-between gap-4 p-4 sm:px-6 transition ${
-                                            isMe ? 'bg-blue-50/60 font-semibold' : 'hover:bg-slate-50/80'
+                                            isMe ? 'bg-indigo-50/50 font-semibold' : 'hover:bg-slate-50/80'
                                         }`}
                                     >
                                         {/* Left: Rank & Movement & Profile */}
                                         <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                                             {/* Rank Number */}
                                             <div className="w-8 sm:w-10 text-center shrink-0">
-                                                <span className={`text-sm sm:text-base font-black font-mono ${
-                                                    item.rank === 1 ? 'text-amber-500' : item.rank === 2 ? 'text-slate-600' : item.rank === 3 ? 'text-amber-700' : 'text-slate-700'
+                                                <span className={`text-sm sm:text-base font-extrabold font-mono ${
+                                                    item.rank === 1 ? 'text-amber-500' : item.rank === 2 ? 'text-slate-500' : item.rank === 3 ? 'text-amber-700' : 'text-slate-700'
                                                 }`}>
                                                     #{item.rank}
                                                 </span>
@@ -573,33 +707,36 @@ export default function LeaderboardIndex({
                                             </div>
 
                                             {/* Avatar / Thumbnail */}
-                                            <div className="size-10 sm:size-11 rounded-xl bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden">
-                                                {item.user?.avatar ? (
-                                                    <img src={item.user.avatar} alt="avatar" className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <span>{(item.user?.name || item.team?.name || item.project?.title || 'R').slice(0, 2).toUpperCase()}</span>
-                                                )}
+                                            <div className={`size-10 sm:size-11 ${v.isProject ? 'rounded-2xl' : 'rounded-full'} bg-slate-100 border border-slate-200 shrink-0 flex items-center justify-center text-xs font-bold text-slate-700 overflow-hidden shadow-2xs`}>
+                                                <img
+                                                    src={v.url}
+                                                    alt={v.name}
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        (e.currentTarget as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(v.name)}&background=2563EB&color=fff&size=96&bold=true`;
+                                                    }}
+                                                />
                                             </div>
 
                                             {/* Name & Details */}
                                             <div className="min-w-0 flex-1">
                                                 <div className="flex items-center gap-2 flex-wrap">
-                                                    <h4 className="text-xs sm:text-sm font-extrabold text-slate-900 truncate">
-                                                        {item.user?.name || item.team?.name || item.project?.title}
+                                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate" title={v.name}>
+                                                        {v.name}
                                                     </h4>
                                                     {isMe && (
-                                                        <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-md bg-blue-600 text-white">
+                                                        <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-indigo-600 text-white">
                                                             Anda
                                                         </span>
                                                     )}
                                                     {item.badge && (
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">
+                                                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
                                                             {item.badge.name}
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                                                <p className="text-[11px] text-slate-400 truncate mt-0.5">
                                                     {item.user?.campus_name && (
                                                         <span>{item.user.campus_name} • {item.user.major}</span>
                                                     )}
@@ -625,14 +762,14 @@ export default function LeaderboardIndex({
 
                                             {/* Activity count */}
                                             {item.total_activities > 0 && (
-                                                <span className="hidden md:inline-block text-[11px] font-semibold text-slate-500 px-2 py-1 rounded-lg bg-slate-50">
+                                                <span className="hidden md:inline-block text-[11px] font-semibold text-slate-500 px-2.5 py-1 rounded-full bg-slate-100/70 border border-slate-200/50">
                                                     {item.total_activities} aktivitas
                                                 </span>
                                             )}
 
                                             {/* Total Points */}
                                             <div className="min-w-[90px]">
-                                                <div className="text-sm sm:text-base font-black text-slate-900 font-mono">
+                                                <div className="text-sm sm:text-base font-extrabold text-slate-900 font-mono">
                                                     {item.points.toLocaleString()}
                                                 </div>
                                                 <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">

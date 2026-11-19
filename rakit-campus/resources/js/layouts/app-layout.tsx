@@ -13,6 +13,7 @@ import {
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    ArrowLeft,
     ArrowLeftRight,
     Award,
     Bell,
@@ -29,6 +30,7 @@ import {
     LayoutDashboard,
     LogOut,
     Mail,
+    MessageSquare,
     PlusCircle,
     Puzzle,
     Settings,
@@ -65,21 +67,25 @@ export default function AppLayout({
         user?.campus?.role === 'admin' ||
         user?.campus?.role === 'campus_admin'
     );
+    const isAdminArea = url.startsWith('/admin') || url.startsWith('/leaderboard/admin');
     const [isGatewayOpen, setIsGatewayOpen] = useState(false);
 
-    // Persistent & route-aware active hub state
+    // Persistent & route-aware active hub state (Only relevant when outside admin workspace)
     const [activeHub, setActiveHub] = useState<'competition' | 'project'>(() => {
         if (typeof window !== 'undefined') {
+            const pathname = window.location.pathname;
+            if (pathname.startsWith('/admin') || pathname.startsWith('/leaderboard/admin')) {
+                return 'project';
+            }
+
             const params = new URLSearchParams(window.location.search);
             const hubParam = params.get('hub');
             if (hubParam === 'competition') return 'competition';
             if (hubParam === 'project') return 'project';
 
-            const pathname = window.location.pathname;
             if (
                 pathname.startsWith('/competitions') ||
                 pathname.startsWith('/competition-workspace') ||
-                pathname.startsWith('/admin/competitions') ||
                 pathname.startsWith('/matching')
             ) {
                 return 'competition';
@@ -104,14 +110,18 @@ export default function AppLayout({
         }
         return 'project';
     });
-    const isCompetitionHub = activeHub === 'competition';
+    const isCompetitionHub = !isAdminArea && activeHub === 'competition';
 
     // Synchronize hub state consistently without unexpected auto-redirects
     useEffect(() => {
         if (typeof window !== 'undefined') {
+            const pathname = window.location.pathname;
+            if (pathname.startsWith('/admin') || pathname.startsWith('/leaderboard/admin')) {
+                return;
+            }
+
             const params = new URLSearchParams(window.location.search);
             const hubParam = params.get('hub');
-            const pathname = window.location.pathname;
 
             let detectedHub: 'competition' | 'project' | null = null;
 
@@ -122,7 +132,6 @@ export default function AppLayout({
             } else if (
                 pathname.startsWith('/competitions') ||
                 pathname.startsWith('/competition-workspace') ||
-                pathname.startsWith('/admin/competitions') ||
                 pathname.startsWith('/matching')
             ) {
                 detectedHub = 'competition';
@@ -160,7 +169,7 @@ export default function AppLayout({
 
     // Check explicit select_hub URL parameter only (never auto-popup on tab click or /dashboard)
     useEffect(() => {
-        if (isLecturer) {
+        if (isAdminArea || isAdmin || isLecturer) {
             setIsGatewayOpen(false);
             return;
         }
@@ -175,7 +184,7 @@ export default function AppLayout({
 
         // Jangan pernah memunculkan pop-up otomatis saat pindah tab atau klik Dashboard
         setIsGatewayOpen(false);
-    }, [url, isLecturer]);
+    }, [url, isLecturer, isAdmin, isAdminArea]);
 
     const initials = useMemo(() => {
         const name = user?.name || 'Mahasiswa';
@@ -193,51 +202,53 @@ export default function AppLayout({
 
     const renderUserActions = () => (
         <div className="flex items-center gap-1.5 sm:gap-2">
-            {/* Ganti Ruang Kerja (Single Jigsaw Button: Chrome Extensions Style, Colored & Center Workspace Icon) */}
-            <button
-                type="button"
-                onClick={() => setIsGatewayOpen(true)}
-                className="relative w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] flex items-center justify-center transition-all duration-200 cursor-pointer group focus:outline-none shrink-0"
-                title={`Ganti Ruang Kerja (Aktif: ${isCompetitionHub ? 'Lomba Hub' : 'Proyek Hub'})`}
-                aria-label={`Ganti Ruang Kerja (${isCompetitionHub ? 'Lomba Hub' : 'Proyek Hub'})`}
-            >
-                {/* SVG Jigsaw Piece (Chrome Extensions Style) */}
-                <svg
-                    viewBox="0 0 24 24"
-                    className="w-full h-full overflow-visible transition-transform duration-200 group-hover:scale-105 drop-shadow-[0_2px_4px_rgba(15,23,42,0.16)]"
+            {!isAdminArea && !isAdmin && !isLecturer && (
+                /* Ganti Ruang Kerja (Single Jigsaw Button: Chrome Extensions Style, Colored & Center Workspace Icon) */
+                <button
+                    type="button"
+                    onClick={() => setIsGatewayOpen(true)}
+                    className="relative w-[34px] h-[34px] sm:w-[38px] sm:h-[38px] flex items-center justify-center transition-all duration-200 cursor-pointer group focus:outline-none shrink-0"
+                    title={`Ganti Ruang Kerja (Aktif: ${isCompetitionHub ? 'Lomba Hub' : 'Proyek Hub'})`}
+                    aria-label={`Ganti Ruang Kerja (${isCompetitionHub ? 'Lomba Hub' : 'Proyek Hub'})`}
                 >
-                    <defs>
-                        <linearGradient id="nav-jigsaw-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#3B82F6" />
-                            <stop offset="100%" stopColor="#1D4ED8" />
-                        </linearGradient>
-                        <linearGradient id="nav-jigsaw-amber" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#F59E0B" />
-                            <stop offset="100%" stopColor="#D97706" />
-                        </linearGradient>
-                    </defs>
-                    <path
-                        d="M5 21q-.85 0-1.425-.575T3 19v-3.8q1.2 0 2.1-.762T6 12.5q0-1.15-.9-1.9T3 9.8V6q0-.825.588-1.412T5 4h3.05q.175-1.275 1.15-2.137T11.5 1q1.3 0 2.275.863T14.95 4H18q.825 0 1.413.588T20 6v3.35q.9.45 1.45 1.3T22 12.5q0 1.025-.55 1.875T20 15.65V19q0 .85-.587 1.425T18 21z"
-                        fill={isCompetitionHub ? 'url(#nav-jigsaw-amber)' : 'url(#nav-jigsaw-blue)'}
-                        stroke={isCompetitionHub ? '#B45309' : '#1E40AF'}
-                        strokeWidth="0.5"
-                        strokeLinejoin="round"
-                        className="transition-colors duration-300"
-                    />
-                </svg>
+                    {/* SVG Jigsaw Piece (Chrome Extensions Style) */}
+                    <svg
+                        viewBox="0 0 24 24"
+                        className="w-full h-full overflow-visible transition-transform duration-200 group-hover:scale-105 drop-shadow-[0_2px_4px_rgba(15,23,42,0.16)]"
+                    >
+                        <defs>
+                            <linearGradient id="nav-jigsaw-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#3B82F6" />
+                                <stop offset="100%" stopColor="#1D4ED8" />
+                            </linearGradient>
+                            <linearGradient id="nav-jigsaw-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#F59E0B" />
+                                <stop offset="100%" stopColor="#D97706" />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M5 21q-.85 0-1.425-.575T3 19v-3.8q1.2 0 2.1-.762T6 12.5q0-1.15-.9-1.9T3 9.8V6q0-.825.588-1.412T5 4h3.05q.175-1.275 1.15-2.137T11.5 1q1.3 0 2.275.863T14.95 4H18q.825 0 1.413.588T20 6v3.35q.9.45 1.45 1.3T22 12.5q0 1.025-.55 1.875T20 15.65V19q0 .85-.587 1.425T18 21z"
+                            fill={isCompetitionHub ? 'url(#nav-jigsaw-amber)' : 'url(#nav-jigsaw-blue)'}
+                            stroke={isCompetitionHub ? '#B45309' : '#1E40AF'}
+                            strokeWidth="0.5"
+                            strokeLinejoin="round"
+                            className="transition-colors duration-300"
+                        />
+                    </svg>
 
-                {/* Center Workspace Icon (Folder for Proyek Hub, Trophy for Lomba Hub) */}
-                <div
-                    className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-200 group-hover:scale-105"
-                    style={{ transform: 'translate(0.5px, 0.5px)' }}
-                >
-                    {isCompetitionHub ? (
-                        <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.2] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.4)]" />
-                    ) : (
-                        <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.2] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.4)]" />
-                    )}
-                </div>
-            </button>
+                    {/* Center Workspace Icon (Folder for Proyek Hub, Trophy for Lomba Hub) */}
+                    <div
+                        className="absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-200 group-hover:scale-105"
+                        style={{ transform: 'translate(0.5px, 0.5px)' }}
+                    >
+                        {isCompetitionHub ? (
+                            <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.2] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.4)]" />
+                        ) : (
+                            <FolderKanban className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white stroke-[2.2] drop-shadow-[0_1px_1.5px_rgba(0,0,0,0.4)]" />
+                        )}
+                    </div>
+                </button>
+            )}
 
             <NotificationBell />
 
@@ -318,21 +329,61 @@ export default function AppLayout({
                                     <span>Keamanan Sandi</span>
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link
-                                    href="/ai-workspace"
-                                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
-                                >
-                                    <Bot className="size-4 text-blue-600" />
-                                    <div className="flex-1 flex items-center justify-between">
-                                        <span>AI Workspace</span>
-                                        <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
-                                            Kopilot
-                                        </span>
-                                    </div>
-                                </Link>
-                            </DropdownMenuItem>
+                            {!isAdminArea && !isAdmin && (
+                                <>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/ai-workspace"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                        >
+                                            <Bot className="size-4 text-blue-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>AI Workspace</span>
+                                                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                                    Kopilot
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/feedback"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                                        >
+                                            <MessageSquare className="size-4 text-blue-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>Bantuan & Lapor Kendala</span>
+                                                <span className="text-[9px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200">
+                                                    Feedback
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                         </DropdownMenuGroup>
+
+                        {isAdmin && !isAdminArea && (
+                            <>
+                                <DropdownMenuSeparator className="my-1 bg-slate-100" />
+                                <DropdownMenuGroup className="space-y-0.5">
+                                    <DropdownMenuItem asChild>
+                                        <Link
+                                            href="/admin"
+                                            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-700 hover:text-rose-900 hover:bg-rose-50 transition cursor-pointer"
+                                        >
+                                            <ShieldCheck className="size-4 text-rose-600" />
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <span>Panel Administrator</span>
+                                                <span className="text-[9px] font-bold text-rose-700 bg-rose-100/80 px-1.5 py-0.5 rounded">
+                                                    Admin
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
+                                </DropdownMenuGroup>
+                            </>
+                        )}
 
                         <DropdownMenuSeparator className="my-1 bg-slate-100" />
 
@@ -361,6 +412,17 @@ export default function AppLayout({
     );
 
     const navItems = useMemo(() => {
+        if (isAdminArea) {
+            return [
+                { label: 'Ringkasan', href: '/admin', active: url === '/admin' },
+                { label: 'Mahasiswa', href: '/admin/students', active: url.startsWith('/admin/students') },
+                { label: 'Kelola Kompetisi', href: '/admin/competitions', active: url.startsWith('/admin/competitions') },
+                { label: 'Aturan Leaderboard', href: '/leaderboard/admin', active: url.startsWith('/leaderboard/admin') },
+                { label: 'Monitoring Notifikasi', href: '/admin/notifications', active: url.startsWith('/admin/notifications') },
+                { label: 'Saran & Masukan', href: '/admin/feedback', active: url.startsWith('/admin/feedback') },
+            ];
+        }
+
         if (isLecturer) {
             return [
                 { label: 'Dashboard Pengampu', href: '/dashboard', active: url.startsWith('/dashboard') },
@@ -372,7 +434,7 @@ export default function AppLayout({
         if (isCompetitionHub) {
             return [
                 { label: 'Eksplor Lomba', href: '/competitions?tab=explore', active: url === '/competitions' || url.includes('tab=explore') },
-                { label: 'Cari Tim (MinSatu)', href: '/competitions?tab=teams', active: url.includes('tab=teams') },
+                { label: 'Cari Tim', href: '/competitions?tab=teams', active: url.includes('tab=teams') },
                 { label: 'Kategori', href: '/competitions?tab=categories', active: url.includes('tab=categories') },
                 { label: 'Lomba Saya', href: '/competitions?tab=my_competitions', active: url.includes('tab=my_competitions') },
                 { label: 'Workspace', href: '/competition-workspace', active: url.startsWith('/competition-workspace') },
@@ -387,14 +449,14 @@ export default function AppLayout({
             { label: 'Workspace', href: '/workspace', active: url.startsWith('/workspace') },
             { label: 'Leaderboard', href: '/leaderboard?hub=project', active: url.startsWith('/leaderboard') },
         ];
-    }, [isLecturer, isCompetitionHub, url]);
+    }, [isAdminArea, isLecturer, isCompetitionHub, url]);
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+        <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans text-slate-800 antialiased selection:bg-blue-600 selection:text-white w-full max-w-full overflow-x-hidden">
             {title && <Head title={title} />}
 
-            {/* BIG HUB GATEWAY MODAL (Only for students, never for lecturers) */}
-            {!isLecturer && (
+            {/* BIG HUB GATEWAY MODAL (Only for regular students, never for admin or lecturers) */}
+            {!isAdminArea && !isAdmin && !isLecturer && (
                 <HubGatewayModal
                     isOpen={isGatewayOpen}
                     onClose={() => setIsGatewayOpen(false)}
@@ -407,22 +469,95 @@ export default function AppLayout({
                 <div className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
                     {/* Brand Logo & Hub Switcher */}
                     <div className="flex items-center gap-3 sm:gap-4 shrink-0">
-                        <Link href={isCompetitionHub ? '/competitions/dashboard' : '/dashboard'} className="flex items-center gap-2 group shrink-0">
+                        <Link
+                            href={isAdminArea ? '/admin' : isCompetitionHub ? '/competitions/dashboard' : '/dashboard'}
+                            className="flex items-center gap-2.5 group shrink-0"
+                        >
                             <img
                                 src="/images/rakit-mark.png"
                                 alt="RAKIT"
                                 className="h-7 w-auto object-contain transition-transform group-hover:scale-105"
                             />
-                            <span className="text-base sm:text-xl font-black tracking-tight text-slate-900">
-                                RAKIT CAMPUS
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-base sm:text-xl font-black tracking-tight text-slate-900">
+                                    RAKIT CAMPUS
+                                </span>
+                                {isAdminArea && (
+                                    <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                        Ruang Kerja Admin
+                                    </span>
+                                )}
+                            </div>
                         </Link>
                     </div>
 
                     {/* Desktop Navigation Tabs (Option 1: Underline Tabs - Clean Minimalist) */}
-                    <div className="hidden md:flex items-center justify-center h-full overflow-x-auto scrollbar-none">
-                        {isCompetitionHub ? (
-                            <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                    <div className="hidden md:flex items-center flex-1 min-w-0 h-full overflow-x-auto no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+                        {isAdminArea ? (
+                            <nav className="flex items-center gap-1 sm:gap-1.5 lg:gap-2 h-full mx-auto">
+                                <Link
+                                    href="/admin"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url === '/admin'
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Ringkasan
+                                </Link>
+                                <Link
+                                    href="/admin/students"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/admin/students')
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Mahasiswa
+                                </Link>
+                                <Link
+                                    href="/admin/competitions"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/admin/competitions')
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Kompetisi
+                                </Link>
+                                <Link
+                                    href="/leaderboard/admin"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/leaderboard/admin')
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Leaderboard
+                                </Link>
+                                <Link
+                                    href="/admin/notifications"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/admin/notifications')
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Notifikasi
+                                </Link>
+                                <Link
+                                    href="/admin/feedback"
+                                    className={`relative h-14 sm:h-16 flex items-center px-2.5 sm:px-3 lg:px-3.5 text-xs sm:text-sm transition-colors whitespace-nowrap ${
+                                        url.startsWith('/admin/feedback')
+                                            ? 'text-rose-600 font-bold after:absolute after:bottom-0 after:left-2 after:right-2 after:h-[2.5px] after:bg-rose-600 after:rounded-full'
+                                            : 'text-slate-500 hover:text-slate-900 font-medium hover:after:absolute hover:after:bottom-0 hover:after:left-2 hover:after:right-2 hover:after:h-[2px] hover:after:bg-slate-300 hover:after:rounded-full'
+                                    }`}
+                                >
+                                    Saran & Masukan
+                                </Link>
+                            </nav>
+                        ) : isCompetitionHub ? (
+                            <nav className="flex items-center gap-1 sm:gap-2 h-full mx-auto">
                                 <Link
                                     href="/competitions/dashboard"
                                     className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
@@ -521,7 +656,7 @@ export default function AppLayout({
                                 )}
                             </nav>
                         ) : (
-                            <nav className="flex items-center gap-1 sm:gap-2 h-full">
+                            <nav className="flex items-center gap-1 sm:gap-2 h-full mx-auto">
                                 <Link
                                     href="/dashboard"
                                     className={`relative h-14 sm:h-16 flex items-center px-3 sm:px-4 text-xs sm:text-sm transition-colors whitespace-nowrap ${
@@ -572,6 +707,19 @@ export default function AppLayout({
                                 >
                                     Leaderboard
                                 </Link>
+                                {isAdmin && (
+                                    <Link
+                                        href="/admin"
+                                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition whitespace-nowrap flex items-center gap-1.5 ${
+                                            url.startsWith('/admin')
+                                                ? 'bg-rose-600 text-white shadow-sm'
+                                                : 'text-rose-700 hover:text-rose-900 bg-rose-50 border border-rose-200/80 hover:bg-rose-100'
+                                        }`}
+                                    >
+                                        <ShieldCheck className="size-3.5" />
+                                        <span>Panel Admin</span>
+                                    </Link>
+                                )}
                             </nav>
                         )}
                     </div>
@@ -584,7 +732,7 @@ export default function AppLayout({
             </header>
 
             {/* 2. MAIN FULL SCREEN CONTENT AREA (No outer border or enclosing rounded box) */}
-            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-24 md:pb-7">
+            <main className="w-full flex-1 max-w-[1600px] mx-auto px-3.5 sm:px-6 lg:px-8 py-4 sm:py-7 pb-28 md:pb-7 min-w-0 overflow-x-hidden">
                 {/* Optional Breadcrumbs Sub-row */}
                 {breadcrumbs.length > 1 && (
                     <div className="flex items-center gap-1.5 pb-4 text-xs text-slate-500">
@@ -615,28 +763,28 @@ export default function AppLayout({
             {/* 3. MOBILE BOTTOM NAVIGATION (Fixed at bottom on mobile, Hub-aware) */}
             <nav
                 aria-label="Mobile Navigation"
-                className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
+                className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
             >
-                <div className="grid grid-cols-5 h-16 items-center px-1 max-w-lg mx-auto">
-                    {isAdmin ? (
+                <div className={`grid ${isAdminArea ? 'grid-cols-6' : 'grid-cols-5'} h-16 items-center px-1 max-w-lg mx-auto`}>
+                    {isAdminArea ? (
                         <>
                             {/* 1. Dashboard Admin */}
                             <Link
                                 href="/admin"
                                 className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url === '/admin' || url === '/dashboard'
+                                    url === '/admin'
                                         ? 'text-rose-600 font-bold'
                                         : 'text-slate-500 hover:text-slate-800 font-medium'
                                 }`}
                             >
                                 <LayoutDashboard
                                     className={`size-5 ${
-                                        url === '/admin' || url === '/dashboard'
+                                        url === '/admin'
                                             ? 'stroke-[2.25] text-rose-600'
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Admin</span>
+                                <span className="text-[10px] leading-none tracking-tight">Ringkasan</span>
                             </Link>
 
                             {/* 2. Verifikasi Mahasiswa */}
@@ -655,7 +803,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">Verifikasi</span>
+                                <span className="text-[10px] leading-none tracking-tight">Mahasiswa</span>
                             </Link>
 
                             {/* 3. Kelola Lomba */}
@@ -677,26 +825,7 @@ export default function AppLayout({
                                 <span className="text-[10px] leading-none tracking-tight">Kompetisi</span>
                             </Link>
 
-                            {/* 4. Monitoring Email */}
-                            <Link
-                                href="/admin/notifications"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/admin/notifications')
-                                        ? 'text-rose-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Mail
-                                    className={`size-5 ${
-                                        url.startsWith('/admin/notifications')
-                                            ? 'stroke-[2.25] text-rose-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">Email</span>
-                            </Link>
-
-                            {/* 5. Aturan Leaderboard */}
+                            {/* 4. Aturan Leaderboard */}
                             <Link
                                 href="/leaderboard/admin"
                                 className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
@@ -713,6 +842,44 @@ export default function AppLayout({
                                     }`}
                                 />
                                 <span className="text-[10px] leading-none tracking-tight">Poin</span>
+                            </Link>
+
+                            {/* 5. Monitoring Notifikasi */}
+                            <Link
+                                href="/admin/notifications"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/notifications')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Mail
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/notifications')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Notifikasi</span>
+                            </Link>
+
+                            {/* 6. Saran & Masukan */}
+                            <Link
+                                href="/admin/feedback"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/admin/feedback')
+                                        ? 'text-rose-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <MessageSquare
+                                    className={`size-5 ${
+                                        url.startsWith('/admin/feedback')
+                                            ? 'stroke-[2.25] text-rose-600'
+                                            : 'stroke-[1.75]'
+                                    }`}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Masukan</span>
                             </Link>
                         </>
                     ) : isCompetitionHub ? (
@@ -892,44 +1059,24 @@ export default function AppLayout({
                                 <span className="text-[10px] leading-none tracking-tight">Proyek</span>
                             </Link>
 
-                            {/* 4. Workspace / Kelas */}
-                            {isLecturer ? (
-                                <Link
-                                    href="/classes"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                        url.startsWith('/classes')
-                                            ? 'text-emerald-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
-                                    }`}
-                                >
-                                    <GraduationCap
-                                        className={`size-5 ${
-                                            url.startsWith('/classes')
-                                                ? 'stroke-[2.25] text-emerald-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Kelas</span>
-                                </Link>
-                            ) : (
-                                <Link
-                                    href="/workspace"
-                                    className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                            {/* 4. Workspace */}
+                            <Link
+                                href="/workspace"
+                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
+                                    url.startsWith('/workspace')
+                                        ? 'text-blue-600 font-bold'
+                                        : 'text-slate-500 hover:text-slate-800 font-medium'
+                                }`}
+                            >
+                                <Layers
+                                    className={`size-5 ${
                                         url.startsWith('/workspace')
-                                            ? 'text-blue-600 font-bold'
-                                            : 'text-slate-500 hover:text-slate-800 font-medium'
+                                            ? 'stroke-[2.25] text-blue-600'
+                                            : 'stroke-[1.75]'
                                     }`}
-                                >
-                                    <Layers
-                                        className={`size-5 ${
-                                            url.startsWith('/workspace')
-                                                ? 'stroke-[2.25] text-blue-600'
-                                                : 'stroke-[1.75]'
-                                        }`}
-                                    />
-                                    <span className="text-[10px] leading-none tracking-tight">Workspace</span>
-                                </Link>
-                            )}
+                                />
+                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
+                            </Link>
 
                             {/* 5. Leaderboard */}
                             <Link

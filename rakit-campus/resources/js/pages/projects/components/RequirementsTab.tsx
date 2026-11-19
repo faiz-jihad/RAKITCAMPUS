@@ -288,7 +288,7 @@ export default function RequirementsTab({ project, isLeader, isLecturer }: Props
                                 </div>
 
                                 <div>
-                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Kuota Posisi</label>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1">Kuota Slot</label>
                                     <input
                                         type="number"
                                         min={1}

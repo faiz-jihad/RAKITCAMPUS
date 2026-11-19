@@ -46,9 +46,8 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Campus Admin', href: '/admin' },
-    { title: 'Manajemen Mahasiswa', href: '/admin/students' },
+    { title: 'Ruang Kerja Admin', href: '/admin' },
+    { title: 'Kelola Mahasiswa', href: '/admin/students' },
 ];
 
 export default function AdminStudents({ students, filters }: Props) {

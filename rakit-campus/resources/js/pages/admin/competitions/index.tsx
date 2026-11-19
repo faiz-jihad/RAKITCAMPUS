@@ -81,8 +81,7 @@ interface Props {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Campus Admin', href: '/admin' },
+    { title: 'Ruang Kerja Admin', href: '/admin' },
     { title: 'Kelola Kompetisi', href: '/admin/competitions' },
 ];
 
