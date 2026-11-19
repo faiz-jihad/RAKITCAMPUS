@@ -277,5 +277,14 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
     Route::post('/notifications/preferences', [NotificationWebController::class, 'updatePreferences'])->name('notifications.preferences.update');
 });
 
+// Custom Mascot Error Page Preview & Direct Access
+Route::get('/error/{status?}', function (?int $status = 404) {
+    $validStatuses = [403, 404, 500, 503];
+    $code = in_array((int) $status, $validStatuses, true) ? (int) $status : 404;
+    return \Inertia\Inertia::render('error', [
+        'status' => $code,
+    ])->toResponse(request())->setStatusCode($code);
+})->name('error.show');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
