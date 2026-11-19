@@ -20,9 +20,9 @@ export function LanguageSwitcher({
 }: LanguageSwitcherProps) {
     const { locale, setLocale, isId, isEn, t } = useLocale();
 
-    const languages: { code: Locale; name: string; nativeName: string; flag: string; short: string }[] = [
-        { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', flag: '🇮🇩', short: 'ID' },
-        { code: 'en', name: 'English', nativeName: 'English (US)', flag: '🇬🇧', short: 'EN' },
+    const languages: { code: Locale; name: string; nativeName: string; short: string }[] = [
+        { code: 'id', name: 'Indonesian', nativeName: 'Bahasa Indonesia', short: 'ID' },
+        { code: 'en', name: 'English', nativeName: 'English (US)', short: 'EN' },
     ];
 
     const currentLang = languages.find((l) => l.code === locale) || languages[0];
@@ -44,9 +44,13 @@ export function LanguageSwitcher({
                             }`}
                         >
                             <div className="flex items-center gap-3.5">
-                                <span className="text-2xl select-none" role="img" aria-label={lang.name}>
-                                    {lang.flag}
-                                </span>
+                                <div className={`size-9 rounded-xl flex items-center justify-center text-xs font-extrabold border ${
+                                    isSelected
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}>
+                                    {lang.short}
+                                </div>
                                 <div>
                                     <div className={`text-sm font-bold leading-tight ${isSelected ? 'text-blue-900' : 'text-slate-800'}`}>
                                         {lang.nativeName}
@@ -83,7 +87,7 @@ export function LanguageSwitcher({
                     title={`Pilih Bahasa / Select Language (Aktif: ${currentLang.nativeName})`}
                     className={`h-[34px] sm:h-[38px] px-2.5 sm:px-3 rounded-full flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/80 transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400/40 active:scale-95 shrink-0 ${className}`}
                 >
-                    <span className="text-sm leading-none select-none">{currentLang.flag}</span>
+                    <Globe className="size-3.5 text-slate-600 shrink-0" />
                     {showLabel && (
                         <span className="text-[11px] sm:text-xs font-bold tracking-tight text-slate-700">
                             {currentLang.short}
@@ -111,7 +115,11 @@ export function LanguageSwitcher({
                             }`}
                         >
                             <div className="flex items-center gap-2.5">
-                                <span className="text-base select-none">{lang.flag}</span>
+                                <span className={`size-5 rounded-md border flex items-center justify-center text-[10px] font-extrabold ${
+                                    isSelected ? 'bg-blue-600 text-white border-blue-600' : 'bg-slate-100 text-slate-700 border-slate-200'
+                                }`}>
+                                    {lang.short}
+                                </span>
                                 <span>{lang.nativeName}</span>
                             </div>
                             {isSelected && <Check className="size-4 text-blue-600 stroke-[2.5]" />}

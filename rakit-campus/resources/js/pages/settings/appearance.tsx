@@ -1,20 +1,9 @@
 import { Head } from '@inertiajs/react';
-
-import AppearanceTabs from '@/components/appearance-tabs';
-import { type BreadcrumbItem } from '@/types';
-import { Palette } from 'lucide-react';
-
-import AppLayout from '@/layouts/app-layout';
-import SettingsLayout from '@/layouts/settings/layout';
-
-import { Head } from '@inertiajs/react';
-
 import AppearanceTabs from '@/components/appearance-tabs';
 import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { useLocale } from '@/hooks/use-locale';
 import { type BreadcrumbItem } from '@/types';
 import { Globe, Palette } from 'lucide-react';
-
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 

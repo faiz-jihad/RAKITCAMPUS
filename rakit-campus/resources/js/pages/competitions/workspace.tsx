@@ -1356,7 +1356,9 @@ export default function CompetitionWorkspace({
                                                                         {member.user?.name}
                                                                     </span>
                                                                     {isLeaderUser && (
-                                                                        <Award className="size-3 text-amber-500 shrink-0" title="Ketua Tim" />
+                                                                        <span title="Ketua Tim">
+                                                                            <Award className="size-3 text-amber-500 shrink-0" />
+                                                                        </span>
                                                                     )}
                                                                 </div>
                                                                 <span className="text-[10px] text-slate-500 font-medium block truncate">

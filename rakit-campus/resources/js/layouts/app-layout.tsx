@@ -33,6 +33,7 @@ import {
     LogOut,
     Mail,
     MessageSquare,
+    Palette,
     PlusCircle,
     Puzzle,
     Settings,
