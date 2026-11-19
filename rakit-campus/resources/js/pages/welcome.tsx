@@ -158,7 +158,7 @@ const photoRowBottom = [
     },
 ];
 
-export default function Welcome() {
+export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
     const { auth } = usePage<SharedData>().props;
     const laptopCardRef = useRef<HTMLDivElement>(null);
     const phoneCardRef = useRef<HTMLDivElement>(null);
@@ -4046,8 +4046,12 @@ export default function Welcome() {
                 id="pricing"
                 className="py-14 sm:py-24 bg-white border-t border-neutral-200/80 relative select-none"
             >
-                <div className="max-w-6xl mx-auto px-4 sm:px-6">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-14 space-y-2">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200/60 mb-1">
+                            <Sparkles className="size-3.5 text-blue-600" />
+                            <span>Pilihan Paket Terjangkau</span>
+                        </div>
                         <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
                             Investasi Terjangkau untuk Prestasi Nyata
                         </h2>
@@ -4056,130 +4060,207 @@ export default function Welcome() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
-                        {/* Plan 1: Free */}
-                        <div className="rounded-3xl p-6 bg-slate-50/70 border border-slate-200/80 flex flex-col justify-between">
-                            <div className="space-y-3">
-                                <div>
-                                    <h3 className="text-lg font-bold text-slate-900">Free</h3>
-                                    <p className="text-xs text-slate-500 mt-0.5">Eksplorasi lomba & kolaborasi tim dasar</p>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-slate-900 pt-1">
-                                    Gratis <span className="text-xs text-slate-400 font-normal">/selamanya</span>
-                                </div>
-                                <div className="space-y-2 pt-3 border-t border-slate-200/60 text-xs text-slate-600">
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
-                                        <span>Eksplorasi kompetisi & proyek terbuka</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
-                                        <span>Buat & gabung tim kolaborasi</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
-                                        <span>Workspace dasar & papan Kanban</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-emerald-600 shrink-0" />
-                                        <span>Kuota AI standar (10 Sesi)</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="pt-6">
-                                <Link
-                                    href="/register"
-                                    className="w-full py-2.5 rounded-full bg-white border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 flex items-center justify-center transition"
+                    {/* 4 Student Plans Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-stretch mb-6">
+                        {((pricingPlans && pricingPlans.length > 0)
+                            ? pricingPlans.filter((p: any) => p.id !== 'team_pass' && p.slug !== 'team_pass')
+                            : [
+                                  {
+                                      id: 'free',
+                                      name: 'Free',
+                                      price: 0,
+                                      period: 'Selamanya',
+                                      tagline: 'Untuk eksplorasi, bergabung tim, dan portofolio dasar.',
+                                      badge: null,
+                                      is_featured: false,
+                                      features: [
+                                          'Eksplorasi kompetisi & proyek terbuka',
+                                          'Buat & gabung tim kolaborasi',
+                                          'Workspace dasar & task kanban',
+                                          'Profil mahasiswa & rekam jejak dasar',
+                                          'Akses forum & leaderboard kampus',
+                                      ],
+                                      cta: 'Mulai Gratis',
+                                      disabled: true,
+                                  },
+                                  {
+                                      id: 'ai_pass',
+                                      name: 'AI Pass',
+                                      price: 15000,
+                                      period: 'Sekali Bayar',
+                                      tagline: 'Booster instan saat persiapan lomba tanpa komitmen bulanan.',
+                                      badge: 'Populer Saat Lomba',
+                                      is_featured: false,
+                                      features: [
+                                          'AI Proposal Reviewer & Grader Rubrik',
+                                          'Brainstorming ide proyek & solusi',
+                                          'Evaluasi pitch deck & latar belakang',
+                                          '25 Kredit AI ekstra (Masa aktif 30 hari)',
+                                          'Saran perbaikan bab-per-bab proposal',
+                                      ],
+                                      cta: 'Beli AI Pass',
+                                      disabled: false,
+                                  },
+                                  {
+                                      id: 'pro_monthly',
+                                      name: 'RAKIT Pro',
+                                      price: 29000,
+                                      period: 'per bulan',
+                                      tagline: 'Untuk mahasiswa aktif yang rutin ikut lomba & proyek setiap bulan.',
+                                      badge: 'Pilihan Aktif',
+                                      is_featured: false,
+                                      features: [
+                                          'Semua fitur Free & AI Pass',
+                                          'AI Workspace kuota 100 prompt/bulan',
+                                          'Advanced Project Intelligence & GitHub sync',
+                                          'Portfolio Builder eksklusif (Custom Link)',
+                                          'Badge Profil "Verified Pro Hustler/Hacker"',
+                                          'Akses ke Template Juara & Proposal Lolos',
+                                      ],
+                                      cta: 'Langganan Pro',
+                                      disabled: false,
+                                  },
+                                  {
+                                      id: 'semester_pass',
+                                      name: 'RAKIT Semester',
+                                      price: 49000,
+                                      period: 'per 6 bulan (1 Semester)',
+                                      tagline: 'Paling hemat untuk 1 semester perkuliahan dan persiapan magang MSIB.',
+                                      badge: 'Paling Hemat (6 Bulan)',
+                                      is_featured: true,
+                                      features: [
+                                          'Semua fitur RAKIT Pro selama 6 bulan penuh',
+                                          'Hanya Rp 8.100/bulan (Hemat > 70%)',
+                                          'Tanpa autodebit / perpanjangan paksa',
+                                          '300 Kredit AI ekstra untuk 1 semester',
+                                          'Ekspor PDF Portofolio ATS-Ready',
+                                          'Prioritas rekomendasi tim & matchmaking',
+                                      ],
+                                      cta: 'Ambil Pass Semester',
+                                      disabled: false,
+                                  },
+                              ]
+                        ).map((plan: any) => {
+                            const isFeatured = Boolean(plan.is_featured);
+                            const featuresList = Array.isArray(plan.features) ? plan.features : [];
+
+                            return (
+                                <div
+                                    key={plan.id || plan.slug}
+                                    className={`rounded-3xl p-5 sm:p-6 bg-white flex flex-col justify-between transition-all relative ${
+                                        isFeatured
+                                            ? 'border-2 border-blue-600 ring-4 ring-blue-500/10 shadow-lg'
+                                            : 'border border-slate-200/90 shadow-2xs hover:shadow-md'
+                                    }`}
                                 >
-                                    Mulai Gratis
-                                </Link>
+                                    <div className="space-y-3.5">
+                                        <div className="flex items-center justify-between gap-1.5 min-h-[22px]">
+                                            <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
+                                                {plan.name}
+                                            </h3>
+                                            {plan.badge && (
+                                                <span className="text-[9px] font-bold text-amber-800 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                                                    {plan.badge}
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        {plan.tagline && (
+                                            <p className="text-[11px] text-slate-500 leading-relaxed min-h-[32px]">
+                                                {plan.tagline}
+                                            </p>
+                                        )}
+
+                                        <div className="pt-2 border-t border-slate-100">
+                                            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                                                {plan.price === 0 ? 'Gratis' : `Rp ${new Intl.NumberFormat('id-ID').format(plan.price)}`}
+                                                {plan.price > 0 && (
+                                                    <span className="text-[11px] font-normal text-slate-500 ml-1">
+                                                        /{plan.period}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-600">
+                                            {featuresList.map((feat: string, fIdx: number) => (
+                                                <div key={fIdx} className="flex items-start gap-2">
+                                                    <Check className="size-3.5 text-blue-600 shrink-0 mt-0.5" />
+                                                    <span className="leading-tight text-[11px] sm:text-xs">{feat}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="pt-6">
+                                        {plan.id === 'free' || plan.slug === 'free' ? (
+                                            <Link
+                                                href="/register"
+                                                className="w-full py-2.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center justify-center transition shadow-2xs cursor-pointer"
+                                            >
+                                                <span>Paket Standar Aktif</span>
+                                            </Link>
+                                        ) : (
+                                            <Link
+                                                href="/pricing"
+                                                className={`w-full py-2.5 rounded-full text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98 cursor-pointer ${
+                                                    isFeatured
+                                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20'
+                                                        : 'bg-slate-900 hover:bg-slate-800 text-white'
+                                                }`}
+                                            >
+                                                <span>{plan.cta || 'Pilih Paket'}</span>
+                                                <ArrowRight className="size-3" />
+                                            </Link>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Team Plan Banner */}
+                    <div className="rounded-3xl p-6 sm:p-7 bg-slate-900 text-white border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+                        <div className="space-y-2 max-w-2xl">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[9px] font-black text-slate-900 bg-amber-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    1 Tim
+                                </span>
+                                <h3 className="text-xl sm:text-2xl font-bold text-white">RAKIT Team</h3>
+                            </div>
+                            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                                Kolaborasi intensif 1 tim kompetisi kampus. Shared pool 200 Kredit AI untuk seluruh anggota tim, Living Proposal AI, dan workspace terpusat.
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 pt-1 text-xs text-slate-300">
+                                <div className="flex items-center gap-1.5">
+                                    <Check className="size-3.5 text-amber-400 shrink-0" />
+                                    <span>200 Kredit AI Bersama</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Check className="size-3.5 text-amber-400 shrink-0" />
+                                    <span>Living Proposal & Pitch Assistant</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                    <Check className="size-3.5 text-amber-400 shrink-0" />
+                                    <span>Prioritas Lomba & Matchmaking</span>
+                                </div>
                             </div>
                         </div>
 
-                        {/* Plan 2: Pro Monthly (Featured) */}
-                        <div className="rounded-3xl p-6 bg-white border-2 border-blue-600 shadow-xl shadow-blue-500/10 flex flex-col justify-between relative ring-4 ring-blue-500/10">
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-slate-900">RAKIT Pro</h3>
-                                        <p className="text-xs text-slate-500 mt-0.5">Booster intensif kompetisi bulanan</p>
-                                    </div>
-                                    <span className="text-[9px] font-black text-white bg-blue-600 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                        Populer
-                                    </span>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-slate-900 pt-1">
-                                    Rp 29.000 <span className="text-xs text-slate-400 font-normal">/bulan</span>
-                                </div>
-                                <div className="space-y-2 pt-3 border-t border-slate-100 text-xs text-slate-700">
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-blue-600 shrink-0" />
-                                        <span>Semua fitur Free</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-blue-600 shrink-0" />
-                                        <span>AI Workspace 100 prompt/bulan</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-blue-600 shrink-0" />
-                                        <span>Badge Profil "PRO" resmi di navbar & portofolio</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-blue-600 shrink-0" />
-                                        <span>Ekspor PDF Portofolio ATS-Ready</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="pt-6">
-                                <Link
-                                    href="/pricing"
-                                    className="w-full py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
-                                >
-                                    <span>Pilih RAKIT Pro</span>
-                                    <ArrowRight className="size-3" />
-                                </Link>
-                            </div>
-                        </div>
-
-                        {/* Plan 3: RAKIT Team */}
-                        <div className="rounded-3xl p-6 bg-slate-900 text-white border border-slate-800 flex flex-col justify-between">
-                            <div className="space-y-3">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white">RAKIT Team</h3>
-                                        <p className="text-xs text-slate-400 mt-0.5">Kolaborasi intensif 1 tim kompetisi</p>
-                                    </div>
-                                    <span className="text-[9px] font-black text-slate-900 bg-amber-400 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                                        1 Tim
-                                    </span>
-                                </div>
-                                <div className="text-2xl sm:text-3xl font-black text-white pt-1">
+                        <div className="flex flex-col sm:flex-row md:flex-col items-center sm:items-end gap-3 shrink-0 w-full md:w-auto">
+                            <div className="text-center sm:text-right">
+                                <div className="text-2xl sm:text-3xl font-black text-white">
                                     Rp 99.000 <span className="text-xs text-slate-400 font-normal">/tim (3 bln)</span>
                                 </div>
-                                <div className="space-y-2 pt-3 border-t border-white/10 text-xs text-slate-300">
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-amber-400 shrink-0" />
-                                        <span>Shared pool 200 Kredit AI untuk seluruh anggota</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-amber-400 shrink-0" />
-                                        <span>Living Proposal & Pitch Assistant bersama</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Check className="size-3.5 text-amber-400 shrink-0" />
-                                        <span>Prioritas pendaftaran kompetisi kampus</span>
-                                    </div>
-                                </div>
+                                <span className="text-[11px] text-slate-400">Hemat untuk seluruh personel</span>
                             </div>
-                            <div className="pt-6">
-                                <Link
-                                    href="/pricing"
-                                    className="w-full py-2.5 rounded-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-1.5 transition shadow-sm active:scale-98"
-                                >
-                                    <span>Lihat Semua Paket</span>
-                                    <ArrowRight className="size-3" />
-                                </Link>
-                            </div>
+                            <Link
+                                href="/pricing"
+                                className="w-full sm:w-auto px-6 py-3 rounded-full bg-white hover:bg-slate-100 text-slate-900 text-xs font-bold flex items-center justify-center gap-2 transition shadow-sm active:scale-98"
+                            >
+                                <span>Beli untuk Tim</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
                         </div>
                     </div>
                 </div>

@@ -1,7 +1,7 @@
 import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link } from '@inertiajs/react';
-import { CheckCircle, FolderKanban, MessageSquare, ShieldAlert, ShieldCheck, Trophy, Users } from 'lucide-react';
+import { CheckCircle, CreditCard, FolderKanban, MessageSquare, ShieldAlert, ShieldCheck, Trophy, Users } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -85,6 +85,13 @@ export default function AdminIndex({ stats, pendingVerifications: initialPending
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2.5">
+                        <Link
+                            href="/admin/pricing"
+                            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition"
+                        >
+                            <CreditCard className="size-3.5 text-blue-600" />
+                            <span>Kelola Paket Harga</span>
+                        </Link>
                         <Link
                             href="/admin/teams"
                             className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold shadow-2xs transition"

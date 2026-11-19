@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\Team;
 use App\Models\TeamSubscription;
 use App\Models\UserSubscription;
+use App\Models\PricingPlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -47,100 +48,7 @@ class BillingWebController extends Controller
                 ->get();
         }
 
-        $plans = [
-            [
-                'id' => 'free',
-                'name' => 'Free',
-                'price' => 0,
-                'period' => 'Selamanya',
-                'tagline' => 'Untuk eksplorasi, bergabung tim, dan portofolio dasar.',
-                'badge' => null,
-                'is_featured' => false,
-                'features' => [
-                    'Eksplorasi kompetisi & proyek terbuka',
-                    'Buat & gabung tim kolaborasi',
-                    'Workspace dasar & task kanban',
-                    'Profil mahasiswa & rekam jejak dasar',
-                    'Akses forum & leaderboard kampus',
-                ],
-                'cta' => 'Mulai Gratis',
-                'disabled' => true,
-            ],
-            [
-                'id' => 'ai_pass',
-                'name' => 'AI Pass',
-                'price' => 15000,
-                'period' => 'Sekali Bayar',
-                'tagline' => 'Booster instan saat persiapan lomba tanpa komitmen bulanan.',
-                'badge' => 'Populer Saat Lomba',
-                'is_featured' => false,
-                'features' => [
-                    'AI Proposal Reviewer & Grader Rubrik',
-                    'Brainstorming ide proyek & solusi',
-                    'Evaluasi pitch deck & latar belakang',
-                    '25 Kredit AI ekstra (Masa aktif 30 hari)',
-                    'Saran perbaikan bab-per-bab proposal',
-                ],
-                'cta' => 'Beli AI Pass',
-                'disabled' => false,
-            ],
-            [
-                'id' => 'pro_monthly',
-                'name' => 'RAKIT Pro',
-                'price' => 29000,
-                'period' => 'per bulan',
-                'tagline' => 'Untuk mahasiswa aktif yang rutin ikut lomba & proyek setiap bulan.',
-                'badge' => 'Pilihan Aktif',
-                'is_featured' => false,
-                'features' => [
-                    'Semua fitur Free & AI Pass',
-                    'AI Workspace kuota 100 prompt/bulan',
-                    'Advanced Project Intelligence & GitHub sync',
-                    'Portfolio Builder eksklusif (Custom Link)',
-                    'Badge Profil "Verified Pro Hustler/Hacker"',
-                    'Akses ke Template Juara & Proposal Lolos',
-                ],
-                'cta' => 'Langganan Pro',
-                'disabled' => false,
-            ],
-            [
-                'id' => 'semester_pass',
-                'name' => 'RAKIT Semester',
-                'price' => 49000,
-                'period' => 'per 6 bulan (1 Semester)',
-                'tagline' => 'Paling hemat untuk 1 semester perkuliahan dan persiapan magang MSIB.',
-                'badge' => 'Paling Hemat (6 Bulan)',
-                'is_featured' => true,
-                'features' => [
-                    'Semua fitur RAKIT Pro selama 6 bulan penuh',
-                    'Hanya Rp 8.100/bulan (Hemat > 70%)',
-                    'Tanpa autodebit / perpanjangan paksa',
-                    '300 Kredit AI ekstra untuk 1 semester',
-                    'Ekspor PDF Portofolio ATS-Ready',
-                    'Prioritas rekomendasi tim & matchmaking',
-                ],
-                'cta' => 'Ambil Pass Semester',
-                'disabled' => false,
-            ],
-            [
-                'id' => 'team_pass',
-                'name' => 'RAKIT Team',
-                'price' => 99000,
-                'period' => 'per tim (3 bulan)',
-                'tagline' => 'Akselerasi kolaborasi untuk 1 tim kompetisi atau tugas akhir.',
-                'badge' => 'Untuk 1 Tim',
-                'is_featured' => false,
-                'features' => [
-                    'Shared pool 200 Kredit AI untuk seluruh anggota',
-                    'AI Living Proposal & Pitch Assistant bersama',
-                    'Advanced team analytics & workload tracker',
-                    'Prioritas pendaftaran kompetisi kampus',
-                    'Dukungan hingga kuota maksimal tim',
-                ],
-                'cta' => 'Beli untuk Tim',
-                'disabled' => false,
-            ],
-        ];
+        $plans = PricingPlan::getForDisplay();
 
         return Inertia::render('pricing', [
             'plans' => $plans,

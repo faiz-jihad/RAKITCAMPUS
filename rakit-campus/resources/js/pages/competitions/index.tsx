@@ -1397,7 +1397,7 @@ export default function CompetitionIndex({
                                     }`}
                                 >
                                     <Users className="size-3.5 text-blue-600" />
-                                    <span>Tim Membuka Rekrutmen</span>
+                                    <span>{isEn ? 'Teams Recruiting' : 'Tim Membuka Rekrutmen'}</span>
                                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-50 text-blue-700 font-bold">
                                         {validRecruitingTeams.length}
                                     </span>
@@ -1412,7 +1412,7 @@ export default function CompetitionIndex({
                                     }`}
                                 >
                                     <Sparkles className="size-3.5 text-amber-500" />
-                                    <span>Radar Rekrutmen Talenta</span>
+                                    <span>{isEn ? 'Talent Recruiting Radar' : 'Radar Rekrutmen Talenta'}</span>
                                     <span className="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-amber-50 text-amber-700 font-bold">
                                         {radarCandidates.length}
                                     </span>
@@ -1421,13 +1421,17 @@ export default function CompetitionIndex({
 
                             {teamViewMode === 'teams' && totalNeededSlots > 0 && (
                                 <span className="text-xs text-slate-500 font-medium">
-                                    Tersedia <strong className="text-slate-800">{totalNeededSlots} posisi</strong> untuk mahasiswa
+                                    {isEn ? (
+                                        <>Available <strong className="text-slate-800">{totalNeededSlots} positions</strong> for students</>
+                                    ) : (
+                                        <>Tersedia <strong className="text-slate-800">{totalNeededSlots} posisi</strong> untuk mahasiswa</>
+                                    )}
                                 </span>
                             )}
                             {teamViewMode === 'radar' && (
                                 <span className="text-xs text-slate-500 font-medium flex items-center gap-1">
                                     <Sparkles className="size-3 text-amber-500" />
-                                    <span>Rekomendasi Persona <strong>Hacker, Hipster, Hustler</strong></span>
+                                    <span>{isEn ? 'Recommended Personas' : 'Rekomendasi Persona'} <strong>Hacker, Hipster, Hustler</strong></span>
                                 </span>
                             )}
                         </div>
@@ -1440,7 +1444,7 @@ export default function CompetitionIndex({
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Cari tim atau peran..."
+                                    placeholder={isEn ? "Search team or role..." : "Cari tim atau peran..."}
                                     value={teamSearch}
                                     onChange={(e) => setTeamSearch(e.target.value)}
                                     className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -1456,7 +1460,7 @@ export default function CompetitionIndex({
                                     }}
                                     className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >
-                                    <option value="">Semua Kategori</option>
+                                    <option value="">{isEn ? "All Categories" : "Semua Kategori"}</option>
                                     {categories.map((c) => (
                                         <option key={c} value={c}>{c.replace('_', ' ').toUpperCase()}</option>
                                     ))}
@@ -1470,7 +1474,7 @@ export default function CompetitionIndex({
                                     }}
                                     className="px-3 py-2 bg-slate-50 rounded-xl text-xs font-medium text-slate-700 border-0 cursor-pointer"
                                 >
-                                    <option value="">Semua Peran</option>
+                                    <option value="">{isEn ? "All Roles" : "Semua Peran"}</option>
                                     {commonRoleOptions.map((r) => (
                                         <option key={r} value={r}>{r}</option>
                                     ))}
@@ -1493,7 +1497,7 @@ export default function CompetitionIndex({
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <AnimatedIcon name="team" size={56} className="mx-auto mb-3" />
                                 <h4 className="text-sm font-bold text-slate-900">
-                                    Belum Ada Tim yang Sedang Merekrut
+                                    {isEn ? 'No Teams Recruiting Yet' : 'Belum Ada Tim yang Sedang Merekrut'}
                                 </h4>
                                 <button
                                     type="button"
@@ -1504,7 +1508,7 @@ export default function CompetitionIndex({
                                     className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    <span>Bentuk Tim Baru</span>
+                                    <span>{isEn ? 'Form New Team' : 'Bentuk Tim Baru'}</span>
                                 </button>
                             </div>
                         ) : (
@@ -1527,36 +1531,40 @@ export default function CompetitionIndex({
                                     const memberAvatars: Array<{ name: string; avatar: string | null; role: string }> = [];
                                     if (team.leader) {
                                         memberAvatars.push({
-                                            name: team.leader.name || 'Ketua Tim',
+                                            name: team.leader.name || (isEn ? 'Team Leader' : 'Ketua Tim'),
                                             avatar: team.leader.avatar || null,
-                                            role: 'Ketua Tim',
+                                            role: isEn ? 'Team Leader' : 'Ketua Tim',
                                         });
                                     }
                                     if (Array.isArray(team.members)) {
                                         team.members.forEach((m: any) => {
                                             if (m && m.user_id !== team.leader?.id && (m.name || m.user?.name)) {
                                                 memberAvatars.push({
-                                                    name: m.name || m.user?.name || 'Anggota',
+                                                    name: m.name || m.user?.name || (isEn ? 'Member' : 'Anggota'),
                                                     avatar: m.avatar || m.user?.avatar || null,
-                                                    role: m.role_name || 'Anggota',
+                                                    role: m.role_name || (isEn ? 'Member' : 'Anggota'),
                                                 });
                                             }
                                         });
                                     }
                                     if (memberAvatars.length === 0) {
                                         memberAvatars.push({
-                                            name: team.name || 'Tim',
+                                            name: team.name || (isEn ? 'Team' : 'Tim'),
                                             avatar: null,
-                                            role: 'Tim',
+                                            role: isEn ? 'Team' : 'Tim',
                                         });
                                     }
 
                                     const descText =
                                         team.recruitment?.description ||
                                         team.description ||
-                                        `Mencari rekan tim untuk ${comp.name || 'kompetisi'}. Terbuka peran: ${
-                                            roles.map((r: any) => r?.name).filter(Boolean).join(', ') || 'Anggota Tim'
-                                        }.`;
+                                        (isEn
+                                            ? `Looking for teammates for ${comp.name || 'competition'}. Open roles: ${
+                                                  roles.map((r: any) => r?.name).filter(Boolean).join(', ') || 'Team Member'
+                                              }.`
+                                            : `Mencari rekan tim untuk ${comp.name || 'kompetisi'}. Terbuka peran: ${
+                                                  roles.map((r: any) => r?.name).filter(Boolean).join(', ') || 'Anggota Tim'
+                                              }.`);
 
                                     const avatarPalette = [
                                         'bg-blue-100 text-blue-700',
@@ -1577,7 +1585,7 @@ export default function CompetitionIndex({
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60">
                                                         <Folder className="size-3 text-blue-600" />
-                                                        <span>Rekrutmen Tim</span>
+                                                        <span>{isEn ? 'Team Recruitment' : 'Rekrutmen Tim'}</span>
                                                     </div>
                                                     <span className="text-xs text-slate-400 font-medium whitespace-nowrap">
                                                         {formattedDeadline}
@@ -1587,15 +1595,15 @@ export default function CompetitionIndex({
                                                 {/* Team Name & Competition Badge */}
                                                 <div>
                                                     <h3 className="font-bold text-slate-900 text-base leading-snug group-hover:text-blue-600 transition-colors line-clamp-1">
-                                                        {team.name || 'Tim'}
+                                                        {team.name || (isEn ? 'Team' : 'Tim')}
                                                     </h3>
                                                     <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                                                         <div
                                                             className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-semibold max-w-full truncate"
-                                                            title={`Target Kompetisi: ${comp.name || 'Kompetisi'}`}
+                                                            title={`Target Kompetisi: ${comp.name || (isEn ? 'Competition' : 'Kompetisi')}`}
                                                         >
                                                             <Trophy className="size-3 text-amber-500 shrink-0" />
-                                                            <span className="truncate">{comp.name || 'Kompetisi'}</span>
+                                                            <span className="truncate">{comp.name || (isEn ? 'Competition' : 'Kompetisi')}</span>
                                                         </div>
                                                         {comp.category && (
                                                             <span className="px-2 py-0.5 rounded-md bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border border-slate-200/60">
@@ -1611,10 +1619,10 @@ export default function CompetitionIndex({
                                                         <div className="flex items-center justify-between text-xs">
                                                             <span className="text-slate-500 font-medium flex items-center gap-1">
                                                                 <Briefcase className="size-3 text-slate-400" />
-                                                                <span>Dibutuhkan:</span>
+                                                                <span>{isEn ? 'Needed:' : 'Dibutuhkan:'}</span>
                                                             </span>
                                                             <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200/60">
-                                                                {roles.length} Posisi Terbuka
+                                                                {isEn ? `${roles.length} Open Positions` : `${roles.length} Posisi Terbuka`}
                                                             </span>
                                                         </div>
                                                         <div className="flex flex-wrap gap-1.5">
@@ -1622,12 +1630,12 @@ export default function CompetitionIndex({
                                                                 <span
                                                                     key={r.id}
                                                                     className="px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200/60 text-slate-700 text-[11px] font-medium transition-colors flex items-center gap-1.5"
-                                                                    title={r.requirements ? `Syarat: ${r.requirements}` : r.name}
+                                                                    title={r.requirements ? `${isEn ? 'Requirements' : 'Syarat'}: ${r.requirements}` : r.name}
                                                                 >
                                                                     <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
                                                                     <span>{r.name}</span>
                                                                     {r.slots > 1 && (
-                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
+                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} {isEn ? 'slots' : 'slot'})</span>
                                                                     )}
                                                                 </span>
                                                             ))}
@@ -1647,15 +1655,15 @@ export default function CompetitionIndex({
                                                     <div className="flex items-center justify-between text-xs">
                                                         <span className="text-slate-500 font-medium flex items-center gap-1.5">
                                                             <Users className="size-3.5 text-slate-400" />
-                                                            <span>Formasi Tim ({membersCount}/{maxCap})</span>
+                                                            <span>{isEn ? 'Team Roster' : 'Formasi Tim'} ({membersCount}/{maxCap})</span>
                                                         </span>
                                                         {emptySlots > 0 ? (
                                                             <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
-                                                                Sisa {emptySlots} Slot
+                                                                {isEn ? `${emptySlots} Slots Left` : `Sisa ${emptySlots} Slot`}
                                                             </span>
                                                         ) : (
                                                             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
-                                                                Formasi Lengkap
+                                                                {isEn ? 'Full Roster' : 'Formasi Lengkap'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -1671,8 +1679,8 @@ export default function CompetitionIndex({
                                                                         isFilled
                                                                             ? member
                                                                                 ? `${member.name} (${member.role})`
-                                                                                : `Personel #${idx + 1} (Terisi)`
-                                                                            : `Slot Personel #${idx + 1} (Terbuka)`
+                                                                                : `${isEn ? 'Personnel' : 'Personel'} #${idx + 1} (${isEn ? 'Filled' : 'Terisi'})`
+                                                                            : `${isEn ? 'Open Slot' : 'Slot Personel'} #${idx + 1} (${isEn ? 'Open' : 'Terbuka'})`
                                                                     }
                                                                     className={`size-7 rounded-lg flex items-center justify-center transition-all ${
                                                                         isFilled
@@ -1717,7 +1725,7 @@ export default function CompetitionIndex({
                                                         {emptySlots > 0 && (
                                                             <div
                                                                 className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
-                                                                title={`${emptySlots} slot terbuka`}
+                                                                title={`${emptySlots} ${isEn ? 'open slots' : 'slot terbuka'}`}
                                                             >
                                                                 +{emptySlots}
                                                             </div>
@@ -1725,7 +1733,7 @@ export default function CompetitionIndex({
                                                     </div>
 
                                                     <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200/60 select-none">
-                                                        Merekrut
+                                                        {isEn ? 'Recruiting' : 'Merekrut'}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1733,13 +1741,13 @@ export default function CompetitionIndex({
                                             {/* Bottom Action Button */}
                                             <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                                                 <span className="text-xs text-slate-500 font-medium">
-                                                    {roles.length} Posisi · {membersCount}/{maxCap} Person
+                                                    {isEn ? `${roles.length} Roles · ${membersCount}/${maxCap} Persons` : `${roles.length} Posisi · ${membersCount}/${maxCap} Person`}
                                                 </span>
 
                                                 {part.is_member || part.is_leader ? (
                                                     <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-semibold shadow-2xs">
                                                         <CheckCircle2 className="size-3.5 text-emerald-600" />
-                                                        <span>Tergabung</span>
+                                                        <span>{isEn ? 'Joined' : 'Tergabung'}</span>
                                                     </span>
                                                 ) : (
                                                     <button
@@ -1789,7 +1797,7 @@ export default function CompetitionIndex({
                                     <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                     <input
                                         type="text"
-                                        placeholder="Cari nama kandidat, prodi, kampus, atau keahlian (React, Figma, Pitching)..."
+                                        placeholder={isEn ? "Search candidate name, program, campus, or skills (React, Figma, Pitching)..." : "Cari nama kandidat, prodi, kampus, atau keahlian (React, Figma, Pitching)..."}
                                         value={radarSearch}
                                         onChange={(e) => setRadarSearch(e.target.value)}
                                         className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -1810,7 +1818,7 @@ export default function CompetitionIndex({
                                     {(['all', 'Hacker', 'Hipster', 'Hustler'] as const).map((persona) => {
                                         const label =
                                             persona === 'all'
-                                                ? 'Semua Talenta'
+                                                ? (isEn ? 'All Talents' : 'Semua Talenta')
                                                 : persona === 'Hacker'
                                                 ? 'Hacker (Dev)'
                                                 : persona === 'Hipster'
@@ -1822,7 +1830,7 @@ export default function CompetitionIndex({
                                                 key={persona}
                                                 type="button"
                                                 onClick={() => setRadarPersonaFilter(persona)}
-                                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
+                                                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap cursor-pointer ${
                                                     isActive
                                                         ? 'bg-white text-slate-900 shadow-2xs'
                                                         : 'text-slate-600 hover:text-slate-900'
@@ -1844,10 +1852,10 @@ export default function CompetitionIndex({
                                         className="w-20 h-20 object-contain mx-auto mb-3 select-none pointer-events-none drop-shadow-sm"
                                     />
                                     <h4 className="text-sm font-bold text-slate-900">
-                                        Tidak Ada Kandidat yang Cocok
+                                        {isEn ? 'No Matching Candidates' : 'Tidak Ada Kandidat yang Cocok'}
                                     </h4>
                                     <p className="text-xs text-slate-500 mt-1">
-                                        Coba sesuaikan kata kunci pencarian atau filter persona talenta.
+                                        {isEn ? 'Try adjusting your search query or talent persona filter.' : 'Coba sesuaikan kata kunci pencarian atau filter persona talenta.'}
                                     </p>
                                 </div>
                             ) : (
@@ -1900,7 +1908,7 @@ export default function CompetitionIndex({
                                                         {isInvited ? (
                                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold shrink-0">
                                                                 <CheckCircle2 className="size-3.5 text-emerald-600" />
-                                                                <span>Terkirim</span>
+                                                                <span>{isEn ? 'Sent' : 'Terkirim'}</span>
                                                             </span>
                                                         ) : (
                                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border tracking-wide uppercase shrink-0 ${personaStyle}`}>
@@ -1943,11 +1951,11 @@ export default function CompetitionIndex({
                                                             <div className="text-xs font-bold text-slate-900">
                                                                 {score}%
                                                             </div>
-                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Kesiapan</div>
+                                                            <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">{isEn ? 'Readiness' : 'Kesiapan'}</div>
                                                         </div>
                                                         <div>
                                                             <div className="text-xs font-bold text-slate-900">
-                                                                {student.semester ? `Sem ${student.semester}` : 'Aktif'}
+                                                                {student.semester ? `Sem ${student.semester}` : (isEn ? 'Active' : 'Aktif')}
                                                             </div>
                                                             <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Status</div>
                                                         </div>

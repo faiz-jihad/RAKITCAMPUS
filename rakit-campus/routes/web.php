@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\BillingWebController;
 use App\Http\Controllers\Web\Admin\AdminCompetitionWebController;
 use App\Http\Controllers\Web\Admin\AdminFeedbackWebController;
 use App\Http\Controllers\Web\Admin\AdminNotificationWebController;
+use App\Http\Controllers\Web\Admin\AdminPricingWebController;
 use App\Http\Controllers\Web\AssessmentWebController;
 use App\Http\Controllers\Web\CompetitionWebController;
 use App\Http\Controllers\Web\DashboardWebController;
@@ -25,7 +26,9 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('welcome', [
+        'pricingPlans' => \App\Models\PricingPlan::getForDisplay(),
+    ]);
 })->name('home');
 
 Route::get('/feedback', [FeedbackWebController::class, 'index'])->name('feedback.index');
@@ -273,6 +276,13 @@ Route::middleware(['auth', 'profile.completed'])->group(function () {
         Route::get('/feedback', [AdminFeedbackWebController::class, 'index'])->name('admin.feedback.index');
         Route::patch('/feedback/{id}/status', [AdminFeedbackWebController::class, 'updateStatus'])->name('admin.feedback.status');
         Route::delete('/feedback/{id}', [AdminFeedbackWebController::class, 'destroy'])->name('admin.feedback.destroy');
+
+        // Pricing Packages Management
+        Route::get('/pricing', [AdminPricingWebController::class, 'index'])->name('admin.pricing.index');
+        Route::post('/pricing', [AdminPricingWebController::class, 'store'])->name('admin.pricing.store');
+        Route::match(['put', 'post'], '/pricing/{id}', [AdminPricingWebController::class, 'update'])->name('admin.pricing.update');
+        Route::post('/pricing-reset', [AdminPricingWebController::class, 'resetDefault'])->name('admin.pricing.reset');
+        Route::delete('/pricing/{id}', [AdminPricingWebController::class, 'destroy'])->name('admin.pricing.destroy');
     });
 
     // AI Workspace
