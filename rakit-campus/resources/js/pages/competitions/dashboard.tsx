@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
@@ -60,6 +61,7 @@ export default function CompetitionDashboard({
     recentActivities = [],
 }: Props) {
     const { flash, errors: pageErrors } = usePage<any>().props;
+    const { t, locale, isEn } = useLocale();
     const [respondingInvitationId, setRespondingInvitationId] = useState<number | null>(null);
 
     const handleAcceptInvitation = (invitationId: number) => {
@@ -72,7 +74,7 @@ export default function CompetitionDashboard({
     };
 
     const handleDeclineInvitation = (invitationId: number) => {
-        const reason = prompt('Alasan menolak undangan (opsional):');
+        const reason = prompt(isEn ? 'Reason for declining (optional):' : 'Alasan menolak undangan (opsional):');
         setRespondingInvitationId(invitationId);
         router.post(
             `/competition-invitations/${invitationId}/decline`,
@@ -100,7 +102,9 @@ export default function CompetitionDashboard({
     const today = new Date();
     const weekDays = useMemo(() => {
         const days = [];
-        const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+        const dayNames = isEn
+            ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+            : ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
         const currentDayIndex = today.getDay();
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - currentDayIndex + 1); // Start from Monday
@@ -115,42 +119,42 @@ export default function CompetitionDashboard({
             });
         }
         return days;
-    }, []);
+    }, [isEn]);
 
     const checklist = [
         {
             num: 1,
-            title: 'Proposal Inovasi / Abstrak',
-            desc: 'PDF 15–20 halaman baku.',
+            title: isEn ? 'Innovation Proposal / Abstract' : 'Proposal Inovasi / Abstrak',
+            desc: isEn ? 'Standard 15–20 page PDF.' : 'PDF 15–20 halaman baku.',
             icon: FileText,
             isDone: readinessAvg >= 40,
         },
         {
             num: 2,
-            title: 'Lembar Pengesahan Kampus',
-            desc: 'TTD Dosen & Pimpinan Fakultas.',
+            title: isEn ? 'Campus Endorsement Letter' : 'Lembar Pengesahan Kampus',
+            desc: isEn ? 'Faculty & Advisor Signatures.' : 'TTD Dosen & Pimpinan Fakultas.',
             icon: ShieldCheck,
             isDone: readinessAvg >= 60,
         },
         {
             num: 3,
-            title: 'Pitch Deck Paparan',
-            desc: 'Slide 10–12 halaman.',
+            title: isEn ? 'Pitch Deck Presentation' : 'Pitch Deck Paparan',
+            desc: isEn ? '10–12 slide deck.' : 'Slide 10–12 halaman.',
             icon: Layers,
             isDone: readinessAvg >= 80,
         },
         {
             num: 4,
-            title: 'Video Demo & Poster',
-            desc: 'Video demo YouTube + poster A1.',
+            title: isEn ? 'Demo Video & Poster' : 'Video Demo & Poster',
+            desc: isEn ? 'YouTube video demo + A1 poster.' : 'Video demo YouTube + poster A1.',
             icon: Zap,
             isDone: readinessAvg >= 90,
         },
     ];
 
     return (
-        <AppLayout activeTab="lomba" title="Dashboard Kompetisi & Lomba - RakitCampus">
-            <Head title="Dashboard Kompetisi & Lomba" />
+        <AppLayout activeTab="lomba" title={isEn ? 'Competition Dashboard - RakitCampus' : 'Dashboard Kompetisi & Lomba - RakitCampus'}>
+            <Head title={isEn ? 'Competition Dashboard' : 'Dashboard Kompetisi & Lomba'} />
 
             {/* ── FLASH BANNERS ── */}
             {flash?.success && (
@@ -177,18 +181,18 @@ export default function CompetitionDashboard({
                         <div>
                             <div className="flex items-center gap-2.5 flex-wrap">
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                                    Workspace Tim
+                                    {isEn ? 'Team Workspace' : 'Workspace Tim'}
                                 </span>
                                 <span className="size-1 rounded-full bg-slate-300" />
                                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
                                     <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span>{primaryTeam ? primaryTeam.stage_label : 'Siap Mulai'}</span>
+                                    <span>{primaryTeam ? primaryTeam.stage_label : (isEn ? 'Ready to Start' : 'Siap Mulai')}</span>
                                 </div>
                             </div>
 
                             <div className="mt-1 flex items-baseline gap-2.5 flex-wrap">
                                 <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                                    {primaryTeam?.name || 'Workspace Mandiri'}
+                                    {primaryTeam?.name || (isEn ? 'Self Workspace' : 'Workspace Mandiri')}
                                 </h1>
                                 {primaryTeam?.competition?.name && (
                                     <span className="text-xs sm:text-sm font-semibold text-blue-600 truncate max-w-md">
@@ -206,7 +210,7 @@ export default function CompetitionDashboard({
                                         primaryTeam.members.slice(0, 4).map((m: any, idx: number) => (
                                             <div
                                                 key={m.id || idx}
-                                                title={`${m.name} (${m.role || 'Anggota'})`}
+                                                title={`${m.name} (${m.role || (isEn ? 'Member' : 'Anggota')})`}
                                                 className="size-8 rounded-full border-2 border-white bg-slate-800 text-white font-bold text-[10px] flex items-center justify-center shadow-2xs"
                                             >
                                                 {getInitials(m.name)}
@@ -219,7 +223,7 @@ export default function CompetitionDashboard({
                                     )}
                                 </div>
                                 <span className="text-xs text-slate-500 font-medium">
-                                    {primaryTeam?.members_count || 1} Anggota
+                                    {primaryTeam?.members_count || 1} {isEn ? 'Members' : 'Anggota'}
                                 </span>
                             </div>
 
@@ -228,7 +232,7 @@ export default function CompetitionDashboard({
                                 className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
                             >
                                 <Plus className="size-3.5 stroke-[2.5]" />
-                                <span>Undang Rekan</span>
+                                <span>{isEn ? 'Invite Peer' : 'Undang Rekan'}</span>
                             </Link>
                         </div>
                     </div>
@@ -237,25 +241,25 @@ export default function CompetitionDashboard({
                     <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
                             <span className="px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold whitespace-nowrap shadow-xs">
-                                Ikhtisar Lomba
+                                {isEn ? 'Overview' : 'Ikhtisar Lomba'}
                             </span>
                             <Link
                                 href={primaryTeam?.workspace_url || '/competition-workspace'}
                                 className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/70 text-slate-600 text-xs font-medium whitespace-nowrap transition"
                             >
-                                Papan Tugas
+                                {isEn ? 'Task Board' : 'Papan Tugas'}
                             </Link>
                             <Link
                                 href={primaryTeam?.workspace_url || '/competition-workspace'}
                                 className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/70 text-slate-600 text-xs font-medium whitespace-nowrap transition"
                             >
-                                Berkas & Karya
+                                {isEn ? 'Files & Documents' : 'Berkas & Karya'}
                             </Link>
                             <Link
                                 href="/competitions?tab=teams&view=radar"
                                 className="px-3.5 py-1.5 rounded-full bg-slate-100 hover:bg-slate-200/70 text-slate-600 text-xs font-medium whitespace-nowrap transition"
                             >
-                                Radar Talenta
+                                {isEn ? 'Talent Radar' : 'Radar Talenta'}
                             </Link>
                         </div>
 
@@ -264,14 +268,14 @@ export default function CompetitionDashboard({
                                 href="/competitions"
                                 className="px-3.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition shadow-2xs"
                             >
-                                Eksplor Lomba
+                                {isEn ? 'Explore Contests' : 'Eksplor Lomba'}
                             </Link>
                             <Link
                                 href={primaryTeam?.workspace_url || '/competition-workspace'}
                                 className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 group cursor-pointer"
                             >
                                 <FolderKanban className="size-3.5" />
-                                <span>Buka Workspace</span>
+                                <span>{isEn ? 'Open Workspace' : 'Buka Workspace'}</span>
                                 <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
                             </Link>
                         </div>
@@ -288,59 +292,53 @@ export default function CompetitionDashboard({
                     ───────────────────────────────────────────────────────────── */}
                     <div className="lg:col-span-4 space-y-5">
 
-                        {/* CARD 1: ASSIGNMENT / PRIORITY TASK (Image 2 Center Card Style) */}
+                        {/* CARD 1: ASSIGNMENT / PRIORITY TASK */}
                         <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between group">
                             <div>
-                                <div className="flex items-center justify-between gap-2 mb-3">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/70">
-                                            {primaryTeam?.stage_label || 'Inkubasi'}
-                                        </span>
-                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-rose-50 text-rose-600 border border-rose-200/70">
-                                            Prioritas Tinggi
-                                        </span>
-                                    </div>
+                                <div className="flex items-center justify-end mb-3">
                                     <Zap className="size-4 text-amber-500 fill-amber-400" />
                                 </div>
 
                                 <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-2 group-hover:text-blue-600 transition">
-                                    {myTasks[0]?.title || 'Penyusunan Proposal Inovasi & Surat Pengesahan'}
+                                    {myTasks[0]?.title || (isEn ? 'Innovation Proposal & Campus Endorsement' : 'Penyusunan Proposal Inovasi & Surat Pengesahan')}
                                 </h3>
 
                                 <p className="text-xs text-slate-500 mt-2 leading-relaxed line-clamp-2">
-                                    Pastikan seluruh komponen bab latar belakang, arsitektur teknis prototipe, dan lembar pengesahan fakultas telah lengkap.
+                                    {isEn
+                                        ? 'Ensure all background chapters, technical architecture of prototype, and endorsement letter from faculty are complete.'
+                                        : 'Pastikan seluruh komponen bab latar belakang, arsitektur teknis prototipe, dan lembar pengesahan fakultas telah lengkap.'}
                                 </p>
                             </div>
 
                             <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
                                 <span className="text-xs text-slate-400 font-medium flex items-center gap-1">
                                     <Clock className="size-3 text-rose-500" />
-                                    <span>Tenggat: {myTasks[0]?.due_on || 'Minggu Ini'}</span>
+                                    <span>{isEn ? 'Due:' : 'Tenggat:'} {myTasks[0]?.due_on || (isEn ? 'This Week' : 'Minggu Ini')}</span>
                                 </span>
 
                                 <Link
                                     href={primaryTeam?.workspace_url || '/competition-workspace'}
                                     className="px-3.5 py-1.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition shadow-xs"
                                 >
-                                    Kerjakan
+                                    {isEn ? 'Work on Task' : 'Kerjakan'}
                                 </Link>
                             </div>
                         </div>
 
-                        {/* CARD 2: TODAY'S TASKS LIST (Image 2 Bottom Left Tasks Card Style) */}
+                        {/* CARD 2: TODAY'S TASKS LIST */}
                         <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-bold text-slate-900">Tugas Sprint</h3>
+                                    <h3 className="text-base font-bold text-slate-900">{isEn ? 'Sprint Tasks' : 'Tugas Sprint'}</h3>
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-700">
-                                        {myTasks.length} Aktif
+                                        {myTasks.length} {isEn ? 'Active' : 'Aktif'}
                                     </span>
                                 </div>
                                 <Link
                                     href={primaryTeam?.workspace_url || '/competition-workspace'}
                                     className="text-xs font-semibold text-blue-600 hover:underline"
                                 >
-                                    Semua
+                                    {isEn ? 'All' : 'Semua'}
                                 </Link>
                             </div>
 
@@ -356,7 +354,7 @@ export default function CompetitionDashboard({
                                                     {task.title}
                                                 </p>
                                                 <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
-                                                    <span>{task.team?.name || 'Tim Lomba'}</span>
+                                                    <span>{task.team?.name || (isEn ? 'Team Task' : 'Tim Lomba')}</span>
                                                     <span>·</span>
                                                     <span>{task.due_on ? task.due_on : 'Sprint'}</span>
                                                 </div>
@@ -370,15 +368,15 @@ export default function CompetitionDashboard({
                                 </div>
                             ) : (
                                 <div className="py-6 text-center text-xs text-slate-400">
-                                    Belum ada tugas sprint aktif.
+                                    {isEn ? 'No active sprint tasks.' : 'Belum ada tugas sprint aktif.'}
                                 </div>
                             )}
                         </div>
 
-                        {/* CARD 3: STANDAR KELENGKAPAN BERKAS (Checklist Style) */}
+                        {/* CARD 3: STANDAR KELENGKAPAN BERKAS */}
                         <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                             <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center justify-between">
-                                <span>Standar Kelengkapan Berkas</span>
+                                <span>{isEn ? 'Document Standards' : 'Standar Kelengkapan Berkas'}</span>
                                 <ShieldCheck className="size-4 text-emerald-600" />
                             </h3>
 
@@ -394,8 +392,8 @@ export default function CompetitionDashboard({
                                             </div>
                                             <span className="font-semibold text-slate-800 truncate">{item.title}</span>
                                         </div>
-                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${item.isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                                            {item.isDone ? 'Siap' : 'Proses'}
+                                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${item.isDone ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                                            {item.isDone ? (isEn ? 'Ready' : 'Siap') : (isEn ? 'In Progress' : 'Proses')}
                                         </span>
                                     </div>
                                 ))}
@@ -408,17 +406,19 @@ export default function CompetitionDashboard({
                     ───────────────────────────────────────────────────────────── */}
                     <div className="lg:col-span-4 space-y-5">
 
-                        {/* CARD 4: HERO COLLABORATION / MEETING HUB (Image 1 Center Video Card) */}
+                        {/* CARD 4: HERO COLLABORATION / MEETING HUB */}
                         <div className="rounded-[28px] bg-white p-6 sm:p-7 border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.03)] flex flex-col items-center justify-between text-center relative overflow-hidden group">
                             {/* Ambient Light Ring */}
                             <div className="absolute -top-12 -right-12 size-36 rounded-full bg-blue-100/50 blur-2xl pointer-events-none" />
 
                             <div className="w-full flex items-center justify-between text-xs text-slate-400 mb-2">
-                                <span className="font-bold text-[10px] uppercase tracking-wider">Ruang Kolaborasi</span>
+                                <span className="font-bold text-[10px] uppercase tracking-wider">
+                                    {isEn ? 'Collaboration Space' : 'Ruang Kolaborasi'}
+                                </span>
                                 <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
                             </div>
 
-                            {/* Overlapping Large Avatars Cluster with Video Badge (Image 1 Slicing) */}
+                            {/* Overlapping Large Avatars Cluster with Video Badge */}
                             <div className="my-5 relative flex items-center justify-center">
                                 <div className="size-16 sm:size-18 rounded-full border-4 border-white bg-gradient-to-tr from-purple-500 to-indigo-600 text-white font-bold text-lg flex items-center justify-center shadow-md -mr-4 z-0">
                                     {getInitials(primaryTeam?.members?.[0]?.name || 'TM')}
@@ -435,24 +435,26 @@ export default function CompetitionDashboard({
 
                             <div className="space-y-1 mb-5">
                                 <h3 className="text-base sm:text-lg font-bold text-slate-900">
-                                    Workspace Tim Aktif
+                                    {isEn ? 'Active Team Workspace' : 'Workspace Tim Aktif'}
                                 </h3>
                                 <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                                    Diskusi sinkronisasi tugas, kurasi berkas dokumen, dan integrasi repositori kode tim Anda.
+                                    {isEn
+                                        ? 'Task synchronization, document curation, and team repository integration.'
+                                        : 'Diskusi sinkronisasi tugas, kurasi berkas dokumen, dan integrasi repositori kode tim Anda.'}
                                 </p>
                             </div>
 
-                            {/* Solid Action Pill Button (Image 1 Green Join Button Style) */}
+                            {/* Solid Action Pill Button */}
                             <Link
                                 href={primaryTeam?.workspace_url || '/competition-workspace'}
                                 className="w-full py-3 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs sm:text-sm text-center shadow-xs hover:shadow transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 <FolderKanban className="size-4" />
-                                <span>Masuk Workspace Kolaborasi</span>
+                                <span>{isEn ? 'Enter Team Workspace' : 'Masuk Workspace Kolaborasi'}</span>
                             </Link>
                         </div>
 
-                        {/* CARD 5: AI WORKSPACE FLAGSHIP BANNER (Image 2 Bottom Center Purple Banner) */}
+                        {/* CARD 5: AI WORKSPACE FLAGSHIP BANNER */}
                         <div className="rounded-[28px] bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 text-white p-6 sm:p-7 shadow-[0_8px_30px_rgba(79,70,229,0.25)] relative overflow-hidden flex flex-col justify-between min-h-[220px]">
                             {/* Decorative background blurs */}
                             <div className="absolute -top-10 -right-10 size-32 rounded-full bg-white/10 blur-xl pointer-events-none" />
@@ -462,14 +464,16 @@ export default function CompetitionDashboard({
                                 <div>
                                     <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20 text-[11px] font-bold text-amber-300 mb-3">
                                         <Sparkles className="size-3" />
-                                        <span>Asisten Cerdas</span>
+                                        <span>{isEn ? 'Smart Assistant' : 'Asisten Cerdas'}</span>
                                     </div>
 
                                     <h3 className="text-lg font-black tracking-tight text-white mb-1">
                                         AI Workspace RAKIT
                                     </h3>
                                     <p className="text-xs text-indigo-100/90 leading-relaxed max-w-[210px]">
-                                        Konsultasikan draf proposal, telaah kriteria penjurian GEMASTIK/PKM, dan perbaiki penulisan karya secara instan.
+                                        {isEn
+                                            ? 'Review proposal drafts, evaluate judging rubrics, and polish writings instantly.'
+                                            : 'Konsultasikan draf proposal, telaah kriteria penjurian GEMASTIK/PKM, dan perbaiki penulisan karya secara instan.'}
                                     </p>
                                 </div>
 
@@ -486,18 +490,18 @@ export default function CompetitionDashboard({
                                     className="w-full py-2.5 rounded-full bg-white text-indigo-900 hover:bg-indigo-50 font-bold text-xs sm:text-sm text-center transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
                                     <Sparkles className="size-3.5 text-amber-500" />
-                                    <span>Konsultasi AI Sekarang</span>
+                                    <span>{isEn ? 'Consult AI Now' : 'Konsultasi AI Sekarang'}</span>
                                 </Link>
                             </div>
                         </div>
 
-                        {/* CARD 6: UNDANGAN REKRUTMEN (Image 1 User Row List Style) */}
+                        {/* CARD 6: UNDANGAN REKRUTMEN */}
                         <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                             <div className="flex items-center justify-between mb-3.5">
-                                <h3 className="text-sm font-bold text-slate-900">Undangan Rekrutmen</h3>
+                                <h3 className="text-sm font-bold text-slate-900">{isEn ? 'Recruitment Invitations' : 'Undangan Rekrutmen'}</h3>
                                 {pendingInvites.length > 0 && (
                                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">
-                                        {pendingInvites.length} Baru
+                                        {pendingInvites.length} {isEn ? 'New' : 'Baru'}
                                     </span>
                                 )}
                             </div>
@@ -508,7 +512,7 @@ export default function CompetitionDashboard({
                                         <div key={inv.id} className="p-3 rounded-2xl bg-slate-50/70 border border-slate-200/70 text-xs space-y-2">
                                             <div className="font-bold text-slate-900 truncate">{inv.team_name}</div>
                                             <p className="text-[11px] text-slate-500 truncate">
-                                                {inv.role_name} · oleh {inv.inviter_name}
+                                                {inv.role_name} · {isEn ? 'by' : 'oleh'} {inv.inviter_name}
                                             </p>
                                             <div className="flex items-center gap-1.5 pt-1">
                                                 <button
@@ -517,7 +521,7 @@ export default function CompetitionDashboard({
                                                     onClick={() => handleAcceptInvitation(inv.id)}
                                                     className="flex-1 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold transition hover:bg-emerald-700 disabled:opacity-50"
                                                 >
-                                                    Terima
+                                                    {isEn ? 'Accept' : 'Terima'}
                                                 </button>
                                                 <button
                                                     type="button"
@@ -525,7 +529,7 @@ export default function CompetitionDashboard({
                                                     onClick={() => handleDeclineInvitation(inv.id)}
                                                     className="px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-[11px] font-medium hover:bg-rose-50 hover:text-rose-600 transition disabled:opacity-50"
                                                 >
-                                                    Tolak
+                                                    {isEn ? 'Decline' : 'Tolak'}
                                                 </button>
                                             </div>
                                         </div>
@@ -533,7 +537,7 @@ export default function CompetitionDashboard({
                                 </div>
                             ) : (
                                 <p className="text-xs text-slate-400 py-2">
-                                    Tidak ada undangan rekrutmen tertunda.
+                                    {isEn ? 'No pending recruitment invitations.' : 'Tidak ada undangan rekrutmen tertunda.'}
                                 </p>
                             )}
                         </div>
@@ -544,11 +548,11 @@ export default function CompetitionDashboard({
                     ───────────────────────────────────────────────────────────── */}
                     <div className="lg:col-span-4 space-y-5">
 
-                        {/* CARD 7: SPRINT CALENDAR STRIP (Image 1 & 2 Weekdays Calendar Style) */}
+                        {/* CARD 7: SPRINT CALENDAR STRIP */}
                         <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-sm font-bold text-slate-900">
-                                    {today.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                    {today.toLocaleDateString(isEn ? 'en-US' : 'id-ID', { month: 'long', year: 'numeric' })}
                                 </h3>
                                 <div className="flex items-center gap-1">
                                     <button type="button" className="size-6 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 hover:text-slate-700">
@@ -560,7 +564,7 @@ export default function CompetitionDashboard({
                                 </div>
                             </div>
 
-                            {/* Horizontal Week Days Strip (Exact Slicing from Image 1 & 2) */}
+                            {/* Horizontal Week Days Strip */}
                             <div className="grid grid-cols-7 gap-1 text-center py-2 border-y border-slate-100">
                                 {weekDays.map((d, i) => (
                                     <div
@@ -582,22 +586,22 @@ export default function CompetitionDashboard({
                             {/* Schedule Timeline below */}
                             <div className="mt-3.5 space-y-2 text-xs">
                                 <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
-                                    <span className="text-slate-500 font-medium">Sprint Tim Harian</span>
+                                    <span className="text-slate-500 font-medium">{isEn ? 'Daily Team Sprint' : 'Sprint Tim Harian'}</span>
                                     <span className="font-bold text-slate-800">14:00 - 16:30</span>
                                 </div>
                                 <div className="flex items-center justify-between p-2 rounded-xl bg-slate-50 border border-slate-100">
-                                    <span className="text-slate-500 font-medium">Validasi Dosen</span>
-                                    <span className="font-bold text-blue-600">Kamis, 10:00</span>
+                                    <span className="text-slate-500 font-medium">{isEn ? 'Advisor Validation' : 'Validasi Dosen'}</span>
+                                    <span className="font-bold text-blue-600">{isEn ? 'Thursday, 10:00' : 'Kamis, 10:00'}</span>
                                 </div>
                             </div>
                         </div>
 
-                        {/* CARD 8: 2 COMPACT METRIC DONUT GAUGES (Image 2 Bottom Right Donut Gauges) */}
+                        {/* CARD 8: 2 COMPACT METRIC DONUT GAUGES */}
                         <div className="grid grid-cols-2 gap-3.5">
                             {/* Gauge 1: Kesiapan Berkas */}
                             <div className="rounded-[24px] bg-white p-4 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center text-center justify-between">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Kesiapan Berkas
+                                    {isEn ? 'Document Readiness' : 'Kesiapan Berkas'}
                                 </span>
 
                                 <div className="relative size-20 my-2 flex items-center justify-center">
@@ -622,15 +626,15 @@ export default function CompetitionDashboard({
                                     <span className="absolute text-sm font-black text-slate-900">{readinessAvg}%</span>
                                 </div>
 
-                                <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md">
-                                    {readinessAvg >= 80 ? 'Lengkap' : 'Penyusunan'}
+                                <span className="text-[10px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200/50">
+                                    {readinessAvg >= 80 ? (isEn ? 'Complete' : 'Lengkap') : (isEn ? 'In Progress' : 'Penyusunan')}
                                 </span>
                             </div>
 
                             {/* Gauge 2: Tugas Selesai */}
                             <div className="rounded-[24px] bg-white p-4 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col items-center text-center justify-between">
                                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Tugas Selesai
+                                    {isEn ? 'Tasks Completed' : 'Tugas Selesai'}
                                 </span>
 
                                 <div className="relative size-20 my-2 flex items-center justify-center">
@@ -655,18 +659,18 @@ export default function CompetitionDashboard({
                                     <span className="absolute text-sm font-black text-slate-900">{primaryTeam?.progress_percent || 0}%</span>
                                 </div>
 
-                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
-                                    {primaryTeam?.progress_percent || 0}% Selesai
+                                <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/50">
+                                    {primaryTeam?.progress_percent || 0}% {isEn ? 'Done' : 'Selesai'}
                                 </span>
                             </div>
                         </div>
 
-                        {/* CARD 9: DEADLINE / FEATURED COMPETITION (Image 2 Bottom Right Action Card) */}
+                        {/* CARD 9: DEADLINE / FEATURED COMPETITION */}
                         {featuredCompetition && (
                             <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
                                 <div className="flex items-center justify-between mb-2">
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
-                                        Peluang Lomba
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200/70">
+                                        {isEn ? 'Featured Contest' : 'Peluang Lomba'}
                                     </span>
                                     <Trophy className="size-4 text-amber-500" />
                                 </div>
@@ -679,7 +683,7 @@ export default function CompetitionDashboard({
                                 </p>
 
                                 <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                                    <span className="text-slate-400">Batas Daftar:</span>
+                                    <span className="text-slate-400">{isEn ? 'Registration Deadline:' : 'Batas Daftar:'}</span>
                                     <span className="font-bold text-rose-600">{featuredCompetition.registration_deadline}</span>
                                 </div>
 
@@ -688,7 +692,7 @@ export default function CompetitionDashboard({
                                         href={`/competitions/${featuredCompetition.slug}`}
                                         className="flex-1 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold text-center transition shadow-2xs"
                                     >
-                                        Panduan Lomba
+                                        {isEn ? 'Contest Details' : 'Panduan Lomba'}
                                     </Link>
                                 </div>
                             </div>

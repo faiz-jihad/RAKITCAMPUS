@@ -780,7 +780,7 @@ export default function AppLayout({
                 aria-label="Mobile Navigation"
                 className="fixed bottom-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#06080F]/95 backdrop-blur-md border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.06)] md:hidden pb-[env(safe-area-inset-bottom,0px)]"
             >
-                <div className={`grid ${isAdminArea ? 'grid-cols-6' : 'grid-cols-5'} h-16 items-center px-1 max-w-lg mx-auto`}>
+                <div className={`grid ${isAdminArea ? 'grid-cols-6' : 'grid-cols-5'} h-16 items-center px-1 max-w-lg mx-auto overflow-hidden`}>
                     {isAdminArea ? (
                         <>
                             {/* 1. Dashboard Admin */}
@@ -977,7 +977,7 @@ export default function AppLayout({
                                 <span className="text-[10px] leading-none tracking-tight">{t('nav.my_competitions', 'Lomba Saya')}</span>
                             </Link>
 
-                            {/* 4. Workspace Tim */}
+                            {/* 5. Workspace Tim */}
                             <Link
                                 href="/competition-workspace"
                                 className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
@@ -993,26 +993,7 @@ export default function AppLayout({
                                             : 'stroke-[1.75]'
                                     }`}
                                 />
-                                <span className="text-[10px] leading-none tracking-tight">{t('workspace.team_workspace', 'Workspace')}</span>
-                            </Link>
-
-                            {/* 5. Leaderboard */}
-                            <Link
-                                href="/leaderboard?hub=competition"
-                                className={`flex flex-col items-center justify-center gap-1 py-1 rounded-xl transition ${
-                                    url.startsWith('/leaderboard')
-                                        ? 'text-blue-600 font-bold'
-                                        : 'text-slate-500 hover:text-slate-800 font-medium'
-                                }`}
-                            >
-                                <Trophy
-                                    className={`size-5 ${
-                                        url.startsWith('/leaderboard')
-                                            ? 'stroke-[2.25] text-blue-600'
-                                            : 'stroke-[1.75]'
-                                    }`}
-                                />
-                                <span className="text-[10px] leading-none tracking-tight">{t('nav.ranking', 'Peringkat')}</span>
+                                <span className="text-[10px] leading-none tracking-tight">Workspace</span>
                             </Link>
                         </>
                     ) : (

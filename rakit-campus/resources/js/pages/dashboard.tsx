@@ -1,4 +1,5 @@
 import AppLayout from '@/layouts/app-layout';
+import { useLocale } from '@/hooks/use-locale';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Activity,
@@ -172,6 +173,7 @@ export default function Dashboard({
     profileCompletion,
 }: Props) {
     const { flash, errors: pageErrors } = usePage().props as any;
+    const { t, locale, isEn } = useLocale();
     const isLecturer = Boolean(user?.is_lecturer || user?.role === 'lecturer');
 
     // State untuk persetujuan tim & undangan
@@ -490,19 +492,19 @@ export default function Dashboard({
 
                 {/* FLASH & ERROR BANNERS */}
                 {flash?.success && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-medium text-white flex items-center gap-2">
-                        <CheckCircle2 className="size-4 text-blue-400 shrink-0" />
+                    <div className="mb-5 p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800 flex items-center gap-2.5 shadow-2xs">
+                        <CheckCircle2 className="size-4 text-emerald-600 shrink-0" />
                         <span>{flash.success}</span>
                     </div>
                 )}
                 {flash?.info && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-xs font-medium text-blue-800">
+                    <div className="mb-5 p-3.5 rounded-2xl bg-indigo-50 border border-indigo-200 text-xs font-semibold text-indigo-800 shadow-2xs">
                         {flash.info}
                     </div>
                 )}
                 {flash?.error && (
-                    <div className="mb-5 p-3.5 rounded-xl bg-slate-100 border border-slate-300 text-xs font-medium text-slate-900 flex items-center gap-2">
-                        <AlertCircle className="size-4 text-slate-700 shrink-0" />
+                    <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-700 flex items-center gap-2.5 shadow-2xs">
+                        <AlertCircle className="size-4 text-rose-600 shrink-0" />
                         <span>{flash.error}</span>
                     </div>
                 )}
@@ -2268,7 +2270,7 @@ export default function Dashboard({
     // TAMPILAN DASHBOARD REGULER MAHASISWA
     // ==========================================
     return (
-        <AppLayout activeTab="dashboard" title="Dashboard - RakitCampus">
+        <AppLayout activeTab="dashboard" title={isEn ? 'Student Dashboard - RakitCampus' : 'Dashboard - RakitCampus'}>
             {/* 1. HEADER ROW (Apple iOS HIG Hub Card with Mascot) */}
             <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-5 mb-5 sm:mb-6">
                 {/* Left: Mascot Hero + Student Identity */}
@@ -2283,19 +2285,19 @@ export default function Dashboard({
                     <div className="space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                Workspace Mahasiswa
+                                {isEn ? 'Student Workspace' : 'Workspace Mahasiswa'}
                             </span>
                             <span className="size-1 rounded-full bg-slate-300" />
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
                                 <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                <span>{primaryTeam ? 'Tim Aktif' : 'Siap Berkolaborasi'}</span>
+                                <span>{primaryTeam ? (isEn ? 'Active Team' : 'Tim Aktif') : (isEn ? 'Ready to Collaborate' : 'Siap Berkolaborasi')}</span>
                             </span>
                         </div>
                         <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                            Halo, {user?.name || 'Mahasiswa'}!
+                            {isEn ? `Hello, ${user?.name || 'Student'}!` : `Halo, ${user?.name || 'Mahasiswa'}!`}
                         </h1>
                         <p className="text-xs sm:text-[13px] text-slate-500 font-medium">
-                            {user?.major || 'Teknik Informatika'} · {user?.campus || 'Perguruan Tinggi'}
+                            {user?.major || (isEn ? 'Informatics' : 'Teknik Informatika')} · {user?.campus || (isEn ? 'University' : 'Perguruan Tinggi')}
                         </p>
                     </div>
                 </div>
@@ -2305,14 +2307,14 @@ export default function Dashboard({
                     <div className="flex items-center p-1 bg-slate-100/90 rounded-full border border-slate-200/80 shrink-0">
                         <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-blue-700 shadow-2xs flex items-center gap-1.5">
                             <FolderGit2 className="size-3.5 text-blue-600" />
-                            <span>Proyek</span>
+                            <span>{isEn ? 'Projects' : 'Proyek'}</span>
                         </span>
                         <Link
                             href="/competitions/dashboard"
                             className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5"
                         >
                             <Trophy className="size-3.5 text-amber-500" />
-                            <span>Lomba</span>
+                            <span>{isEn ? 'Competitions' : 'Lomba'}</span>
                         </Link>
                     </div>
 
@@ -2321,7 +2323,7 @@ export default function Dashboard({
                         className="justify-center inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
                     >
                         <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                        <span>Buat Proyek</span>
+                        <span>{isEn ? 'Create Project' : 'Buat Proyek'}</span>
                     </Link>
                     <Link
                         href={primaryTeam ? `/workspace/${primaryTeam.id}` : '/workspace'}
@@ -2359,10 +2361,10 @@ export default function Dashboard({
                     <div>
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                Progres Tugas
+                                {isEn ? 'Task Progress' : 'Progres Tugas'}
                             </span>
                             <span className="text-xs text-slate-400 font-medium">
-                                Sprint Aktif
+                                {isEn ? 'Active Sprint' : 'Sprint Aktif'}
                             </span>
                         </div>
 
@@ -2397,7 +2399,7 @@ export default function Dashboard({
                                         {taskPercent}%
                                     </span>
                                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mt-0.5">
-                                        TUNTAS
+                                        {isEn ? 'DONE' : 'TUNTAS'}
                                     </span>
                                 </div>
                             </div>
@@ -2405,14 +2407,14 @@ export default function Dashboard({
 
                         <div className="mt-2 text-left">
                             <div className="text-sm font-bold text-slate-900">
-                                {completedTasks} / {totalTasks} Tugas Selesai
+                                {completedTasks} / {totalTasks} {isEn ? 'Tasks Completed' : 'Tugas Selesai'}
                             </div>
                             <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                                 {totalTasks === 0
-                                    ? 'Belum ada tugas sprint aktif.'
+                                    ? (isEn ? 'No active sprint tasks yet.' : 'Belum ada tugas sprint aktif.')
                                     : pendingTasks === 0
-                                    ? 'Semua tugas sprint telah selesai.'
-                                    : `${pendingTasks} tugas sedang berjalan.`}
+                                    ? (isEn ? 'All sprint tasks have been completed.' : 'Semua tugas sprint telah selesai.')
+                                    : (isEn ? `${pendingTasks} tasks currently in progress.` : `${pendingTasks} tugas sedang berjalan.`)}
                             </p>
                         </div>
                     </div>
@@ -2422,7 +2424,7 @@ export default function Dashboard({
                             href={primaryTeam ? `/workspace/${primaryTeam.id}` : '/workspace'}
                             className="w-full flex items-center justify-between px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold shadow-xs transition-all duration-200 group cursor-pointer"
                         >
-                            <span>Buka Workspace</span>
+                            <span>{isEn ? 'Open Workspace' : 'Buka Workspace'}</span>
                             <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-1" />
                         </Link>
                     </div>
@@ -2437,8 +2439,10 @@ export default function Dashboard({
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                                     {primaryTeam
-                                        ? (primaryTeam.is_academic || primaryTeam.project?.category === 'academic' ? 'Tim Akademik' : 'Tim Mandiri')
-                                        : 'Tim Proyek'}
+                                        ? (primaryTeam.is_academic || primaryTeam.project?.category === 'academic'
+                                            ? (isEn ? 'Academic Team' : 'Tim Akademik')
+                                            : (isEn ? 'Independent Team' : 'Tim Mandiri'))
+                                        : (isEn ? 'Project Team' : 'Tim Proyek')}
                                 </span>
                                 {primaryTeam?.project?.class_label && (
                                     <span className="text-xs text-slate-400 font-medium truncate max-w-[160px] sm:max-w-[200px]">
@@ -2452,21 +2456,21 @@ export default function Dashboard({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex flex-wrap items-baseline gap-2 mb-1.5">
                                         <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight truncate">
-                                            {primaryTeam ? primaryTeam.name : 'Belum Memiliki Tim'}
+                                            {primaryTeam ? primaryTeam.name : (isEn ? 'No Team Yet' : 'Belum Memiliki Tim')}
                                         </h3>
                                         {primaryTeam && (
                                             <span className="text-xs text-slate-500 font-semibold">
-                                                · {primaryTeam.members_count || primaryTeam.members?.length || 1} Anggota
+                                                · {primaryTeam.members_count || primaryTeam.members?.length || 1} {isEn ? 'Members' : 'Anggota'}
                                             </span>
                                         )}
                                     </div>
                                     <p className="text-xs sm:text-[13px] text-slate-600 leading-relaxed line-clamp-2">
                                         {primaryTeam?.project?.title ? (
                                             <span className="font-semibold text-slate-800">
-                                                Proyek: {primaryTeam.project.title}
+                                                {isEn ? 'Project:' : 'Proyek:'} {primaryTeam.project.title}
                                             </span>
                                         ) : (
-                                            primaryTeam?.description || 'Bergabunglah dengan tim atau mulai proyek baru Anda.'
+                                            primaryTeam?.description || (isEn ? 'Join a team or start your new project.' : 'Bergabunglah dengan tim atau mulai proyek baru Anda.')
                                         )}
                                     </p>
 
@@ -2479,7 +2483,7 @@ export default function Dashboard({
                                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                                 >
                                                     <FolderKanban className="size-3.5" />
-                                                    <span>Buka Workspace</span>
+                                                    <span>{isEn ? 'Open Workspace' : 'Buka Workspace'}</span>
                                                     <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                                                 </Link>
                                             ) : (
@@ -2488,7 +2492,7 @@ export default function Dashboard({
                                                     className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                                 >
                                                     <Users className="size-3.5" />
-                                                    <span>Kelola Tim</span>
+                                                    <span>{isEn ? 'Manage Team' : 'Kelola Tim'}</span>
                                                     <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
                                                 </Link>
                                             )
@@ -2498,7 +2502,7 @@ export default function Dashboard({
                                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-semibold transition-all duration-200 shadow-xs cursor-pointer group"
                                             >
                                                 <Plus className="size-3.5" />
-                                                <span>Buat Proyek</span>
+                                                <span>{isEn ? 'Create Project' : 'Buat Proyek'}</span>
                                             </Link>
                                         )}
 
@@ -2507,7 +2511,7 @@ export default function Dashboard({
                                                 href={`/projects/${primaryTeam.project.slug || primaryTeam.project.id}`}
                                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-blue-600 border border-slate-200 text-xs font-semibold shadow-2xs active:scale-[0.98] transition-all duration-200 cursor-pointer group"
                                             >
-                                                <span>Detail Proyek</span>
+                                                <span>{isEn ? 'Project Details' : 'Detail Proyek'}</span>
                                                 <ArrowRight className="size-3 text-slate-400 group-hover:text-blue-600 transition-transform duration-200 group-hover:translate-x-0.5" />
                                             </Link>
                                         )}
@@ -2519,7 +2523,7 @@ export default function Dashboard({
                                     <div className="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-200/70 w-full md:w-auto md:min-w-[210px] shrink-0">
                                         <div className="mb-2">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                                                Susunan Tim
+                                                {isEn ? 'Team Roster' : 'Susunan Tim'}
                                             </span>
                                         </div>
 
@@ -2546,7 +2550,7 @@ export default function Dashboard({
                                                     <div
                                                         key={member.id || idx}
                                                         className={`size-7 rounded-full ${grad} font-bold text-[10px] flex items-center justify-center ring-2 ring-white shadow-2xs hover:scale-110 transition-transform cursor-pointer`}
-                                                        title={`${member.name} - ${member.role || 'Anggota'}`}
+                                                        title={`${member.name} - ${member.role || (isEn ? 'Member' : 'Anggota')}`}
                                                     >
                                                         {memberInitials}
                                                     </div>
@@ -2557,7 +2561,7 @@ export default function Dashboard({
                                         {/* Roles list */}
                                         <div className="text-[11px] text-slate-500 font-medium truncate max-w-[200px]">
                                             {primaryTeam.members
-                                                .map((m: any) => m.role?.replace(/ Specialist| Developer/gi, '') || 'Anggota')
+                                                .map((m: any) => m.role?.replace(/ Specialist| Developer/gi, '') || (isEn ? 'Member' : 'Anggota'))
                                                 .slice(0, 3)
                                                 .join(' · ')}
                                         </div>
@@ -2574,7 +2578,7 @@ export default function Dashboard({
                             <div>
                                 <div className="mb-3">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Kesiapan Profil
+                                        {isEn ? 'Profile Readiness' : 'Kesiapan Profil'}
                                     </span>
                                 </div>
 
@@ -2584,7 +2588,7 @@ export default function Dashboard({
                                             {readinessScore}%
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-2">
-                                            Lengkapi keahlian & biodata Anda.
+                                            {isEn ? 'Complete your skills & bio.' : 'Lengkapi keahlian & biodata Anda.'}
                                         </p>
                                     </div>
 
@@ -2592,7 +2596,7 @@ export default function Dashboard({
                                     <div className="size-12 sm:size-14 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0 group-hover/card:scale-105 transition-transform duration-200">
                                         <ShieldCheck className="size-4 sm:size-5" />
                                         <span className="text-[8px] font-extrabold tracking-wider uppercase mt-0.5">
-                                            {user?.is_verified ? 'VERIFIED' : 'MAHASISWA'}
+                                            {user?.is_verified ? 'VERIFIED' : (isEn ? 'STUDENT' : 'MAHASISWA')}
                                         </span>
                                     </div>
                                 </div>
@@ -2603,7 +2607,7 @@ export default function Dashboard({
                                     href="/settings/profile"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-between group cursor-pointer"
                                 >
-                                    <span>Kelola Profil</span>
+                                    <span>{isEn ? 'Manage Profile' : 'Kelola Profil'}</span>
                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
                                 </Link>
                             </div>
@@ -2614,7 +2618,7 @@ export default function Dashboard({
                             <div>
                                 <div className="mb-3">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                                        Rekrutmen Terbuka
+                                        {isEn ? 'Open Recruitment' : 'Rekrutmen Terbuka'}
                                     </span>
                                 </div>
 
@@ -2625,11 +2629,11 @@ export default function Dashboard({
                                                 {recommendedProjects.length}
                                             </span>
                                             <span className="text-xs font-semibold text-slate-500">
-                                                Proyek Terbuka
+                                                {isEn ? 'Open Projects' : 'Proyek Terbuka'}
                                             </span>
                                         </div>
                                         <p className="text-xs text-slate-500 mt-1 leading-relaxed line-clamp-1">
-                                            Peluang bergabung dengan tim proyek baru.
+                                            {isEn ? 'Opportunities to join new project teams.' : 'Peluang bergabung dengan tim proyek baru.'}
                                         </p>
                                         {recommendedProjects.length > 0 && (
                                             <div className="text-[11px] text-slate-500 truncate mt-1.5 flex items-center gap-1.5">
@@ -2658,7 +2662,7 @@ export default function Dashboard({
                                     href="/projects?status=recruiting"
                                     className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center justify-between group cursor-pointer"
                                 >
-                                    <span>Eksplorasi Proyek</span>
+                                    <span>{isEn ? 'Explore Projects' : 'Eksplorasi Proyek'}</span>
                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-1.5" />
                                 </Link>
                             </div>
@@ -2676,14 +2680,14 @@ export default function Dashboard({
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <div>
                                 <h2 className="text-sm font-bold text-slate-900">
-                                    Tugas Prioritas
+                                    {isEn ? 'Priority Tasks' : 'Tugas Prioritas'}
                                 </h2>
                             </div>
                             <Link
                                 href="/workspace"
                                 className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
-                                <span>Buka Workspace Tim</span>
+                                <span>{isEn ? 'Open Team Workspace' : 'Buka Workspace Tim'}</span>
                                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                             </Link>
                         </div>
@@ -2707,12 +2711,12 @@ export default function Dashboard({
                                                     {task.title}
                                                 </Link>
                                                 <div className="flex items-center gap-2 mt-0.5 text-[11px] text-slate-400">
-                                                    <span>{task.team?.name || 'Tugas Proyek'}</span>
+                                                    <span>{task.team?.name || (isEn ? 'Project Task' : 'Tugas Proyek')}</span>
                                                     {dueDate && (
                                                         <>
                                                             <span>•</span>
                                                             <span className={isUrgent ? 'text-rose-600 font-medium' : ''}>
-                                                                Tenggat: {dueDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                                                                {isEn ? 'Due:' : 'Tenggat:'} {dueDate.toLocaleDateString(isEn ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}
                                                             </span>
                                                         </>
                                                     )}
@@ -2720,7 +2724,7 @@ export default function Dashboard({
                                             </div>
 
                                             <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 shrink-0">
-                                                {task.status || 'Aktif'}
+                                                {task.status || (isEn ? 'Active' : 'Aktif')}
                                             </span>
                                         </div>
                                     );
@@ -2733,8 +2737,8 @@ export default function Dashboard({
                                     alt="Semua Tugas Beres"
                                     className="w-16 h-auto object-contain mx-auto mb-2.5 drop-shadow-2xs select-none pointer-events-none"
                                 />
-                                <p className="font-semibold text-slate-700">Semua tugas telah diselesaikan</p>
-                                <p className="text-[11px] text-slate-400 mt-0.5">Tidak ada tugas mendesak saat ini. Waktunya istirahat atau susun sprint berikutnya!</p>
+                                <p className="font-semibold text-slate-700">{isEn ? 'All tasks have been completed' : 'Semua tugas telah diselesaikan'}</p>
+                                <p className="text-[11px] text-slate-400 mt-0.5">{isEn ? 'No urgent tasks right now. Time to rest or plan the next sprint!' : 'Tidak ada tugas mendesak saat ini. Waktunya istirahat atau susun sprint berikutnya!'}</p>
                             </div>
                         )}
                     </div>
@@ -2743,13 +2747,13 @@ export default function Dashboard({
                     <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-4">
                             <h2 className="text-sm font-bold text-slate-900">
-                                Proyek & Tim Anda
+                                {isEn ? 'Your Projects & Teams' : 'Proyek & Tim Anda'}
                             </h2>
                             <Link
                                 href="/projects"
                                 className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
-                                <span>Semua Proyek</span>
+                                <span>{isEn ? 'All Projects' : 'Semua Proyek'}</span>
                                 <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform" />
                             </Link>
                         </div>
@@ -2771,7 +2775,7 @@ export default function Dashboard({
                                             <div>
                                                 <div className="flex items-center justify-between gap-2 mb-2">
                                                     <span className="text-[11px] font-semibold text-slate-500">
-                                                        {isAcademicProject ? 'Proyek Akademik' : 'Proyek Mandiri'}
+                                                        {isAcademicProject ? (isEn ? 'Academic Project' : 'Proyek Akademik') : (isEn ? 'Independent Project' : 'Proyek Mandiri')}
                                                     </span>
                                                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
                                                         <span className={`size-1.5 rounded-full ${fBadge.dotColor}`} />
@@ -2783,26 +2787,26 @@ export default function Dashboard({
                                                 </h3>
                                                 {team.project?.title && team.project.title !== team.name && (
                                                     <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
-                                                        Proyek: {team.project.title}
+                                                        {isEn ? 'Project:' : 'Proyek:'} {team.project.title}
                                                     </p>
                                                 )}
 
                                                 {fStatus === 'formation_rejected' && fNotes && (
                                                     <div className="mt-2 p-2 rounded-lg bg-rose-50 border border-rose-200 text-[11px] text-rose-800 flex items-start gap-1.5">
                                                         <AlertCircle className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
-                                                        <span><strong>Alasan Ditolak Dosen:</strong> {fNotes}</span>
+                                                        <span><strong>{isEn ? 'Lecturer Rejection Reason:' : 'Alasan Ditolak Dosen:'}</strong> {fNotes}</span>
                                                     </div>
                                                 )}
                                                 {fStatus === 'lecturer_approved' && fNotes && (
                                                     <div className="mt-2 p-2 rounded-lg bg-blue-50 border border-blue-200 text-[11px] text-blue-800">
-                                                        <strong>Catatan Dosen:</strong> {fNotes}
+                                                        <strong>{isEn ? 'Lecturer Notes:' : 'Catatan Dosen:'}</strong> {fNotes}
                                                     </div>
                                                 )}
                                             </div>
 
                                             {isAcademicProject && team.can_access_workspace && team.project && (
                                                 <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                                                    <span className="text-slate-500 text-[11px]">Evaluasi Semester:</span>
+                                                    <span className="text-slate-500 text-[11px]">{isEn ? 'Semester Evaluation:' : 'Evaluasi Semester:'}</span>
                                                     <div className="flex items-center gap-2">
                                                         <Link
                                                             href={`/projects/${team.project.slug || team.project.id}?tab=uts`}
@@ -2823,13 +2827,13 @@ export default function Dashboard({
 
                                             <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                                                 <span className="text-[11px] text-slate-500">
-                                                    {team.members_count || 1} Anggota <span className="text-slate-300 mx-1">|</span> Progres {team.progress_percent ?? 0}%
+                                                    {team.members_count || 1} {isEn ? 'Members' : 'Anggota'} <span className="text-slate-300 mx-1">|</span> {isEn ? 'Progress' : 'Progres'} {team.progress_percent ?? 0}%
                                                 </span>
                                                 <Link
                                                     href={team.project ? `/projects/${team.project.slug || team.project.id}` : `/workspace/${team.id}`}
                                                     className="group/link font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                                                 >
-                                                    <span>Buka Detail</span>
+                                                    <span>{isEn ? 'Open Details' : 'Buka Detail'}</span>
                                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover/link:translate-x-0.5" />
                                                 </Link>
                                             </div>
@@ -2844,16 +2848,16 @@ export default function Dashboard({
                                     alt="Mulai Proyek Baru"
                                     className="w-16 h-auto object-contain mx-auto mb-2.5 drop-shadow-2xs select-none pointer-events-none"
                                 />
-                                <p className="font-semibold text-slate-700">Belum tergabung dalam tim proyek</p>
+                                <p className="font-semibold text-slate-700">{isEn ? 'Not enrolled in a project team yet' : 'Belum tergabung dalam tim proyek'}</p>
                                 <p className="text-[11px] text-slate-400 mt-0.5">
-                                    Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.
+                                    {isEn ? 'Start by creating a new project or applying to a class team.' : 'Mulai dengan membuat proyek baru atau mengajukan diri ke tim kelas.'}
                                 </p>
                                 <Link
                                     href="/projects/create"
                                     className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs"
                                 >
                                     <Plus className="w-3.5 h-3.5" />
-                                    <span>Buat Proyek Baru</span>
+                                    <span>{isEn ? 'Create New Project' : 'Buat Proyek Baru'}</span>
                                 </Link>
                             </div>
                         )}
@@ -2866,15 +2870,15 @@ export default function Dashboard({
                                 <div>
                                     <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
                                         <Inbox className="w-4 h-4 text-blue-600" />
-                                        <span>Tim yang Mengajak Kolaborasi</span>
+                                        <span>{isEn ? 'Teams Inviting You to Collaborate' : 'Tim yang Mengajak Kolaborasi'}</span>
                                         {receivedInvitations.filter((i: any) => i.status === 'pending').length > 0 && (
                                             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700">
-                                                {receivedInvitations.filter((i: any) => i.status === 'pending').length} Menunggu
+                                                {receivedInvitations.filter((i: any) => i.status === 'pending').length} {isEn ? 'Pending' : 'Menunggu'}
                                             </span>
                                         )}
                                     </h2>
                                     <p className="text-xs text-slate-400 mt-0.5">
-                                        Undangan bergabung antarmahasiswa (berdiri sendiri, terpisah dari status persetujuan dosen)
+                                        {isEn ? 'Peer invitations between students (independent from lecturer approvals)' : 'Undangan bergabung antarmahasiswa (berdiri sendiri, terpisah dari status persetujuan dosen)'}
                                     </p>
                                 </div>
                             </div>
@@ -2904,12 +2908,12 @@ export default function Dashboard({
                                                         {isComp ? (
                                                             <>
                                                                 <Trophy className="w-2.5 h-2.5 text-amber-600" />
-                                                                <span>Tim Kompetisi</span>
+                                                                <span>{isEn ? 'Competition Team' : 'Tim Kompetisi'}</span>
                                                             </>
                                                         ) : (
                                                             <>
                                                                 <FolderKanban className="w-2.5 h-2.5 text-blue-600" />
-                                                                <span>Proyek Kampus</span>
+                                                                <span>{isEn ? 'Campus Project' : 'Proyek Kampus'}</span>
                                                             </>
                                                         )}
                                                     </span>
@@ -2947,21 +2951,21 @@ export default function Dashboard({
                                                             : 'bg-blue-50 text-blue-700 border-blue-200'
                                                     }`}>
                                                         {inv.status === 'accepted'
-                                                            ? 'Resmi Bergabung'
+                                                            ? (isEn ? 'Joined' : 'Resmi Bergabung')
                                                             : inv.status === 'declined'
-                                                            ? 'Undangan Ditolak'
+                                                            ? (isEn ? 'Declined' : 'Undangan Ditolak')
                                                             : inv.status === 'expired'
-                                                            ? 'Kedaluwarsa'
-                                                            : 'Undangan Masuk'}
+                                                            ? (isEn ? 'Expired' : 'Kedaluwarsa')
+                                                            : (isEn ? 'Incoming Invite' : 'Undangan Masuk')}
                                                     </span>
                                                 </div>
 
                                                 <p className="text-[11px] text-slate-600">
-                                                    Pengundang: <strong className="text-slate-800">{inv.inviter_name}</strong>
+                                                    {isEn ? 'Inviter:' : 'Pengundang:'} <strong className="text-slate-800">{inv.inviter_name}</strong>
                                                     {' • '}
-                                                    Posisi: <strong className={isComp ? 'text-amber-800' : 'text-blue-700'}>{inv.role_name}</strong>
+                                                    {isEn ? 'Role:' : 'Posisi:'} <strong className={isComp ? 'text-amber-800' : 'text-blue-700'}>{inv.role_name}</strong>
                                                     {' • '}
-                                                    Anggota: {inv.team_members_count}/{inv.team_capacity}
+                                                    {isEn ? 'Members:' : 'Anggota:'} {inv.team_members_count}/{inv.team_capacity}
                                                     {inv.class_label && ` • ${inv.class_label}`}
                                                 </p>
 
@@ -2972,7 +2976,7 @@ export default function Dashboard({
                                                 )}
                                                 {inv.status === 'declined' && inv.declined_reason && (
                                                     <p className="text-[11px] text-rose-600">
-                                                        Alasan ditolak: "{inv.declined_reason}"
+                                                        {isEn ? 'Declined reason:' : 'Alasan ditolak:'} "{inv.declined_reason}"
                                                     </p>
                                                 )}
                                             </div>
@@ -2989,7 +2993,7 @@ export default function Dashboard({
                                                         className="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 border border-slate-200 hover:border-rose-200 text-xs font-bold transition-all duration-150 active:scale-95 inline-flex items-center gap-1 cursor-pointer disabled:opacity-50 shadow-2xs"
                                                     >
                                                         <X className="w-3.5 h-3.5" />
-                                                        <span>Tolak</span>
+                                                        <span>{isEn ? 'Decline' : 'Tolak'}</span>
                                                     </button>
                                                     <button
                                                         type="button"
@@ -2998,7 +3002,7 @@ export default function Dashboard({
                                                         className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all duration-150 active:scale-95 shadow-2xs hover:shadow-xs inline-flex items-center gap-1 cursor-pointer disabled:opacity-50"
                                                     >
                                                         <Check className="w-3.5 h-3.5" />
-                                                        <span>{isBusy ? 'Memproses...' : 'Terima'}</span>
+                                                        <span>{isBusy ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? 'Accept' : 'Terima')}</span>
                                                     </button>
                                                 </div>
                                             )}
@@ -3013,7 +3017,7 @@ export default function Dashboard({
                                                                 : 'bg-blue-600 hover:bg-blue-700 text-white'
                                                         }`}
                                                     >
-                                                        <span>{isComp ? 'Buka Workspace Lomba' : 'Buka Proyek'}</span>
+                                                        <span>{isComp ? (isEn ? 'Open Contest Workspace' : 'Buka Workspace Lomba') : (isEn ? 'Open Project' : 'Buka Proyek')}</span>
                                                         <ArrowRight className="w-3.5 h-3.5" />
                                                     </Link>
                                                 </div>
@@ -3029,13 +3033,13 @@ export default function Dashboard({
                     <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <h2 className="text-sm font-bold text-slate-900">
-                                Proyek yang Membuka Rekrutmen
+                                {isEn ? 'Projects Opening Recruitment' : 'Proyek yang Membuka Rekrutmen'}
                             </h2>
                             <Link
                                 href="/projects?status=recruiting"
                                 className="group/link text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors flex items-center gap-1"
                             >
-                                <span>Eksplorasi Semua</span>
+                                <span>{isEn ? 'Explore All' : 'Eksplorasi Semua'}</span>
                                 <ArrowRight className="w-3.5 h-3.5 group-hover/link:translate-x-0.5 transition-transform duration-150" />
                             </Link>
                         </div>
@@ -3051,22 +3055,22 @@ export default function Dashboard({
                                         <div>
                                             <div className="flex items-center justify-between gap-2 mb-1.5 text-xs">
                                                 <span className="font-semibold text-slate-500 capitalize">
-                                                    {proj.category?.replace(/_/g, ' ') || 'Proyek'}
+                                                    {proj.category?.replace(/_/g, ' ') || (isEn ? 'Project' : 'Proyek')}
                                                 </span>
                                                 <span className="font-semibold text-blue-600">
-                                                    {proj.open_roles?.length || 1} Posisi Dicari
+                                                    {proj.open_roles?.length || 1} {isEn ? 'Roles Needed' : 'Posisi Dicari'}
                                                 </span>
                                             </div>
-                                            <h3 className="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition line-clamp-1">
+                                            <h3 className="text-sm font-bold text-slate-900 group-hover/text-blue-600 transition line-clamp-1">
                                                 {proj.title}
                                             </h3>
                                             <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">
-                                                {proj.short_description || 'Proyek kolaborasi mahasiswa.'}
+                                                {proj.short_description || (isEn ? 'Student collaborative project.' : 'Proyek kolaborasi mahasiswa.')}
                                             </p>
 
                                             {proj.open_roles && proj.open_roles.length > 0 && (
                                                 <div className="flex items-center gap-1.5 mt-2.5 text-xs text-slate-600">
-                                                    <span className="text-slate-400 font-medium">Posisi:</span>
+                                                    <span className="text-slate-400 font-medium">{isEn ? 'Roles:' : 'Posisi:'}</span>
                                                     <span className="font-medium text-slate-800 truncate">
                                                         {proj.open_roles.map((r: any) => r.name).slice(0, 2).join(', ')}
                                                         {proj.open_roles.length > 2 ? ` +${proj.open_roles.length - 2}` : ''}
@@ -3077,10 +3081,10 @@ export default function Dashboard({
 
                                         <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
                                             <span className="text-[11px] text-slate-500 truncate">
-                                                {proj.leader?.name || 'Ketua Tim'} · {proj.members_count ?? 1}/{proj.max_team_size ?? 4} Anggota
+                                                {proj.leader?.name || (isEn ? 'Team Lead' : 'Ketua Tim')} · {proj.members_count ?? 1}/{proj.max_team_size ?? 4} {isEn ? 'Members' : 'Anggota'}
                                             </span>
                                             <span className="font-semibold text-blue-600 group-hover:text-blue-700 flex items-center gap-1 shrink-0 transition-colors">
-                                                <span>Detail</span>
+                                                <span>{isEn ? 'Details' : 'Detail'}</span>
                                                 <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                                             </span>
                                         </div>
@@ -3089,9 +3093,9 @@ export default function Dashboard({
                             </div>
                         ) : (
                             <div className="py-6 text-center text-xs text-slate-400">
-                                <p className="font-semibold text-slate-700">Belum ada proyek yang membuka rekrutmen saat ini</p>
+                                <p className="font-semibold text-slate-700">{isEn ? 'No projects currently opening recruitment' : 'Belum ada proyek yang membuka rekrutmen saat ini'}</p>
                                 <Link href="/projects?status=recruiting" className="group/link text-blue-600 font-semibold hover:text-blue-700 transition-colors mt-1 inline-flex items-center gap-1">
-                                    <span>Lihat daftar proyek di Project Hub</span>
+                                    <span>{isEn ? 'View projects in Project Hub' : 'Lihat daftar proyek di Project Hub'}</span>
                                     <ArrowRight className="w-3.5 h-3.5 transition-transform duration-150 group-hover/link:translate-x-0.5" />
                                 </Link>
                             </div>
@@ -3107,13 +3111,13 @@ export default function Dashboard({
                             <div className="space-y-1">
                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100/90 text-blue-800 text-[10px] font-bold uppercase tracking-wider">
                                     <Sparkles className="size-3 text-blue-600" />
-                                    <span>Sahabat RAKIT</span>
+                                    <span>{isEn ? 'RAKIT Companion' : 'Sahabat RAKIT'}</span>
                                 </span>
                                 <h3 className="text-sm font-bold text-slate-900 pt-1">
-                                    Cari Rekan Tim Lomba
+                                    {isEn ? 'Find Competition Teammates' : 'Cari Rekan Tim Lomba'}
                                 </h3>
                                 <p className="text-xs text-slate-600 leading-relaxed">
-                                    Temukan hacker, desainer UI/UX, dan presenter kompetisi di Radar Talenta.
+                                    {isEn ? 'Find hackers, UI/UX designers, and presenters on Talent Radar.' : 'Temukan hacker, desainer UI/UX, dan presenter kompetisi di Radar Talenta.'}
                                 </p>
                             </div>
                             <img
@@ -3127,7 +3131,7 @@ export default function Dashboard({
                                 href="/competitions?tab=teams&view=radar"
                                 className="w-full py-2 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
                             >
-                                <span>Buka Radar Rekrutmen</span>
+                                <span>{isEn ? 'Open Talent Radar' : 'Buka Radar Rekrutmen'}</span>
                                 <ArrowRight className="size-3.5" />
                             </Link>
                         </div>
@@ -3137,13 +3141,13 @@ export default function Dashboard({
                     <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                         <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                             <h2 className="text-sm font-bold text-slate-900">
-                                Profil Mahasiswa
+                                {isEn ? 'Student Profile' : 'Profil Mahasiswa'}
                             </h2>
                             <Link
                                 href="/settings/profile"
                                 className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                             >
-                                Edit Profil
+                                {isEn ? 'Edit Profile' : 'Edit Profil'}
                             </Link>
                         </div>
 
@@ -3153,10 +3157,10 @@ export default function Dashboard({
                             </div>
                             <div className="min-w-0">
                                 <h3 className="text-sm font-bold text-slate-900 truncate">
-                                    {user?.name || 'Mahasiswa'}
+                                    {user?.name || (isEn ? 'Student' : 'Mahasiswa')}
                                 </h3>
                                 <p className="text-xs text-slate-500 truncate">
-                                    {user?.headline || user?.major || 'Teknik Informatika'}
+                                    {user?.headline || user?.major || (isEn ? 'Informatics' : 'Teknik Informatika')}
                                 </p>
                             </div>
                         </div>
@@ -3167,14 +3171,14 @@ export default function Dashboard({
                                 <span className="font-semibold text-slate-800">{user?.nim || '-'}</span>
                             </div>
                             <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">Kampus</span>
-                                <span className="font-semibold text-slate-800 truncate block">{user?.campus || 'Kampus'}</span>
+                                <span className="text-[10px] text-slate-400 block font-medium">{isEn ? 'Campus' : 'Kampus'}</span>
+                                <span className="font-semibold text-slate-800 truncate block">{user?.campus || (isEn ? 'University' : 'Kampus')}</span>
                             </div>
                         </div>
 
                         {user?.skills && user.skills.length > 0 && (
                             <div className="pt-3 border-t border-slate-100">
-                                <span className="text-[10px] text-slate-400 block font-medium mb-1.5">Keahlian</span>
+                                <span className="text-[10px] text-slate-400 block font-medium mb-1.5">{isEn ? 'Skills' : 'Keahlian'}</span>
                                 <div className="flex flex-wrap gap-1">
                                     {user.skills.slice(0, 4).map((s: any, idx: number) => (
                                         <span key={s.id || idx} className="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">
@@ -3196,10 +3200,10 @@ export default function Dashboard({
                         <div className="bg-white rounded-[28px] border border-slate-200/80 p-5 sm:p-6 shadow-[0_2px_16px_rgba(0,0,0,0.03)]">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                                 <h2 className="text-sm font-bold text-slate-900">
-                                    Rekan Kolaborasi Tim
+                                    {isEn ? 'Collaborating Teammates' : 'Rekan Kolaborasi Tim'}
                                 </h2>
                                 <span className="text-xs text-slate-400 font-medium">
-                                    {teammates.length} Rekan
+                                    {teammates.length} {isEn ? 'Peers' : 'Rekan'}
                                 </span>
                             </div>
 
@@ -3229,7 +3233,7 @@ export default function Dashboard({
                                                     {peer.name}
                                                 </div>
                                                 <div className="text-[11px] text-slate-500 truncate">
-                                                    {peer.role || 'Anggota'} · {peer.team}
+                                                    {peer.role || (isEn ? 'Member' : 'Anggota')} · {peer.team}
                                                 </div>
                                             </div>
                                         </div>
@@ -3244,18 +3248,18 @@ export default function Dashboard({
                         <div className="bg-white rounded-xl border border-slate-200/80 p-4 sm:p-5 shadow-2xs">
                             <div className="flex items-center justify-between pb-3.5 border-b border-slate-100 mb-3.5">
                                 <h2 className="text-sm font-bold text-slate-900">
-                                    Aktivitas Terbaru
+                                    {isEn ? 'Recent Activities' : 'Aktivitas Terbaru'}
                                 </h2>
                             </div>
 
                             <div className="space-y-3">
                                 {recentActivities.slice(0, 4).map((act: any, idx: number) => (
                                     <div key={act.id || idx} className="text-xs text-slate-600">
-                                        <span className="font-semibold text-slate-900">{act.actor?.name || 'Rekan Tim'}</span>{' '}
-                                        <span>{act.description || act.action || 'memperbarui proyek'}</span>
+                                        <span className="font-semibold text-slate-900">{act.actor?.name || (isEn ? 'Teammate' : 'Rekan Tim')}</span>{' '}
+                                        <span>{act.description || act.action || (isEn ? 'updated project' : 'memperbarui proyek')}</span>
                                         <div className="text-[10px] text-slate-400 mt-0.5">
                                             {act.team?.name ? `${act.team.name} · ` : ''}
-                                            {act.created_at ? new Date(act.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Baru saja'}
+                                            {act.created_at ? new Date(act.created_at).toLocaleDateString(isEn ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' }) : (isEn ? 'Just now' : 'Baru saja')}
                                         </div>
                                     </div>
                                 ))}
@@ -3272,7 +3276,7 @@ export default function Dashboard({
                         <div className="flex items-start justify-between gap-3 mb-3">
                             <div>
                                 <h3 className="text-base font-bold text-slate-900">
-                                    Tolak Undangan Kolaborasi
+                                    {isEn ? 'Decline Collaboration Invitation' : 'Tolak Undangan Kolaborasi'}
                                 </h3>
                                 <p className="text-xs text-slate-500 mt-0.5">
                                     {declineModalInvite.team_name} ({declineModalInvite.project_title})
@@ -3290,13 +3294,13 @@ export default function Dashboard({
                         <form onSubmit={handleDeclineInvitationSubmit} className="space-y-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1.5">
-                                    Alasan Penolakan (Opsional)
+                                    {isEn ? 'Decline Reason (Optional)' : 'Alasan Penolakan (Opsional)'}
                                 </label>
                                 <textarea
                                     rows={3}
                                     value={declineReason}
                                     onChange={(e) => setDeclineReason(e.target.value)}
-                                    placeholder="Contoh: Saat ini sudah tergabung di tim lain atau jadwal bentrok..."
+                                    placeholder={isEn ? 'e.g. Currently involved in another team or schedule conflict...' : 'Contoh: Saat ini sudah tergabung di tim lain atau jadwal bentrok...'}
                                     className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                                 />
                             </div>
@@ -3306,14 +3310,14 @@ export default function Dashboard({
                                     onClick={() => setDeclineModalInvite(null)}
                                     className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer"
                                 >
-                                    Batal
+                                    {isEn ? 'Cancel' : 'Batal'}
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={processingInviteId === declineModalInvite.id}
                                     className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition disabled:opacity-50 cursor-pointer"
                                 >
-                                    {processingInviteId === declineModalInvite.id ? 'Memproses...' : 'Konfirmasi Tolak'}
+                                    {processingInviteId === declineModalInvite.id ? (isEn ? 'Processing...' : 'Memproses...') : (isEn ? 'Confirm Decline' : 'Konfirmasi Tolak')}
                                 </button>
                             </div>
                         </form>

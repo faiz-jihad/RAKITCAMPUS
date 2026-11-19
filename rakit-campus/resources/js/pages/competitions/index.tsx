@@ -337,7 +337,7 @@ export default function CompetitionIndex({
     filters = {},
 }: Props) {
     const safeFilters = (Array.isArray(filters) || !filters) ? {} : filters;
-    const { t, locale } = useLocale();
+    const { t, locale, isEn } = useLocale();
 
     const [activeTab, setActiveTab] = useState<'explore' | 'teams' | 'categories' | 'my_competitions' | 'recommendations'>(
         (safeFilters.tab as any) || 'explore'
@@ -617,16 +617,9 @@ export default function CompetitionIndex({
                             />
                         </div>
                         <div>
-                            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200/60 text-[10px] font-bold text-indigo-700 uppercase tracking-wider mb-1">
-                                <Trophy className="size-3 text-indigo-600" />
-                                <span>{t('competitions.tag', 'Competition Hub & Talent Radar')}</span>
-                            </div>
                             <h1 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-slate-900 tracking-tight">
                                 {t('competitions.hub_title', 'Competition Hub Mahasiswa')}
                             </h1>
-                            <p className="text-xs text-slate-500 mt-1 max-w-xl leading-relaxed">
-                                {t('competitions.hub_subtitle', 'Eksplorasi kompetisi bergengsi, temukan rekan tim lintas prodi, dan pantau linimasa karya lomba nasional.')}
-                            </p>
                         </div>
                     </div>
 
@@ -698,10 +691,10 @@ export default function CompetitionIndex({
                                         <div className="absolute top-3.5 left-3.5 flex items-center gap-1.5">
                                             <span className="px-2.5 py-1 rounded-full bg-indigo-600 text-white text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1 shadow-xs">
                                                 <Trophy className="size-3" />
-                                                <span>Sorotan</span>
+                                                <span>{t('competitions.spotlight_badge', 'Sorotan')}</span>
                                             </span>
                                             <span className="px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white/90 text-[10px] font-semibold uppercase">
-                                                {spotlightComp.level || 'Nasional'}
+                                                {spotlightComp.level ? (isEn ? (spotlightComp.level === 'Nasional' ? 'National' : spotlightComp.level === 'Internasional' ? 'International' : spotlightComp.level === 'Regional' ? 'Regional' : 'University') : spotlightComp.level) : (isEn ? 'National' : 'Nasional')}
                                             </span>
                                         </div>
 
@@ -713,7 +706,7 @@ export default function CompetitionIndex({
                                                     ? 'bg-rose-500 text-white shadow-2xs'
                                                     : 'bg-black/40 hover:bg-black/60 text-white'
                                             }`}
-                                            title={bookmarkedIds.includes(spotlightComp.id) ? 'Hapus Simpanan' : 'Simpan'}
+                                            title={bookmarkedIds.includes(spotlightComp.id) ? (isEn ? 'Remove Bookmark' : 'Hapus Simpanan') : (isEn ? 'Save' : 'Simpan')}
                                         >
                                             <Bookmark className={`w-3.5 h-3.5 ${bookmarkedIds.includes(spotlightComp.id) ? 'fill-current' : ''}`} />
                                         </button>
@@ -722,12 +715,12 @@ export default function CompetitionIndex({
                                             <span className="text-[10px] text-white/70 block uppercase tracking-wider font-bold">Deadline</span>
                                             <span className="text-xs font-bold text-white">
                                                 {spotlightComp.registration_deadline
-                                                    ? new Date(spotlightComp.registration_deadline).toLocaleDateString('id-ID', {
+                                                    ? new Date(spotlightComp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
                                                           day: 'numeric',
                                                           month: 'short',
                                                           year: 'numeric',
                                                       })
-                                                    : 'Terbuka'}
+                                                    : (isEn ? 'Open' : 'Terbuka')}
                                             </span>
                                         </div>
                                     </div>
@@ -752,7 +745,7 @@ export default function CompetitionIndex({
                                         <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-1.5 flex-wrap">
                                                 <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold">
-                                                    {spotlightComp.competition_type || 'Tim'}
+                                                    {spotlightComp.competition_type === 'individual' ? (isEn ? 'Individual' : 'Individu') : (isEn ? 'Team' : 'Tim')}
                                                 </span>
                                                 <span className="px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-[11px] font-bold uppercase">
                                                     {spotlightComp.category?.replace('_', ' ') || 'Teknologi'}
@@ -762,7 +755,7 @@ export default function CompetitionIndex({
                                                 href={`/competitions/${spotlightComp.slug || spotlightComp.id}`}
                                                 className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-2xs transition active:scale-95"
                                             >
-                                                <span>Detail</span>
+                                                <span>{t('competitions.view_detail', 'Detail')}</span>
                                                 <ArrowUpRight className="w-3.5 h-3.5" />
                                             </Link>
                                         </div>
@@ -778,10 +771,10 @@ export default function CompetitionIndex({
                                                     <Clock className="size-4" />
                                                 </div>
                                                 <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                                                    Deadline Terdekat
+                                                    {t('competitions.approaching_deadlines', 'Deadline Terdekat')}
                                                 </h3>
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Segera Ditutup</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{t('competitions.closing_soon', 'Segera Ditutup')}</span>
                                         </div>
 
                                         <div className="divide-y divide-slate-100">
@@ -814,14 +807,14 @@ export default function CompetitionIndex({
                                                                         : 'bg-slate-100 text-slate-700'
                                                                 }`}
                                                             >
-                                                                {daysLeft !== null ? `${daysLeft} hari` : 'Segera'}
+                                                                {daysLeft !== null ? (isEn ? `${daysLeft} days` : `${daysLeft} hari`) : (isEn ? 'Soon' : 'Segera')}
                                                             </span>
                                                         </Link>
                                                     );
                                                 })
                                             ) : (
                                                 <div className="py-6 text-center text-xs text-slate-400">
-                                                    Belum ada jadwal deadline terdekat
+                                                    {t('competitions.no_upcoming_deadlines', 'Belum ada jadwal deadline terdekat')}
                                                 </div>
                                             )}
                                         </div>
@@ -834,9 +827,9 @@ export default function CompetitionIndex({
                                                 const el = document.getElementById('catalog-section');
                                                 if (el) el.scrollIntoView({ behavior: 'smooth' });
                                             }}
-                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition"
+                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-700 transition cursor-pointer"
                                         >
-                                            Lihat Semua Katalog ↓
+                                            {t('competitions.view_all_catalog', 'Lihat Semua Katalog ↓')}
                                         </button>
                                     </div>
                                 </div>
@@ -853,15 +846,15 @@ export default function CompetitionIndex({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
-                                                    Cari Rekan Tim
+                                                    {t('competitions.find_teammates_card', 'Cari Rekan Tim')}
                                                 </h3>
                                                 <span className="text-[11px] text-slate-500">
-                                                    {openRecruitingTeams.length} tim aktif membuka lowongan peran
+                                                    {openRecruitingTeams.length} {t('competitions.teams_open_slots', 'tim aktif membuka lowongan peran')}
                                                 </span>
                                             </div>
                                         </div>
                                         <span className="text-xs font-bold text-indigo-600 group-hover:translate-x-0.5 transition-transform">
-                                            Eksplor Tim →
+                                            {t('competitions.explore_teams_btn', 'Eksplor Tim →')}
                                         </span>
                                     </div>
 
@@ -875,7 +868,7 @@ export default function CompetitionIndex({
                                             </span>
                                         ))}
                                         {openRecruitingTeams.length === 0 && (
-                                            <span className="text-xs text-slate-500 italic">Belum ada tim yang membuka lowongan</span>
+                                            <span className="text-xs text-slate-500 italic">{t('competitions.no_teams_recruiting', 'Belum ada tim yang membuka lowongan')}</span>
                                         )}
                                     </div>
                                 </div>
@@ -889,10 +882,10 @@ export default function CompetitionIndex({
                                             </span>
                                             <div>
                                                 <h3 className="text-xs sm:text-sm font-extrabold text-slate-900">
-                                                    Kategori Unggulan
+                                                    {t('competitions.featured_categories', 'Kategori Unggulan')}
                                                 </h3>
                                                 <span className="text-[11px] text-slate-500">
-                                                    Filter cepat minat kompetisi
+                                                    {t('competitions.quick_filter', 'Filter cepat minat kompetisi')}
                                                 </span>
                                             </div>
                                         </div>
@@ -901,7 +894,7 @@ export default function CompetitionIndex({
                                             onClick={() => setActiveTab('categories')}
                                             className="text-xs font-bold text-indigo-600 hover:text-indigo-700 cursor-pointer"
                                         >
-                                            Semua ({categories.length})
+                                            {t('competitions.all_count', 'Semua ({count})').replace('{count}', String(categories.length))}
                                         </button>
                                     </div>
 
@@ -934,7 +927,7 @@ export default function CompetitionIndex({
                                 <Search className="w-4 h-4 text-slate-400 shrink-0" />
                                 <input
                                     type="text"
-                                    placeholder="Cari kompetisi atau penyelenggara..."
+                                    placeholder={t('competitions.search_placeholder', 'Cari kompetisi atau penyelenggara...')}
                                     value={exploreSearch}
                                     onChange={(e) => setExploreSearch(e.target.value)}
                                     className="bg-transparent text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-full font-medium"
@@ -943,7 +936,7 @@ export default function CompetitionIndex({
                                     type="submit"
                                     className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shrink-0 cursor-pointer"
                                 >
-                                    Cari
+                                    {t('competitions.search_btn', 'Cari')}
                                 </button>
                             </form>
 
@@ -969,9 +962,9 @@ export default function CompetitionIndex({
                                         );
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate max-w-none lg:max-w-[170px]"
-                                    title="Filter Penyelenggara Kompetisi"
+                                    title={isEn ? 'Filter Competition Organizers' : 'Filter Penyelenggara Kompetisi'}
                                 >
-                                    <option value="">Semua Penyelenggara</option>
+                                    <option value="">{t('competitions.all_organizers', 'Semua Penyelenggara')}</option>
                                     {organizers.map((org) => (
                                         <option key={org} value={org}>
                                             {org}
@@ -1001,7 +994,7 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="">Semua Kategori</option>
+                                    <option value="">{t('competitions.all_categories', 'Semua Kategori')}</option>
                                     {categories.map((c) => (
                                         <option key={c} value={c}>
                                             {c.replace('_', ' ').toUpperCase()}
@@ -1031,11 +1024,11 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="">Semua Tingkat</option>
-                                    <option value="university">Kampus</option>
-                                    <option value="regional">Regional</option>
-                                    <option value="national">Nasional</option>
-                                    <option value="international">Internasional</option>
+                                    <option value="">{t('competitions.all_levels', 'Semua Tingkat')}</option>
+                                    <option value="university">{isEn ? 'University' : 'Kampus'}</option>
+                                    <option value="regional">{isEn ? 'Regional' : 'Regional'}</option>
+                                    <option value="national">{isEn ? 'National' : 'Nasional'}</option>
+                                    <option value="international">{isEn ? 'International' : 'Internasional'}</option>
                                 </select>
 
                                 <select
@@ -1060,7 +1053,7 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="">Semua Format</option>
+                                    <option value="">{t('competitions.all_formats', 'Semua Format')}</option>
                                     <option value="Online">Online</option>
                                     <option value="Offline">Offline</option>
                                     <option value="Hybrid">Hybrid</option>
@@ -1088,9 +1081,9 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="">Semua Tipe</option>
-                                    <option value="team">Tim</option>
-                                    <option value="individual">Individu</option>
+                                    <option value="">{isEn ? 'All Types' : 'Semua Tipe'}</option>
+                                    <option value="team">{isEn ? 'Team' : 'Tim'}</option>
+                                    <option value="individual">{isEn ? 'Individual' : 'Individu'}</option>
                                 </select>
 
                                 <select
@@ -1115,10 +1108,10 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-medium text-slate-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="">Semua Status</option>
-                                    <option value="open">Buka</option>
-                                    <option value="closing_soon">Segera Tutup</option>
-                                    <option value="closed">Ditutup</option>
+                                    <option value="">{t('competitions.all_status', 'Semua Status')}</option>
+                                    <option value="open">{isEn ? 'Open' : 'Buka'}</option>
+                                    <option value="closing_soon">{isEn ? 'Closing Soon' : 'Segera Tutup'}</option>
+                                    <option value="closed">{isEn ? 'Closed' : 'Ditutup'}</option>
                                 </select>
 
                                 <select
@@ -1143,9 +1136,9 @@ export default function CompetitionIndex({
                                     }}
                                     className="w-full lg:w-auto px-2.5 py-1.5 bg-slate-50 border border-slate-200/80 rounded-lg text-xs font-semibold text-blue-700 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition cursor-pointer truncate"
                                 >
-                                    <option value="deadline_asc">Deadline Terdekat</option>
-                                    <option value="deadline_desc">Deadline Terlama</option>
-                                    <option value="latest">Terbaru</option>
+                                    <option value="deadline_asc">{isEn ? 'Approaching Deadline' : 'Deadline Terdekat'}</option>
+                                    <option value="deadline_desc">{isEn ? 'Furthest Deadline' : 'Deadline Terlama'}</option>
+                                    <option value="latest">{isEn ? 'Latest' : 'Terbaru'}</option>
                                 </select>
 
                                 {(exploreSearch || exploreOrganizer || exploreCategory || exploreLevel || exploreFormat || exploreType || exploreStatus) && (
@@ -1154,7 +1147,7 @@ export default function CompetitionIndex({
                                         onClick={handleResetExploreFilter}
                                         className="col-span-2 sm:col-span-1 lg:w-auto px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg text-center cursor-pointer transition"
                                     >
-                                        Reset Filter
+                                        {t('competitions.reset_filter', 'Reset Filter')}
                                     </button>
                                 )}
                             </div>
@@ -1163,10 +1156,10 @@ export default function CompetitionIndex({
                         {/* RESULTS HEADER */}
                         <div className="flex items-center justify-between pt-1">
                             <h2 className="text-sm font-bold text-slate-900 tracking-tight">
-                                Daftar Kompetisi
+                                {t('competitions.competition_list', 'Daftar Kompetisi')}
                             </h2>
                             <span className="text-xs text-slate-400 font-medium">
-                                {catalogCompetitions.length} kompetisi
+                                {t('competitions.competitions_count', '{count} kompetisi').replace('{count}', String(catalogCompetitions.length))}
                             </span>
                         </div>
 
@@ -1175,14 +1168,14 @@ export default function CompetitionIndex({
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <AnimatedIcon name="search" size={56} className="mx-auto mb-3" />
                                 <h3 className="text-sm font-bold text-slate-900">
-                                    Tidak Ada Kompetisi
+                                    {t('competitions.no_competitions', 'Tidak Ada Kompetisi')}
                                 </h3>
                                 <button
                                     type="button"
                                     onClick={handleResetExploreFilter}
                                     className="mt-3 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition cursor-pointer"
                                 >
-                                    Reset Filter
+                                    {t('competitions.reset_filter', 'Reset Filter')}
                                 </button>
                             </div>
                         ) : (
@@ -1192,12 +1185,12 @@ export default function CompetitionIndex({
                                     const isExpired = comp.registration_deadline && new Date(comp.registration_deadline) < new Date();
                                     const isClosed = isExpired || comp.status === 'closed' || comp.status === 'completed' || comp.status === 'cancelled';
                                     const formattedDeadline = comp.registration_deadline
-                                        ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
+                                        ? new Date(comp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
                                               day: 'numeric',
                                               month: 'short',
                                               year: 'numeric',
                                           })
-                                        : 'Terbuka';
+                                        : (isEn ? 'Open' : 'Terbuka');
 
                                     const deadline = comp.registration_deadline ? new Date(comp.registration_deadline) : null;
                                     const now = new Date();
@@ -1208,18 +1201,18 @@ export default function CompetitionIndex({
                                     const teamLabel = comp.min_team_size && comp.max_team_size
                                         ? comp.min_team_size === comp.max_team_size
                                             ? comp.min_team_size === 1
-                                                ? 'Individu'
-                                                : `${comp.min_team_size} Orang`
-                                            : `${comp.min_team_size}-${comp.max_team_size} Orang`
-                                        : '1 Tim';
+                                                ? (isEn ? 'Individual' : 'Individu')
+                                                : (isEn ? `${comp.min_team_size} People` : `${comp.min_team_size} Orang`)
+                                            : (isEn ? `${comp.min_team_size}-${comp.max_team_size} People` : `${comp.min_team_size}-${comp.max_team_size} Orang`)
+                                        : (isEn ? '1 Team' : '1 Tim');
 
                                     const topPillText = comp.prize_info
                                         ? comp.prize_info
                                         : isClosed
-                                            ? 'Pendaftaran Tutup'
+                                            ? (isEn ? 'Registration Closed' : 'Pendaftaran Tutup')
                                             : daysLeft !== null
-                                                ? (daysLeft === 0 ? 'Tutup Hari Ini' : `${daysLeft} Hari Lagi`)
-                                                : 'Pendaftaran Buka';
+                                                ? (daysLeft === 0 ? (isEn ? 'Closes Today' : 'Tutup Hari Ini') : (isEn ? `${daysLeft} Days Left` : `${daysLeft} Hari Lagi`))
+                                                : (isEn ? 'Registration Open' : 'Pendaftaran Buka');
 
                                     return (
                                         <div
@@ -1260,7 +1253,7 @@ export default function CompetitionIndex({
                                                             ? 'bg-rose-500 text-white shadow-rose-500/30'
                                                             : 'bg-black/40 hover:bg-black/60 text-white border border-white/20'
                                                     }`}
-                                                    title={isSaved ? 'Hapus Simpanan' : 'Simpan Lomba'}
+                                                    title={isSaved ? (isEn ? 'Remove Saved' : 'Hapus Simpanan') : (isEn ? 'Save Competition' : 'Simpan Lomba')}
                                                 >
                                                     <Bookmark className={`size-4 sm:size-4.5 ${isSaved ? 'fill-current' : ''}`} />
                                                 </button>
@@ -1286,14 +1279,14 @@ export default function CompetitionIndex({
                                                     </h3>
                                                     <div className="flex items-center gap-1 text-amber-400 text-xs sm:text-sm font-bold shrink-0 ml-1">
                                                         <Star className="size-3.5 sm:size-4 fill-amber-400 text-amber-400" />
-                                                        <span className="text-white/95">{comp.level || 'Nasional'}</span>
+                                                        <span className="text-white/95">{comp.level ? (isEn ? (comp.level === 'Nasional' ? 'National' : comp.level === 'Internasional' ? 'International' : comp.level === 'Regional' ? 'Regional' : 'University') : comp.level) : (isEn ? 'National' : 'Nasional')}</span>
                                                     </div>
                                                 </div>
 
                                                 {/* Organizer with MapPin */}
                                                 <div className="flex items-center gap-1.5 text-xs sm:text-[13px] text-white/80 line-clamp-1 -mt-1">
                                                     <MapPin className="size-3.5 sm:size-4 text-white/70 shrink-0" />
-                                                    <span className="truncate">{comp.organizer || 'Penyelenggara Terverifikasi'}</span>
+                                                    <span className="truncate">{comp.organizer || (isEn ? 'Verified Organizer' : 'Penyelenggara Terverifikasi')}</span>
                                                     {comp.format && (
                                                         <span className="text-white/50 text-[11px] shrink-0">• {comp.format}</span>
                                                     )}
@@ -1301,17 +1294,17 @@ export default function CompetitionIndex({
 
                                                 {/* 3 Specs Row */}
                                                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2 pt-2.5 border-t border-white/10 text-[11px] sm:text-xs text-white/85">
-                                                    <div className="flex items-center gap-1.5 truncate" title={`Ukuran Tim: ${teamLabel}`}>
+                                                    <div className="flex items-center gap-1.5 truncate" title={isEn ? `Team Size: ${teamLabel}` : `Ukuran Tim: ${teamLabel}`}>
                                                         <Users className="size-3.5 sm:size-4 text-white/60 shrink-0" />
                                                         <span className="truncate">{teamLabel}</span>
                                                     </div>
-                                                    <div className="flex items-center gap-1.5 truncate" title={`Kategori: ${comp.category?.replace('_', ' ') || 'Umum'}`}>
+                                                    <div className="flex items-center gap-1.5 truncate" title={isEn ? `Category: ${comp.category?.replace('_', ' ') || 'General'}` : `Kategori: ${comp.category?.replace('_', ' ') || 'Umum'}`}>
                                                         <Trophy className="size-3.5 sm:size-4 text-white/60 shrink-0" />
                                                         <span className="truncate capitalize">{comp.category?.replace('_', ' ') || 'Umum'}</span>
                                                     </div>
                                                     <div className="flex items-center gap-1.5 truncate" title={`Deadline: ${formattedDeadline}`}>
                                                         <Calendar className="size-3.5 sm:size-4 text-white/60 shrink-0" />
-                                                        <span className="truncate">{isClosed ? 'Selesai' : formattedDeadline}</span>
+                                                        <span className="truncate">{isClosed ? (isEn ? 'Closed' : 'Selesai') : formattedDeadline}</span>
                                                     </div>
                                                 </div>
 
@@ -1325,7 +1318,7 @@ export default function CompetitionIndex({
                                                     className="w-full py-2.5 sm:py-3 px-4 rounded-full bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all duration-200 cursor-pointer active:scale-[0.99] group/btn"
                                                 >
                                                     <FileText className="size-4 text-slate-900 group-hover/btn:text-blue-600 transition-colors" />
-                                                    <span>Detail Lomba</span>
+                                                    <span>{t('competitions.view_detail', 'Detail Lomba')}</span>
                                                 </button>
                                             </div>
                                         </div>
@@ -1760,38 +1753,21 @@ export default function CompetitionIndex({
                     {/* SUB-VIEW 2: RADAR REKRUTMEN TALENTA KANDIDAT */}
                     {teamViewMode === 'radar' && (
                         <div className="space-y-5">
-                            {/* Banner Callout with Mascot Heart (Apple iOS HIG Card) */}
-                            <div className="rounded-[28px] bg-white p-5 sm:p-6 border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="space-y-1 max-w-xl">
-                                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200/60 mb-1">
-                                        <Users className="size-3.5 text-blue-600" />
-                                        <span>Radar Talenta & Rekrutmen</span>
-                                    </div>
-                                    <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
-                                        Cari Rekan & Bentuk Tim Kolaborasi
-                                    </h3>
-                                    <p className="text-xs sm:text-[13px] text-slate-500 leading-relaxed">
-                                        Temukan rekan mahasiswa kampus dengan profil komplementer (Developer, UI/UX Designer, Hustler) untuk diajak berkolaborasi atau diundang ke tim kompetisi Anda.
-                                    </p>
-                                </div>
-                                <div className="flex items-center gap-3 shrink-0">
-                                    <img
-                                        src="/images/mascot/mascot-heart.png"
-                                        alt="Mascot RAKIT"
-                                        className="w-14 sm:w-16 h-auto object-contain drop-shadow-sm select-none pointer-events-none hidden sm:block"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            setCreateTeamPreselectedCompId(null);
-                                            setCreateTeamModalOpen(true);
-                                        }}
-                                        className="px-4 py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs cursor-pointer flex items-center gap-1.5"
-                                    >
-                                        <Plus className="size-3.5 stroke-[2.5]" />
-                                        <span>Bentuk Tim Baru</span>
-                                    </button>
-                                </div>
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-200/80">
+                                <h3 className="text-lg sm:text-xl font-bold tracking-tight text-slate-900">
+                                    {isEn ? 'Find Teammates & Build Collaborative Teams' : 'Cari Rekan & Bentuk Tim Kolaborasi'}
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCreateTeamPreselectedCompId(null);
+                                        setCreateTeamModalOpen(true);
+                                    }}
+                                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition active:scale-[0.98] shadow-xs cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
+                                >
+                                    <Plus className="size-3.5 stroke-[2.5]" />
+                                    <span>{isEn ? 'Create New Team' : 'Bentuk Tim Baru'}</span>
+                                </button>
                             </div>
 
                             {/* Radar Filter Toolbar */}
@@ -2058,17 +2034,17 @@ export default function CompetitionIndex({
                                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-blue-600 transition mb-1 cursor-pointer"
                                 >
                                     <ArrowLeft className="w-3.5 h-3.5" />
-                                    Kembali ke Eksplor Lomba
+                                    {isEn ? 'Back to Explore Competitions' : 'Kembali ke Eksplor Lomba'}
                                 </button>
                                 <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                    Kategori Kompetisi
+                                    {isEn ? 'Competition Categories' : 'Kategori Kompetisi'}
                                 </h2>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                    Pilih bidang peminatan untuk menemukan perlombaan yang relevan dengan keahlianmu.
+                                    {isEn ? 'Select a field of interest to discover competitions relevant to your skills.' : 'Pilih bidang peminatan untuk menemukan perlombaan yang relevan dengan keahlianmu.'}
                                 </p>
                             </div>
                             <span className="self-start sm:self-auto text-xs font-medium text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                                {coreCategoryList.length} Bidang
+                                {isEn ? `${coreCategoryList.length} Fields` : `${coreCategoryList.length} Bidang`}
                             </span>
                         </div>
 
@@ -2107,7 +2083,7 @@ export default function CompetitionIndex({
                                                 </div>
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/60 text-slate-600 text-xs font-semibold group-hover:bg-blue-50 group-hover:text-blue-700 group-hover:border-blue-100 transition-colors">
                                                     <span className={`w-1.5 h-1.5 rounded-full ${count > 0 ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                                    {count} lomba
+                                                    {isEn ? `${count} contests` : `${count} lomba`}
                                                 </span>
                                             </div>
 
@@ -2121,7 +2097,7 @@ export default function CompetitionIndex({
                                         </div>
 
                                         <div className="mt-4 pt-3.5 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-400 group-hover:text-blue-600 transition-colors">
-                                            <span>Jelajahi kompetisi</span>
+                                            <span>{isEn ? 'Explore competitions' : 'Jelajahi kompetisi'}</span>
                                             <ArrowUpRight className="w-4 h-4 stroke-[2] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                                         </div>
                                     </div>
@@ -2148,7 +2124,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Semua ({lifecycleCounts.all ?? (myParticipations.length + savedCompetitions.length)})
+                                    {isEn ? 'All' : 'Semua'} ({lifecycleCounts.all ?? (myParticipations.length + savedCompetitions.length)})
                                 </button>
                                 <button
                                     type="button"
@@ -2159,7 +2135,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Tersimpan ({lifecycleCounts.saved ?? savedCompetitions.length})
+                                    {isEn ? 'Saved' : 'Tersimpan'} ({lifecycleCounts.saved ?? savedCompetitions.length})
                                 </button>
                                 <button
                                     type="button"
@@ -2170,7 +2146,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Rencana ({lifecycleCounts.planning ?? myParticipations.filter(p => p.lifecycle_status === 'planning').length})
+                                    {isEn ? 'Planning' : 'Rencana'} ({lifecycleCounts.planning ?? myParticipations.filter(p => p.lifecycle_status === 'planning').length})
                                 </button>
                                 <button
                                     type="button"
@@ -2181,7 +2157,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Terdaftar Resmi ({lifecycleCounts.registered ?? myParticipations.filter(p => p.lifecycle_status === 'registered').length})
+                                    {isEn ? 'Officially Registered' : 'Terdaftar Resmi'} ({lifecycleCounts.registered ?? myParticipations.filter(p => p.lifecycle_status === 'registered').length})
                                 </button>
                                 <button
                                     type="button"
@@ -2192,7 +2168,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Sedang Berjalan ({lifecycleCounts.in_progress ?? myParticipations.filter(p => p.lifecycle_status === 'in_progress').length})
+                                    {isEn ? 'In Progress' : 'Sedang Berjalan'} ({lifecycleCounts.in_progress ?? myParticipations.filter(p => p.lifecycle_status === 'in_progress').length})
                                 </button>
                                 <button
                                     type="button"
@@ -2203,7 +2179,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Selesai & Prestasi ({lifecycleCounts.completed ?? myParticipations.filter(p => p.lifecycle_status === 'completed').length})
+                                    {isEn ? 'Completed & Awards' : 'Selesai & Prestasi'} ({lifecycleCounts.completed ?? myParticipations.filter(p => p.lifecycle_status === 'completed').length})
                                 </button>
                                 <button
                                     type="button"
@@ -2214,7 +2190,7 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Dibatalkan ({lifecycleCounts.withdrawn ?? myParticipations.filter(p => p.lifecycle_status === 'withdrawn').length})
+                                    {isEn ? 'Withdrawn' : 'Dibatalkan'} ({lifecycleCounts.withdrawn ?? myParticipations.filter(p => p.lifecycle_status === 'withdrawn').length})
                                 </button>
                                 <button
                                     type="button"
@@ -2225,17 +2201,21 @@ export default function CompetitionIndex({
                                             : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
                                     }`}
                                 >
-                                    Pengajuan Tim ({myApplications.length})
+                                    {isEn ? 'Team Applications' : 'Pengajuan Tim'} ({myApplications.length})
                                 </button>
                             </div>
 
-                            <Link
-                                href="/competitions/create"
-                                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shrink-0"
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreateTeamPreselectedCompId(null);
+                                    setCreateTeamModalOpen(true);
+                                }}
+                                className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition shrink-0 cursor-pointer"
                             >
                                 <Plus className="w-3.5 h-3.5" />
-                                <span>Bikin Tim</span>
-                            </Link>
+                                <span>{isEn ? 'Create Team' : 'Bikin Tim'}</span>
+                            </button>
                         </div>
 
                         {/* CASE 1: APPLICATIONS (Team Recruitment User Requests) */}
@@ -2269,24 +2249,24 @@ export default function CompetitionIndex({
                                                     <div className="flex flex-wrap items-center gap-2">
                                                         <h4 className="text-sm font-bold text-slate-900">{app.team_name}</h4>
                                                         <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                                                            Posisi: {app.role_name}
+                                                            {isEn ? 'Position' : 'Posisi'}: {app.role_name}
                                                         </span>
                                                         {app.status === 'accepted' ? (
                                                             <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
-                                                                Diterima
+                                                                {isEn ? 'Accepted' : 'Diterima'}
                                                             </span>
                                                         ) : app.status === 'rejected' ? (
                                                             <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800">
-                                                                Ditolak
+                                                                {isEn ? 'Rejected' : 'Ditolak'}
                                                             </span>
                                                         ) : (
                                                             <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                                                                Menunggu
+                                                                {isEn ? 'Pending' : 'Menunggu'}
                                                             </span>
                                                         )}
                                                     </div>
                                                     <p className="text-xs text-slate-500 mt-0.5">
-                                                        {app.competition_name} • Ketua Tim: {app.leader_name || 'Ketua Tim'}
+                                                        {app.competition_name} • {isEn ? 'Team Leader' : 'Ketua Tim'}: {app.leader_name || (isEn ? 'Leader' : 'Ketua Tim')}
                                                     </p>
                                                     {app.message && (
                                                         <p className="text-[11px] text-slate-400 mt-1 italic">
@@ -2300,7 +2280,7 @@ export default function CompetitionIndex({
                                                         href={`/competition-workspace/${app.competition?.slug || app.participation_id}`}
                                                         className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shrink-0"
                                                     >
-                                                        <span>Workspace Tim</span>
+                                                        <span>{isEn ? 'Team Workspace' : 'Workspace Tim'}</span>
                                                         <ArrowRight className="w-3.5 h-3.5" />
                                                     </Link>
                                                 )}
@@ -2318,14 +2298,14 @@ export default function CompetitionIndex({
                                     <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                         <AnimatedIcon name="target" size={56} className="mx-auto mb-3" />
                                         <h3 className="text-sm font-bold text-slate-900">
-                                            Belum Ada Kompetisi Tersimpan
+                                            {isEn ? 'No Saved Competitions Yet' : 'Belum Ada Kompetisi Tersimpan'}
                                         </h3>
                                         <button
                                             type="button"
                                             onClick={() => setActiveTab('explore')}
                                             className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
                                         >
-                                            Eksplor Lomba
+                                            {isEn ? 'Explore Competitions' : 'Eksplor Lomba'}
                                         </button>
                                     </div>
                                 ) : (
@@ -2349,7 +2329,7 @@ export default function CompetitionIndex({
                                                             type="button"
                                                             onClick={(e) => handleToggleBookmark(e, comp.id)}
                                                             className="p-1.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 cursor-pointer"
-                                                            title="Hapus dari Simpanan"
+                                                            title={isEn ? 'Remove from Saved' : 'Hapus dari Simpanan'}
                                                         >
                                                             <Bookmark className="w-3.5 h-3.5 fill-current" />
                                                         </button>
@@ -2363,20 +2343,20 @@ export default function CompetitionIndex({
 
                                                     <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                                                         <div>
-                                                            <span className="text-[10px] text-slate-400 block">Batas Pendaftaran</span>
+                                                            <span className="text-[10px] text-slate-400 block">{isEn ? 'Registration Deadline' : 'Batas Pendaftaran'}</span>
                                                             <span className={`font-bold text-[11px] ${comp.is_urgent ? 'text-rose-600' : 'text-slate-800'}`}>
                                                                 {comp.registration_deadline
-                                                                    ? new Date(comp.registration_deadline).toLocaleDateString('id-ID', {
+                                                                    ? new Date(comp.registration_deadline).toLocaleDateString(isEn ? 'en-US' : 'id-ID', {
                                                                           day: 'numeric',
                                                                           month: 'short',
                                                                           year: 'numeric',
                                                                       })
-                                                                    : 'Terbuka'}
+                                                                    : (isEn ? 'Open' : 'Terbuka')}
                                                             </span>
                                                         </div>
                                                         {comp.is_urgent && (
                                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200">
-                                                                Segera Tutup
+                                                                {isEn ? 'Closing Soon' : 'Segera Tutup'}
                                                             </span>
                                                         )}
                                                     </div>
@@ -2391,13 +2371,13 @@ export default function CompetitionIndex({
                                                         }}
                                                         className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer flex-1 text-center"
                                                     >
-                                                        Ikuti Sekarang
+                                                        {isEn ? 'Join Now' : 'Ikuti Sekarang'}
                                                     </button>
                                                     <Link
                                                         href={`/competitions/${comp.slug || comp.id}`}
                                                         className="px-3 py-1.5 border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold transition"
                                                     >
-                                                        Detail ↗
+                                                        {isEn ? 'Details →' : 'Detail ↗'}
                                                     </Link>
                                                 </div>
                                             </div>
@@ -2421,17 +2401,17 @@ export default function CompetitionIndex({
                                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                                 <AnimatedIcon name="target" size={56} className="mx-auto mb-3" />
                                                 <h3 className="text-sm font-bold text-slate-900">
-                                                    Belum Ada Lomba di Tahap Ini
+                                                    {isEn ? 'No Competitions in This Stage Yet' : 'Belum Ada Lomba di Tahap Ini'}
                                                 </h3>
                                                 <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1">
-                                                    Temukan peluang kompetisi dan mulai rancang tim Anda di halaman eksplorasi.
+                                                    {isEn ? 'Find competition opportunities and assemble your team on the explore tab.' : 'Temukan peluang kompetisi dan mulai rancang tim Anda di halaman eksplorasi.'}
                                                 </p>
                                                 <button
                                                     type="button"
                                                     onClick={() => setActiveTab('explore')}
                                                     className="mt-3 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold cursor-pointer"
                                                 >
-                                                    Eksplor Lomba
+                                                    {isEn ? 'Explore Competitions' : 'Eksplor Lomba'}
                                                 </button>
                                             </div>
                                         );
@@ -2473,14 +2453,14 @@ export default function CompetitionIndex({
 
                                                 const statusLabel =
                                                     status === 'planning'
-                                                        ? 'Rencana'
+                                                        ? (isEn ? 'Planning' : 'Rencana')
                                                         : status === 'registered'
-                                                        ? 'Terdaftar Resmi'
+                                                        ? (isEn ? 'Registered' : 'Terdaftar Resmi')
                                                         : status === 'in_progress'
-                                                        ? 'Sedang Berjalan'
+                                                        ? (isEn ? 'In Progress' : 'Sedang Berjalan')
                                                         : status === 'completed'
-                                                        ? 'Selesai'
-                                                        : 'Dibatalkan';
+                                                        ? (isEn ? 'Completed' : 'Selesai')
+                                                        : (isEn ? 'Withdrawn' : 'Dibatalkan');
 
                                                 const workspaceUrl = `/competition-workspace/${comp?.slug || part.id}`;
 
@@ -2520,17 +2500,17 @@ export default function CompetitionIndex({
                                                                             </span>
                                                                             <div className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[10px] sm:text-[11px] font-semibold flex items-center gap-1 border border-slate-200/60">
                                                                                 <Award className="size-3 text-slate-500" />
-                                                                                <span>{team?.is_leader ? 'Leader' : 'Anggota'}</span>
+                                                                                <span>{team?.is_leader ? 'Leader' : (isEn ? 'Member' : 'Anggota')}</span>
                                                                             </div>
                                                                         </div>
 
                                                                         {/* Team Name & Competition */}
                                                                         <div className="space-y-1 mb-4">
                                                                             <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug line-clamp-1 group-hover:text-blue-600 transition">
-                                                                                {team?.name || 'Mandiri'}
+                                                                                {team?.name || (isEn ? 'Individual' : 'Mandiri')}
                                                                             </h3>
                                                                             <p className="text-xs sm:text-sm font-medium text-slate-500 leading-normal line-clamp-1">
-                                                                                {comp?.name || 'Kompetisi'}
+                                                                                {comp?.name || (isEn ? 'Competition' : 'Kompetisi')}
                                                                             </p>
                                                                         </div>
                                                                     </div>
@@ -2540,7 +2520,7 @@ export default function CompetitionIndex({
                                                                         {/* Progress Row */}
                                                                         <div>
                                                                             <div className="flex items-center justify-between text-[11px] sm:text-xs mb-1">
-                                                                                <span className="text-slate-400 font-medium">Progres</span>
+                                                                                <span className="text-slate-400 font-medium">{isEn ? 'Progress' : 'Progres'}</span>
                                                                                 <span className="text-slate-800 font-bold">{progressPercent}%</span>
                                                                             </div>
                                                                             <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -2555,11 +2535,11 @@ export default function CompetitionIndex({
                                                                         <div className="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 pt-0.5">
                                                                             <div className="flex items-center gap-1.5">
                                                                                 <Users className="size-3.5 text-slate-400 shrink-0" />
-                                                                                <span>{team?.members_count || 1} Anggota</span>
+                                                                                <span>{team?.members_count || 1} {isEn ? 'Members' : 'Anggota'}</span>
                                                                             </div>
                                                                             <div className="flex items-center gap-1.5">
                                                                                 <CheckCircle2 className="size-3.5 text-slate-400 shrink-0" />
-                                                                                <span>{completedTasksCount}/{tasksCount} Selesai</span>
+                                                                                <span>{completedTasksCount}/{tasksCount} {isEn ? 'Done' : 'Selesai'}</span>
                                                                             </div>
                                                                         </div>
                                                                     </div>
@@ -2587,13 +2567,13 @@ export default function CompetitionIndex({
                                                                         }}
                                                                         className="px-2.5 py-1 text-[11px] font-semibold bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg shadow-2xs transition cursor-pointer"
                                                                     >
-                                                                        Update Tahap
+                                                                        {isEn ? 'Update Stage' : 'Update Tahap'}
                                                                     </button>
                                                                 )}
                                                                 <Link
                                                                     href={`/competitions/${comp?.slug || comp?.id}`}
                                                                     className="p-1 text-slate-400 hover:text-slate-700 transition"
-                                                                    title="Detail Lomba"
+                                                                    title={isEn ? 'Competition Details' : 'Detail Lomba'}
                                                                 >
                                                                     <ExternalLink className="size-3.5" />
                                                                 </Link>
@@ -2608,7 +2588,9 @@ export default function CompetitionIndex({
                                             {totalMyCompPages > 1 && (
                                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-6 border-t border-slate-200/80">
                                                     <p className="text-xs text-slate-500 font-medium">
-                                                        Menampilkan <strong className="text-slate-800">{(myCompPage - 1) * MY_COMP_PER_PAGE + 1}</strong> - <strong className="text-slate-800">{Math.min(myCompPage * MY_COMP_PER_PAGE, filteredParticipations.length)}</strong> dari <strong className="text-slate-800">{filteredParticipations.length}</strong> tim
+                                                        {isEn
+                                                            ? `Showing ${(myCompPage - 1) * MY_COMP_PER_PAGE + 1} - ${Math.min(myCompPage * MY_COMP_PER_PAGE, filteredParticipations.length)} of ${filteredParticipations.length} teams`
+                                                            : `Menampilkan ${(myCompPage - 1) * MY_COMP_PER_PAGE + 1} - ${Math.min(myCompPage * MY_COMP_PER_PAGE, filteredParticipations.length)} dari ${filteredParticipations.length} tim`}
                                                     </p>
 
                                                     <div className="flex items-center gap-1.5">
@@ -2619,7 +2601,7 @@ export default function CompetitionIndex({
                                                             className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
                                                         >
                                                             <ChevronLeft className="size-3.5" />
-                                                            <span>Sebelumnya</span>
+                                                            <span>{isEn ? 'Previous' : 'Sebelumnya'}</span>
                                                         </button>
 
                                                         <div className="flex items-center gap-1">
@@ -2645,7 +2627,7 @@ export default function CompetitionIndex({
                                                             onClick={() => setMyCompPage(p => Math.min(totalMyCompPages, p + 1))}
                                                             className="px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 cursor-pointer"
                                                         >
-                                                            <span>Berikutnya</span>
+                                                            <span>{isEn ? 'Next' : 'Berikutnya'}</span>
                                                             <ChevronRight className="size-3.5" />
                                                         </button>
                                                     </div>
@@ -2666,7 +2648,7 @@ export default function CompetitionIndex({
                     <div className="space-y-6">
                         <div className="pb-3 border-b border-slate-200/80">
                             <h2 className="text-xl font-bold tracking-tight text-slate-900">
-                                Rekomendasi
+                                {isEn ? 'AI Recommendations' : 'Rekomendasi'}
                             </h2>
                         </div>
 
@@ -2681,10 +2663,10 @@ export default function CompetitionIndex({
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-[11px] font-bold uppercase tracking-wider text-blue-600">
-                                                    {comp.category?.replace('_', ' ') || 'HACKATHON'}
+                                                    {comp.category?.replace('_', ' ') || (isEn ? 'HACKATHON' : 'HACKATHON')}
                                                 </span>
                                                 <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
-                                                    {idx === 0 ? '98% Relevan' : `${95 - idx * 4}% Relevan`}
+                                                    {idx === 0 ? (isEn ? '98% Match' : '98% Relevan') : (isEn ? `${95 - idx * 4}% Match` : `${95 - idx * 4}% Relevan`)}
                                                 </span>
                                             </div>
 
@@ -2695,8 +2677,8 @@ export default function CompetitionIndex({
                                         </div>
 
                                         <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-xs">
-                                            <span className="text-slate-500 font-medium">{comp.level || 'Nasional'}</span>
-                                            <span className="font-bold text-blue-600">Detail ↗</span>
+                                            <span className="text-slate-500 font-medium">{comp.level ? (isEn ? (comp.level === 'Nasional' ? 'National' : comp.level === 'Internasional' ? 'International' : comp.level === 'Regional' ? 'Regional' : 'University') : comp.level) : (isEn ? 'National' : 'Nasional')}</span>
+                                            <span className="font-bold text-blue-600">{isEn ? 'Details →' : 'Detail ↗'}</span>
                                         </div>
                                     </div>
                                 ))}
@@ -2705,13 +2687,13 @@ export default function CompetitionIndex({
                             <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-xs">
                                 <AnimatedIcon name="sparkles" size={56} className="mx-auto mb-3" />
                                 <h3 className="text-sm font-bold text-slate-900">
-                                    Belum Ada Rekomendasi
+                                    {isEn ? 'No Recommendations Yet' : 'Belum Ada Rekomendasi'}
                                 </h3>
                                 <Link
                                     href="/settings/profile"
                                     className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold"
                                 >
-                                    <span>Lengkapi Profil</span>
+                                    <span>{isEn ? 'Complete Profile' : 'Lengkapi Profil'}</span>
                                     <ArrowRight className="w-3.5 h-3.5" />
                                 </Link>
                             </div>

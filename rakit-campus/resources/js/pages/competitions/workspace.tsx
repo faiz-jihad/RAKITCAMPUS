@@ -68,7 +68,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import GitHubContributionMonitor from '@/components/github/GitHubContributionMonitor';
 
 interface Props {
@@ -124,7 +124,7 @@ export default function CompetitionWorkspace({
     canManageGitHub = false,
     myPendingInvitation,
 }: Props) {
-    const { t, locale } = useLocale();
+    const { t, locale, isEn } = useLocale();
     const canManageTasks = Boolean(isMember || isLeader || isAdmin);
     const [activeTab, setActiveTab] = useState<'overview' | 'applicants' | 'kanban' | 'github' | 'documents' | 'history'>(() => {
         if (typeof window !== 'undefined') {
@@ -211,6 +211,16 @@ export default function CompetitionWorkspace({
     // Page Flash Props
     const { flash } = usePage().props as any;
     const [dismissedFlash, setDismissedFlash] = useState(false);
+
+    useEffect(() => {
+        if (flash?.success || flash?.error || flash?.info) {
+            setDismissedFlash(false);
+            const timer = setTimeout(() => {
+                setDismissedFlash(true);
+            }, 6000);
+            return () => clearTimeout(timer);
+        }
+    }, [flash]);
 
     // Form states
     const stageForm = useForm({
@@ -677,32 +687,62 @@ export default function CompetitionWorkspace({
             <Head title={`Workspace: ${participation.team?.name} — ${participation.competition?.name}`} />
 
             <div className="max-w-7xl mx-auto space-y-6 pb-16">
-                {/* GLOBAL FLASH ALERTS */}
+                {/* GLOBAL FLASH ALERTS (Apple HIG Bento Cohesive Design) */}
                 {flash?.success && !dismissedFlash && (
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-900 border border-slate-800 text-white text-xs sm:text-sm shadow-xs transition animate-in fade-in">
-                        <div className="flex items-center gap-2.5">
-                            <CheckCircle2 className="size-4.5 text-blue-400 shrink-0" />
-                            <span className="font-semibold leading-relaxed">{flash.success}</span>
+                    <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-emerald-50/95 dark:bg-emerald-950/40 border border-emerald-200/90 dark:border-emerald-800/60 shadow-xs transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                <CheckCircle2 className="size-4.5" />
+                            </div>
+                            <span className="text-xs sm:text-sm font-bold text-emerald-950 dark:text-emerald-100 leading-relaxed">
+                                {flash.success}
+                            </span>
                         </div>
                         <button
                             type="button"
                             onClick={() => setDismissedFlash(true)}
-                            className="text-slate-400 hover:text-white p-1 rounded-md cursor-pointer transition"
+                            className="text-emerald-700/60 hover:text-emerald-900 dark:text-emerald-400/60 dark:hover:text-emerald-200 p-1.5 rounded-xl hover:bg-emerald-100/60 dark:hover:bg-emerald-900/60 cursor-pointer transition active:scale-95"
+                            title={isEn ? 'Dismiss' : 'Tutup'}
+                        >
+                            <X className="size-4" />
+                        </button>
+                    </div>
+                )}
+                {flash?.info && !dismissedFlash && (
+                    <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-indigo-50/95 dark:bg-indigo-950/40 border border-indigo-200/90 dark:border-indigo-800/60 shadow-xs transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                <Info className="size-4.5" />
+                            </div>
+                            <span className="text-xs sm:text-sm font-bold text-indigo-950 dark:text-indigo-100 leading-relaxed">
+                                {flash.info}
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setDismissedFlash(true)}
+                            className="text-indigo-700/60 hover:text-indigo-900 dark:text-indigo-400/60 dark:hover:text-indigo-200 p-1.5 rounded-xl hover:bg-indigo-100/60 dark:hover:bg-indigo-900/60 cursor-pointer transition active:scale-95"
+                            title={isEn ? 'Dismiss' : 'Tutup'}
                         >
                             <X className="size-4" />
                         </button>
                     </div>
                 )}
                 {flash?.error && !dismissedFlash && (
-                    <div className="flex items-center justify-between p-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-900 text-xs sm:text-sm shadow-xs transition animate-in fade-in">
-                        <div className="flex items-center gap-2.5">
-                            <AlertCircle className="size-4.5 text-slate-700 shrink-0" />
-                            <span className="font-semibold leading-relaxed">{flash.error}</span>
+                    <div className="flex items-center justify-between p-3.5 sm:p-4 rounded-2xl bg-rose-50/95 dark:bg-rose-950/40 border border-rose-200/90 dark:border-rose-800/60 shadow-xs transition-all duration-300 animate-in fade-in slide-in-from-top-2">
+                        <div className="flex items-center gap-3">
+                            <div className="size-8 rounded-xl bg-rose-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                                <AlertCircle className="size-4.5" />
+                            </div>
+                            <span className="text-xs sm:text-sm font-bold text-rose-950 dark:text-rose-100 leading-relaxed">
+                                {flash.error}
+                            </span>
                         </div>
                         <button
                             type="button"
                             onClick={() => setDismissedFlash(true)}
-                            className="text-slate-500 hover:text-slate-900 p-1 rounded-md cursor-pointer transition"
+                            className="text-rose-700/60 hover:text-rose-900 dark:text-rose-400/60 dark:hover:text-rose-200 p-1.5 rounded-xl hover:bg-rose-100/60 dark:hover:bg-rose-900/60 cursor-pointer transition active:scale-95"
+                            title={isEn ? 'Dismiss' : 'Tutup'}
                         >
                             <X className="size-4" />
                         </button>
@@ -2843,7 +2883,7 @@ export default function CompetitionWorkspace({
                                                     {storageUsedMb} MB
                                                 </span>
                                                 <span className="text-[9px] text-slate-400 font-medium mt-0.5">
-                                                    dari {storageMaxMb} MB
+                                                    {isEn ? `of ${storageMaxMb} MB` : `dari ${storageMaxMb} MB`}
                                                 </span>
                                             </div>
                                         </div>
@@ -2853,11 +2893,11 @@ export default function CompetitionWorkspace({
                                     <div className="flex items-center justify-between text-[11px] pt-3 border-t border-slate-100">
                                         <span className="flex items-center gap-1.5 text-slate-600 font-semibold">
                                             <span className="size-2 rounded-full bg-indigo-600" />
-                                            <span>Terpakai {storagePercent}%</span>
+                                            <span>{isEn ? `Used ${storagePercent}%` : `Terpakai ${storagePercent}%`}</span>
                                         </span>
                                         <span className="flex items-center gap-1.5 text-slate-500 font-medium">
                                             <span className="size-2 rounded-full bg-slate-300" />
-                                            <span>Sisa {storageRemainingMb} MB</span>
+                                            <span>{isEn ? `${storageRemainingMb} MB left` : `Sisa ${storageRemainingMb} MB`}</span>
                                         </span>
                                     </div>
                                 </div>
@@ -2866,8 +2906,8 @@ export default function CompetitionWorkspace({
                                 <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between gap-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Syarat Lomba</span>
-                                            <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">Kelengkapan Berkas</h4>
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{isEn ? 'Contest Requirements' : 'Syarat Lomba'}</span>
+                                            <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">{isEn ? 'Deliverable Completeness' : 'Kelengkapan Berkas'}</h4>
                                         </div>
                                         <div className="size-9 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shadow-2xs">
                                             <CheckCircle2 className="size-4.5" />
@@ -2877,10 +2917,10 @@ export default function CompetitionWorkspace({
                                     <div>
                                         <div className="flex items-baseline justify-between mb-2">
                                             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                                                {completedFoldersCount} <span className="text-sm font-semibold text-slate-400">/ {DOC_FOLDERS.length} folder</span>
+                                                {completedFoldersCount} <span className="text-sm font-semibold text-slate-400">/ {DOC_FOLDERS.length} {isEn ? 'folders' : 'folder'}</span>
                                             </div>
                                             <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/60">
-                                                {readinessPercent}% Siap
+                                                {readinessPercent}% {isEn ? 'Ready' : 'Siap'}
                                             </span>
                                         </div>
 
@@ -2895,11 +2935,11 @@ export default function CompetitionWorkspace({
 
                                     {/* Bottom Micro Status */}
                                     <div className="flex items-center justify-between text-[11px] pt-3 border-t border-slate-100 text-slate-600 font-medium">
-                                        <span>Total Berkas: <strong className="font-bold text-slate-900">{allDocs.length}</strong></span>
+                                        <span>{isEn ? 'Total Deliverables:' : 'Total Berkas:'} <strong className="font-bold text-slate-900">{allDocs.length}</strong></span>
                                         <span>
                                             {completedFoldersCount === DOC_FOLDERS.length
-                                                ? 'Semua Berkas Lengkap'
-                                                : `${DOC_FOLDERS.length - completedFoldersCount} Berkas Menunggu`}
+                                                ? (isEn ? 'All Deliverables Complete' : 'Semua Berkas Lengkap')
+                                                : (isEn ? `${DOC_FOLDERS.length - completedFoldersCount} Pending` : `${DOC_FOLDERS.length - completedFoldersCount} Berkas Menunggu`)}
                                         </span>
                                     </div>
                                 </div>
@@ -2915,13 +2955,13 @@ export default function CompetitionWorkspace({
                                             />
                                         </div>
                                         <div>
-                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">Arsip Resmi</span>
-                                            <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">Direktori Berkas Tim</h4>
+                                            <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{isEn ? 'Official Archive' : 'Arsip Resmi'}</span>
+                                            <h4 className="text-sm font-extrabold text-slate-900 mt-0.5">{isEn ? 'Team Deliverable Directory' : 'Direktori Berkas Tim'}</h4>
                                         </div>
                                     </div>
 
                                     <p className="text-xs text-slate-500 leading-relaxed">
-                                        Kelola proposal, slide deck, demo video, dan berkas registrasi resmi tim dalam folder terstruktur.
+                                        {isEn ? 'Organize proposals, slide decks, demo videos, and team registration documents in structured folders.' : 'Kelola proposal, slide deck, demo video, dan berkas registrasi resmi tim dalam folder terstruktur.'}
                                     </p>
 
                                     {canManageTasks && (
@@ -2936,7 +2976,7 @@ export default function CompetitionWorkspace({
                                             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
                                         >
                                             <Upload className="size-3.5" />
-                                            <span>Unggah Berkas Baru</span>
+                                            <span>{isEn ? 'Upload New Deliverable' : 'Unggah Berkas Baru'}</span>
                                         </button>
                                     )}
                                 </div>
@@ -2947,11 +2987,11 @@ export default function CompetitionWorkspace({
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <Folder className="size-4 text-slate-700" />
-                                        <span className="text-xs font-bold text-slate-900">Folder Berkas Seleksi Tim</span>
-                                        <span className="text-[10px] text-slate-400">({allDocs.length} berkas terunggah)</span>
+                                        <span className="text-xs font-bold text-slate-900">{isEn ? 'Team Selection Folders' : 'Folder Berkas Seleksi Tim'}</span>
+                                        <span className="text-[10px] text-slate-400">({allDocs.length} {isEn ? 'files uploaded' : 'berkas terunggah'})</span>
                                     </div>
                                     <span className="text-[11px] text-slate-400 hidden sm:inline">
-                                        Klik folder untuk memfilter atau tarik berkas langsung ke dalam kartu
+                                        {isEn ? 'Click folder to filter or drag files directly into the card' : 'Klik folder untuk memfilter atau tarik berkas langsung ke dalam kartu'}
                                     </span>
                                 </div>
 
@@ -3063,10 +3103,10 @@ export default function CompetitionWorkspace({
                                                         <div className="py-2 text-[11px] text-slate-400 italic">
                                                             {isDragTarget ? (
                                                                 <span className="font-bold text-indigo-600 not-italic animate-pulse">
-                                                                    Lepaskan file di sini...
+                                                                    {isEn ? 'Drop file here...' : 'Lepaskan file di sini...'}
                                                                 </span>
                                                             ) : (
-                                                                <span>Tarik berkas atau klik folder</span>
+                                                                <span>{isEn ? 'Drag files or click folder' : 'Tarik berkas atau klik folder'}</span>
                                                             )}
                                                         </div>
                                                     )}
@@ -3079,12 +3119,12 @@ export default function CompetitionWorkspace({
                                                     {isSelected ? (
                                                         <span className="font-bold text-indigo-600 flex items-center gap-1.5">
                                                             <span className="size-2 rounded-full bg-indigo-600 animate-pulse" />
-                                                            <span>Folder Aktif</span>
+                                                            <span>{isEn ? 'Active Folder' : 'Folder Aktif'}</span>
                                                             <ChevronDown className="size-3.5" />
                                                         </span>
                                                     ) : (
                                                         <span className="font-semibold text-slate-500 group-hover:text-indigo-600 transition flex items-center gap-1">
-                                                            <span>Buka Folder</span>
+                                                            <span>{isEn ? 'Open Folder' : 'Buka Folder'}</span>
                                                             <ChevronRight className="size-3.5" />
                                                         </span>
                                                     )}
@@ -3099,10 +3139,10 @@ export default function CompetitionWorkspace({
                                                                 setDocModalOpen(true);
                                                             }}
                                                             className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 active:scale-95 text-white text-xs font-semibold shadow-2xs transition cursor-pointer"
-                                                            title={`Unggah berkas ke ${folder.label}`}
+                                                            title={isEn ? `Upload files to ${folder.label}` : `Unggah berkas ke ${folder.label}`}
                                                         >
                                                             <Plus className="size-3" />
-                                                            <span>Unggah</span>
+                                                            <span>{isEn ? 'Upload' : 'Unggah'}</span>
                                                         </button>
                                                     )}
                                                 </div>
@@ -3128,7 +3168,7 @@ export default function CompetitionWorkspace({
                                                 }`}
                                             >
                                                 <FolderArchive className="size-3.5" />
-                                                <span>Semua ({allDocs.length})</span>
+                                                <span>{isEn ? 'All' : 'Semua'} ({allDocs.length})</span>
                                             </button>
 
                                             {DOC_FOLDERS.map((f) => {
@@ -3366,7 +3406,7 @@ export default function CompetitionWorkspace({
                                                                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                                                                             : 'bg-amber-50 text-amber-700 border border-amber-200'
                                                                     }`}>
-                                                                        {doc.status === 'approved' ? 'Disetujui' : doc.status === 'revision_required' ? 'Revisi' : 'Kurasi'}
+                                                                        {doc.status === 'approved' ? (isEn ? 'Approved' : 'Disetujui') : doc.status === 'revision_required' ? (isEn ? 'Revision' : 'Revisi') : (isEn ? 'Pending' : 'Kurasi')}
                                                                     </span>
                                                                 </div>
                                                             </div>
@@ -3380,16 +3420,16 @@ export default function CompetitionWorkspace({
                                                                         <span className="truncate font-medium text-slate-600">{folderInfo.label}</span>
                                                                     )}
                                                                     <span>•</span>
-                                                                    <span>{new Date(doc.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                                                    <span>{new Date(doc.created_at).toLocaleDateString(isEn ? 'en-US' : 'id-ID', { day: 'numeric', month: 'short' })}</span>
                                                                 </div>
                                                                 <p className="text-[11px] text-slate-500 mt-1 truncate">
-                                                                    Oleh: {doc.uploader?.name || 'Anggota'}
+                                                                    {isEn ? `By: ${doc.uploader?.name || 'Member'}` : `Oleh: ${doc.uploader?.name || 'Anggota'}`}
                                                                 </p>
                                                             </div>
 
                                                             {doc.feedback && (
                                                                 <div className="p-2.5 rounded-2xl bg-amber-50 border border-amber-200 text-[10px] text-amber-900 line-clamp-2">
-                                                                    <strong>Masukan:</strong> {doc.feedback}
+                                                                    <strong>{isEn ? 'Feedback:' : 'Masukan:'}</strong> {doc.feedback}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -3403,7 +3443,7 @@ export default function CompetitionWorkspace({
                                                                     className="flex-1 py-2 px-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold flex items-center justify-center gap-1.5 transition text-xs shadow-2xs active:scale-95"
                                                                 >
                                                                     {isExternal ? <ExternalLink className="size-3" /> : <Download className="size-3" />}
-                                                                    <span>{isExternal ? 'Buka' : 'Unduh'}</span>
+                                                                    <span>{isExternal ? (isEn ? 'Open' : 'Buka') : (isEn ? 'Download' : 'Unduh')}</span>
                                                                 </a>
                                                             )}
 
@@ -3412,7 +3452,7 @@ export default function CompetitionWorkspace({
                                                                     type="button"
                                                                     onClick={() => openReplaceModal(doc)}
                                                                     className="p-2 rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition cursor-pointer active:scale-95"
-                                                                    title="Ganti Berkas"
+                                                                    title={isEn ? 'Replace Deliverable' : 'Ganti Berkas'}
                                                                 >
                                                                     <RefreshCw className="size-3.5" />
                                                                 </button>
@@ -3423,7 +3463,7 @@ export default function CompetitionWorkspace({
                                                                     type="button"
                                                                     onClick={() => handleDeleteDoc(doc)}
                                                                     className="p-2 rounded-xl border border-slate-200 hover:bg-rose-50 hover:border-rose-200 text-slate-400 hover:text-rose-600 transition cursor-pointer active:scale-95"
-                                                                    title="Hapus Berkas"
+                                                                    title={isEn ? 'Delete Deliverable' : 'Hapus Berkas'}
                                                                 >
                                                                     <Trash2 className="size-3.5" />
                                                                 </button>
