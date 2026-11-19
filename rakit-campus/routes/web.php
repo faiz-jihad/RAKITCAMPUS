@@ -35,10 +35,14 @@ Route::get('/sitemap.xml', [SitemapWebController::class, 'index'])->name('sitema
 
 Route::get('/p/{slug}', [PortfolioWebController::class, 'publicView'])->name('portfolio.public');
 
-// Public Discovery Hubs (Open for browsing, enriched when authenticated)
-Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard')->middleware('throttle:dashboard');
-Route::get('/competitions/dashboard', [DashboardWebController::class, 'competitionDashboard'])->name('competitions.dashboard')->middleware('throttle:dashboard');
-Route::get('/projects/dashboard', [DashboardWebController::class, 'index'])->name('projects.dashboard')->middleware('throttle:dashboard');
+// Protected Dashboard Hubs (Requires Authentication)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [DashboardWebController::class, 'index'])->name('dashboard')->middleware('throttle:dashboard');
+    Route::get('/competitions/dashboard', [DashboardWebController::class, 'competitionDashboard'])->name('competitions.dashboard')->middleware('throttle:dashboard');
+    Route::get('/projects/dashboard', [DashboardWebController::class, 'index'])->name('projects.dashboard')->middleware('throttle:dashboard');
+});
+
+// Public Discovery Hubs
 Route::get('/projects', [ProjectWebController::class, 'index'])->name('projects.index');
 Route::get('/projects/leaderboard', [LeaderboardWebController::class, 'projectIndex'])->name('projects.leaderboard');
 Route::get('/projects/{id}/workspace', function ($id, \Illuminate\Http\Request $request) {

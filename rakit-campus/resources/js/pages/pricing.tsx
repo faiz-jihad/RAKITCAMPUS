@@ -5,15 +5,9 @@ import {
     ArrowRight,
     Check,
     CheckCircle2,
-    Crown,
-    ExternalLink,
     HelpCircle,
     QrCode,
-    Sparkles,
-    Trophy,
-    Users,
     X,
-    Zap,
 } from 'lucide-react';
 import React, { useState } from 'react';
 
@@ -131,11 +125,6 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
             <div className="py-8 sm:py-12 px-4 sm:px-6 max-w-7xl mx-auto w-full space-y-10 sm:space-y-14">
                 {/* Header Section */}
                 <div className="text-center max-w-3xl mx-auto space-y-3.5">
-                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200/70 text-xs font-bold tracking-tight shadow-2xs">
-                        <Sparkles className="size-3.5 text-blue-600" />
-                        <span>Monetize Acceleration, Not Access</span>
-                    </div>
-
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 leading-tight">
                         Investasi Terjangkau untuk Prestasi Nyata
                     </h1>
@@ -170,15 +159,6 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                                         : 'bg-white border border-slate-200/80 shadow-[0_2px_16px_rgba(0,0,0,0.03)] hover:shadow-lg hover:border-slate-300'
                                 }`}
                             >
-                                {/* Top Badge */}
-                                {plan.badge && (
-                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                                        <span className="px-3 py-1 rounded-full text-[11px] font-extrabold tracking-tight bg-blue-600 text-white shadow-md uppercase">
-                                            {plan.badge}
-                                        </span>
-                                    </div>
-                                )}
-
                                 <div className="space-y-4">
                                     <div>
                                         <h3 className="text-xl font-black text-slate-900 tracking-tight">
@@ -253,10 +233,6 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                 {plans.length > 4 && (
                     <div className="rounded-[28px] sm:rounded-[32px] bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10">
                         <div className="space-y-2 max-w-xl text-center md:text-left">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30 text-xs font-bold uppercase tracking-wider">
-                                <Users className="size-3.5 text-amber-400" />
-                                <span>Paket Bersama 1 Tim</span>
-                            </div>
                             <h3 className="text-2xl sm:text-3xl font-black tracking-tight">
                                 RAKIT Team — Rp 99.000 / tim
                             </h3>
