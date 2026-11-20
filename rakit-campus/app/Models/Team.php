@@ -46,6 +46,14 @@ class Team extends Model
         return $this->hasMany(TeamMember::class);
     }
 
+    /**
+     * Alias for members relationship to prevent runtime exceptions.
+     */
+    public function memberships(): HasMany
+    {
+        return $this->members();
+    }
+
     public function recruitment(): HasOne
     {
         return $this->hasOne(Recruitment::class);

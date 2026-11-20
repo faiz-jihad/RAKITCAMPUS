@@ -68,8 +68,11 @@ class ProfileController extends Controller
         ];
 
         if (!$subscription && !$isPlatformAdmin) {
-            $teamSub = \App\Models\TeamSubscription::whereHas('team.memberships', function ($q) use ($user) {
-                $q->where('user_id', $user->id)->where('status', 'active');
+            $teamSub = \App\Models\TeamSubscription::whereHas('team', function ($t) use ($user) {
+                $t->where('leader_id', $user->id)
+                  ->orWhereHas('members', function ($m) use ($user) {
+                      $m->where('user_id', $user->id)->where('status', 'active');
+                  });
             })->where('status', 'active')->where(function ($q) {
                 $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
             })->latest()->first();
