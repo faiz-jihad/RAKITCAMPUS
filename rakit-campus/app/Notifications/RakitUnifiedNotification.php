@@ -66,7 +66,10 @@ class RakitUnifiedNotification extends Notification implements ShouldQueue, Shou
 
         if ($preferenceService->shouldSendInApp($notifiable, $this->category)) {
             $channels[] = 'database';
-            $channels[] = 'broadcast';
+            $broadcaster = config('broadcasting.default');
+            if ($broadcaster && !in_array($broadcaster, ['log', 'null', 'none'], true)) {
+                $channels[] = 'broadcast';
+            }
         }
 
         if ($preferenceService->shouldSendEmail($notifiable, $this->category, $this->priority)) {

@@ -44,6 +44,17 @@ interface NotificationServiceInterface extends NotificationCounterInterface
         array $options = []
     ): void;
 
+    /**
+     * Dispatch single-user notification helper.
+     */
+    public function notifyUser(
+        User|int $user,
+        string $title,
+        string $message,
+        ?string $actionUrl = null,
+        array $options = []
+    ): void;
+
     // Domain Notification Triggers
     public function sendWelcomeNotification(User $user): void;
     public function sendSecurityAlert(User $user, string $activityName, array $details = []): void;

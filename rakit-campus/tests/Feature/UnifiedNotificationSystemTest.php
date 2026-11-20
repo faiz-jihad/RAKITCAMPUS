@@ -78,6 +78,7 @@ class UnifiedNotificationSystemTest extends TestCase
             'study_program' => 'Sistem Informasi',
             'semester' => 5,
             'availability_hours' => 20,
+            'is_onboarded' => true,
         ]);
 
         $this->studentB = User::factory()->create([
@@ -101,6 +102,7 @@ class UnifiedNotificationSystemTest extends TestCase
             'study_program' => 'Teknik Informatika',
             'semester' => 5,
             'availability_hours' => 20,
+            'is_onboarded' => true,
         ]);
 
         $skill1 = \App\Models\Skill::create(['name' => 'Laravel', 'slug' => 'laravel', 'category' => 'Backend']);

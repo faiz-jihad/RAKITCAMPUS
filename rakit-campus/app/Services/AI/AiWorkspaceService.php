@@ -198,6 +198,9 @@ Pastikan blok JSON valid dan diletakkan di akhir respon.";
             $liveReport .= "\n--- DOKUMEN & LAPORAN DI CLOUD TIM ---\n";
             foreach ($ctx['cloud_documents'] as $doc) {
                 $liveReport .= "• Berkas: {$doc['name']} (Tipe: {$doc['type']}, Versi: {$doc['version']}, Diunggah oleh: {$doc['uploader']} pada {$doc['submitted_at']})\n";
+                if (!empty($doc['extracted_text'])) {
+                    $liveReport .= "  [Kutipan Isi Berkas Cloud]:\n  " . str_replace("\n", "\n  ", mb_substr(trim($doc['extracted_text']), 0, 3500)) . "\n\n";
+                }
             }
         }
 
@@ -429,14 +432,21 @@ Pastikan blok JSON valid dan diletakkan di akhir respon.";
 
             // Real team documents uploaded to cloud
             $context['cloud_documents'] = $participation->documents()->with('uploader:id,name')->get()->map(function ($d) {
+                $extractedText = '';
+                if (!empty($d->path)) {
+                    $extractedText = \App\Services\AI\DocumentTextExtractor::extractFromStorage($d->path, 4000);
+                }
+
                 return [
                     'id' => $d->id,
                     'name' => $d->name ?? $d->title ?? 'Berkas Lomba',
                     'type' => $d->required_document_key ?? 'general',
                     'file_url' => $d->file_url,
+                    'file_size' => $d->file_size,
                     'version' => $d->version ?? 1,
                     'uploader' => $d->uploader?->name ?? 'Anggota Tim',
                     'submitted_at' => $d->submitted_at?->format('d M Y H:i') ?? $d->created_at?->format('d M Y H:i'),
+                    'extracted_text' => $extractedText,
                 ];
             })->toArray();
         }

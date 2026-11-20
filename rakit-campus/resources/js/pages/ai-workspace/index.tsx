@@ -84,6 +84,17 @@ interface AgenticAction {
     payload: any;
 }
 
+export interface CloudDocumentItem {
+    id: number;
+    name: string;
+    type: string;
+    file_url?: string;
+    file_size?: number;
+    version: number;
+    uploader?: string;
+    submitted_at?: string;
+}
+
 interface Props {
     teams: TeamItem[];
     activeTeam: TeamItem | null;
@@ -98,6 +109,7 @@ interface Props {
     } | null;
     messages: MessageItem[];
     assistantType: 'project' | 'competition' | 'team' | 'document';
+    cloudDocuments?: CloudDocumentItem[];
 }
 
 const ASSISTANT_METADATA = {
@@ -313,6 +325,7 @@ export default function AiWorkspaceIndex({
     activeSession,
     messages: initialMessages,
     assistantType: initialAssistantType,
+    cloudDocuments = [],
 }: Props) {
     const { t, locale } = useLocale();
     const [assistantType, setAssistantType] = useState<'project' | 'competition' | 'team' | 'document'>(
@@ -321,6 +334,8 @@ export default function AiWorkspaceIndex({
     const [messages, setMessages] = useState<MessageItem[]>(initialMessages || []);
     const [inputMessage, setInputMessage] = useState('');
     const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; size: number } | null>(null);
+    const [attachedRawFile, setAttachedRawFile] = useState<File | null>(null);
+    const [selectedCloudDoc, setSelectedCloudDoc] = useState<CloudDocumentItem | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -425,35 +440,65 @@ export default function AiWorkspaceIndex({
 
         const userMsgContent = text;
         const currentFile = attachedFile;
+        const currentRawFile = attachedRawFile;
+        const currentCloudDoc = selectedCloudDoc;
+
         setInputMessage('');
         setAttachedFile(null);
+        setAttachedRawFile(null);
+        setSelectedCloudDoc(null);
         setErrorMsg(null);
 
         // Optimistically add user message
+        let attachmentNote = '';
+        if (currentFile) attachmentNote += `\n\n[Lampiran Berkas: ${currentFile.name}]`;
+        if (currentCloudDoc) attachmentNote += `\n\n[Berkas Cloud: ${currentCloudDoc.name} (${currentCloudDoc.type})]`;
+
         const tempUserMsg: MessageItem = {
             id: Date.now(),
             role: 'user',
-            content: userMsgContent + (currentFile ? `\n\n[Lampiran Dokumen: ${currentFile.name}]` : ''),
+            content: userMsgContent + attachmentNote,
             created_at: new Date().toISOString(),
         };
         setMessages((prev) => [...prev, tempUserMsg]);
         setIsLoading(true);
 
         try {
-            const res = await fetch(`/ai-workspace/sessions/${activeSession.id}/messages`, {
-                method: 'POST',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-XSRF-TOKEN': getXsrfToken(),
-                },
-                body: JSON.stringify({
-                    message: userMsgContent,
-                    file_content: currentFile ? currentFile.content : null,
-                }),
-            });
+            let res: Response;
+            if (currentRawFile) {
+                const formData = new FormData();
+                formData.append('message', userMsgContent);
+                formData.append('file', currentRawFile);
+                if (currentCloudDoc) {
+                    formData.append('cloud_document_id', String(currentCloudDoc.id));
+                }
+                res = await fetch(`/ai-workspace/sessions/${activeSession.id}/messages`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN': getXsrfToken(),
+                    },
+                    body: formData,
+                });
+            } else {
+                res = await fetch(`/ai-workspace/sessions/${activeSession.id}/messages`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-XSRF-TOKEN': getXsrfToken(),
+                    },
+                    body: JSON.stringify({
+                        message: userMsgContent,
+                        file_content: currentFile ? currentFile.content : null,
+                        cloud_document_id: currentCloudDoc ? currentCloudDoc.id : null,
+                    }),
+                });
+            }
 
             const json = await res.json();
 
@@ -526,30 +571,43 @@ export default function AiWorkspaceIndex({
         handleSendMessage(prompt);
     };
 
-    // File Upload Handler
+    // File Upload Handler with server-side extraction support for DOCX/PDF
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Ukuran file maksimal untuk analisis AI adalah 2 MB.');
+        if (file.size > 10 * 1024 * 1024) {
+            alert('Ukuran berkas maksimal untuk analisis AI adalah 10 MB.');
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const content = event.target?.result as string;
+        setAttachedRawFile(file);
+
+        const isText = file.name.match(/\.(txt|md|markdown|json|csv|xml|html|js|ts|py|php)$/i);
+        if (isText) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target?.result as string;
+                setAttachedFile({
+                    name: file.name,
+                    content: content.slice(0, 150000),
+                    size: file.size,
+                });
+            };
+            reader.readAsText(file);
+        } else {
+            // For binary files (PDF, DOCX), display file attachment badge and send file via FormData
             setAttachedFile({
                 name: file.name,
-                content: content.slice(0, 150000),
+                content: '',
                 size: file.size,
             });
-        };
-        reader.readAsText(file);
+        }
     };
 
     const handleRemoveFile = () => {
         setAttachedFile(null);
+        setAttachedRawFile(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -1033,6 +1091,25 @@ export default function AiWorkspaceIndex({
 
                         {/* Chat Input Bar */}
                         <div className="p-3 sm:p-4 border-t border-slate-100 bg-slate-50/50">
+                            {selectedCloudDoc && (
+                                <div className="mb-2 px-3 py-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center justify-between">
+                                    <div className="flex items-center gap-2 truncate">
+                                        <FileText className="size-3.5 text-blue-600 shrink-0" />
+                                        <span className="truncate font-semibold">[Berkas Cloud] {selectedCloudDoc.name}</span>
+                                        <span className="text-[10px] text-blue-600">
+                                            ({selectedCloudDoc.type} • v{selectedCloudDoc.version})
+                                        </span>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setSelectedCloudDoc(null)}
+                                        className="text-blue-400 hover:text-blue-700 p-0.5 rounded-md transition cursor-pointer"
+                                    >
+                                        <X className="size-3.5" />
+                                    </button>
+                                </div>
+                            )}
+
                             {attachedFile && (
                                 <div className="mb-2 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs flex items-center justify-between">
                                     <div className="flex items-center gap-2 truncate">
@@ -1144,6 +1221,53 @@ export default function AiWorkspaceIndex({
                                             </div>
                                         </div>
                                     )}
+
+                                    {/* Cloud Documents from Team Cloud */}
+                                    <div className="p-3 rounded-2xl bg-indigo-50/50 border border-indigo-100/90 space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-[10px] font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                                                <FileText className="size-3 text-indigo-600" />
+                                                <span>Berkas Cloud Tim ({cloudDocuments.length})</span>
+                                            </span>
+                                        </div>
+
+                                        {cloudDocuments && cloudDocuments.length > 0 ? (
+                                            <div className="space-y-1.5 max-h-48 overflow-y-auto pr-0.5">
+                                                {cloudDocuments.map((doc) => (
+                                                    <div
+                                                        key={doc.id}
+                                                        onClick={() => {
+                                                            setSelectedCloudDoc(doc);
+                                                            setInputMessage((prev) =>
+                                                                prev ? prev : `Tolong analisis dan berikan review kritis untuk berkas '${doc.name}' (${doc.type}) yang ada di cloud tim kami.`
+                                                            );
+                                                        }}
+                                                        className={`p-2 rounded-xl text-left transition-all border cursor-pointer flex items-center justify-between gap-2 ${
+                                                            selectedCloudDoc?.id === doc.id
+                                                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
+                                                                : 'bg-white hover:bg-indigo-50/80 text-slate-800 border-slate-200/80'
+                                                        }`}
+                                                    >
+                                                        <div className="min-w-0">
+                                                            <div className="font-semibold text-xs truncate">{doc.name}</div>
+                                                            <div className={`text-[10px] truncate ${selectedCloudDoc?.id === doc.id ? 'text-indigo-100' : 'text-slate-400'}`}>
+                                                                {doc.type} • v{doc.version}
+                                                            </div>
+                                                        </div>
+                                                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold shrink-0 ${
+                                                            selectedCloudDoc?.id === doc.id ? 'bg-indigo-700 text-white' : 'bg-slate-100 text-slate-600'
+                                                        }`}>
+                                                            {selectedCloudDoc?.id === doc.id ? 'Terpilih' : 'Bedah'}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-[11px] text-slate-400 italic">
+                                                Belum ada berkas diunggah di cloud tim ini.
+                                            </p>
+                                        )}
+                                    </div>
 
                                     <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-slate-600">
                                         <span className="text-xs">Anggota</span>

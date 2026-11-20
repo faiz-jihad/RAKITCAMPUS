@@ -124,6 +124,40 @@ class NotificationService implements NotificationServiceInterface
         );
     }
 
+    /**
+     * Dispatch single-user notification helper.
+     */
+    public function notifyUser(
+        User|int $user,
+        string $title,
+        string $message,
+        ?string $actionUrl = null,
+        array $options = []
+    ): void {
+        $userModel = $user instanceof User ? $user : User::find($user);
+        if (!$userModel) {
+            return;
+        }
+
+        $category = $options['category'] ?? NotificationPreferenceService::CATEGORY_ACCOUNT_SECURITY;
+        $type = $options['type'] ?? 'user_notification';
+        $priority = $options['priority'] ?? 'high';
+
+        $this->notify(
+            recipients: $userModel,
+            notificationType: $type,
+            category: $category,
+            title: $title,
+            message: $message,
+            options: array_merge([
+                'priority' => $priority,
+                'action_url' => $actionUrl,
+                'action_text' => $options['action_text'] ?? 'Lihat Detail',
+                'details' => $options['details'] ?? [],
+            ], $options)
+        );
+    }
+
     // ==========================================
     // 1. ACCOUNT & AUTHENTICATION
     // ==========================================

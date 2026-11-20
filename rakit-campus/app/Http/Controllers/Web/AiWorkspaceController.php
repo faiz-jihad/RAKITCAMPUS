@@ -106,6 +106,29 @@ class AiWorkspaceController extends Controller
             }
         }
 
+        // Get cloud documents for active team
+        $cloudDocuments = [];
+        if ($activeTeam) {
+            $participationIds = $activeTeam->participations()->pluck('id');
+            if ($participationIds->isNotEmpty()) {
+                $cloudDocuments = \App\Models\CompetitionDocument::whereIn('participation_id', $participationIds)
+                    ->with('uploader:id,name')
+                    ->latest()
+                    ->get()
+                    ->map(fn($d) => [
+                        'id' => $d->id,
+                        'name' => $d->name ?: ($d->original_name ?: 'Berkas Lomba'),
+                        'type' => $d->required_document_key ?: 'general',
+                        'file_url' => $d->file_url,
+                        'file_size' => $d->file_size,
+                        'version' => $d->version ?? 1,
+                        'uploader' => $d->uploader?->name ?? 'Anggota Tim',
+                        'submitted_at' => $d->submitted_at?->format('d M Y') ?? $d->created_at?->format('d M Y'),
+                    ])
+                    ->toArray();
+            }
+        }
+
         return Inertia::render('ai-workspace/index', [
             'teams' => $teams->map(fn($t) => [
                 'id' => $t->id,
@@ -135,6 +158,7 @@ class AiWorkspaceController extends Controller
             'activeSession' => $activeSession,
             'messages' => $messages,
             'assistantType' => $assistantType,
+            'cloudDocuments' => $cloudDocuments,
         ]);
     }
 
@@ -213,6 +237,8 @@ class AiWorkspaceController extends Controller
         $validated = $request->validate([
             'message' => 'required|string|max:8000',
             'file_content' => 'nullable|string|max:200000',
+            'cloud_document_id' => 'nullable|integer',
+            'file' => 'nullable|file|max:10240',
         ]);
 
         $session = AiSession::where('id', $sessionId)
@@ -225,7 +251,28 @@ class AiWorkspaceController extends Controller
             })
             ->firstOrFail();
 
-        $reply = $this->aiService->sendMessage($session, $validated['message'], $validated['file_content'] ?? null);
+        $fileContent = $validated['file_content'] ?? null;
+
+        // 1. If an actual file was uploaded directly via multipart form data
+        if ($request->hasFile('file') && $request->file('file')->isValid()) {
+            $extracted = \App\Services\AI\DocumentTextExtractor::extractFromUploadedFile($request->file('file'));
+            if (!empty($extracted)) {
+                $fileContent = ($fileContent ? $fileContent . "\n\n" : '') . "--- Berkas Diunggah ({$request->file('file')->getClientOriginalName()}) ---\n" . $extracted;
+            }
+        }
+
+        // 2. If a cloud document was chosen from team cloud storage
+        if (!empty($validated['cloud_document_id'])) {
+            $doc = \App\Models\CompetitionDocument::find($validated['cloud_document_id']);
+            if ($doc && !empty($doc->path)) {
+                $cloudExtracted = \App\Services\AI\DocumentTextExtractor::extractFromStorage($doc->path, 50000);
+                if (!empty($cloudExtracted)) {
+                    $fileContent = ($fileContent ? $fileContent . "\n\n" : '') . "--- Berkas dari Cloud Tim: {$doc->name} (v{$doc->version}) ---\n" . $cloudExtracted;
+                }
+            }
+        }
+
+        $reply = $this->aiService->sendMessage($session, $validated['message'], $fileContent);
 
         if (!$reply) {
             return response()->json(['error' => 'AI tidak dapat merespons saat ini. Pastikan API key Gemini sudah dikonfigurasi.'], 503);

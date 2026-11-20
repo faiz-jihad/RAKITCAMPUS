@@ -1,5 +1,6 @@
 import { type SharedData } from '@/types';
 import SeoHead from '@/components/seo/SeoHead';
+import { LanguageSwitcher } from '@/components/ui/language-switcher';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -2111,6 +2112,11 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                         )}
                     </div>
 
+                    {/* Language Switcher Pill */}
+                    <div className="flex items-center self-center ml-1 sm:ml-2">
+                        <LanguageSwitcher variant="pill" showLabel={true} className="!bg-white/10 !text-white !border-white/20 hover:!bg-white/20 !h-[32px] sm:!h-[38px]" />
+                    </div>
+
                     {/* Borderless Hamburger Menu Button inside the unified bar */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -2311,6 +2317,11 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                             </Link>
                         </div>
                     )}
+
+                    {/* Language Switcher in Mobile Drawer */}
+                    <div className="pt-2">
+                        <LanguageSwitcher variant="buttons" className="w-full" />
+                    </div>
                 </div>
             </div>
 
