@@ -87,6 +87,11 @@ class BillingWebController extends Controller
      */
     public function checkout(Request $request): JsonResponse
     {
+        Log::info('CHECKOUT_HIT_START', [
+            'user' => $request->user()?->id,
+            'payload' => $request->all(),
+        ]);
+
         $user = $request->user();
         if (!$user) {
             return response()->json(['message' => 'Silakan masuk terlebih dahulu.'], 401);

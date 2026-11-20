@@ -38,6 +38,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        $exceptions->report(function (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('GLOBAL_EXCEPTION: ' . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+        });
+
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, Request $request) {
             if ($request->header('X-Inertia')) {
                 return back()->with('error', 'Sesi Anda telah diperbarui. Silakan coba kembali.');
