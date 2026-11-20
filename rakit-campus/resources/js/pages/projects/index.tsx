@@ -10,6 +10,7 @@ import {
     Clock,
     Compass,
     Filter,
+    Folder,
     FolderKanban,
     GraduationCap,
     Layers,
@@ -400,140 +401,119 @@ export default function ProjectIndex({
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7 pt-2">
                             {projects.data.map((proj) => {
                                 const openRoles = proj.team?.recruitment?.roles?.map((r) => r.name) || [];
-                                const jigsawPathD = "M 42 42 L 154 42 C 160 42 174 40.1 180 33.64 C 158 22.24 173.4 4 200 4 C 226.6 4 242 22.24 220 33.64 C 226 40.1 240 42 246 42 L 358 42 L 358 184 C 358 190 356.1 204 349.64 210 C 338.24 188 320 203.4 320 230 C 320 256.6 338.24 272 349.64 250 C 356.1 256 358 270 358 276 L 358 418 L 246 418 C 240 418 226 416.1 220 409.64 C 242 398.24 226.6 380 200 380 C 173.4 380 158 398.24 180 409.64 C 174 416.1 160 418 154 418 L 42 418 L 42 276 C 42 270 40.1 256 33.64 250 C 22.24 272 4 256.6 4 230 C 4 203.4 22.24 188 33.64 210 C 40.1 204 42 190 42 184 L 42 42 Z";
 
                                 return (
                                     <div
                                         key={proj.id}
-                                        className="group relative transition-all duration-300 ease-out hover:-translate-y-2.5 cursor-default select-none"
+                                        className="group relative flex flex-col transition-all duration-300 hover:-translate-y-1.5"
                                     >
-                                        {/* 1. AUTHENTIC 3D JIGSAW PUZZLE PIECE (Bentuk Utuh Kepingan Puzzle 3D) */}
-                                        <div className="relative w-full aspect-[400/460] drop-shadow-[0_14px_22px_rgba(30,58,138,0.28)] group-hover:drop-shadow-[0_24px_34px_rgba(30,58,138,0.44)] transition-all duration-300">
-                                            <svg
-                                                viewBox="0 0 400 460"
-                                                className="w-full h-full overflow-visible pointer-events-none"
-                                            >
-                                                <defs>
-                                                    {/* 3D Extrusion Side Wall Gradient (Ketebalan Sisi Bawah/Samping 3D) */}
-                                                    <linearGradient id={`extrusion-${proj.id}`} x1="0%" y1="0%" x2="0%" y2="100%">
-                                                        <stop offset="0%" stopColor="#1E3A8A" />
-                                                        <stop offset="100%" stopColor="#0B132B" />
-                                                    </linearGradient>
-
-                                                    {/* Glossy Front Face Gradient */}
-                                                    <linearGradient id={`face-${proj.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
-                                                        <stop offset="0%" stopColor="#3B82F6" />
-                                                        <stop offset="35%" stopColor="#2563EB" />
-                                                        <stop offset="100%" stopColor="#1D4ED8" />
-                                                    </linearGradient>
-                                                </defs>
-
-                                                {/* Lapisan Ketebalan Fisik 3D (Extruded Depth) */}
-                                                <path
-                                                    d={jigsawPathD}
-                                                    transform="translate(0, 10)"
-                                                    fill={`url(#extrusion-${proj.id})`}
-                                                />
-
-                                                {/* Permukaan Depan Kepingan Jigsaw Puzzle (Front Face dengan Specular Bevel Rim) */}
-                                                <path
-                                                    d={jigsawPathD}
-                                                    fill={`url(#face-${proj.id})`}
-                                                    stroke="rgba(255, 255, 255, 0.55)"
-                                                    strokeWidth="2.2"
-                                                    strokeLinejoin="round"
-                                                />
-                                            </svg>
-
-                                            {/* 2. KONTEN DI DALAM SAFE-AREA KEPINGAN PUZZLE */}
+                                        {/* 3D Folder Dossier Container */}
+                                        <div className="relative pt-6">
+                                            {/* Folder Tab: Moncong Tab Kiri Atas yang Bersih (Tanpa Teks & Ikon) */}
                                             <div
-                                                className="absolute inset-0 z-10 flex flex-col justify-between text-white pointer-events-auto"
-                                                style={{ top: '11%', bottom: '16%', left: '13%', right: '20%' }}
-                                            >
-                                                <div>
-                                                    {/* Top Bar: Kategori, Kelas/Mandiri & Status Rekrutmen */}
-                                                    <div className="flex items-center justify-between gap-1.5 mb-2">
-                                                        <div className="flex items-center gap-1 truncate text-[10px] sm:text-[11px]">
-                                                            <span className="font-black tracking-wider uppercase text-blue-200 truncate">
+                                                className="absolute top-0 left-0 h-9 w-28 sm:w-36 rounded-tl-[18px] rounded-tr-2xl bg-gradient-to-b from-blue-700 to-blue-800 border-t border-l border-r border-blue-400/50 shadow-xs z-0"
+                                            />
+
+                                            {/* Manila Document Sheet (Tersembunyi di awal, muncul & naik saat di-hover) */}
+                                            <div className="absolute top-0.5 left-4 right-4 h-11 rounded-t-xl bg-[#FEF3C7] border-t border-x border-amber-300/90 shadow-sm px-4 py-2 transition-all duration-300 ease-out z-10 pointer-events-none translate-y-7 opacity-0 group-hover:translate-y-0 group-hover:opacity-100">
+                                                <div className="space-y-1.5 opacity-70">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="h-1.5 w-24 bg-amber-400/80 rounded-full" />
+                                                        <div className="h-1.5 w-12 bg-amber-300/80 rounded-full" />
+                                                    </div>
+                                                    <div className="h-1.5 w-36 bg-amber-300/70 rounded-full" />
+                                                </div>
+                                            </div>
+
+                                            {/* Front Folder Pocket Body (Blue Dossier) */}
+                                            <div className="relative z-20 rounded-b-[24px] rounded-tr-[24px] rounded-tl-none bg-gradient-to-b from-blue-600 via-blue-600 to-blue-700 border border-blue-400/40 shadow-[0_12px_28px_rgba(29,78,216,0.25)] group-hover:shadow-[0_18px_38px_rgba(29,78,216,0.4)] transition-all duration-300 p-5 sm:p-6 overflow-hidden flex flex-col justify-between min-h-[350px] text-white">
+                                                {/* Subtle glossy top edge curve accent */}
+                                                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-white/30 to-transparent pointer-events-none" />
+
+                                                <div className="space-y-3.5">
+                                                    {/* Top Row: Kategori, Jalur Proyek & Status (Teks dengan Pemisah |) */}
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <div className="flex items-center gap-1.5 text-xs font-bold tracking-wide truncate min-w-0">
+                                                            <span className="uppercase text-blue-200 shrink-0">
                                                                 {proj.category.replace('_', ' ')}
                                                             </span>
+                                                            <span className="text-blue-300/60 font-light mx-0.5 shrink-0">|</span>
                                                             {proj.academic_class ? (
-                                                                <>
-                                                                    <span className="text-blue-300 shrink-0 font-sans mx-0.5">|</span>
-                                                                    <span className="inline-flex items-center gap-1 font-semibold text-white truncate" title={proj.academic_class.name}>
-                                                                        <GraduationCap className="size-3 text-blue-200 shrink-0" />
-                                                                        <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
-                                                                    </span>
-                                                                </>
+                                                                <span
+                                                                    className="inline-flex items-center gap-1 text-white font-medium truncate"
+                                                                    title={proj.academic_class.name}
+                                                                >
+                                                                    <GraduationCap className="size-3.5 text-blue-200 shrink-0" />
+                                                                    <span className="truncate">{proj.academic_class.code || proj.academic_class.name}</span>
+                                                                </span>
                                                             ) : (
-                                                                <>
-                                                                    <span className="text-blue-300 shrink-0 font-sans mx-0.5">|</span>
-                                                                    <span className="inline-flex items-center gap-1 font-semibold text-blue-100 truncate">
-                                                                        <Compass className="size-3 text-blue-200 shrink-0" />
-                                                                        <span>Mandiri</span>
-                                                                    </span>
-                                                                </>
+                                                                <span className="inline-flex items-center gap-1 text-blue-100 font-medium truncate">
+                                                                    <Compass className="size-3.5 text-blue-200 shrink-0" />
+                                                                    <span>Mandiri</span>
+                                                                </span>
                                                             )}
                                                         </div>
 
                                                         {proj.status === 'recruiting' ? (
-                                                            <div className="inline-flex items-center gap-1 text-white bg-white/20 px-2 py-0.5 rounded-full text-[10px] font-bold tracking-tight shrink-0 border border-white/25">
-                                                                <UserPlus className="size-3 text-white" />
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-white text-blue-700 shadow-xs shrink-0 tracking-tight">
+                                                                <UserPlus className="size-3 text-blue-700" />
                                                                 <span>Rekrutmen</span>
-                                                            </div>
+                                                            </span>
                                                         ) : proj.status === 'in_progress' ? (
-                                                            <div className="inline-flex items-center gap-1 text-blue-100 text-[10px] font-medium tracking-tight shrink-0">
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-white/15 text-blue-100 border border-white/20 shrink-0">
                                                                 <Clock className="size-3 text-blue-200" />
                                                                 <span>Sedang Berjalan</span>
-                                                            </div>
+                                                            </span>
                                                         ) : (
-                                                            <div className="inline-flex items-center gap-1 text-blue-100 text-[10px] font-medium tracking-tight shrink-0">
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-white/15 text-blue-100 border border-white/20 shrink-0">
                                                                 <CheckCircle2 className="size-3 text-blue-200" />
                                                                 <span>Selesai</span>
-                                                            </div>
+                                                            </span>
                                                         )}
                                                     </div>
 
-                                                    {/* Title */}
-                                                    <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
-                                                        <h3 className="text-sm sm:text-base font-black text-white group-hover/title:text-blue-100 transition-colors duration-150 leading-snug line-clamp-2">
-                                                            {proj.title}
-                                                        </h3>
-                                                    </Link>
-
-                                                    {/* Description */}
-                                                    <p className="text-[11px] text-blue-100 mt-1 line-clamp-2 leading-relaxed">
-                                                        {proj.short_description}
-                                                    </p>
+                                                    {/* Title & Description */}
+                                                    <div>
+                                                        <Link href={`/projects/${proj.slug || proj.id}`} className="block group/title">
+                                                            <h3 className="text-base sm:text-lg font-bold text-white group-hover/title:text-blue-100 transition-colors leading-snug line-clamp-2">
+                                                                {proj.title}
+                                                            </h3>
+                                                        </Link>
+                                                        <p className="text-xs text-blue-100/90 line-clamp-2 leading-relaxed mt-1.5">
+                                                            {proj.short_description || 'Tidak ada deskripsi singkat.'}
+                                                        </p>
+                                                    </div>
 
                                                     {/* Integrated Recruitment Strip / Team Status */}
-                                                    <div className="mt-2.5 pt-2 border-t border-white/15">
+                                                    <div className="pt-3 border-t border-white/15">
                                                         {proj.status === 'recruiting' && (proj.has_open_recruitment ?? proj.team?.recruitment?.status === 'open') && openRoles.length > 0 ? (
-                                                            <div>
-                                                                <div className="flex items-center justify-between text-[10px] mb-1">
-                                                                    <span className="font-bold text-white">Dibutuhkan:</span>
-                                                                    <span className="font-bold text-blue-100 bg-white/20 px-1.5 py-0.5 rounded-full text-[9px]">{openRoles.length} Terbuka</span>
+                                                            <div className="space-y-1.5">
+                                                                <div className="flex items-center justify-between text-xs">
+                                                                    <span className="font-semibold text-white text-[11px]">Dibutuhkan:</span>
+                                                                    <span className="font-bold text-white bg-white/20 px-2 py-0.5 rounded-full text-[10px] border border-white/25">
+                                                                        {openRoles.length} Terbuka
+                                                                    </span>
                                                                 </div>
-                                                                <div className="flex flex-wrap gap-1">
+                                                                <div className="flex flex-wrap gap-1.5">
                                                                     {openRoles.slice(0, 2).map((r, rIdx) => (
                                                                         <span
                                                                             key={rIdx}
-                                                                            className="text-[9px] font-semibold bg-white/15 text-white px-1.5 py-0.5 rounded border border-white/20 truncate max-w-[130px]"
+                                                                            className="text-[10px] font-semibold bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20 truncate max-w-[130px]"
                                                                         >
                                                                             {r}
                                                                         </span>
                                                                     ))}
                                                                     {openRoles.length > 2 && (
-                                                                        <span className="text-[9px] font-medium text-blue-200 self-center px-0.5">
+                                                                        <span className="text-[10px] font-medium text-blue-200 self-center px-0.5">
                                                                             +{openRoles.length - 2} lagi
                                                                         </span>
                                                                     )}
                                                                 </div>
                                                             </div>
                                                         ) : (
-                                                            <div className="flex items-center justify-between text-[10px] py-0.5">
-                                                                <span className="font-medium text-blue-100">Susunan Tim:</span>
-                                                                <span className="text-[9px] font-semibold text-white bg-white/20 px-1.5 py-0.5 rounded border border-white/20">
+                                                            <div className="flex items-center justify-between text-xs py-0.5">
+                                                                <span className="font-medium text-blue-200 text-[11px]">Susunan Tim:</span>
+                                                                <span className="text-[10px] font-semibold text-white bg-white/20 px-2 py-0.5 rounded-md border border-white/25">
                                                                     Tim Lengkap
                                                                 </span>
                                                             </div>
@@ -542,17 +522,17 @@ export default function ProjectIndex({
 
                                                     {/* Tech Stack Chips */}
                                                     {proj.tech_stack && proj.tech_stack.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1 mt-2">
+                                                        <div className="flex flex-wrap gap-1.5 pt-0.5">
                                                             {proj.tech_stack.slice(0, 3).map((tech, i) => (
                                                                 <span
                                                                     key={i}
-                                                                    className="text-[9px] font-medium bg-white/15 text-white px-1.5 py-0.5 rounded border border-white/10"
+                                                                    className="text-[10px] font-medium bg-white/15 text-white px-2 py-0.5 rounded-md border border-white/20"
                                                                 >
                                                                     {tech}
                                                                 </span>
                                                             ))}
                                                             {proj.tech_stack.length > 3 && (
-                                                                <span className="text-[9px] text-blue-200 font-medium self-center px-0.5">
+                                                                <span className="text-[10px] text-blue-200 font-medium self-center px-1">
                                                                     +{proj.tech_stack.length - 3}
                                                                 </span>
                                                             )}
@@ -560,43 +540,43 @@ export default function ProjectIndex({
                                                     )}
                                                 </div>
 
-                                                {/* Card Footer */}
-                                                <div className="pt-2 mt-2 border-t border-white/15 flex items-center justify-between gap-1 text-[11px]">
-                                                    <div className="flex items-center gap-1 text-white">
-                                                        <Users className="size-3 text-blue-200" />
-                                                        <span className="font-bold text-white text-[11px]">
+                                                {/* Pocket Footer: Members & Action Buttons */}
+                                                <div className="pt-3.5 mt-4 border-t border-white/15 flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-1.5 text-white">
+                                                        <Users className="size-3.5 text-blue-200 shrink-0" />
+                                                        <span className="font-bold text-white text-xs">
                                                             {proj.team?.members?.length || 1} Anggota
                                                         </span>
                                                     </div>
 
-                                                    <div className="flex items-center gap-1 shrink-0">
+                                                    <div className="flex items-center gap-1.5 shrink-0">
                                                         {proj.status === 'recruiting' && !isLecturer && (
                                                             proj.is_member ? (
                                                                 proj.can_access_workspace ? (
                                                                     <Link
                                                                         href={proj.team ? `/workspace/${proj.team.id}` : '/workspace'}
-                                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white/20 hover:bg-white/30 text-white text-[10px] font-bold border border-white/30 transition"
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 transition"
                                                                         title="Buka Workspace Tim Proyek"
                                                                     >
-                                                                        <FolderKanban className="size-2.5 text-white" />
+                                                                        <FolderKanban className="size-3 text-white" />
                                                                         <span>Workspace</span>
                                                                     </Link>
                                                                 ) : (
-                                                                    <span className="text-[10px] font-bold text-white bg-white/20 px-2 py-0.5 rounded border border-white/30">
+                                                                    <span className="text-xs font-bold text-white bg-white/20 px-2.5 py-1 rounded-lg border border-white/25">
                                                                         Tim Anda
                                                                     </span>
                                                                 )
                                                             ) : proj.has_applied ? (
-                                                                <span className="text-[10px] font-medium text-blue-100 bg-white/15 px-1.5 py-0.5 rounded border border-white/20">
-                                                                    Dilamar
+                                                                <span className="text-xs font-medium text-blue-100 bg-white/15 px-2.5 py-1 rounded-lg border border-white/20">
+                                                                    Sudah Melamar
                                                                 </span>
                                                             ) : isGuest ? (
                                                                 proj.has_open_recruitment !== false && (
                                                                     <Link
                                                                         href="/login"
-                                                                        className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold shadow-xs transition"
+                                                                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition"
                                                                     >
-                                                                        <Send className="size-2.5 text-blue-700" />
+                                                                        <Send className="size-3 text-blue-700" />
                                                                         <span>Lamar</span>
                                                                     </Link>
                                                                 )
@@ -604,13 +584,13 @@ export default function ProjectIndex({
                                                                 <button
                                                                     type="button"
                                                                     onClick={() => openJoinModal(proj)}
-                                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded bg-white hover:bg-blue-50 text-blue-700 text-[10px] font-bold shadow-xs transition cursor-pointer"
+                                                                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-bold shadow-xs transition cursor-pointer"
                                                                 >
-                                                                    <Send className="size-2.5 text-blue-700" />
+                                                                    <Send className="size-3 text-blue-700" />
                                                                     <span>Lamar</span>
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-[10px] font-medium text-blue-200">
+                                                                <span className="text-[11px] font-medium text-blue-200">
                                                                     {proj.has_open_recruitment === false
                                                                         ? 'Tutup'
                                                                         : proj.has_capacity === false
@@ -624,10 +604,10 @@ export default function ProjectIndex({
 
                                                         <Link
                                                             href={`/projects/${proj.slug || proj.id}`}
-                                                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-[11px] font-black transition shadow-xs active:scale-95"
+                                                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 text-xs font-extrabold transition shadow-xs duration-150 active:scale-95"
                                                         >
                                                             <span>Detail</span>
-                                                            <ArrowRight className="size-2.5 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
+                                                            <ArrowRight className="size-3 text-blue-700 group-hover:translate-x-0.5 transition-transform" />
                                                         </Link>
                                                     </div>
                                                 </div>
