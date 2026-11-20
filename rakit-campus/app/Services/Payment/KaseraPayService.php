@@ -99,10 +99,6 @@ class KaseraPayService
             $payload['customer'] = $params['customer'];
         }
 
-        if (!empty($params['metadata'])) {
-            $payload['metadata'] = $params['metadata'];
-        }
-
         try {
             $response = Http::timeout($this->timeout)
                 ->withToken($this->apiKey)

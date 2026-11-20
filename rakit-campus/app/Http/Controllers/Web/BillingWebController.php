@@ -185,11 +185,6 @@ class BillingWebController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ],
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'plan_type' => $planType,
-                    'user_id' => $user->id,
-                ],
             ]);
 
             $checkoutUrl = $tx['checkout_url'] ?? null;
