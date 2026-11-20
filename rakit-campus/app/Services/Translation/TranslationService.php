@@ -139,7 +139,17 @@ class TranslationService
 
         $response = GeminiAgentService::call($systemPrompt, $text);
 
-        return $response ? trim($response) : null;
+        if (!$response) {
+            return null;
+        }
+
+        $clean = trim($response);
+        // Strip wrapping quotes if model added them
+        if ((str_starts_with($clean, '"') && str_ends_with($clean, '"')) || (str_starts_with($clean, "'") && str_ends_with($clean, "'"))) {
+            $clean = substr($clean, 1, -1);
+        }
+
+        return trim($clean);
     }
 
     /**
