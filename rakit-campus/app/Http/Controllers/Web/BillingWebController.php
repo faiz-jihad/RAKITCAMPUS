@@ -131,17 +131,47 @@ class BillingWebController extends Controller
             ->where('plan_type', $planType)
             ->where('status', Order::STATUS_PENDING)
             ->where('created_at', '>=', now()->subMinutes(15))
-            ->whereNotNull('checkout_url')
             ->latest()
             ->first();
 
         if ($existingPendingOrder && !$existingPendingOrder->isExpired()) {
-            return response()->json([
-                'success' => true,
-                'order' => $existingPendingOrder,
-                'checkout_url' => $existingPendingOrder->checkout_url,
-                'reused' => true,
-            ]);
+            // Self-heal: If checkout_url is missing, attempt to retrieve transaction from Kasera Pay
+            if (empty($existingPendingOrder->checkout_url) && $this->kaseraPayService->isConfigured()) {
+                try {
+                    $tx = $this->kaseraPayService->getTransactionByExternalId($existingPendingOrder->order_number);
+                    if ($tx && !empty($tx['checkout_url'])) {
+                        $expiresAt = isset($tx['expires_at']) ? new \DateTime($tx['expires_at']) : now()->addHours(24);
+                        $existingPendingOrder->update([
+                            'provider_transaction_id' => $tx['id'] ?? null,
+                            'checkout_url' => $tx['checkout_url'] ?? null,
+                            'expires_at' => $expiresAt,
+                            'payment_reference' => $tx['id'] ?? null,
+                            'metadata' => array_merge($existingPendingOrder->metadata ?? [], [
+                                'kasera_response' => [
+                                    'id' => $tx['id'] ?? null,
+                                    'status' => $tx['status'] ?? null,
+                                    'payment' => $tx['payment'] ?? null,
+                                    'fee' => $tx['fee'] ?? null,
+                                ],
+                            ]),
+                        ]);
+                        $existingPendingOrder->refresh();
+                    }
+                } catch (\Throwable) {
+                    $existingPendingOrder->update(['status' => Order::STATUS_FAILED]);
+                    $existingPendingOrder = null;
+                }
+            }
+
+            if ($existingPendingOrder && !empty($existingPendingOrder->checkout_url) && !$existingPendingOrder->isExpired()) {
+                return response()->json([
+                    'success' => true,
+                    'order' => $existingPendingOrder,
+                    'checkout_url' => $existingPendingOrder->checkout_url,
+                    'qr_string' => $existingPendingOrder->qr_string,
+                    'reused' => true,
+                ]);
+            }
         }
 
         // 3. Generate New Order
@@ -214,13 +244,14 @@ class BillingWebController extends Controller
                 'expires_at' => $expiresAt->format('c'),
             ]);
         } catch (KaseraPayException $e) {
+            $order->update(['status' => Order::STATUS_FAILED]);
+
             Log::error('Kasera Pay transaction creation exception', [
                 'order_number' => $orderNumber,
                 'message' => $e->getMessage(),
                 'provider_error' => $e->getProviderError(),
             ]);
 
-            // If API key is not configured, give clear actionable instruction
             if (!$this->kaseraPayService->isConfigured()) {
                 return response()->json([
                     'success' => false,
@@ -234,6 +265,8 @@ class BillingWebController extends Controller
                 'message' => $e->getMessage(),
             ], 422);
         } catch (\Throwable $e) {
+            $order->update(['status' => Order::STATUS_FAILED]);
+
             Log::error('Unexpected checkout exception', [
                 'order_number' => $orderNumber,
                 'error' => $e->getMessage(),
@@ -268,23 +301,49 @@ class BillingWebController extends Controller
         }
 
         // If order is still pending, perform real server-to-server inquiry against Kasera Pay API
-        if ($order->isPending() && $order->provider_transaction_id && $this->kaseraPayService->isConfigured()) {
+        if ($order->isPending() && $this->kaseraPayService->isConfigured()) {
             try {
-                $tx = $this->kaseraPayService->getTransaction($order->provider_transaction_id);
-                $remoteStatus = strtolower((string) ($tx['status'] ?? ''));
+                $tx = null;
+                if ($order->provider_transaction_id) {
+                    $tx = $this->kaseraPayService->getTransaction($order->provider_transaction_id);
+                } elseif ($order->order_number) {
+                    $tx = $this->kaseraPayService->getTransactionByExternalId($order->order_number);
+                }
 
-                if (in_array($remoteStatus, ['succeeded', 'paid', 'settlement'], true)) {
-                    $this->settlementService->settle(
-                        $order,
-                        $tx['id'] ?? $order->provider_transaction_id,
-                        $tx['payment_method'] ?? 'qris',
-                        ['verified_via' => 'return_url_server_inquiry', 'raw_kasera' => $tx]
-                    );
-                    $order->refresh();
-                } elseif ($remoteStatus === 'expired') {
-                    $order->update(['status' => Order::STATUS_EXPIRED]);
-                } elseif (in_array($remoteStatus, ['failed', 'cancelled'], true)) {
-                    $order->update(['status' => Order::STATUS_FAILED]);
+                if ($tx) {
+                    // Sync missing fields
+                    if (empty($order->checkout_url) || empty($order->provider_transaction_id) || empty($order->metadata['kasera_response'])) {
+                        $order->update([
+                            'provider_transaction_id' => $tx['id'] ?? $order->provider_transaction_id,
+                            'checkout_url' => $tx['checkout_url'] ?? $order->checkout_url,
+                            'expires_at' => isset($tx['expires_at']) ? new \DateTime($tx['expires_at']) : $order->expires_at,
+                            'metadata' => array_merge($order->metadata ?? [], [
+                                'kasera_response' => [
+                                    'id' => $tx['id'] ?? null,
+                                    'status' => $tx['status'] ?? null,
+                                    'payment' => $tx['payment'] ?? null,
+                                    'fee' => $tx['fee'] ?? null,
+                                ],
+                            ]),
+                        ]);
+                        $order->refresh();
+                    }
+
+                    $remoteStatus = strtolower((string) ($tx['status'] ?? ''));
+
+                    if (in_array($remoteStatus, ['succeeded', 'paid', 'settlement'], true)) {
+                        $this->settlementService->settle(
+                            $order,
+                            $tx['id'] ?? $order->provider_transaction_id,
+                            $tx['payment_method'] ?? 'qris',
+                            ['verified_via' => 'return_url_server_inquiry', 'raw_kasera' => $tx]
+                        );
+                        $order->refresh();
+                    } elseif ($remoteStatus === 'expired') {
+                        $order->update(['status' => Order::STATUS_EXPIRED]);
+                    } elseif (in_array($remoteStatus, ['failed', 'cancelled'], true)) {
+                        $order->update(['status' => Order::STATUS_FAILED]);
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::warning('Server-to-server Kasera verification failed on finish page', [
@@ -338,23 +397,48 @@ class BillingWebController extends Controller
         }
 
         // If pending, perform real-time verification with Kasera Pay
-        if ($order->isPending() && $order->provider_transaction_id && $this->kaseraPayService->isConfigured()) {
+        if ($order->isPending() && $this->kaseraPayService->isConfigured()) {
             try {
-                $tx = $this->kaseraPayService->getTransaction($order->provider_transaction_id);
-                $remoteStatus = strtolower((string) ($tx['status'] ?? ''));
+                $tx = null;
+                if ($order->provider_transaction_id) {
+                    $tx = $this->kaseraPayService->getTransaction($order->provider_transaction_id);
+                } elseif ($order->order_number) {
+                    $tx = $this->kaseraPayService->getTransactionByExternalId($order->order_number);
+                }
 
-                if (in_array($remoteStatus, ['succeeded', 'paid', 'settlement'], true)) {
-                    $this->settlementService->settle(
-                        $order,
-                        $tx['id'] ?? $order->provider_transaction_id,
-                        $tx['payment_method'] ?? 'qris',
-                        ['verified_via' => 'realtime_ajax_poll']
-                    );
-                    $order->refresh();
-                } elseif ($remoteStatus === 'expired') {
-                    $order->update(['status' => Order::STATUS_EXPIRED]);
-                } elseif (in_array($remoteStatus, ['failed', 'cancelled'], true)) {
-                    $order->update(['status' => Order::STATUS_FAILED]);
+                if ($tx) {
+                    if (empty($order->checkout_url) || empty($order->provider_transaction_id) || empty($order->metadata['kasera_response'])) {
+                        $order->update([
+                            'provider_transaction_id' => $tx['id'] ?? $order->provider_transaction_id,
+                            'checkout_url' => $tx['checkout_url'] ?? $order->checkout_url,
+                            'expires_at' => isset($tx['expires_at']) ? new \DateTime($tx['expires_at']) : $order->expires_at,
+                            'metadata' => array_merge($order->metadata ?? [], [
+                                'kasera_response' => [
+                                    'id' => $tx['id'] ?? null,
+                                    'status' => $tx['status'] ?? null,
+                                    'payment' => $tx['payment'] ?? null,
+                                    'fee' => $tx['fee'] ?? null,
+                                ],
+                            ]),
+                        ]);
+                        $order->refresh();
+                    }
+
+                    $remoteStatus = strtolower((string) ($tx['status'] ?? ''));
+
+                    if (in_array($remoteStatus, ['succeeded', 'paid', 'settlement'], true)) {
+                        $this->settlementService->settle(
+                            $order,
+                            $tx['id'] ?? $order->provider_transaction_id,
+                            $tx['payment_method'] ?? 'qris',
+                            ['verified_via' => 'realtime_ajax_poll']
+                        );
+                        $order->refresh();
+                    } elseif ($remoteStatus === 'expired') {
+                        $order->update(['status' => Order::STATUS_EXPIRED]);
+                    } elseif (in_array($remoteStatus, ['failed', 'cancelled'], true)) {
+                        $order->update(['status' => Order::STATUS_FAILED]);
+                    }
                 }
             } catch (\Throwable $e) {
                 Log::warning('Ajax check-status Kasera inquiry failed', [

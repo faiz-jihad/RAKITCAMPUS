@@ -7,6 +7,7 @@ import {
     Check,
     CheckCircle2,
     Clock,
+    Copy,
     Crown,
     ExternalLink,
     HelpCircle,
@@ -90,6 +91,8 @@ export default function PricingPage({
     const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
     const [createdOrder, setCreatedOrder] = useState<any | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [checkoutError, setCheckoutError] = useState<string | null>(null);
+    const [modalCopied, setModalCopied] = useState(false);
     const [isCelebrationOpen, setIsCelebrationOpen] = useState(false);
     const [activatedPlanInfo, setActivatedPlanInfo] = useState<any>(null);
 
@@ -129,6 +132,7 @@ export default function PricingPage({
 
         setSelectedPlan(plan);
         setIsSubmitting(true);
+        setCheckoutError(null);
 
         try {
             const res = await fetch('/checkout', {
@@ -154,10 +158,10 @@ export default function PricingPage({
                 });
                 setIsCheckoutOpen(true);
             } else {
-                alert(data.message || 'Gagal memulai checkout.');
+                setCheckoutError(data.message || 'Gagal memulai sesi pembayaran. Silakan coba kembali.');
             }
         } catch {
-            alert('Terjadi kesalahan jaringan.');
+            setCheckoutError('Terjadi gangguan koneksi jaringan. Silakan periksa koneksi internet Anda.');
         } finally {
             setIsSubmitting(false);
         }
@@ -532,10 +536,34 @@ export default function PricingPage({
                 )}
             </div>
 
-            {/* KASERA PAY CHECKOUT MODAL */}
+            {/* FLOATING IOS TOAST ERROR NOTIFICATION */}
+            {checkoutError && (
+                <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 max-w-md w-[92%] bg-[#1D1D1F]/95 backdrop-blur-xl text-white px-5 py-4 rounded-[24px] shadow-2xl border border-white/10 flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                            <ShieldAlert className="size-4" />
+                        </div>
+                        <p className="text-xs font-medium text-slate-200 leading-snug">
+                            {checkoutError}
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setCheckoutError(null)}
+                        className="text-slate-400 hover:text-white p-1 rounded-full cursor-pointer shrink-0"
+                    >
+                        <X className="size-4" />
+                    </button>
+                </div>
+            )}
+
+            {/* KASERA PAY CHECKOUT MODAL (Apple iOS Sheet Style) */}
             {isCheckoutOpen && createdOrder && selectedPlan && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-                    <div className="bg-white rounded-[32px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-[36px] sm:rounded-[36px] max-w-md w-full p-6 sm:p-8 shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-slate-200/80 relative space-y-5 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300">
+                        {/* iOS Sheet Grabber on Mobile */}
+                        <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto -mt-2 mb-2 sm:hidden" />
+
                         {/* Close button */}
                         <button
                             type="button"
@@ -545,20 +573,34 @@ export default function PricingPage({
                             <X className="size-4" />
                         </button>
 
-                        <div className="text-center space-y-1">
-                            <div className="size-12 rounded-2xl bg-blue-50 border border-blue-200/80 text-blue-600 mx-auto flex items-center justify-center mb-2 shadow-2xs">
-                                <QrCode className="size-6" />
+                        <div className="text-center space-y-1.5 pt-1">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
+                                <span className="size-1.5 rounded-full bg-[#0071E3] animate-pulse" />
+                                <span>Kasera Pay Official</span>
                             </div>
-                            <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                                Pembayaran Kasera Pay (QRIS)
+                            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
+                                Selesaikan Pembayaran
                             </h3>
-                            <p className="text-xs text-slate-500">
-                                Order ID: <span className="font-mono font-bold text-slate-700">{createdOrder.order_number}</span>
-                            </p>
+                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                                <span>Order:</span>
+                                <span className="font-mono font-bold text-slate-700">{createdOrder.order_number}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(createdOrder.order_number);
+                                        setModalCopied(true);
+                                        setTimeout(() => setModalCopied(false), 2000);
+                                    }}
+                                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
+                                    title="Salin ID"
+                                >
+                                    {modalCopied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
+                                </button>
+                            </div>
                         </div>
 
                         {/* Order Summary Card */}
-                        <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2 text-xs">
+                        <div className="bg-[#F9F9FB] rounded-[22px] p-4 border border-slate-200/70 space-y-2 text-xs">
                             <div className="flex justify-between items-center text-slate-600">
                                 <span>Paket Pilihan:</span>
                                 <span className="font-bold text-slate-900">{selectedPlan.name}</span>
@@ -569,31 +611,36 @@ export default function PricingPage({
                             </div>
                             <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm">
                                 <span className="font-bold text-slate-900">Total Tagihan:</span>
-                                <span className="font-black text-blue-600 text-base">{formatRupiah(createdOrder.amount)}</span>
+                                <span className="font-black text-[#0071E3] text-base">{formatRupiah(createdOrder.amount)}</span>
                             </div>
                         </div>
 
-                        {/* QRIS Display or Gateway Notice */}
-                        <div className="bg-white rounded-2xl p-4 border-2 border-dashed border-slate-200 text-center space-y-3">
+                        {/* QRIS Display */}
+                        <div className="bg-white rounded-[26px] p-4 border border-slate-200/90 shadow-2xs text-center space-y-3">
                             {createdOrder.qr_string ? (
-                                <div className="size-44 mx-auto bg-white rounded-xl p-2 border border-slate-200 flex items-center justify-center">
+                                <div className="size-48 mx-auto bg-white rounded-2xl p-2 border border-slate-200/80 shadow-xs flex items-center justify-center">
                                     <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(createdOrder.qr_string)}&size=200x200&margin=8`}
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(createdOrder.qr_string)}&size=220x220&margin=8`}
                                         alt="QRIS Kasera Pay"
-                                        className="size-full object-contain"
+                                        className="size-full object-contain rounded-lg"
                                     />
                                 </div>
                             ) : (
-                                <div className="size-36 mx-auto bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col items-center justify-center p-3 text-center">
-                                    <ShieldCheck className="size-10 text-blue-600 mb-1.5" />
-                                    <span className="text-xs font-bold text-slate-800">Kasera Pay Gateway</span>
-                                    <span className="text-[10px] text-slate-500">QRIS Real-Time</span>
+                                <div className="size-40 mx-auto bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col items-center justify-center p-3 text-center">
+                                    <ShieldCheck className="size-10 text-[#0071E3] mb-1.5" />
+                                    <span className="text-xs font-bold text-slate-800">QRIS Kasera Pay</span>
+                                    <span className="text-[10px] text-slate-500">Siap Ditautkan</span>
                                 </div>
                             )}
 
-                            <p className="text-[11px] text-slate-500 leading-tight">
-                                Scan QRIS menggunakan GoPay, DANA, OVO, ShopeePay, atau Mobile Banking
-                            </p>
+                            <div className="space-y-0.5">
+                                <p className="text-[11px] font-semibold text-slate-700">
+                                    Scan QRIS dengan GoPay, DANA, OVO, ShopeePay, atau BCA
+                                </p>
+                                <p className="text-[10px] text-slate-400">
+                                    Atau klik tombol checkout resmi Kasera Pay di bawah
+                                </p>
+                            </div>
                         </div>
 
                         {/* Actions */}
@@ -603,31 +650,20 @@ export default function PricingPage({
                                     href={createdOrder.checkout_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                                    className="w-full py-3.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
                                 >
-                                    <span>Buka Halaman Checkout Kasera</span>
+                                    <span>Buka Checkout Resmi Kasera Pay</span>
                                     <ExternalLink className="size-3.5" />
                                 </a>
                             )}
 
                             <Link
                                 href={`/billing/status/${createdOrder.order_number}`}
-                                className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
                             >
                                 <span>Lihat Halaman Status &amp; Verifikasi</span>
                                 <ArrowRight className="size-3.5" />
                             </Link>
-
-                            {/* Testing fallback for development environment */}
-                            {createdOrder.id && (
-                                <a
-                                    href={`/billing/simulate/${createdOrder.id}`}
-                                    className="w-full py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                                >
-                                    <CheckCircle2 className="size-3 text-emerald-600" />
-                                    <span>Simulasi Pembayaran Cepat (Uji Sandbox)</span>
-                                </a>
-                            )}
 
                             <button
                                 type="button"

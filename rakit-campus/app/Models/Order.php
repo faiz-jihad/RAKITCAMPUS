@@ -43,6 +43,11 @@ class Order extends Model
         'metadata' => 'array',
     ];
 
+    protected $appends = [
+        'plan_label',
+        'qr_string',
+    ];
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -88,7 +93,16 @@ class Order extends Model
             'pro_monthly' => 'RAKIT Pro Bulanan',
             'semester_pass' => 'RAKIT Semester (6 Bulan)',
             'team_pass' => 'RAKIT Team Pass',
-            default => strtoupper($this->plan_type),
+            default => strtoupper((string) $this->plan_type),
         };
+    }
+
+    public function getQrStringAttribute(): ?string
+    {
+        return $this->metadata['kasera_response']['payment']['qr_string']
+            ?? $this->metadata['kasera_response']['payment']['qr_content']
+            ?? $this->metadata['payment']['qr_string']
+            ?? $this->metadata['qr_string']
+            ?? null;
     }
 }

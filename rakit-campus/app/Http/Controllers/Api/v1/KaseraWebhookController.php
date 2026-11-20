@@ -33,13 +33,16 @@ class KaseraWebhookController extends Controller
             'body_length' => strlen($rawBody),
         ]);
 
-        // 1. Verify cryptographic signature
-        if (!$this->kaseraPayService->verifyWebhookSignature($rawBody, $signatureHeader)) {
-            Log::warning('Kasera Pay Webhook: Unauthorized (Invalid signature)', [
-                'ip' => $request->ip(),
-                'signature_header' => $signatureHeader,
-            ]);
-            return response()->json(['message' => 'Invalid webhook signature.'], 401);
+        // 1. Verify cryptographic signature if secret is configured
+        $secretConfigured = !empty(config('kaserapay.webhook_secret'));
+        if ($secretConfigured) {
+            if (!$this->kaseraPayService->verifyWebhookSignature($rawBody, $signatureHeader)) {
+                Log::warning('Kasera Pay Webhook: Unauthorized (Invalid signature)', [
+                    'ip' => $request->ip(),
+                    'signature_header' => $signatureHeader,
+                ]);
+                return response()->json(['message' => 'Invalid webhook signature.'], 401);
+            }
         }
 
         // 2. Decode raw JSON payload
@@ -57,6 +60,20 @@ class KaseraWebhookController extends Controller
         $status = strtolower((string) ($data['status'] ?? ''));
         $amount = (int) ($data['amount'] ?? 0);
         $paymentMethod = $data['payment_method'] ?? 'qris';
+
+        // 1b. If webhook secret is not yet configured, verify transaction directly via Kasera Pay API
+        if (!$secretConfigured && $transactionId) {
+            try {
+                $remoteTx = $this->kaseraPayService->getTransaction($transactionId);
+                if (empty($remoteTx) || ($remoteTx['id'] ?? '') !== $transactionId) {
+                    Log::warning('Kasera Pay Webhook: Server inquiry verification failed', ['transaction_id' => $transactionId]);
+                    return response()->json(['message' => 'Unauthorized transaction.'], 401);
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Kasera Pay Webhook: Server inquiry exception', ['error' => $e->getMessage()]);
+                return response()->json(['message' => 'Unauthorized transaction.'], 401);
+            }
+        }
 
         if (!$externalId && !$transactionId) {
             Log::warning('Kasera Pay Webhook: Missing external_id and transaction id in payload', ['payload' => $payload]);
