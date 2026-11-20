@@ -91,6 +91,10 @@ class KaseraPayService
             $payload['return_url'] = $params['return_url'];
         }
 
+        if (!empty($params['order_items'])) {
+            $payload['order_items'] = $params['order_items'];
+        }
+
         if (!empty($params['customer'])) {
             $payload['customer'] = $params['customer'];
         }
@@ -120,10 +124,11 @@ class KaseraPayService
             }
 
             $errorBody = $response->json() ?? [];
-            $errorMessage = $errorBody['message'] ?? $errorBody['error'] ?? "Kasera Pay API Error (HTTP {$response->status()})";
+            $rawMsg = $errorBody['message'] ?? $errorBody['error'] ?? null;
+            $errorMessage = is_string($rawMsg) ? $rawMsg : "Kasera Pay API Error (HTTP {$response->status()}): " . json_encode($errorBody);
 
             Log::error('Kasera Pay API createTransaction failed', [
-                'external_id' => $params['external_id'],
+                'external_id' => $externalId,
                 'http_status' => $response->status(),
                 'error' => $errorBody,
             ]);
@@ -136,7 +141,7 @@ class KaseraPayService
             );
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             Log::error('Kasera Pay connection timeout', [
-                'external_id' => $params['external_id'],
+                'external_id' => $externalId,
                 'message' => $e->getMessage(),
             ]);
             throw new KaseraPayException('Gagal terhubung ke server Kasera Pay. Silakan periksa koneksi internet Anda.', 504, 504, null, $e);

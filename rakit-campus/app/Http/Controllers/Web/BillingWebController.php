@@ -174,6 +174,13 @@ class BillingWebController extends Controller
                 'external_id' => $orderNumber,
                 'payment_methods' => ['qris'],
                 'return_url' => $returnUrl,
+                'order_items' => [
+                    [
+                        'name' => $planName,
+                        'price' => $amount,
+                        'quantity' => 1,
+                    ],
+                ],
                 'customer' => [
                     'name' => $user->name,
                     'email' => $user->email,
