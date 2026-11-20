@@ -262,7 +262,7 @@ export default function PricingPage({
         },
         {
             q: 'Apa perbedaan AI Pass dengan langganan RAKIT Pro?',
-            a: 'AI Pass adalah booster satu kali bayar (one-time) Rp 15.000 untuk 30 hari (+25 kredit AI dan reviewer proposal). RAKIT Pro adalah langganan komprehensif bulanan/semester yang membuka 100-300 kuota AI, verifikasi pro badge, dan ekspor portofolio ATS.',
+            a: `AI Pass adalah booster satu kali bayar (one-time) ${formatRupiah(aiPassPlan.price)} untuk 30 hari (+${aiPassPlan.ai_credits_bonus || 25} kredit AI dan reviewer proposal). RAKIT Pro adalah langganan komprehensif bulanan/semester yang membuka kuota AI Workspace, verifikasi pro badge, dan ekspor portofolio ATS.`,
         },
         {
             q: 'Bagaimana metode pembayarannya? Apakah ada autodebit?',
@@ -417,7 +417,7 @@ export default function PricingPage({
                                     </div>
                                     <p className="text-[11px] text-zinc-500 pt-0.5">
                                         {billingCycle === 'semester'
-                                            ? 'Setara Rp 8.100 / bulan • Akses 1 semester penuh'
+                                            ? `Setara ${formatRupiah(Math.round(semesterPlan.price / 6))} / bulan • Akses 1 semester penuh`
                                             : 'Dapat dibatalkan sewaktu-waktu tanpa komitmen'}
                                     </p>
                                 </div>
@@ -447,9 +447,7 @@ export default function PricingPage({
                             >
                                 {activeSubscription?.plan_type === currentProPlan.id
                                     ? 'Paket Sedang Aktif'
-                                    : billingCycle === 'semester'
-                                    ? 'Ambil Pass Semester (Rp 49.000)'
-                                    : 'Langganan Pro Bulanan (Rp 29.000)'}
+                                    : `${currentProPlan.cta || 'Pilih Paket'} (${formatRupiah(currentProPlan.price)})`}
                             </button>
                         </div>
 
@@ -534,7 +532,9 @@ export default function PricingPage({
                                     <div className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-900">
                                         {formatRupiah(teamPlan.price)}
                                     </div>
-                                    <span className="text-xs text-zinc-400">untuk 3 bulan (Rp 33.000/bln per tim)</span>
+                                    <span className="text-xs text-zinc-400">
+                                        {teamPlan.price > 0 ? `Hanya ${formatRupiah(Math.round(teamPlan.price / 3))}/bln untuk 1 tim (3 bln)` : 'Akses 1 Tim Lomba'}
+                                    </span>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">

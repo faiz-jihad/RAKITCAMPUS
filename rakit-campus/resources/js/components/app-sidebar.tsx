@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Award, Bell, BookOpen, BotMessageSquare, Clock, FolderKanban, GraduationCap, Kanban, LayoutGrid, Repeat, ShieldCheck, Sparkles, Trophy, User, Users } from 'lucide-react';
+import { Award, Bell, BookOpen, BotMessageSquare, Clock, CreditCard, FolderKanban, GraduationCap, Kanban, LayoutGrid, Repeat, ShieldCheck, Sparkles, Trophy, User, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import AppLogo from './app-logo';
 
@@ -151,6 +151,11 @@ export function AppSidebar() {
           ];
 
     if (isCampusAdmin) {
+        mainNavItems.push({
+            title: 'Kelola Paket & Harga',
+            url: '/admin/pricing',
+            icon: CreditCard,
+        });
         mainNavItems.push({
             title: 'Kelola Kompetisi',
             url: '/admin/competitions',

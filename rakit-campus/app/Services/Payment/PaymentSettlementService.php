@@ -113,13 +113,22 @@ class PaymentSettlementService
      */
     protected function activatePlanEntitlements(Order $order, User $user): void
     {
+        $dbPlan = \App\Models\PricingPlan::where('slug', $order->plan_type)->first();
+        $bonusCredits = $dbPlan ? (int) $dbPlan->ai_credits_bonus : match ($order->plan_type) {
+            'ai_pass' => 25,
+            'pro_monthly' => 100,
+            'semester_pass' => 300,
+            'team_pass' => 200,
+            default => 0,
+        };
+
         match ($order->plan_type) {
             'ai_pass' => UserSubscription::create([
                 'user_id' => $user->id,
                 'order_id' => $order->id,
                 'plan_type' => 'ai_pass',
                 'status' => 'active',
-                'ai_credits_bonus' => 25,
+                'ai_credits_bonus' => $bonusCredits,
                 'starts_at' => now(),
                 'expires_at' => now()->addDays(30),
             ]),
@@ -128,7 +137,7 @@ class PaymentSettlementService
                 'order_id' => $order->id,
                 'plan_type' => 'pro_monthly',
                 'status' => 'active',
-                'ai_credits_bonus' => 100,
+                'ai_credits_bonus' => $bonusCredits,
                 'starts_at' => now(),
                 'expires_at' => now()->addMonth(),
             ]),
@@ -137,7 +146,7 @@ class PaymentSettlementService
                 'order_id' => $order->id,
                 'plan_type' => 'semester_pass',
                 'status' => 'active',
-                'ai_credits_bonus' => 300,
+                'ai_credits_bonus' => $bonusCredits,
                 'starts_at' => now(),
                 'expires_at' => now()->addMonths(6),
             ]),
@@ -146,7 +155,7 @@ class PaymentSettlementService
                 'order_id' => $order->id,
                 'purchased_by' => $user->id,
                 'status' => 'active',
-                'ai_credits_pooled' => 200,
+                'ai_credits_pooled' => $bonusCredits,
                 'starts_at' => now(),
                 'expires_at' => now()->addMonths(3),
             ]) : null,
