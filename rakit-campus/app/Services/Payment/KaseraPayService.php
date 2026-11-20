@@ -75,10 +75,15 @@ class KaseraPayService
             throw new KaseraPayException('Nominal pembayaran harus lebih besar dari 0 Rupiah.', 422);
         }
 
+        $externalId = (string) ($params['external_id'] ?? $params['order_number'] ?? '');
+        if (empty($externalId)) {
+            throw new KaseraPayException('Parameter external_id atau order_number wajib diisi.', 422);
+        }
+
         $payload = [
             'amount' => $amount,
-            'description' => (string) $params['description'],
-            'external_id' => (string) $params['external_id'],
+            'description' => (string) ($params['description'] ?? 'Pembayaran RAKIT Campus'),
+            'external_id' => $externalId,
             'payment_methods' => $params['payment_methods'] ?? ['qris'],
         ];
 
@@ -98,7 +103,7 @@ class KaseraPayService
             $response = Http::timeout($this->timeout)
                 ->withToken($this->apiKey)
                 ->withHeaders([
-                    'Idempotency-Key' => $params['external_id'],
+                    'Idempotency-Key' => $externalId,
                     'Content-Type' => 'application/json',
                     'Accept' => 'application/json',
                 ])
@@ -107,7 +112,7 @@ class KaseraPayService
             if ($response->successful()) {
                 $json = $response->json();
                 Log::info('Kasera Pay transaction created successfully', [
-                    'external_id' => $params['external_id'],
+                    'external_id' => $externalId,
                     'transaction_id' => $json['id'] ?? null,
                     'status' => $json['status'] ?? null,
                 ]);
