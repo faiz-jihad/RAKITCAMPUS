@@ -15,6 +15,10 @@ class SecurityHeadersMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (app()->environment('production') || $request->isSecure() || $request->header('X-Forwarded-Proto') === 'https') {
+            \Illuminate\Support\Facades\URL::forceScheme('https');
+        }
+
         /** @var Response $response */
         $response = $next($request);
 

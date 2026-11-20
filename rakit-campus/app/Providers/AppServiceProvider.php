@@ -34,10 +34,6 @@ class AppServiceProvider extends ServiceProvider
         // Strict Eloquent check: Disallow N+1 and lazy loading in non-production environments
         Model::preventLazyLoading(! $this->app->isProduction());
 
-        if ($this->app->environment('production') || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
-            \Illuminate\Support\Facades\URL::forceScheme('https');
-        }
-
         $this->configureRateLimiting();
     }
 
