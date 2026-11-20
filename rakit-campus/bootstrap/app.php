@@ -23,6 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'api/*',
             'api/v1/*',
+            'payments/kasera/webhook',
+            'api/payments/kasera/webhook',
+            'api/v1/payments/kasera/webhook',
             'api/v1/integrations/github/webhook',
         ]);
         $middleware->redirectTo(

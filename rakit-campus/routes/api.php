@@ -141,3 +141,7 @@ Route::prefix('v1')->group(function () {
         });
     });
 });
+
+// Fallback alias for Kasera Pay Webhook (/api/payments/kasera/webhook)
+Route::post('/payments/kasera/webhook', [KaseraWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');

@@ -318,5 +318,9 @@ Route::get('/error/{status?}', function (?int $status = 404) {
     ])->toResponse(request())->setStatusCode($code);
 })->name('error.show');
 
+// Root fallback alias for Kasera Pay Webhook (/payments/kasera/webhook)
+Route::post('/payments/kasera/webhook', [\App\Http\Controllers\Api\v1\KaseraWebhookController::class, 'handle'])
+    ->middleware('throttle:60,1');
+
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
