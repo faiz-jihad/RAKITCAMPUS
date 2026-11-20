@@ -1720,6 +1720,7 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                 if (timeoutRef.current) clearTimeout(timeoutRef.current);
                 setFeaturesDropdownOpen(false);
                 setIsPinned(false);
+                setMobileMenuOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -1730,6 +1731,21 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
             window.removeEventListener('keydown', handleKeyDown);
         };
     }, []);
+
+    // Prevent background scrolling when mobile slide-over menu is open
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        if (mobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            if (typeof document !== 'undefined') {
+                document.body.style.overflow = '';
+            }
+        };
+    }, [mobileMenuOpen]);
 
     // Smart Scroll-Up Navbar Visibility Trigger:
     // Sembunyikan saat scroll ke bawah, munculkan seketika saat scroll ke atas
@@ -1949,31 +1965,31 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
 
             {/* 1. Header / Navigation */}
             <header
-                className={`fixed top-0 left-0 right-0 z-50 px-3 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${introStage < 2
+                className={`fixed top-0 left-0 right-0 z-50 px-2.5 xs:px-4 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ease-in-out ${introStage < 2
                     ? 'opacity-0 pointer-events-none'
                     : isNavVisible
                         ? 'translate-y-0 opacity-100'
                         : '-translate-y-full opacity-0 pointer-events-none'
                     } ${isScrolledPastTop
-                        ? 'py-2.5 sm:py-3.5 bg-[#121212] border-b border-white/10 shadow-2xl'
-                        : 'pt-4 sm:pt-8 pb-3 bg-transparent border-b border-transparent'
+                        ? 'py-2 sm:py-3 bg-[#121212]/95 backdrop-blur-md border-b border-white/10 shadow-2xl'
+                        : 'pt-3 sm:pt-6 lg:pt-8 pb-2 sm:pb-3 bg-transparent border-b border-transparent'
                     }`}
             >
                 {/* Logo (Serif All-Caps) */}
-                <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-2 shrink-0">
-                    <span className="font-serif text-base xs:text-lg sm:text-2xl md:text-3xl font-normal tracking-[0.18em] sm:tracking-[0.22em] text-white uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] whitespace-nowrap select-none">
+                <Link href="/" className="flex items-center group whitespace-nowrap min-w-0 mr-1.5 sm:mr-3 shrink-0">
+                    <span className="font-serif text-[13px] xs:text-base sm:text-xl md:text-2xl lg:text-2xl xl:text-3xl font-normal tracking-[0.14em] sm:tracking-[0.2em] text-white uppercase drop-shadow-[0_2px_12px_rgba(0,0,0,0.85)] whitespace-nowrap select-none">
                         RAKIT CAMPUS
                     </span>
                 </Link>
 
-                {/* Unified Solid Black Nav Toolbar (100% Match to Reference Layout) */}
-                <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[44px] sm:h-[52px] flex items-stretch pl-2.5 sm:pl-8 pr-1.5 sm:pr-4 relative z-40 transition-colors duration-200 shrink-0`}>
+                {/* Unified Solid Black Nav Toolbar (Fully Responsive across all devices) */}
+                <div className={`${isScrolledPastTop ? 'bg-transparent shadow-none' : 'bg-[#121212] shadow-2xl'} h-[36px] xs:h-[40px] sm:h-[46px] lg:h-[52px] flex items-stretch pl-1.5 xs:pl-2.5 sm:pl-6 lg:pl-8 pr-1 xs:pr-1.5 sm:pr-3 lg:pr-4 relative z-40 transition-colors duration-200 shrink-0 max-w-full`}>
                     {/* Desktop Menu Links */}
-                    <nav className="hidden lg:flex items-stretch gap-7 xl:gap-8 text-[11px] font-bold tracking-[0.22em] text-white uppercase mr-6 xl:mr-8 select-none">
+                    <nav className="hidden lg:flex items-stretch gap-3.5 xl:gap-6 2xl:gap-8 text-[10px] xl:text-[11px] font-bold tracking-[0.12em] xl:tracking-[0.2em] text-white uppercase mr-3.5 xl:mr-8 select-none">
                         <a
                             href="#about"
                             onClick={handleNavAboutClick}
-                            className="hover-blur-text flex items-center cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer whitespace-nowrap"
                         >
                             TENTANG
                         </a>
@@ -2002,11 +2018,11 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                                 }}
                                 aria-expanded={featuresDropdownOpen}
                                 aria-haspopup="true"
-                                className="hover-blur-text flex items-center gap-1.5 cursor-pointer h-full text-white uppercase tracking-[0.22em] text-[11px] font-bold focus:outline-hidden"
+                                className="hover-blur-text flex items-center gap-1 cursor-pointer h-full text-white uppercase tracking-[0.12em] xl:tracking-[0.2em] text-[10px] xl:text-[11px] font-bold focus:outline-hidden whitespace-nowrap"
                             >
                                 <span>FITUR</span>
                                 <ChevronDown
-                                    className={`size-3 text-blue-500 transition-transform duration-300 stroke-[2.5] ${featuresDropdownOpen ? 'rotate-180' : 'rotate-0'
+                                    className={`size-2.5 xl:size-3 text-blue-500 transition-transform duration-300 stroke-[2.5] ${featuresDropdownOpen ? 'rotate-180' : 'rotate-0'
                                         }`}
                                 />
                             </button>
@@ -2046,42 +2062,42 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
 
                         <Link
                             href="/projects"
-                            className="hover-blur-text flex items-center cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer whitespace-nowrap"
                         >
                             PROJECT HUB
                         </Link>
                         <Link
                             href="/competitions"
-                            className="hover-blur-text flex items-center cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer whitespace-nowrap"
                         >
                             KOMPETISI
                         </Link>
                         <a
                             href="#workflow"
-                            className="hover-blur-text flex items-center cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer whitespace-nowrap"
                         >
                             CARA KERJA
                         </a>
                         <Link
                             href="/pricing"
-                            className="hover-blur-text flex items-center cursor-pointer"
+                            className="hover-blur-text flex items-center cursor-pointer whitespace-nowrap"
                         >
                             HARGA
                         </Link>
                     </nav>
 
                     {/* White Rectangular Action Buttons (Adjacent with 4px gap) */}
-                    <div className="flex items-center gap-1.5 self-center">
+                    <div className="flex items-center gap-1 xs:gap-1.5 self-center">
                         {auth?.user ? (
                             <>
                                 {(auth.user as any)?.is_pro && (
-                                    <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] font-black tracking-wider uppercase shadow-xs mr-1">
+                                    <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[8.5px] font-black tracking-wider uppercase shadow-xs mr-0.5">
                                         PRO
                                     </span>
                                 )}
                                 <Link
                                     href="/dashboard"
-                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3.5 sm:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                    className="hover-blur-text bg-white text-black text-[9px] xs:text-[10px] sm:text-xs font-bold px-2.5 xs:px-3.5 sm:px-5 lg:px-6 h-[28px] xs:h-[32px] sm:h-[36px] flex items-center justify-center tracking-[0.1em] sm:tracking-[0.18em] uppercase hover:bg-neutral-200 transition-colors shadow-xs whitespace-nowrap"
                                 >
                                     DASHBOARD
                                 </Link>
@@ -2089,7 +2105,7 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                                     method="post"
                                     href="/logout"
                                     as="button"
-                                    className="hover-blur-text border border-white/40 text-white/90 hover:text-white hover:border-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase transition-colors"
+                                    className="hidden sm:flex hover-blur-text border border-white/40 text-white/90 hover:text-white hover:border-white text-[10px] sm:text-xs font-bold px-3 sm:px-4 h-[32px] sm:h-[36px] items-center justify-center tracking-[0.14em] uppercase transition-colors whitespace-nowrap"
                                 >
                                     KELUAR
                                 </Link>
@@ -2098,13 +2114,13 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                             <>
                                 <Link
                                     href="/login"
-                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                    className="hidden xs:flex hover-blur-text border border-white/25 sm:border-transparent sm:bg-white text-white sm:text-black text-[9px] xs:text-[10px] sm:text-xs font-bold px-2 xs:px-3 sm:px-4 md:px-5 h-[28px] xs:h-[32px] sm:h-[36px] items-center justify-center tracking-[0.1em] sm:tracking-[0.18em] uppercase hover:border-white sm:hover:bg-neutral-200 transition-colors shadow-xs whitespace-nowrap"
                                 >
                                     MASUK
                                 </Link>
                                 <Link
                                     href="/register"
-                                    className="hover-blur-text bg-white text-black text-[10px] sm:text-xs font-bold px-3 sm:px-5 md:px-6 h-[32px] sm:h-[38px] flex items-center justify-center tracking-[0.15em] sm:tracking-[0.2em] uppercase hover:bg-neutral-200 transition-colors shadow-xs"
+                                    className="hover-blur-text bg-white text-black text-[9px] xs:text-[10px] sm:text-xs font-bold px-2.5 xs:px-3.5 sm:px-4 md:px-5 h-[28px] xs:h-[32px] sm:h-[36px] flex items-center justify-center tracking-[0.1em] sm:tracking-[0.18em] uppercase hover:bg-neutral-200 transition-colors shadow-xs whitespace-nowrap"
                                 >
                                     MULAI
                                 </Link>
@@ -2113,18 +2129,22 @@ export default function Welcome({ pricingPlans }: { pricingPlans?: any[] }) {
                     </div>
 
                     {/* Language Switcher Pill */}
-                    <div className="flex items-center self-center ml-1 sm:ml-2">
-                        <LanguageSwitcher variant="pill" showLabel={true} className="!bg-white/10 !text-white !border-white/20 hover:!bg-white/20 !h-[32px] sm:!h-[38px]" />
+                    <div className="flex items-center self-center ml-0.5 xs:ml-1 sm:ml-2">
+                        <LanguageSwitcher
+                            variant="pill"
+                            showLabel={true}
+                            className="!bg-white/10 !text-white !border-white/20 hover:!bg-white/20 !h-[28px] xs:!h-[32px] sm:!h-[36px] !px-1.5 xs:!px-2 sm:!px-3 !text-[10px] sm:!text-xs"
+                        />
                     </div>
 
                     {/* Borderless Hamburger Menu Button inside the unified bar */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         aria-label="Toggle Navigation"
-                        className="h-[32px] sm:h-[38px] px-2.5 sm:px-3.5 ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
+                        className="h-[28px] xs:h-[32px] sm:h-[36px] px-1.5 xs:px-2.5 sm:px-3.5 ml-0.5 xs:ml-1 sm:ml-2 flex flex-col items-center justify-center gap-1 sm:gap-1.5 hover:opacity-75 transition-opacity cursor-pointer self-center"
                     >
-                        <span className="w-5 h-[1.5px] bg-white"></span>
-                        <span className="w-5 h-[1.5px] bg-white"></span>
+                        <span className="w-4 sm:w-5 h-[1.5px] bg-white"></span>
+                        <span className="w-4 sm:w-5 h-[1.5px] bg-white"></span>
                     </button>
                 </div>
             </header>
