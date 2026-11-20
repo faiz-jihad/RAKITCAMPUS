@@ -559,239 +559,116 @@ export default function PricingPage({
 
             {/* KASERA PAY CHECKOUT MODAL (Apple iOS Sheet Style) */}
             {isCheckoutOpen && createdOrder && selectedPlan && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
-                    <div className="bg-white rounded-t-[36px] sm:rounded-[36px] max-w-md w-full p-6 sm:p-8 shadow-[0_25px_70px_rgba(0,0,0,0.18)] border border-slate-200/80 relative space-y-5 animate-in slide-in-from-bottom-6 sm:zoom-in-95 duration-300">
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-white rounded-t-3xl sm:rounded-3xl max-w-sm w-full p-6 sm:p-7 shadow-xl border border-zinc-200/80 relative space-y-4 animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200">
                         {/* iOS Sheet Grabber on Mobile */}
-                        <div className="w-10 h-1 bg-slate-300 rounded-full mx-auto -mt-2 mb-2 sm:hidden" />
+                        <div className="w-10 h-1 bg-zinc-300 rounded-full mx-auto -mt-1 mb-2 sm:hidden" />
 
                         {/* Close button */}
                         <button
                             type="button"
                             onClick={() => setIsCheckoutOpen(false)}
-                            className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer"
+                            className="absolute top-4 right-4 size-7 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition cursor-pointer"
                         >
-                            <X className="size-4" />
+                            <X className="size-3.5" />
                         </button>
 
-                        <div className="text-center space-y-1.5 pt-1">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-[10px] font-bold uppercase tracking-wider">
-                                <span className="size-1.5 rounded-full bg-[#0071E3] animate-pulse" />
-                                <span>Kasera Pay Official</span>
-                            </div>
-                            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">
-                                Selesaikan Pembayaran
+                        <div className="text-center space-y-1">
+                            <h3 className="text-lg font-semibold text-zinc-900 tracking-tight">
+                                Pembayaran {selectedPlan.name}
                             </h3>
-                            <div className="flex items-center justify-center gap-1.5 text-xs text-slate-500">
-                                <span>Order:</span>
-                                <span className="font-mono font-bold text-slate-700">{createdOrder.order_number}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(createdOrder.order_number);
-                                        setModalCopied(true);
-                                        setTimeout(() => setModalCopied(false), 2000);
-                                    }}
-                                    className="text-slate-400 hover:text-slate-700 p-0.5 cursor-pointer"
-                                    title="Salin ID"
-                                >
-                                    {modalCopied ? <Check className="size-3 text-emerald-600" /> : <Copy className="size-3" />}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Order Summary Card */}
-                        <div className="bg-[#F9F9FB] rounded-[22px] p-4 border border-slate-200/70 space-y-2 text-xs">
-                            <div className="flex justify-between items-center text-slate-600">
-                                <span>Paket Pilihan:</span>
-                                <span className="font-bold text-slate-900">{selectedPlan.name}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-slate-600">
-                                <span>Periode:</span>
-                                <span className="font-medium text-slate-800">{selectedPlan.period}</span>
-                            </div>
-                            <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm">
-                                <span className="font-bold text-slate-900">Total Tagihan:</span>
-                                <span className="font-black text-[#0071E3] text-base">{formatRupiah(createdOrder.amount)}</span>
+                            <div className="text-2xl font-bold text-zinc-900">
+                                {formatRupiah(createdOrder.amount)}
                             </div>
                         </div>
 
                         {/* QRIS Display */}
-                        <div className="bg-white rounded-[26px] p-4 border border-slate-200/90 shadow-2xs text-center space-y-3">
+                        <div className="space-y-2 text-center">
                             {createdOrder.qr_string ? (
-                                <div className="size-48 mx-auto bg-white rounded-2xl p-2 border border-slate-200/80 shadow-xs flex items-center justify-center">
+                                <div className="size-48 mx-auto bg-white rounded-2xl p-2.5 border border-zinc-200/80 shadow-2xs flex items-center justify-center">
                                     <img
-                                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(createdOrder.qr_string)}&size=220x220&margin=8`}
-                                        alt="QRIS Kasera Pay"
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(createdOrder.qr_string)}&size=200x200&margin=4`}
+                                        alt="QRIS"
                                         className="size-full object-contain rounded-lg"
                                     />
                                 </div>
                             ) : (
-                                <div className="size-40 mx-auto bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col items-center justify-center p-3 text-center">
-                                    <ShieldCheck className="size-10 text-[#0071E3] mb-1.5" />
-                                    <span className="text-xs font-bold text-slate-800">QRIS Kasera Pay</span>
-                                    <span className="text-[10px] text-slate-500">Siap Ditautkan</span>
+                                <div className="size-44 mx-auto bg-zinc-50 rounded-2xl border border-zinc-200/80 flex items-center justify-center text-xs text-zinc-400">
+                                    Menyiapkan QRIS...
                                 </div>
                             )}
 
-                            <div className="space-y-0.5">
-                                <p className="text-[11px] font-semibold text-slate-700">
-                                    Scan QRIS dengan GoPay, DANA, OVO, ShopeePay, atau BCA
-                                </p>
-                                <p className="text-[10px] text-slate-400">
-                                    Atau klik tombol checkout resmi Kasera Pay di bawah
-                                </p>
-                            </div>
+                            <p className="text-[11px] text-zinc-400">
+                                Pindai dengan aplikasi pembayaran apa saja
+                            </p>
                         </div>
 
                         {/* Actions */}
-                        <div className="space-y-2.5 pt-1">
+                        <div className="space-y-2 pt-1">
                             {createdOrder.checkout_url && (
                                 <a
                                     href={createdOrder.checkout_url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="w-full py-3.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-bold shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                                    className="w-full py-2.5 rounded-full bg-[#0071E3] hover:bg-[#0077ED] text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
                                 >
-                                    <span>Buka Checkout Resmi Kasera Pay</span>
+                                    <span>Buka Kasera Pay</span>
                                     <ExternalLink className="size-3.5" />
                                 </a>
                             )}
 
                             <Link
                                 href={`/billing/status/${createdOrder.order_number}`}
-                                className="w-full py-3 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold active:scale-[0.98] transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                className="w-full py-2.5 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-800 text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer text-center"
                             >
-                                <span>Lihat Halaman Status &amp; Verifikasi</span>
+                                <span>Lihat Status Transaksi</span>
                                 <ArrowRight className="size-3.5" />
                             </Link>
-
-                            <button
-                                type="button"
-                                onClick={() => setIsCheckoutOpen(false)}
-                                className="w-full py-2 text-slate-400 hover:text-slate-600 text-xs font-medium text-center transition"
-                            >
-                                Tutup &amp; Selesaikan Nanti
-                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* CELEBRATION SUCCESS POP-UP CARD (Apple iOS Style Animation) */}
+            {/* CELEBRATION SUCCESS POP-UP */}
             {isCelebrationOpen && (
-                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-300">
-                    <div className="relative max-w-md w-full">
-                        {/* Confetti Particles (Floating Animation Effect) */}
-                        <div className="absolute -top-12 -left-8 size-4 rounded-full bg-blue-500/80 blur-[0.5px] animate-bounce duration-700 pointer-events-none" />
-                        <div className="absolute -top-8 -right-6 size-3.5 rounded-full bg-amber-400/90 blur-[0.5px] animate-pulse duration-500 pointer-events-none" />
-                        <div className="absolute top-1/2 -left-10 size-3 rounded-full bg-emerald-400/80 animate-ping duration-1000 pointer-events-none" />
-                        <div className="absolute top-1/3 -right-12 size-4 rounded-full bg-purple-500/80 blur-[0.5px] animate-bounce duration-1000 pointer-events-none" />
-                        <div className="absolute -bottom-6 -left-6 size-3.5 rounded-full bg-rose-400/80 animate-pulse duration-700 pointer-events-none" />
-                        <div className="absolute -bottom-8 -right-8 size-4 rounded-full bg-indigo-500/80 animate-bounce duration-500 pointer-events-none" />
+                <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
+                    <div className="bg-white rounded-3xl max-w-sm w-full p-6 sm:p-8 shadow-xl border border-zinc-200/80 relative text-center space-y-5 animate-in zoom-in-95 duration-200">
+                        <button
+                            type="button"
+                            onClick={() => setIsCelebrationOpen(false)}
+                            className="absolute top-4 right-4 size-7 rounded-full bg-zinc-100 hover:bg-zinc-200 text-zinc-500 flex items-center justify-center transition cursor-pointer"
+                        >
+                            <X className="size-3.5" />
+                        </button>
 
-                        {/* Pop-up Card */}
-                        <div className="bg-white rounded-[36px] p-7 sm:p-8 shadow-[0_24px_70px_rgba(0,0,0,0.3)] border border-slate-200/90 relative text-center space-y-6 overflow-hidden animate-in zoom-in-95 duration-300">
-                            {/* Close Button */}
+                        <div className="size-14 rounded-full bg-zinc-900 text-white flex items-center justify-center mx-auto">
+                            <Check className="size-7 stroke-[2.5]" />
+                        </div>
+
+                        <div className="space-y-1">
+                            <h3 className="text-xl font-semibold text-zinc-900 tracking-tight">
+                                {activatedPlanInfo?.plan_name || 'Paket'} Aktif
+                            </h3>
+                            <p className="text-xs text-zinc-500">
+                                +{activatedPlanInfo?.bonus_credits || 100} kredit AI telah ditambahkan ke akun Anda.
+                            </p>
+                        </div>
+
+                        <div className="space-y-2 pt-1">
+                            <Link
+                                href="/ai-workspace"
+                                className="w-full py-2.5 rounded-full bg-zinc-900 hover:bg-black text-white text-xs font-medium transition-colors flex items-center justify-center gap-1.5"
+                            >
+                                <span>Buka AI Workspace</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
                             <button
                                 type="button"
                                 onClick={() => setIsCelebrationOpen(false)}
-                                className="absolute top-5 right-5 size-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition cursor-pointer z-10"
+                                className="w-full py-2 text-zinc-500 hover:text-zinc-800 text-xs font-medium text-center transition"
                             >
-                                <X className="size-4" />
+                                Selesai
                             </button>
-
-                            {/* Ambient Top Glow */}
-                            <div className="absolute -top-24 left-1/2 -translate-x-1/2 size-48 bg-gradient-to-b from-blue-400/20 to-transparent rounded-full blur-2xl pointer-events-none" />
-
-                            {/* Squircle Celebration Icon */}
-                            <div className="relative pt-2">
-                                <div className="size-20 sm:size-22 rounded-[28px] bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-600 text-white flex items-center justify-center shadow-xl shadow-blue-500/30 ring-8 ring-blue-500/10 mx-auto transition-transform hover:scale-105 duration-300">
-                                    <Sparkles className="size-10 sm:size-11 text-amber-300 animate-pulse" />
-                                </div>
-                                <div className="absolute bottom-0 right-1/2 translate-x-10 size-7 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center text-white shadow-md">
-                                    <Check className="size-4 stroke-[3]" />
-                                </div>
-                            </div>
-
-                            {/* Header Information */}
-                            <div className="space-y-2">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200/80 text-emerald-800 text-[10px] font-black tracking-wider uppercase shadow-2xs">
-                                    <CheckCircle2 className="size-3 text-emerald-600" />
-                                    <span>PEMBAYARAN TERKONFIRMASI</span>
-                                </span>
-
-                                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-snug">
-                                    Selamat! {activatedPlanInfo?.plan_name || 'RAKIT Pro'} Aktif
-                                </h3>
-
-                                <p className="text-xs text-slate-500 leading-relaxed max-w-xs mx-auto">
-                                    Hak akses prioritas dan booster AI telah aktif seketika pada akun Anda.
-                                </p>
-                            </div>
-
-                            {/* Unlocked Benefits Bento */}
-                            <div className="bg-slate-50/80 rounded-2xl p-4 border border-slate-200/80 text-left space-y-2.5">
-                                <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                                    Manfaat yang Terbuka:
-                                </div>
-                                <div className="grid grid-cols-1 gap-2 text-xs">
-                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-                                        <div className="size-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                                            <Zap className="size-4" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <span className="font-bold text-slate-900">+{activatedPlanInfo?.bonus_credits || 100} Sesi AI Ekstra</span>
-                                            <p className="text-[10px] text-slate-400">Langsung aktif di AI Workspace</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-                                        <div className="size-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-                                            <Crown className="size-4" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <span className="font-bold text-slate-900">Badge PRO Resmi</span>
-                                            <p className="text-[10px] text-slate-400">Terpasang di profil &amp; portofolio Anda</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex items-center gap-2.5 text-slate-700 bg-white p-2.5 rounded-xl border border-slate-100 shadow-2xs">
-                                        <div className="size-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                                            <ShieldCheck className="size-4" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <span className="font-bold text-slate-900">Fitur Living Proposal &amp; ATS</span>
-                                            <p className="text-[10px] text-slate-400">Analisis proposal &amp; ekspor PDF terbuka</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Order Ref */}
-                            {activatedPlanInfo?.order_number && (
-                                <p className="text-[10px] text-slate-400 font-mono">
-                                    ID Transaksi: {activatedPlanInfo.order_number}
-                                </p>
-                            )}
-
-                            {/* Call to Actions */}
-                            <div className="space-y-2 pt-1">
-                                <Link
-                                    href="/ai-workspace"
-                                    className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 active:scale-98"
-                                >
-                                    <span>Buka AI Workspace Sekarang</span>
-                                    <ArrowRight className="size-3.5" />
-                                </Link>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setIsCelebrationOpen(false)}
-                                    className="w-full py-2.5 rounded-full text-slate-500 hover:text-slate-800 text-xs font-semibold text-center transition"
-                                >
-                                    Selesai &amp; Tetap di Halaman Ini
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>

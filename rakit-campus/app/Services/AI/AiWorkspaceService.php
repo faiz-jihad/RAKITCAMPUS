@@ -34,6 +34,17 @@ class AiWorkspaceService
             return null;
         }
 
+        // Refresh live context from team workspace
+        if ($session->team) {
+            try {
+                $liveContext = $this->buildContextData($session->team, $session->project_id, $session->competition_id);
+                $session->context_data = array_merge($session->context_data ?? [], $liveContext);
+                $session->save();
+            } catch (\Throwable $e) {
+                Log::warning('Failed refreshing AI session live context: ' . $e->getMessage());
+            }
+        }
+
         // Build conversation history
         $history = $session->messages()->get();
         $contents = [];
@@ -97,9 +108,9 @@ class AiWorkspaceService
         $base = "Anda adalah RAKIT AI — asisten cerdas untuk platform RAKIT Campus yang membantu tim mahasiswa Indonesia dalam proyek akademik dan kompetisi.\n";
         $base .= "Tim aktif: {$teamName}.\n";
         $base .= "Selalu jawab dalam Bahasa Indonesia kecuali user menggunakan bahasa lain.\n";
-        $base .= "Berikan jawaban yang spesifik, actionable, dan berbasis data nyata — hindari generalisasi kosong.\n\n";
+        $base .= "Berikan jawaban yang spesifik, actionable, dan berbasis data nyata yang ada di ruang kerja tim — hindari generalisasi kosong.\n\n";
 
-        $agenticInstructions = "\n\nKEMAMPUAN AGENTIC EXECUTION:
+        $agenticInstructions = "KEMAMPUAN AGENTIC EXECUTION:
 Ketika Anda menyarankan pembagian tugas, rencana aksi sprint, checklist lomba, atau draf bagian proposal, sertakan SATU blok JSON tindakan terstruktur di akhir respon Anda agar pengguna dapat langsung menerapkannya ke Workspace hanya dengan 1 klik:
 ```json:action
 {
@@ -129,32 +140,102 @@ Pastikan blok JSON valid dan diletakkan di akhir respon.";
 
         $base .= $agenticInstructions . "\n\n";
 
+        // Build Structured Live State Report
+        $ctx = $session->context_data ?? [];
+        $liveReport = "==================================================\n";
+        $liveReport .= "DATA NYATA WORKSPACE TIM (LIVE STATE):\n";
+        $liveReport .= "==================================================\n";
+        $liveReport .= "Nama Tim: " . ($ctx['team_name'] ?? $teamName) . "\n";
+
+        if (!empty($ctx['team_members'])) {
+            $liveReport .= "Anggota Tim:\n";
+            foreach ($ctx['team_members'] as $m) {
+                $liveReport .= "• " . ($m['name'] ?? 'Mahasiswa') . " (" . ($m['role'] ?? 'Member') . ")\n";
+            }
+        }
+
+        if (!empty($ctx['competition'])) {
+            $c = $ctx['competition'];
+            $liveReport .= "\n--- KOMPETISI AKTIF ---\n";
+            $liveReport .= "Nama: {$c['name']}\n";
+            if (!empty($c['organizer'])) $liveReport .= "Penyelenggara: {$c['organizer']}\n";
+            if (!empty($c['category'])) $liveReport .= "Kategori: {$c['category']}\n";
+            if (!empty($c['level'])) $liveReport .= "Tingkat: {$c['level']}\n";
+            if (!empty($c['deadline'])) $liveReport .= "Batas Pendaftaran: {$c['deadline']}\n";
+            if (!empty($c['current_stage'])) $liveReport .= "Tahap Saat Ini: {$c['current_stage']}\n";
+            if (isset($c['progress_percent'])) $liveReport .= "Kesiapan Berkas & Tugas: {$c['progress_percent']}%\n";
+            if (!empty($c['required_documents'])) {
+                $docs = is_array($c['required_documents']) ? implode(', ', $c['required_documents']) : $c['required_documents'];
+                $liveReport .= "Dokumen/Berkas yang Wajib Disiapkan: {$docs}\n";
+            }
+            if (!empty($c['eligibility'])) $liveReport .= "Persyaratan Peserta: " . substr($c['eligibility'], 0, 300) . "\n";
+            if (!empty($c['description'])) $liveReport .= "Deskripsi / Petunjuk Lomba: " . substr($c['description'], 0, 400) . "\n";
+        }
+
+        if (!empty($ctx['sprints']) || !empty($ctx['tasks'])) {
+            $liveReport .= "\n--- SPRINT & PAPAN KANBAN (PROGRES TUGAS AKTIF) ---\n";
+            if (!empty($ctx['sprints'])) {
+                $liveReport .= "Milestone / Sprint Terdaftar:\n";
+                foreach ($ctx['sprints'] as $s) {
+                    $due = !empty($s['due_date']) ? " (Target: {$s['due_date']})" : "";
+                    $liveReport .= "• [{$s['status']}] {$s['title']}{$due}\n";
+                }
+            }
+            if (!empty($ctx['tasks'])) {
+                $t = $ctx['tasks'];
+                $liveReport .= "Ringkasan Beban Kanban: {$t['total']} Total | {$t['in_progress_count']} In Progress | {$t['review_count']} Review | {$t['todo_count']} Todo | {$t['completed_count']} Selesai\n";
+                if (!empty($t['list'])) {
+                    $liveReport .= "Daftar Tugas Terkini:\n";
+                    foreach ($t['list'] as $task) {
+                        $due = !empty($task['due_on']) ? ", Deadline: {$task['due_on']}" : "";
+                        $liveReport .= "• [{$task['status']}] {$task['title']} (PJ: {$task['assignee']}, Prioritas: {$task['priority']}{$due})\n";
+                    }
+                }
+            }
+        }
+
+        if (!empty($ctx['cloud_documents'])) {
+            $liveReport .= "\n--- DOKUMEN & LAPORAN DI CLOUD TIM ---\n";
+            foreach ($ctx['cloud_documents'] as $doc) {
+                $liveReport .= "• Berkas: {$doc['name']} (Tipe: {$doc['type']}, Versi: {$doc['version']}, Diunggah oleh: {$doc['uploader']} pada {$doc['submitted_at']})\n";
+            }
+        }
+
+        if (!empty($ctx['living_proposal'])) {
+            $p = $ctx['living_proposal'];
+            $liveReport .= "\n--- DOKUMEN LIVING PROPOSAL (DRAFT LAPORAN TIM AKTIF) ---\n";
+            if (!empty($p['title'])) $liveReport .= "Judul: {$p['title']} (Status: {$p['status']}, Versi {$p['version']})\n";
+            if (!empty($p['abstract'])) $liveReport .= "Abstrak / Executive Summary:\n{$p['abstract']}\n\n";
+            if (!empty($p['problem_statement'])) $liveReport .= "Rumusan Masalah (Problem Statement):\n{$p['problem_statement']}\n\n";
+            if (!empty($p['objectives'])) $liveReport .= "Tujuan Proyek (Objectives):\n{$p['objectives']}\n\n";
+            if (!empty($p['proposed_solution'])) $liveReport .= "Solusi yang Ditawarkan:\n{$p['proposed_solution']}\n\n";
+            if (!empty($p['target_users'])) $liveReport .= "Target Pengguna:\n{$p['target_users']}\n\n";
+            if (!empty($p['needs_analysis'])) $liveReport .= "Analisis Kebutuhan:\n{$p['needs_analysis']}\n\n";
+            if (!empty($p['system_architecture'])) $liveReport .= "Arsitektur Sistem:\n{$p['system_architecture']}\n\n";
+            if (!empty($p['methodology'])) $liveReport .= "Metodologi Kerja:\n{$p['methodology']}\n\n";
+            if (!empty($p['timeline_plan'])) $liveReport .= "Rencana Timeline:\n{$p['timeline_plan']}\n\n";
+            if (!empty($p['tech_stack'])) $liveReport .= "Tech Stack: {$p['tech_stack']}\n";
+        }
+        $liveReport .= "==================================================\n\n";
+
         return match ($session->assistant_type) {
-            'project' => $base . "Spesialisasi: AI Project Assistant.\n" .
-                "Bantu tim dalam: brainstorming ide proyek, identifikasi masalah, background research, problem statement, tujuan proyek, solusi teknis, metodologi, roadmap pengembangan, analisis kelayakan, dan saran perbaikan dokumentasi proposal.\n" .
-                "Jika ada konteks proyek aktif, gunakan informasi tersebut. Jangan memodifikasi data proyek langsung — hanya berikan rekomendasi.\n" .
-                "Konteks proyek saat ini: " . json_encode($session->context_data ?? []),
+            'project' => $base . $liveReport . "Spesialisasi: AI Project Assistant.\n" .
+                "Gunakan data di atas untuk menganalisis dan membimbing pengembangan proyek tim secara nyata. " .
+                "Bantu tim menyempurnakan solusi, arsitektur, dan problem statement.",
 
-            'competition' => $base . "Spesialisasi: Competition Assistant.\n" .
-                "Bantu tim dalam: menemukan kompetisi relevan, menganalisis persyaratan lomba, menjelaskan kriteria kelayakan, checklist pendaftaran, strategi persiapan, dan menghubungkan kebutuhan lomba dengan proyek RAKIT yang ada.\n" .
-                "PENTING: Jangan pernah mengarang deadline, link pendaftaran, persyaratan eligibilitas, atau hasil lomba. Jika tidak yakin, sampaikan secara jelas keterbatasannya.\n" .
-                "Data kompetisi tersedia di RAKIT Competition Hub. Gunakan data nyata dari platform.\n" .
-                "Konteks kompetisi: " . json_encode($session->context_data ?? []),
+            'competition' => $base . $liveReport . "Spesialisasi: Competition Assistant.\n" .
+                "Tugasmu: Evaluasi kesiapan tim menghadapi kompetisi aktif di atas. " .
+                "Periksa apakah berkas di cloud dan tugas kanban sudah memenuhi kriteria dan deadline lomba. Berikan strategi pemenangan yang konkret.",
 
-            'team' => $base . "Spesialisasi: Team Assistant.\n" .
-                "Bantu tim dalam: rekomendasi distribusi peran, alokasi tugas, identifikasi bottleneck, ringkasan kemajuan, saran milestone, pekerjaan yang terlambat, dan peningkatan kolaborasi.\n" .
-                "PENTING: Kamu boleh merekomendasikan perubahan tugas/peran, tetapi JANGAN PERNAH memodifikasi data tugas, anggota, deadline, atau data sensitif lainnya tanpa konfirmasi eksplisit pengguna.\n" .
-                "Data tim aktif: " . json_encode($session->context_data ?? []),
+            'team' => $base . $liveReport . "Spesialisasi: Sprint & Team Assistant.\n" .
+                "Tugasmu: Analisis progres sprint dan papan kanban tim di atas. " .
+                "Identifikasi tugas mana yang tertunda, anggota mana yang butuh dukungan, dan rekomendasikan tugas konkret selanjutnya.",
 
-            'document' => $base . "Spesialisasi: Document Reviewer.\n" .
-                "Tugasmu adalah meninjau dokumen: proposal, abstrak, laporan proyek, submission kompetisi, file PDF/DOCX.\n" .
-                "Berikan:\n" .
-                "1. Ringkasan Review\n2. Kekuatan Dokumen\n3. Kelemahan / Gap\n4. Bagian yang Hilang\n5. Rekomendasi Revisi Spesifik\n6. Evaluasi Berbasis Rubrik (jika rubrik tersedia)\n\n" .
-                "Jangan memberikan skor arbitrer atau mengklaim dokumen memenuhi standar kompetisi tanpa bukti nyata.\n" .
-                "Evaluasi berdasarkan kriteria aktual yang ada, bukan asumsi.\n" .
-                "Konteks dokumen: " . json_encode($session->context_data ?? []),
+            'document' => $base . $liveReport . "Spesialisasi: Document Reviewer.\n" .
+                "Tugasmu: Tinjau berkas yang ada di 'DOKUMEN & LAPORAN DI CLOUD TIM' dan 'DOKUMEN LIVING PROPOSAL'. " .
+                "Beri masukan kritis terhadap abstrak, rumusan masalah, dan kelengkapan dokumen sesuai standar kompetisi/akademik.",
 
-            default => $base . "Bantu tim dengan pertanyaan seputar proyek, kompetisi, dan pengembangan akademik.",
+            default => $base . $liveReport . "Bantu tim dengan pertanyaan seputar proyek, kompetisi, dan pengembangan akademik berbasis data nyata di atas.",
         };
     }
 
@@ -275,7 +356,7 @@ Pastikan blok JSON valid dan diletakkan di akhir respon.";
     }
 
     /**
-     * Build context data for a session from team/project/competition.
+     * Build rich context data for a session from team/project/competition/tasks/cloud documents.
      */
     public function buildContextData(Team $team, ?int $projectId = null, ?int $competitionId = null): array
     {
@@ -283,38 +364,114 @@ Pastikan blok JSON valid dan diletakkan di akhir respon.";
             'team_id' => $team->id,
             'team_name' => $team->name,
             'team_members' => $team->members()->with('user:id,name')->get()
-                ->map(fn($m) => ['name' => $m->user?->name, 'role' => $m->role_name ?? 'member'])
+                ->map(fn($m) => [
+                    'name' => $m->user?->name ?? 'Mahasiswa',
+                    'role' => $m->role_name ?? (is_object($m->permission) ? $m->permission->value : (string) $m->permission),
+                ])
                 ->toArray(),
         ];
 
-        if ($projectId) {
-            $project = $team->project ?? null;
-            if ($project) {
-                $context['project'] = [
-                    'id' => $project->id,
-                    'title' => $project->title,
-                    'status' => $project->status?->value ?? $project->status,
-                    'category' => $project->category?->value ?? $project->category,
-                    'short_description' => $project->short_description,
+        // 1. Sprints & Milestones
+        $context['sprints'] = $team->milestones()->get()->map(function ($m) {
+            return [
+                'id' => $m->id,
+                'title' => $m->title,
+                'status' => is_object($m->status) ? $m->status->value : (string) $m->status,
+                'due_date' => $m->due_date?->format('d M Y'),
+                'description' => $m->description,
+            ];
+        })->toArray();
+
+        // 2. Real Kanban Tasks
+        $tasks = $team->tasks()->with(['assignee:id,name', 'milestone:id,title'])->latest()->limit(50)->get();
+        $context['tasks'] = [
+            'total' => $tasks->count(),
+            'todo_count' => $tasks->filter(fn($t) => in_array(is_object($t->status) ? $t->status->value : (string) $t->status, ['todo', 'backlog']))->count(),
+            'in_progress_count' => $tasks->filter(fn($t) => (is_object($t->status) ? $t->status->value : (string) $t->status) === 'in_progress')->count(),
+            'review_count' => $tasks->filter(fn($t) => (is_object($t->status) ? $t->status->value : (string) $t->status) === 'review')->count(),
+            'completed_count' => $tasks->filter(fn($t) => (is_object($t->status) ? $t->status->value : (string) $t->status) === 'completed')->count(),
+            'list' => $tasks->take(30)->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'title' => $t->title,
+                    'status' => is_object($t->status) ? $t->status->value : (string) $t->status,
+                    'priority' => is_object($t->priority) ? $t->priority->value : (string) $t->priority,
+                    'assignee' => $t->assignee?->name ?? 'Belum Ditugaskan',
+                    'milestone' => $t->milestone?->title ?? 'Umum',
+                    'due_on' => $t->due_on?->format('d M Y'),
                 ];
-            }
+            })->toArray(),
+        ];
+
+        // 3. Competition Participation & Cloud Documents
+        $participationQuery = $team->participations()->with('competition');
+        if ($competitionId) {
+            $participationQuery->where('competition_id', $competitionId);
+        }
+        $participation = $participationQuery->latest()->first();
+
+        if ($participation && $participation->competition) {
+            $comp = $participation->competition;
+            $context['competition'] = [
+                'id' => $comp->id,
+                'name' => $comp->name,
+                'organizer' => $comp->organizer,
+                'category' => is_object($comp->category) ? $comp->category->value : (string) $comp->category,
+                'level' => is_object($comp->level) ? $comp->level->value : (string) $comp->level,
+                'description' => $comp->description,
+                'deadline' => $comp->registration_deadline?->format('d M Y H:i'),
+                'eligibility' => $comp->eligibility,
+                'required_documents' => $comp->required_documents ?? [],
+                'prize_info' => $comp->prize_info,
+                'current_stage' => is_object($participation->stage) ? $participation->stage->value : (string) $participation->stage,
+                'progress_percent' => $participation->calculatePreparationProgress(),
+            ];
+
+            // Real team documents uploaded to cloud
+            $context['cloud_documents'] = $participation->documents()->with('uploader:id,name')->get()->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'name' => $d->name ?? $d->title ?? 'Berkas Lomba',
+                    'type' => $d->required_document_key ?? 'general',
+                    'file_url' => $d->file_url,
+                    'version' => $d->version ?? 1,
+                    'uploader' => $d->uploader?->name ?? 'Anggota Tim',
+                    'submitted_at' => $d->submitted_at?->format('d M Y H:i') ?? $d->created_at?->format('d M Y H:i'),
+                ];
+            })->toArray();
         }
 
-        if ($competitionId) {
-            $participation = $team->participations()
-                ->with('competition:id,name,category,level,registration_deadline,required_documents')
-                ->where('competition_id', $competitionId)
+        // 4. Project & Living Proposal Drafts
+        $project = $projectId ? ($team->project ?? null) : $team->project;
+        if ($project) {
+            $context['project'] = [
+                'id' => $project->id,
+                'title' => $project->title,
+                'status' => is_object($project->status) ? $project->status->value : (string) $project->status,
+                'category' => is_object($project->category) ? $project->category->value : (string) $project->category,
+                'short_description' => $project->short_description,
+            ];
+
+            $proposal = \App\Models\ProjectProposal::where('project_id', $project->id)
+                ->with('currentVersion')
                 ->first();
-            if ($participation) {
-                $comp = $participation->competition;
-                $context['competition'] = [
-                    'id' => $comp->id,
-                    'name' => $comp->name,
-                    'category' => $comp->category?->value ?? $comp->category,
-                    'level' => $comp->level?->value ?? $comp->level ?? null,
-                    'deadline' => $comp->registration_deadline?->format('d M Y'),
-                    'required_docs' => $comp->required_documents,
-                    'stage' => $participation->stage?->value ?? $participation->stage,
+
+            if ($proposal && $proposal->currentVersion) {
+                $ver = $proposal->currentVersion;
+                $context['living_proposal'] = [
+                    'version' => $ver->version_number,
+                    'status' => $proposal->status,
+                    'title' => $ver->title,
+                    'abstract' => $ver->abstract,
+                    'problem_statement' => $ver->problem_statement,
+                    'objectives' => $ver->objectives,
+                    'proposed_solution' => $ver->proposed_solution,
+                    'target_users' => $ver->target_users,
+                    'needs_analysis' => $ver->needs_analysis,
+                    'system_architecture' => $ver->system_architecture,
+                    'methodology' => $ver->methodology,
+                    'timeline_plan' => $ver->timeline_plan,
+                    'tech_stack' => is_array($ver->tech_stack) ? implode(', ', $ver->tech_stack) : $ver->tech_stack,
                 ];
             }
         }

@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/hooks/use-locale';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { KeyRound, LogOut, Palette, User } from 'lucide-react';
+import { CreditCard, KeyRound, LogOut, Palette, User } from 'lucide-react';
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
     const { t, locale } = useLocale();
@@ -15,6 +15,12 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             url: '/settings/profile',
             icon: User,
             desc: locale === 'en' ? 'Bio, skills & availability' : 'Biodata, skill, & ketersediaan',
+        },
+        {
+            title: 'Paket & Langganan',
+            url: '/pricing',
+            icon: CreditCard,
+            desc: 'Status paket, kuota & upgrade',
         },
         {
             title: t('nav.security', 'Keamanan Sandi'),

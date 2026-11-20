@@ -35,6 +35,13 @@ interface Props {
     mustVerifyEmail: boolean;
     status?: string;
     isMandatory?: boolean;
+    currentPlan?: {
+        type: string;
+        label: string;
+        is_paid: boolean;
+        expires_at?: string | null;
+        bonus_credits?: number;
+    };
     profile: {
         id: number;
         slug?: string | null;
@@ -85,6 +92,7 @@ export default function Profile({
     mustVerifyEmail,
     status,
     isMandatory = false,
+    currentPlan,
     profile,
     allSkills = [],
     campus,
@@ -288,6 +296,16 @@ export default function Profile({
                                         <ShieldCheck className="size-3" />
                                         Mahasiswa Terverifikasi
                                     </span>
+                                    {currentPlan && (
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                                            currentPlan.is_paid
+                                                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                                                : 'bg-slate-100 text-slate-600 border-slate-200'
+                                        }`}>
+                                            <Sparkles className="size-3" />
+                                            <span>Paket: {currentPlan.label}</span>
+                                        </span>
+                                    )}
                                 </div>
                                 <p className="text-xs text-slate-600 font-medium">
                                     {data.study_program || 'Program Studi Mahasiswa'} • Semester {data.semester || 1} • {campus || 'Perguruan Tinggi Indonesia'}
@@ -300,6 +318,43 @@ export default function Profile({
                             </div>
                         </div>
                     </div>
+
+                    {/* Current Subscription Plan Card */}
+                    {currentPlan && (
+                        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex items-center gap-3.5">
+                                <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                    currentPlan.is_paid ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600'
+                                }`}>
+                                    <Sparkles className="size-5" />
+                                </div>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider">Paket Saat Ini</span>
+                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                                            currentPlan.is_paid ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60' : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            {currentPlan.is_paid ? 'Aktif' : 'Standar'}
+                                        </span>
+                                    </div>
+                                    <div className="text-base font-bold text-slate-900 mt-0.5">
+                                        {currentPlan.label}
+                                    </div>
+                                    <p className="text-xs text-slate-500 mt-0.5">
+                                        {currentPlan.expires_at ? `Berlaku hingga ${currentPlan.expires_at}` : 'Akses fitur eksplorasi & kolaborasi standar'}
+                                        {currentPlan.bonus_credits > 0 && ` • +${currentPlan.bonus_credits} Kredit AI`}
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                href="/pricing"
+                                className="px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition-colors shrink-0 flex items-center gap-1.5"
+                            >
+                                <span>{currentPlan.is_paid ? 'Kelola Paket' : 'Upgrade ke Pro'}</span>
+                                <ExternalLink className="size-3" />
+                            </Link>
+                        </div>
+                    )}
 
                     {/* 2. Main Bento Form */}
                     <form onSubmit={submit} className="flex flex-col gap-6">

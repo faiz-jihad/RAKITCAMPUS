@@ -48,10 +48,48 @@ class ProfileController extends Controller
 
         $isMandatory = $isStudent && (!$hasNim || !$hasDepartment || !$hasStudyProgram || !$hasSkills || !$hasAvailability);
 
+        $subscription = $user->activeSubscription();
+        $isPlatformAdmin = $user->isPlatformAdmin();
+
+        $planLabel = match ($subscription?->plan_type) {
+            'ai_pass' => 'AI Pass',
+            'pro_monthly' => 'RAKIT Pro',
+            'semester_pass' => 'RAKIT Semester',
+            'team_pass' => 'RAKIT Team Pass',
+            default => $isPlatformAdmin ? 'Platform Admin' : 'Paket Standar (Gratis)',
+        };
+
+        $currentPlan = [
+            'type' => $subscription?->plan_type ?? ($isPlatformAdmin ? 'admin' : 'free'),
+            'label' => $planLabel,
+            'is_paid' => $subscription !== null || $isPlatformAdmin,
+            'expires_at' => $subscription?->expires_at ? $subscription->expires_at->format('d M Y') : ($isPlatformAdmin ? 'Akses Penuh' : null),
+            'bonus_credits' => $subscription?->ai_credits_bonus ?? 0,
+        ];
+
+        if (!$subscription && !$isPlatformAdmin) {
+            $teamSub = \App\Models\TeamSubscription::whereHas('team.memberships', function ($q) use ($user) {
+                $q->where('user_id', $user->id)->where('status', 'active');
+            })->where('status', 'active')->where(function ($q) {
+                $q->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })->latest()->first();
+
+            if ($teamSub) {
+                $currentPlan = [
+                    'type' => 'team_pass',
+                    'label' => 'RAKIT Team Pass',
+                    'is_paid' => true,
+                    'expires_at' => $teamSub->expires_at?->format('d M Y'),
+                    'bonus_credits' => $teamSub->ai_credits_pooled ?? 0,
+                ];
+            }
+        }
+
         return Inertia::render('settings/profile', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => $request->session()->get('status'),
             'isMandatory' => $isMandatory || $request->boolean('mandatory'),
+            'currentPlan' => $currentPlan,
             'profile' => $profile ? [
                 'id' => $profile->id,
                 'slug' => $profile->slug,
