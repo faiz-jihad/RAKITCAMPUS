@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\PricingPlan;
+use App\Services\Payment\KaseraPayService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class AdminPricingWebController extends Controller
 {
+    public function __construct(
+        protected KaseraPayService $kaseraPayService
+    ) {}
     private function checkAdmin(Request $request)
     {
         $user = $request->user();
@@ -43,8 +48,44 @@ class AdminPricingWebController extends Controller
 
         $plans = PricingPlan::orderBy('sort_order', 'asc')->get();
 
+        $recentOrders = Order::with('user:id,name,email')
+            ->latest()
+            ->take(20)
+            ->get()
+            ->map(fn ($o) => [
+                'id' => $o->id,
+                'order_number' => $o->order_number,
+                'user_name' => $o->user?->name ?? 'Pengguna',
+                'user_email' => $o->user?->email,
+                'plan_type' => $o->plan_type,
+                'plan_label' => $o->plan_label,
+                'amount' => $o->amount,
+                'status' => $o->status,
+                'provider' => $o->provider ?? 'kasera',
+                'provider_transaction_id' => $o->provider_transaction_id,
+                'payment_method' => $o->payment_method ?? 'qris',
+                'paid_at' => $o->paid_at?->translatedFormat('d M Y, H:i'),
+                'created_at' => $o->created_at?->translatedFormat('d M Y, H:i'),
+            ]);
+
+        $orderStats = [
+            'total_volume' => (int) Order::whereIn('status', [Order::STATUS_PAID, Order::STATUS_SETTLEMENT])->sum('amount'),
+            'paid_count' => Order::whereIn('status', [Order::STATUS_PAID, Order::STATUS_SETTLEMENT])->count(),
+            'pending_count' => Order::where('status', Order::STATUS_PENDING)->count(),
+        ];
+
+        $gatewayStatus = [
+            'is_configured' => $this->kaseraPayService->isConfigured(),
+            'is_live' => $this->kaseraPayService->isLive(),
+            'environment' => $this->kaseraPayService->getEnvironment(),
+            'base_url' => config('kaserapay.base_url', 'https://pay.kasera.id'),
+        ];
+
         return Inertia::render('admin/pricing/index', [
             'plans' => $plans,
+            'recentOrders' => $recentOrders,
+            'orderStats' => $orderStats,
+            'gatewayStatus' => $gatewayStatus,
         ]);
     }
 

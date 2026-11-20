@@ -6,10 +6,15 @@ import {
     ArrowRight,
     Check,
     CheckCircle2,
+    Clock,
     Crown,
+    ExternalLink,
     HelpCircle,
     PartyPopper,
     QrCode,
+    Receipt,
+    RefreshCw,
+    ShieldAlert,
     ShieldCheck,
     Sparkles,
     Trophy,
@@ -35,8 +40,15 @@ interface OrderItem {
     id: number;
     order_number: string;
     plan_type: string;
+    plan_label?: string;
     amount: number;
     status: string;
+    provider?: string;
+    provider_transaction_id?: string | null;
+    checkout_url?: string | null;
+    payment_method?: string;
+    paid_at?: string | null;
+    expires_at?: string | null;
     created_at: string;
 }
 
@@ -53,6 +65,8 @@ interface Props {
         name: string;
         type: string;
     }>;
+    gatewayConfigured?: boolean;
+    gatewayEnvironment?: string;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -60,7 +74,14 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Harga & Langganan', href: '/pricing' },
 ];
 
-export default function PricingPage({ plans, activeSubscription, myOrders, myTeams }: Props) {
+export default function PricingPage({
+    plans,
+    activeSubscription,
+    myOrders = [],
+    myTeams = [],
+    gatewayConfigured = true,
+    gatewayEnvironment = 'sandbox',
+}: Props) {
     const { auth, flash } = usePage().props as any;
     const user = auth?.user;
 
@@ -126,7 +147,11 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
 
             const data = await res.json();
             if (data.success && data.order) {
-                setCreatedOrder(data.order);
+                setCreatedOrder({
+                    ...data.order,
+                    checkout_url: data.checkout_url || data.order.checkout_url,
+                    qr_string: data.qr_string || data.order.qr_string,
+                });
                 setIsCheckoutOpen(true);
             } else {
                 alert(data.message || 'Gagal memulai checkout.');
@@ -416,11 +441,100 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                         </div>
                     </div>
                 </div>
+
+                {/* RIWAYAT TRANSAKSI & PEMBAYARAN */}
+                {user && myOrders && myOrders.length > 0 && (
+                    <div className="max-w-4xl mx-auto space-y-4 pt-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                                    <Receipt className="size-5 text-blue-600" />
+                                    <span>Riwayat Transaksi &amp; Langganan</span>
+                                </h3>
+                                <p className="text-xs text-slate-500">
+                                    Daftar pesanan dan riwayat pembayaran resmi Anda melalui Kasera Pay Gateway.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                                        <tr>
+                                            <th className="py-3 px-4">No. Pesanan</th>
+                                            <th className="py-3 px-4">Paket</th>
+                                            <th className="py-3 px-4">Nominal</th>
+                                            <th className="py-3 px-4">Status</th>
+                                            <th className="py-3 px-4">Tanggal</th>
+                                            <th className="py-3 px-4 text-right">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {myOrders.map((ord) => (
+                                            <tr key={ord.id} className="hover:bg-slate-50/70 transition">
+                                                <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                                                    {ord.order_number}
+                                                </td>
+                                                <td className="py-3 px-4 font-semibold text-slate-900">
+                                                    {ord.plan_label || ord.plan_type.replace('_', ' ').toUpperCase()}
+                                                </td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">
+                                                    {formatRupiah(ord.amount)}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    {ord.status === 'paid' && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                                                            <CheckCircle2 className="size-3" />
+                                                            Berhasil
+                                                        </span>
+                                                    )}
+                                                    {ord.status === 'pending' && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
+                                                            <Clock className="size-3" />
+                                                            Menunggu
+                                                        </span>
+                                                    )}
+                                                    {ord.status === 'expired' && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                                            Kedaluwarsa
+                                                        </span>
+                                                    )}
+                                                    {(ord.status === 'failed' || ord.status === 'cancelled') && (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-bold border border-rose-200">
+                                                            Gagal
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-500 text-[11px]">
+                                                    {ord.created_at}
+                                                </td>
+                                                <td className="py-3 px-4 text-right">
+                                                    <Link
+                                                        href={`/billing/status/${ord.order_number}`}
+                                                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold transition shadow-2xs ${
+                                                            ord.status === 'pending'
+                                                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                                                : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                                        }`}
+                                                    >
+                                                        <span>{ord.status === 'pending' ? 'Bayar / Cek' : 'Rincian'}</span>
+                                                        <ArrowRight className="size-3" />
+                                                    </Link>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
 
-            {/* QRIS CHECKOUT MODAL */}
+            {/* KASERA PAY CHECKOUT MODAL */}
             {isCheckoutOpen && createdOrder && selectedPlan && (
-                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
                     <div className="bg-white rounded-[32px] max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative space-y-5 animate-in fade-in zoom-in-95 duration-200">
                         {/* Close button */}
                         <button
@@ -436,7 +550,7 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                                 <QrCode className="size-6" />
                             </div>
                             <h3 className="text-lg font-black text-slate-900 tracking-tight">
-                                Pembayaran QRIS Instan
+                                Pembayaran Kasera Pay (QRIS)
                             </h3>
                             <p className="text-xs text-slate-500">
                                 Order ID: <span className="font-mono font-bold text-slate-700">{createdOrder.order_number}</span>
@@ -459,40 +573,68 @@ export default function PricingPage({ plans, activeSubscription, myOrders, myTea
                             </div>
                         </div>
 
-                        {/* QRIS Display Mockup */}
-                        <div className="bg-white rounded-2xl p-5 border-2 border-dashed border-slate-200 text-center space-y-3">
-                            <div className="size-44 mx-auto bg-slate-100 rounded-xl p-2 border border-slate-200 flex items-center justify-center">
-                                {/* Simulated QRIS Graphic */}
-                                <div className="relative size-full bg-white rounded-lg p-2 flex flex-col items-center justify-center">
-                                    <QrCode className="size-32 text-slate-900" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="size-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-black text-xs shadow-md">
-                                            R
-                                        </div>
-                                    </div>
+                        {/* QRIS Display or Gateway Notice */}
+                        <div className="bg-white rounded-2xl p-4 border-2 border-dashed border-slate-200 text-center space-y-3">
+                            {createdOrder.qr_string ? (
+                                <div className="size-44 mx-auto bg-white rounded-xl p-2 border border-slate-200 flex items-center justify-center">
+                                    <img
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(createdOrder.qr_string)}&size=200x200&margin=8`}
+                                        alt="QRIS Kasera Pay"
+                                        className="size-full object-contain"
+                                    />
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="size-36 mx-auto bg-blue-50/50 rounded-2xl border border-blue-100 flex flex-col items-center justify-center p-3 text-center">
+                                    <ShieldCheck className="size-10 text-blue-600 mb-1.5" />
+                                    <span className="text-xs font-bold text-slate-800">Kasera Pay Gateway</span>
+                                    <span className="text-[10px] text-slate-500">QRIS Real-Time</span>
+                                </div>
+                            )}
+
                             <p className="text-[11px] text-slate-500 leading-tight">
                                 Scan QRIS menggunakan GoPay, DANA, OVO, ShopeePay, atau Mobile Banking
                             </p>
                         </div>
 
                         {/* Actions */}
-                        <div className="space-y-2 pt-1">
-                            <a
-                                href={`/billing/simulate/${createdOrder.id}`}
-                                className="w-full py-3 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+                        <div className="space-y-2.5 pt-1">
+                            {createdOrder.checkout_url && (
+                                <a
+                                    href={createdOrder.checkout_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="w-full py-3 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer"
+                                >
+                                    <span>Buka Halaman Checkout Kasera</span>
+                                    <ExternalLink className="size-3.5" />
+                                </a>
+                            )}
+
+                            <Link
+                                href={`/billing/status/${createdOrder.order_number}`}
+                                className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-black text-white text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                             >
-                                <CheckCircle2 className="size-4" />
-                                <span>Simulasikan Pembayaran Berhasil (Scan QRIS)</span>
-                            </a>
+                                <span>Lihat Halaman Status &amp; Verifikasi</span>
+                                <ArrowRight className="size-3.5" />
+                            </Link>
+
+                            {/* Testing fallback for development environment */}
+                            {createdOrder.id && (
+                                <a
+                                    href={`/billing/simulate/${createdOrder.id}`}
+                                    className="w-full py-2 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-800 text-[11px] font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                                >
+                                    <CheckCircle2 className="size-3 text-emerald-600" />
+                                    <span>Simulasi Pembayaran Cepat (Uji Sandbox)</span>
+                                </a>
+                            )}
 
                             <button
                                 type="button"
                                 onClick={() => setIsCheckoutOpen(false)}
-                                className="w-full py-2.5 rounded-full text-slate-500 hover:text-slate-800 text-xs font-semibold text-center transition"
+                                className="w-full py-2 text-slate-400 hover:text-slate-600 text-xs font-medium text-center transition"
                             >
-                                Batalkan Transaksi
+                                Tutup &amp; Selesaikan Nanti
                             </button>
                         </div>
                     </div>

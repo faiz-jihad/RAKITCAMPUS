@@ -2,13 +2,20 @@ import AppLayout from '@/layouts/app-layout';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
+    ArrowRight,
     Check,
+    CheckCircle2,
+    Clock,
     CreditCard,
+    DollarSign,
     Edit3,
     ExternalLink,
     Plus,
+    Receipt,
     RefreshCw,
     RotateCcw,
+    ShieldAlert,
+    ShieldCheck,
     Sparkles,
     Star,
     Trash2,
@@ -32,8 +39,40 @@ interface PricingPlanData {
     sort_order: number;
 }
 
+interface OrderItem {
+    id: number;
+    order_number: string;
+    user_name: string;
+    user_email?: string | null;
+    plan_type: string;
+    plan_label?: string;
+    amount: number;
+    status: string;
+    provider: string;
+    provider_transaction_id?: string | null;
+    payment_method: string;
+    paid_at?: string | null;
+    created_at: string;
+}
+
+interface OrderStats {
+    total_volume: number;
+    paid_count: number;
+    pending_count: number;
+}
+
+interface GatewayStatus {
+    is_configured: boolean;
+    is_live: boolean;
+    environment: string;
+    base_url: string;
+}
+
 interface Props {
     plans: PricingPlanData[];
+    recentOrders?: OrderItem[];
+    orderStats?: OrderStats;
+    gatewayStatus?: GatewayStatus;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -41,7 +80,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Kelola Paket Harga', href: '/admin/pricing' },
 ];
 
-export default function AdminPricingIndex({ plans }: Props) {
+export default function AdminPricingIndex({
+    plans,
+    recentOrders = [],
+    orderStats = { total_volume: 0, paid_count: 0, pending_count: 0 },
+    gatewayStatus = { is_configured: false, is_live: false, environment: 'sandbox', base_url: 'https://pay.kasera.id' },
+}: Props) {
     const [editingPlan, setEditingPlan] = useState<PricingPlanData | null>(null);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -328,6 +372,133 @@ export default function AdminPricingIndex({ plans }: Props) {
                             </div>
                         );
                     })}
+                </div>
+
+                {/* Gateway Status & Transaction Monitoring */}
+                <div className="space-y-6 pt-4">
+                    {/* Gateway Health & Stats Banner */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gateway Payment</span>
+                            <div className="flex items-center gap-2 pt-1">
+                                {gatewayStatus.is_configured ? (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                                        <CheckCircle2 className="size-3.5" />
+                                        Terhubung ({gatewayStatus.environment.toUpperCase()})
+                                    </span>
+                                ) : (
+                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-bold border border-amber-200">
+                                        <Clock className="size-3.5" />
+                                        Kredensial Belum Terpasang
+                                    </span>
+                                )}
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-mono block pt-1">{gatewayStatus.base_url}</span>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Volume Transaksi</span>
+                            <div className="text-2xl font-black text-slate-900 tracking-tight pt-1">
+                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(orderStats.total_volume)}
+                            </div>
+                            <span className="text-[11px] text-slate-400">Total terverifikasi lunas</span>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Transaksi Sukses</span>
+                            <div className="text-2xl font-black text-emerald-600 tracking-tight pt-1">
+                                {orderStats.paid_count}
+                            </div>
+                            <span className="text-[11px] text-slate-400">Pesanan berhasil</span>
+                        </div>
+
+                        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-2xs space-y-1">
+                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Menunggu Pembayaran</span>
+                            <div className="text-2xl font-black text-amber-600 tracking-tight pt-1">
+                                {orderStats.pending_count}
+                            </div>
+                            <span className="text-[11px] text-slate-400">Pesanan pending QRIS</span>
+                        </div>
+                    </div>
+
+                    {/* Recent Transactions Table */}
+                    <div className="bg-white rounded-3xl border border-slate-200/90 shadow-xs overflow-hidden space-y-3 p-5 sm:p-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                                    <Receipt className="size-4.5 text-blue-600" />
+                                    <span>Monitoring Transaksi Kasera Pay (Terbaru)</span>
+                                </h3>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                    Catatan transaksi pembayaran real-time mahasiswa dan tim inovasi.
+                                </p>
+                            </div>
+                        </div>
+
+                        {recentOrders.length === 0 ? (
+                            <div className="text-center py-10 text-slate-400 text-xs">
+                                Belum ada riwayat transaksi pembayaran.
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs text-left">
+                                    <thead className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200 uppercase tracking-wider text-[10px]">
+                                        <tr>
+                                            <th className="py-3 px-4">No. Pesanan</th>
+                                            <th className="py-3 px-4">Pengguna</th>
+                                            <th className="py-3 px-4">Paket</th>
+                                            <th className="py-3 px-4">Nominal</th>
+                                            <th className="py-3 px-4">Status</th>
+                                            <th className="py-3 px-4">Tanggal</th>
+                                            <th className="py-3 px-4 text-right">Gateway ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {recentOrders.map((ord) => (
+                                            <tr key={ord.id} className="hover:bg-slate-50/70 transition">
+                                                <td className="py-3 px-4 font-mono font-bold text-slate-800">
+                                                    {ord.order_number}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    <div className="font-semibold text-slate-900">{ord.user_name}</div>
+                                                    {ord.user_email && <div className="text-[10px] text-slate-400">{ord.user_email}</div>}
+                                                </td>
+                                                <td className="py-3 px-4 font-semibold text-slate-800">
+                                                    {ord.plan_label || ord.plan_type}
+                                                </td>
+                                                <td className="py-3 px-4 font-bold text-slate-900">
+                                                    {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(ord.amount)}
+                                                </td>
+                                                <td className="py-3 px-4">
+                                                    {ord.status === 'paid' || ord.status === 'settlement' ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200">
+                                                            <CheckCircle2 className="size-3" />
+                                                            Lunas
+                                                        </span>
+                                                    ) : ord.status === 'pending' ? (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-bold border border-amber-200">
+                                                            <Clock className="size-3" />
+                                                            Pending
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold border border-slate-200">
+                                                            {ord.status}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-4 text-slate-500 text-[11px]">
+                                                    {ord.created_at}
+                                                </td>
+                                                <td className="py-3 px-4 text-right font-mono text-[10px] text-slate-500">
+                                                    {ord.provider_transaction_id || '-'}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 

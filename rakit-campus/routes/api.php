@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\v1\AuthController;
 use App\Http\Controllers\Api\v1\CompetitionController;
 use App\Http\Controllers\Api\v1\GitHubWebhookController;
 use App\Http\Controllers\Api\v1\GitHubWorkspaceController;
+use App\Http\Controllers\Api\v1\KaseraWebhookController;
 use App\Http\Controllers\Api\v1\MatchingController;
 use App\Http\Controllers\Api\v1\NotificationController;
 use App\Http\Controllers\Api\v1\PortfolioController;
@@ -39,6 +40,10 @@ Route::prefix('v1')->group(function () {
 
     // GitHub Webhook Integration (Signature Verified via HMAC SHA-256)
     Route::post('/integrations/github/webhook', [GitHubWebhookController::class, 'handle']);
+
+    // Kasera Pay Webhook Integration (Signature Verified via Kasera-Signature-V1 HMAC SHA-256)
+    Route::post('/payments/kasera/webhook', [KaseraWebhookController::class, 'handle'])
+        ->middleware('throttle:60,1');
 
     // Authenticated Endpoints (Sanctum + Web Session)
     Route::middleware(['auth:sanctum,web'])->group(function () {

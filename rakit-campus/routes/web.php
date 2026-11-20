@@ -79,8 +79,13 @@ Route::inertia('/privacy', 'privacy/index')->name('privacy');
 Route::get('/pricing', [BillingWebController::class, 'index'])->name('pricing');
 
 Route::middleware(['auth'])->group(function () {
-    // Billing Checkout & Simulation
+    // Billing Checkout, Return Handler, Status & Live Inquiry
     Route::post('/checkout', [BillingWebController::class, 'checkout'])->name('billing.checkout');
+    Route::get('/billing/finish', [BillingWebController::class, 'finish'])->name('billing.finish');
+    Route::get('/billing/status/{orderNumber}', [BillingWebController::class, 'finish'])->name('billing.status');
+    Route::post('/billing/orders/{orderNumber}/check-status', [BillingWebController::class, 'checkStatus'])
+        ->name('billing.orders.check-status')
+        ->middleware('throttle:30,1');
     Route::match(['get', 'post'], '/billing/simulate/{orderId}', [BillingWebController::class, 'simulatePayment'])->name('billing.simulate');
 
     Route::get('/onboarding', [OnboardingWebController::class, 'show'])->name('onboarding');
