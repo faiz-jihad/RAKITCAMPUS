@@ -78,28 +78,31 @@ export default function AppLayout({
     // Persistent & route-aware active hub state (Only relevant when outside admin workspace)
     const [activeHub, setActiveHub] = useState<'competition' | 'project'>(() => {
         if (typeof window !== 'undefined') {
-            const pathname = window.location.pathname;
-            if (pathname.startsWith('/admin') || pathname.startsWith('/leaderboard/admin')) {
+            const currentUrl = page.url || window.location.pathname;
+            const rawPath = currentUrl.split('?')[0];
+            if (rawPath.startsWith('/admin') || rawPath.startsWith('/leaderboard/admin')) {
                 return 'project';
             }
 
-            const params = new URLSearchParams(window.location.search);
+            const searchPart = currentUrl.includes('?') ? currentUrl.slice(currentUrl.indexOf('?')) : window.location.search;
+            const params = new URLSearchParams(searchPart);
             const hubParam = params.get('hub');
             if (hubParam === 'competition') return 'competition';
             if (hubParam === 'project') return 'project';
 
             if (
-                pathname.startsWith('/competitions') ||
-                pathname.startsWith('/competition-workspace') ||
-                pathname.startsWith('/matching')
+                rawPath.startsWith('/competitions') ||
+                rawPath.startsWith('/competition-workspace') ||
+                rawPath.startsWith('/matching')
             ) {
                 return 'competition';
             }
             if (
-                pathname === '/dashboard' ||
-                pathname.startsWith('/projects') ||
-                pathname.startsWith('/classes') ||
-                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
+                rawPath === '/' ||
+                rawPath === '/dashboard' ||
+                rawPath.startsWith('/projects') ||
+                rawPath.startsWith('/classes') ||
+                (rawPath.startsWith('/workspace') && !rawPath.startsWith('/competition-workspace'))
             ) {
                 return 'project';
             }
@@ -120,12 +123,14 @@ export default function AppLayout({
     // Synchronize hub state consistently without unexpected auto-redirects
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const pathname = window.location.pathname;
-            if (pathname.startsWith('/admin') || pathname.startsWith('/leaderboard/admin')) {
+            const currentUrl = url || window.location.pathname;
+            const rawPath = currentUrl.split('?')[0];
+            if (rawPath.startsWith('/admin') || rawPath.startsWith('/leaderboard/admin')) {
                 return;
             }
 
-            const params = new URLSearchParams(window.location.search);
+            const searchPart = currentUrl.includes('?') ? currentUrl.slice(currentUrl.indexOf('?')) : window.location.search;
+            const params = new URLSearchParams(searchPart);
             const hubParam = params.get('hub');
 
             let detectedHub: 'competition' | 'project' | null = null;
@@ -135,16 +140,17 @@ export default function AppLayout({
             } else if (hubParam === 'project') {
                 detectedHub = 'project';
             } else if (
-                pathname.startsWith('/competitions') ||
-                pathname.startsWith('/competition-workspace') ||
-                pathname.startsWith('/matching')
+                rawPath.startsWith('/competitions') ||
+                rawPath.startsWith('/competition-workspace') ||
+                rawPath.startsWith('/matching')
             ) {
                 detectedHub = 'competition';
             } else if (
-                pathname === '/dashboard' ||
-                pathname.startsWith('/projects') ||
-                pathname.startsWith('/classes') ||
-                (pathname.startsWith('/workspace') && !pathname.startsWith('/competition-workspace'))
+                rawPath === '/' ||
+                rawPath === '/dashboard' ||
+                rawPath.startsWith('/projects') ||
+                rawPath.startsWith('/classes') ||
+                (rawPath.startsWith('/workspace') && !rawPath.startsWith('/competition-workspace'))
             ) {
                 detectedHub = 'project';
             }

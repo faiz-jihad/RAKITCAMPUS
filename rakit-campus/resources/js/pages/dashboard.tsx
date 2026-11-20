@@ -2303,20 +2303,11 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* Right: Hub Switcher Pill + Action Buttons */}
+                {/* Right: Project Hub Indicator Badge + Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-                    <div className="flex items-center p-1 bg-slate-100/90 rounded-full border border-slate-200/80 shrink-0">
-                        <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-white text-blue-700 shadow-2xs flex items-center gap-1.5">
-                            <FolderGit2 className="size-3.5 text-blue-600" />
-                            <span>{isEn ? 'Projects' : 'Proyek'}</span>
-                        </span>
-                        <Link
-                            href="/competitions/dashboard"
-                            className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 transition flex items-center gap-1.5"
-                        >
-                            <Trophy className="size-3.5 text-amber-500" />
-                            <span>{isEn ? 'Competitions' : 'Lomba'}</span>
-                        </Link>
+                    <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-xs font-bold text-blue-700 shadow-2xs">
+                        <FolderGit2 className="size-3.5 text-blue-600" />
+                        <span>{isEn ? 'Project Hub' : 'Proyek Hub'}</span>
                     </div>
 
                     <Link
@@ -2938,7 +2929,7 @@ export default function Dashboard({
                                                         </Link>
                                                     ) : inv.project_id ? (
                                                         <Link
-                                                            href={`/projects/${inv.project_slug || inv.project_id}`}
+                                                            href={inv.target_url || `/projects/${inv.project_slug || inv.project_id}`}
                                                             className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors truncate"
                                                         >
                                                             {inv.project_title}
@@ -3121,10 +3112,10 @@ export default function Dashboard({
                                     <span>{isEn ? 'RAKIT Companion' : 'Sahabat RAKIT'}</span>
                                 </span>
                                 <h3 className="text-sm font-bold text-slate-900 pt-1">
-                                    {isEn ? 'Find Competition Teammates' : 'Cari Rekan Tim Lomba'}
+                                    {isEn ? 'Find Project Collaborators' : 'Cari Rekan Kolaborasi Proyek'}
                                 </h3>
                                 <p className="text-xs text-slate-600 leading-relaxed">
-                                    {isEn ? 'Find hackers, UI/UX designers, and presenters on Talent Radar.' : 'Temukan hacker, desainer UI/UX, dan presenter kompetisi di Radar Talenta.'}
+                                    {isEn ? 'Find peers, hackers, and designers to build your classroom projects.' : 'Temukan rekan dengan keahlian komplementer untuk kolaborasi proyek kelas.'}
                                 </p>
                             </div>
                             <img
@@ -3135,10 +3126,10 @@ export default function Dashboard({
                         </div>
                         <div className="pt-3.5 mt-3 border-t border-blue-100/70">
                             <Link
-                                href="/competitions?tab=teams&view=radar"
+                                href="/projects?status=recruiting"
                                 className="w-full py-2 rounded-full bg-slate-900 hover:bg-slate-800 active:scale-[0.98] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-xs cursor-pointer"
                             >
-                                <span>{isEn ? 'Open Talent Radar' : 'Buka Radar Rekrutmen'}</span>
+                                <span>{isEn ? 'Explore Open Teams' : 'Eksplorasi Tim Terbuka'}</span>
                                 <ArrowRight className="size-3.5" />
                             </Link>
                         </div>

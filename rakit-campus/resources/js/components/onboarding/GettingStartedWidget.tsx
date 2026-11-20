@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from '@inertiajs/react';
-import { Trophy, FolderPlus, Users2, Check, ArrowRight, X, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
+import { FolderKanban, FolderPlus, Users2, Check, ArrowRight, X, Sparkles, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useLocale } from '@/hooks/use-locale';
 
 interface GettingStartedWidgetProps {
@@ -75,12 +75,12 @@ export default function GettingStartedWidget({
         {
             id: 'explore',
             stepNumber: 1,
-            title: isEn ? 'Explore competitions' : 'Jelajahi kompetisi',
-            description: isEn ? 'Find your next challenge.' : 'Temukan tantangan berikutnya.',
-            href: '/competitions?tab=explore',
-            icon: Trophy,
+            title: isEn ? 'Explore class projects' : 'Jelajahi proyek kelas',
+            description: isEn ? 'Browse academic and innovation projects.' : 'Lihat beragam proyek akademik dan karya mahasiswa.',
+            href: '/projects',
+            icon: FolderKanban,
             completed: task1Completed,
-            actionLabel: isEn ? 'Explore competitions' : 'Jelajahi kompetisi',
+            actionLabel: isEn ? 'Explore projects' : 'Jelajahi proyek',
             onClick: handleExploreClick,
         },
         {
@@ -97,11 +97,11 @@ export default function GettingStartedWidget({
             id: 'team',
             stepNumber: 3,
             title: isEn ? 'Build your team' : 'Bentuk tim',
-            description: isEn ? 'Find people to build with.' : 'Temukan rekan untuk berkolaborasi.',
-            href: '/competitions?tab=recruitment',
+            description: isEn ? 'Find people to collaborate and build with.' : 'Temukan rekan untuk berkolaborasi dalam proyek.',
+            href: '/projects?status=recruiting',
             icon: Users2,
             completed: task3Completed,
-            actionLabel: isEn ? 'Find team' : 'Cari rekan',
+            actionLabel: isEn ? 'Find teammates' : 'Cari rekan',
         },
     ];
 

@@ -42,9 +42,9 @@ export default function WorkspaceIndex({ teams }: Props) {
                     <EmptyState
                         icon={Kanban}
                         title={isEn ? "No team yet" : "Belum ada tim"}
-                        description={isEn ? "Build something together." : "Wujudkan karya kolaboratif bersama tim."}
-                        actionLabel={isEn ? "Find a team" : "Cari tim"}
-                        actionHref="/competitions?tab=recruitment"
+                        description={isEn ? "Build something together in classroom and innovation projects." : "Wujudkan karya kolaboratif bersama tim dalam proyek kelas."}
+                        actionLabel={isEn ? "Explore Open Projects" : "Eksplorasi Proyek Terbuka"}
+                        actionHref="/projects?status=recruiting"
                     />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-7">
