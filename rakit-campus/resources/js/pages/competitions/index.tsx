@@ -60,6 +60,7 @@ import {
 import React, { useMemo, useState } from 'react';
 import ContextualGuideTooltip from '@/components/onboarding/ContextualGuideTooltip';
 import EmptyState from '@/components/ui/EmptyState';
+import { AutoTranslate } from '@/components/ui/auto-translate';
 
 interface Competition {
     id: number;
@@ -752,12 +753,12 @@ export default function CompetitionIndex({
                                             </span>
                                             <Link href={`/competitions/${spotlightComp.slug || spotlightComp.id}`} className="group/link block">
                                                 <h2 className="text-base sm:text-xl font-extrabold text-slate-900 group-hover/link:text-indigo-600 transition tracking-tight leading-snug line-clamp-2 mt-1">
-                                                    {spotlightComp.name}
+                                                    <AutoTranslate text={spotlightComp.name} />
                                                 </h2>
                                             </Link>
                                             {spotlightComp.description && (
                                                 <p className="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">
-                                                    {spotlightComp.description}
+                                                    <AutoTranslate text={spotlightComp.description} />
                                                 </p>
                                             )}
                                         </div>
@@ -814,7 +815,7 @@ export default function CompetitionIndex({
                                                         >
                                                             <div className="min-w-0 flex-1">
                                                                 <h4 className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 transition truncate">
-                                                                    {comp.name}
+                                                                    <AutoTranslate text={comp.name} />
                                                                 </h4>
                                                                 <p className="text-[10px] text-slate-400 truncate mt-0.5">
                                                                     {comp.organizer}
@@ -1281,7 +1282,7 @@ export default function CompetitionIndex({
                                                 {/* Title & Level Rating */}
                                                 <div className="flex items-center justify-between gap-1.5">
                                                     <h3 className="text-xs sm:text-base font-bold text-white tracking-tight line-clamp-1 group-hover:text-blue-200 transition-colors">
-                                                        {comp.name}
+                                                        <AutoTranslate text={comp.name} />
                                                     </h3>
                                                     <div className="flex items-center gap-0.5 sm:gap-1 text-amber-400 text-[10px] sm:text-xs font-bold shrink-0 ml-1">
                                                         <Star className="size-3 sm:size-3.5 fill-amber-400 text-amber-400" />

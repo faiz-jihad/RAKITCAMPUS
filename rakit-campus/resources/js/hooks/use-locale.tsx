@@ -122,3 +122,5 @@ export function useLocale() {
         translations: translations[locale] || translations.id,
     };
 }
+
+export { useAutoTranslate } from './use-auto-translate';

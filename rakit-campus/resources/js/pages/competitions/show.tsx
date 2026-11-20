@@ -6,6 +6,7 @@ import TrackCompetitionModal from '@/components/competitions/TrackCompetitionMod
 import UpdateStageModal from '@/components/competitions/UpdateStageModal';
 import AppLayout from '@/layouts/app-layout';
 import { useLocale } from '@/hooks/use-locale';
+import { AutoTranslate } from '@/components/ui/auto-translate';
 import { getCompetitionCover } from '@/lib/competition-cover';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
@@ -487,12 +488,15 @@ export default function CompetitionShow({
 
                                 {/* Title */}
                                 <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                                    {competition.name}
+                                    <AutoTranslate text={competition.name} />
                                 </h1>
 
                                 {/* Description Excerpt */}
                                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed line-clamp-3">
-                                    {competition.description || 'Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional bersama komunitas kampus.'}
+                                    <AutoTranslate
+                                        text={competition.description}
+                                        fallback="Peluang prestasi mahasiswa untuk berkolaborasi dan berkompetisi di kancah regional maupun nasional bersama komunitas kampus."
+                                    />
                                 </p>
 
                                 {/* Jalur Lomba / Tracks Bento Tags */}

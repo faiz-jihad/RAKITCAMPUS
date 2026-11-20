@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\v1\ProfileController;
 use App\Http\Controllers\Api\v1\ProjectController;
 use App\Http\Controllers\Api\v1\RecruitmentController;
 use App\Http\Controllers\Api\v1\TeamWorkspaceController;
+use App\Http\Controllers\Api\v1\TranslationController;
 use App\Http\Controllers\Api\v1\UploadController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,6 +33,9 @@ Route::prefix('v1')->group(function () {
     // Public Profiles & Portfolios
     Route::get('/students/{identifier}', [ProfileController::class, 'publicProfile']);
     Route::get('/portfolio/public/{slug}', [PortfolioController::class, 'publicPortfolio']);
+
+    // Universal Dynamic Translation (Hybrid AI + Cloud Translate with Cache)
+    Route::post('/translate', [TranslationController::class, 'translate'])->middleware('throttle:120,1');
 
     // GitHub Webhook Integration (Signature Verified via HMAC SHA-256)
     Route::post('/integrations/github/webhook', [GitHubWebhookController::class, 'handle']);

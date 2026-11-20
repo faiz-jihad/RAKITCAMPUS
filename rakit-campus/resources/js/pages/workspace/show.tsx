@@ -1,5 +1,6 @@
 import AppLayout from '@/layouts/app-layout';
 import { useLocale } from '@/hooks/use-locale';
+import { AutoTranslate } from '@/components/ui/auto-translate';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, router } from '@inertiajs/react';
 import {
@@ -1318,13 +1319,13 @@ export default function WorkspaceShow({
 
                                                         {/* Task Title */}
                                                         <h4 className="text-xs sm:text-[13px] font-bold text-slate-900 leading-snug break-words">
-                                                            {task.title}
+                                                            <AutoTranslate text={task.title} />
                                                         </h4>
 
                                                         {/* Task Description */}
                                                         {task.description && (
                                                             <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed break-words">
-                                                                {task.description}
+                                                                <AutoTranslate text={task.description} />
                                                             </p>
                                                         )}
 
@@ -1433,9 +1434,13 @@ export default function WorkspaceShow({
                                                     <div className="flex items-start sm:items-center gap-2.5 min-w-0">
                                                         <div className="size-2 rounded-full bg-blue-600 shrink-0 mt-1 sm:mt-0" />
                                                         <div className="min-w-0">
-                                                            <h4 className="text-xs font-bold text-slate-900 break-words">{task.title}</h4>
+                                                            <h4 className="text-xs font-bold text-slate-900 break-words">
+                                                                <AutoTranslate text={task.title} />
+                                                            </h4>
                                                             {task.description && (
-                                                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 break-words">{task.description}</p>
+                                                                <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1 break-words">
+                                                                    <AutoTranslate text={task.description} />
+                                                                </p>
                                                             )}
                                                         </div>
                                                     </div>

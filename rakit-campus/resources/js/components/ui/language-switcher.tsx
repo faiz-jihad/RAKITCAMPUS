@@ -126,6 +126,10 @@ export function LanguageSwitcher({
                         </DropdownMenuItem>
                     );
                 })}
+                <div className="mt-1 pt-1.5 border-t border-slate-100 px-3 py-1 text-[10px] text-slate-400 flex items-center gap-1.5">
+                    <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>{locale === 'en' ? 'AI Auto-Translates Data' : 'Terjemah Otomatis Aktif'}</span>
+                </div>
             </DropdownMenuContent>
         </DropdownMenu>
     );
