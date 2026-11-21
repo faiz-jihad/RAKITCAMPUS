@@ -812,7 +812,7 @@ export default function CompetitionShow({
                                                                                 ? 'bg-indigo-600 text-white shadow-2xs'
                                                                                 : 'border border-dashed border-slate-300 text-slate-300 bg-white'
                                                                         }`}
-                                                                        title={isFilled ? `Anggota #${idx + 1} Terisi` : `Slot #${idx + 1} Kosong`}
+                                                                        title={isFilled ? `Anggota #${idx + 1} Terisi` : `Posisi #${idx + 1} Kosong`}
                                                                     >
                                                                         <User className="size-3 stroke-[2]" />
                                                                     </div>
@@ -831,7 +831,7 @@ export default function CompetitionShow({
                                                                     key={r.id}
                                                                     className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200/60"
                                                                 >
-                                                                    {r.name} ({r.slots} slot)
+                                                                    {r.name} ({r.slots} posisi)
                                                                 </span>
                                                             ))}
                                                         </div>

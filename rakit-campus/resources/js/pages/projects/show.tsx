@@ -139,8 +139,8 @@ export default function ProjectShow({
     );
     const flash = page.props?.flash;
     const academicClass = project.academic_class || project.academicClass;
-    const isAcademic = Boolean(project.academic_class_id || academicClass?.id || project.category === 'academic');
-    const academicOnlyTabs = ['uts', 'uas', 'lecturer_review'];
+    const isAcademic = Boolean(project.academic_class_id || academicClass?.id);
+    const academicOnlyTabs = ['proposal', 'versions', 'uts', 'uas', 'lecturer_review', 'evaluation'];
     const initialTabParam = typeof window !== 'undefined'
         ? new URLSearchParams(window.location.search).get('tab')
         : null;
@@ -862,8 +862,6 @@ export default function ProjectShow({
             icon: UserCheck,
             badge: project.formation_status === 'workspace_activated' ? 'Aktif' : (project.formation_status ? project.formation_status.replace('_', ' ') : 'Draft'),
         },
-        { id: 'proposal', label: 'Living Proposal', icon: FileText },
-        { id: 'versions', label: `Versi (${livingProposal?.versions?.length || 1})`, icon: GitBranch },
         { id: 'tasks', label: `Tasks & Kanban (${(kanban.todo?.length || 0) + (kanban.in_progress?.length || 0) + (kanban.in_review?.length || 0) + (kanban.completed?.length || 0)})`, icon: FolderKanban },
         { id: 'milestones', label: `Milestones & Target (${milestones.length})`, icon: Clock },
         { id: 'progress', label: `Progress (${implementationProgress}%)`, icon: Sparkles },
@@ -1115,7 +1113,7 @@ export default function ProjectShow({
                                     <>
                                         {/* Team formation & workspace activation aligned with Lecturer Approval step */}
                                         {isLeader && (
-                                            (canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') && project.team?.id ? (
+                                            (!isAcademic || canAccessWorkspace || project.formation_status === 'workspace_activated') && project.team?.id ? (
                                                 <Link
                                                     href={`/workspace/${project.team.id}`}
                                                     className="w-full sm:w-auto justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer active:scale-95"
@@ -1185,7 +1183,7 @@ export default function ProjectShow({
                                         {/* Anggota biasa (bukan ketua): Informasi status peran */}
                                         {!isLeader && isMember && (
                                             <div className="flex flex-col sm:items-end gap-1.5">
-                                                {(canAccessWorkspace || (!academicClass && activeMembersCount >= maxQuota) || project.formation_status === 'workspace_activated') && project.team?.id ? (
+                                                {(!isAcademic || canAccessWorkspace || project.formation_status === 'workspace_activated') && project.team?.id ? (
                                                     <Link
                                                         href={`/workspace/${project.team.id}`}
                                                         className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
@@ -1534,11 +1532,17 @@ export default function ProjectShow({
                                     {/* Top Bar: Meta Badges & Action */}
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
                                         <div className="flex flex-wrap items-center gap-2">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold tracking-tight">
-                                                <span>Versi {proposalVersion}</span>
-                                                <span className="text-blue-300 font-sans mx-1.5 font-normal">|</span>
-                                                <span className="uppercase text-[10px] tracking-wider">{proposalStatus || 'DRAFT'}</span>
-                                            </span>
+                                            {isAcademic ? (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold tracking-tight">
+                                                    <span>Versi {proposalVersion}</span>
+                                                    <span className="text-blue-300 font-sans mx-1.5 font-normal">|</span>
+                                                    <span className="uppercase text-[10px] tracking-wider">{proposalStatus || 'DRAFT'}</span>
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold tracking-tight">
+                                                    <span>Proyek Mandiri</span>
+                                                </span>
+                                            )}
                                             {isAcademic && academicClass?.name && (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200/60 text-[11px] font-medium">
                                                     <BookOpen className="size-3 text-slate-500" />
@@ -1547,15 +1551,26 @@ export default function ProjectShow({
                                             )}
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => setActiveTab('proposal')}
-                                            className="group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs hover:shadow-blue-600/20 cursor-pointer self-start sm:self-auto shrink-0"
-                                        >
-                                            <FileText className="size-3.5" />
-                                            <span>Buka Proposal</span>
-                                            <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-                                        </button>
+                                        {isAcademic ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => setActiveTab('proposal')}
+                                                className="group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs hover:shadow-blue-600/20 cursor-pointer self-start sm:self-auto shrink-0"
+                                            >
+                                                <FileText className="size-3.5" />
+                                                <span>Buka Proposal</span>
+                                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                            </button>
+                                        ) : project.team?.id ? (
+                                            <Link
+                                                href={`/workspace/${project.team.id}`}
+                                                className="group inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white text-xs font-bold transition-all duration-200 shadow-2xs hover:shadow-xs hover:shadow-blue-600/20 cursor-pointer self-start sm:self-auto shrink-0"
+                                            >
+                                                <FolderKanban className="size-3.5" />
+                                                <span>Buka Workspace</span>
+                                                <ArrowRight className="size-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                            </Link>
+                                        ) : null}
                                     </div>
 
                                     {/* Main Content: Title & Abstract */}
@@ -1571,37 +1586,39 @@ export default function ProjectShow({
                                         </p>
                                     </div>
 
-                                    {/* Bottom Dosen Pembimbing Strip */}
-                                    <div className="rounded-xl bg-slate-50/80 border border-slate-200/70 p-3 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div className="flex items-center gap-3">
-                                            <div className="size-9 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
-                                                <GraduationCap className="size-4.5" />
+                                    {/* Bottom Dosen Pembimbing Strip (Academic Only) */}
+                                    {isAcademic && (
+                                        <div className="rounded-xl bg-slate-50/80 border border-slate-200/70 p-3 sm:px-4 sm:py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-9 rounded-lg bg-white border border-slate-200/80 flex items-center justify-center text-blue-600 shadow-2xs shrink-0">
+                                                    <GraduationCap className="size-4.5" />
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosen Pembimbing Akademik</span>
+                                                    <span className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
+                                                        {academicClass?.lecturer?.name || project.lecturer?.name || 'Budi Santoso, M.Kom.'}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Dosen Pembimbing Akademik</span>
-                                                <span className="font-extrabold text-slate-900 text-xs sm:text-[13px]">
-                                                    {academicClass?.lecturer?.name || project.lecturer?.name || 'Budi Santoso, M.Kom.'}
-                                                </span>
-                                            </div>
-                                        </div>
 
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            {guidances.length > 0 ? (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setActiveTab('lecturer_review')}
-                                                    className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 hover:border-blue-300 text-xs font-bold transition-all duration-200 shadow-2xs active:scale-[0.98] cursor-pointer"
-                                                >
-                                                    <span>{guidances.length} Catatan Bimbingan</span>
-                                                    <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
-                                                </button>
-                                            ) : (
-                                                <span className="text-xs font-medium text-slate-500">
-                                                    Status Bimbingan: <strong className="text-slate-900 font-bold">Siap Konsultasi</strong>
-                                                </span>
-                                            )}
+                                            <div className="flex items-center gap-3 shrink-0">
+                                                {guidances.length > 0 ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setActiveTab('lecturer_review')}
+                                                        className="group inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white hover:bg-blue-50 text-blue-700 border border-blue-200 hover:border-blue-300 text-xs font-bold transition-all duration-200 shadow-2xs active:scale-[0.98] cursor-pointer"
+                                                    >
+                                                        <span>{guidances.length} Catatan Bimbingan</span>
+                                                        <ArrowRight className="size-3 transition-transform duration-200 group-hover:translate-x-0.5" />
+                                                    </button>
+                                                ) : (
+                                                    <span className="text-xs font-medium text-slate-500">
+                                                        Status Bimbingan: <strong className="text-slate-900 font-bold">Siap Konsultasi</strong>
+                                                    </span>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
                                 </div>
 
                                 {/* 2. BENTO DUAL: TUJUAN PROYEK & SOLUSI INOVATIF */}
@@ -2109,6 +2126,7 @@ export default function ProjectShow({
                             project={project}
                             period={utsPeriod}
                             submission={utsSubmission}
+                            utsSubmission={utsSubmission}
                             isMember={isMember}
                             isLeader={isLeader}
                             isLecturer={isLecturerUser}
@@ -2121,6 +2139,7 @@ export default function ProjectShow({
                             project={project}
                             period={uasPeriod}
                             submission={uasSubmission}
+                            utsSubmission={utsSubmission}
                             isMember={isMember}
                             isLeader={isLeader}
                             isLecturer={isLecturerUser}
@@ -2318,7 +2337,7 @@ export default function ProjectShow({
                                                     : !hasOpenRecruitment
                                                     ? 'Rekrutmen Ditutup'
                                                     : project.has_capacity
-                                                    ? 'Rekrutmen Terbuka | Slot Tersedia'
+                                                    ? 'Rekrutmen Terbuka | Posisi Tersedia'
                                                     : 'Kapasitas Penuh'}
                                             </span>
                                             {isLeader && !['team_locked', 'workspace_activated'].includes(project.formation_status || '') && (
@@ -2392,7 +2411,7 @@ export default function ProjectShow({
                                                     <div>
                                                         <h4 className="text-xs font-bold text-slate-900">{role.name}</h4>
                                                         <p className="text-[11px] text-slate-500 mt-0.5">
-                                                            Kebutuhan: {role.slots || 1} slot | {role.requirements || role.description || 'Keahlian teknis relevan dengan proyek'}
+                                                            Kebutuhan: {role.slots || 1} posisi | {role.requirements || role.description || 'Keahlian teknis relevan dengan proyek'}
                                                         </p>
                                                     </div>
 

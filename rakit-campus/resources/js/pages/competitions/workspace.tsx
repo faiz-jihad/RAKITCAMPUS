@@ -1388,7 +1388,7 @@ export default function CompetitionWorkspace({
                                                 );
                                             })}
 
-                                            {/* Open Slot Placeholder if space available */}
+                                            {/* Open Position Placeholder if space available */}
                                             {capacity > membersCount && (
                                                 <button
                                                     type="button"
@@ -1400,7 +1400,7 @@ export default function CompetitionWorkspace({
                                                     </div>
                                                     <div className="min-w-0">
                                                         <span className="text-xs font-semibold text-slate-700 block">
-                                                            Slot Terbuka ({capacity - membersCount} lagi)
+                                                            Posisi Terbuka ({capacity - membersCount} lagi)
                                                         </span>
                                                         <span className="text-[10px] text-slate-400">Undang rekan kampus</span>
                                                     </div>
@@ -1999,7 +1999,7 @@ export default function CompetitionWorkspace({
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-800 mb-1">
-                                                Jumlah Slot <span className="text-blue-600">*</span>
+                                                Jumlah Posisi <span className="text-blue-600">*</span>
                                             </label>
                                             <input
                                                 type="number"
@@ -2064,7 +2064,7 @@ export default function CompetitionWorkspace({
                                                     <div className="min-w-0 flex-1">
                                                         <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
                                                         <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 mt-1 shrink-0">
-                                                            {r.slots} Slot Terbuka
+                                                            {r.slots} Posisi Terbuka
                                                         </span>
                                                     </div>
                                                     {isLeader && !participation.is_formation_locked && (

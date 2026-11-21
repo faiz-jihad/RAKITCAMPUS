@@ -2904,7 +2904,7 @@ export default function Welcome() {
                                                                     </div>
                                                                     <div className="size-7 sm:size-8.5 rounded-xl bg-blue-50 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0">
                                                                         <Building2 className="size-3 sm:size-3.5" />
-                                                                        <span className="text-[5px] sm:text-[6px] font-extrabold tracking-wider uppercase">OPEN SLOT</span>
+                                                                        <span className="text-[5px] sm:text-[6px] font-extrabold tracking-wider uppercase">POSISI BUKA</span>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -3200,7 +3200,7 @@ export default function Welcome() {
                                                     </div>
                                                     <div className="min-w-0">
                                                         <div className="text-[7.5px] font-extrabold text-slate-900 leading-tight">5 Proyek</div>
-                                                        <div className="text-[5.5px] text-slate-500 font-medium uppercase truncate">OPEN SLOT</div>
+                                                        <div className="text-[5.5px] text-slate-500 font-medium uppercase truncate">POSISI BUKA</div>
                                                     </div>
                                                 </div>
                                             </div>

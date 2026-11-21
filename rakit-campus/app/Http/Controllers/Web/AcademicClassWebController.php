@@ -386,7 +386,7 @@ class AcademicClassWebController extends Controller
                     ],
                     [
                         'title' => 'Wajib Diversitas Peran (Anti-Monopoli)',
-                        'desc' => 'Dilarang menumpuk keahlian sejenis (maks. 2 spesialis sejenis). Slot tim wajib diisi peran pelengkap (Backend, Frontend, UI/UX, atau QA).',
+                        'desc' => 'Dilarang menumpuk keahlian sejenis (maks. 2 spesialis sejenis). Posisi tim wajib diisi peran pelengkap (Backend, Frontend, UI/UX, atau QA).',
                     ],
                     [
                         'title' => 'Sistem Anti-Clique (Anti Teman Satu Geng)',

@@ -45,15 +45,52 @@ class AssessmentWebController extends Controller
 
         $period = AssessmentPeriod::with('rubrics')->findOrFail($periodId);
 
+        // Validasi Alur UTS-UAS: UAS hanya dapat dikumpulkan jika UTS sudah dikumpulkan
+        if ($period->type === 'uas') {
+            $utsPeriod = AssessmentPeriod::where('academic_class_id', $project->academic_class_id)
+                ->where('type', 'uts')
+                ->first();
+
+            if ($utsPeriod) {
+                $utsSubmission = ProjectSubmission::where('project_id', $project->id)
+                    ->where('assessment_period_id', $utsPeriod->id)
+                    ->whereIn('status', ['submitted', 'accepted', 'revision_required'])
+                    ->first();
+
+                if (! $utsSubmission) {
+                    $errorMessage = 'Pengumpulan Evaluasi UAS belum dapat dilakukan karena kelompok Anda belum menyelesaikan dan mengumpulkan Evaluasi UTS.';
+                    if ($request->wantsJson()) {
+                        return response()->json(['message' => $errorMessage, 'errors' => ['uts' => [$errorMessage]]], 422);
+                    }
+                    return back()->withErrors(['uts' => $errorMessage]);
+                }
+            }
+        }
+
+        // Cek dokumen laporan yang sudah pernah diunggah sebelumnya
+        $existingSubmission = ProjectSubmission::where('project_id', $project->id)
+            ->where('assessment_period_id', $period->id)
+            ->first();
+        $hasExistingReport = $existingSubmission && $existingSubmission->documents()->where('document_type', 'report_pdf')->exists();
+
         $validated = $request->validate([
-            'repository_url' => ['nullable', 'url', 'max:255'],
-            'demo_url' => ['nullable', 'url', 'max:255'],
-            'submission_notes' => ['nullable', 'string', 'max:3000'],
+            'repository_url' => ['required', 'url', 'max:255'],
+            'demo_url' => [$period->type === 'uas' ? 'required' : 'nullable', 'url', 'max:255'],
+            'submission_notes' => ['required', 'string', 'min:10', 'max:3000'],
             'challenges_and_solutions' => ['nullable', 'string', 'max:3000'],
             'next_steps' => ['nullable', 'string', 'max:3000'],
-            'report_pdf' => ['nullable', 'file', 'mimes:pdf', 'max:20480'], // max 20MB
+            'report_pdf' => [$hasExistingReport ? 'nullable' : 'required', 'file', 'mimes:pdf', 'max:20480'], // max 20MB
             'presentation_ppt' => ['nullable', 'file', 'mimes:ppt,pptx,pdf', 'max:30720'], // max 30MB
             'supporting_doc' => ['nullable', 'file', 'mimes:pdf,zip,rar', 'max:30720'],
+        ], [
+            'repository_url.required' => 'Tautan repository (GitHub/GitLab) wajib diisi.',
+            'repository_url.url' => 'Format tautan repository tidak valid.',
+            'demo_url.required' => 'Tautan demo aplikasi wajib diisi untuk evaluasi UAS.',
+            'demo_url.url' => 'Format tautan demo aplikasi tidak valid.',
+            'submission_notes.required' => 'Catatan dan deskripsi hasil pengerjaan wajib diisi.',
+            'submission_notes.min' => 'Catatan pengumpulan minimal 10 karakter.',
+            'report_pdf.required' => 'Berkas laporan kemajuan / akhir proyek (PDF) wajib diunggah.',
+            'report_pdf.mimes' => 'Berkas laporan harus berformat PDF.',
         ]);
 
         $files = [];

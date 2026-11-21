@@ -118,10 +118,10 @@ class WorkspaceWebController extends Controller
 
         // Project Workspace must only become available after successful team activation
         if ($team->project) {
-            $isAcademic = !empty($team->project->academic_class_id) || $team->project->category === 'academic';
+            $isAcademic = !empty($team->project->academic_class_id);
 
-            // Untuk proyek mandiri: jika kuota anggota penuh, workspace otomatis aktif
-            if (! $isAcademic && $team->isFull()) {
+            // Untuk proyek mandiri: proyek personal / tim sendiri, bebas dosen, langsung aktif
+            if (! $isAcademic) {
                 if ($team->project->formation_status !== 'workspace_activated' || $team->project->status !== \App\Enums\ProjectStatus::InProgress) {
                     $team->project->update([
                         'status' => \App\Enums\ProjectStatus::InProgress->value,
@@ -131,18 +131,18 @@ class WorkspaceWebController extends Controller
                     $team->members()->update(['status' => 'active']);
                     \App\Services\Matchmaking\TeamFormationService::ensureStarterMilestones($team->project, $user);
                 }
-            }
+            } else {
+                $allowedStatuses = [
+                    \App\Enums\ProjectStatus::InProgress->value,
+                    \App\Enums\ProjectStatus::Completed->value,
+                    \App\Enums\ProjectStatus::OnHold->value,
+                ];
+                $projStatus = is_object($team->project->status) ? $team->project->status->value : $team->project->status;
 
-            $allowedStatuses = [
-                \App\Enums\ProjectStatus::InProgress->value,
-                \App\Enums\ProjectStatus::Completed->value,
-                \App\Enums\ProjectStatus::OnHold->value,
-            ];
-            $projStatus = is_object($team->project->status) ? $team->project->status->value : $team->project->status;
-
-            if (! in_array($projStatus, $allowedStatuses, true) && ! $isLecturer) {
-                return redirect()->route('projects.show', $team->project->id)
-                    ->with('warning', 'Workspace proyek hanya dapat diakses setelah formasi kelompok dikonfirmasi dan diaktifkan (Status: Sedang Berjalan). Silakan selesaikan formasi tim terlebih dahulu.');
+                if (! in_array($projStatus, $allowedStatuses, true) && ! $isLecturer) {
+                    return redirect()->route('projects.show', $team->project->id)
+                        ->with('warning', 'Workspace proyek akademik hanya dapat diakses setelah formasi kelompok disetujui dosen pengampu.');
+                }
             }
         }
 

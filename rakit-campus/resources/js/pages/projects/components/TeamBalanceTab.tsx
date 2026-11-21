@@ -529,7 +529,7 @@ export default function TeamBalanceTab({ project, teamBalance, teamOptimization 
                                             </span>
                                         </td>
                                         <td className="py-3.5 px-4 text-center font-bold text-slate-700">
-                                            {row.type === 'Keahlian Teknis' ? `Lvl ${row.required}` : `${row.required} Slot`}
+                                            {row.type === 'Keahlian Teknis' ? `Lvl ${row.required}` : `${row.required} Posisi`}
                                         </td>
                                         <td className="py-3.5 px-4 text-center font-bold text-slate-900">
                                             {row.type === 'Keahlian Teknis' ? `Lvl ${row.available}` : `${row.available} Terisi`}

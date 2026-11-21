@@ -2637,17 +2637,17 @@ export default function Dashboard({
                                                     {recommendedProjects[0]?.title}
                                                 </span>
                                                 <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/70 shrink-0">
-                                                    Open Slot
+                                                    Posisi Terbuka
                                                 </span>
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Open Slot Badge */}
+                                    {/* Posisi Terbuka Badge */}
                                     <div className="size-14 rounded-2xl bg-blue-50/80 border border-blue-200/80 flex flex-col items-center justify-center text-blue-600 shrink-0 group-hover/card:scale-105 transition-transform duration-200">
                                         <Building2 className="size-5" />
-                                        <span className="text-[8px] font-extrabold tracking-wider uppercase mt-0.5">
-                                            OPEN SLOT
+                                        <span className="text-[7.5px] font-extrabold tracking-wider uppercase mt-0.5 text-center leading-tight">
+                                            POSISI BUKA
                                         </span>
                                     </div>
                                 </div>

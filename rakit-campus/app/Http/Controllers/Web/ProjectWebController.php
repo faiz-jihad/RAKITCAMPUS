@@ -1875,6 +1875,57 @@ class ProjectWebController extends Controller
             'pinned'    => false,
         ]);
 
+        // Send notifications to all team members and leader (except the author)
+        try {
+            $isAnnouncement = $data['kind'] === 'announcement';
+            $recipientIds = $project->team->members()
+                ->pluck('user_id')
+                ->push($project->team->leader_id)
+                ->unique()
+                ->filter(fn($id) => !empty($id) && (int) $id !== (int) $user->id)
+                ->values();
+
+            $recipients = \App\Models\User::whereIn('id', $recipientIds)->get();
+            $targetUrl = '/projects/' . ($project->slug ?: $project->id) . '?tab=discussion';
+
+            $notifType = $isAnnouncement ? 'team_announcement' : 'team_discussion';
+            $category = 'project_hub';
+            $priority = $isAnnouncement ? 'urgent' : 'high';
+            $notifTitle = $isAnnouncement
+                ? ('[Pengumuman] ' . ($data['title'] ?: ('Pengumuman Tim ' . $project->title)))
+                : ('Diskusi Tim: ' . ($data['title'] ?: $project->title));
+            $notifMessage = $isAnnouncement
+                ? ("{$user->name} menerbitkan pengumuman penting di tim: " . \Illuminate\Support\Str::limit($data['body'], 140))
+                : ("{$user->name} memulai diskusi baru di tim: " . \Illuminate\Support\Str::limit($data['body'], 140));
+
+            foreach ($recipients as $recipient) {
+                $recipient->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid()->toString(),
+                    'type' => 'App\Notifications\ApplicationStatusNotification',
+                    'data' => [
+                        'type' => $notifType,
+                        'notification_type' => $notifType,
+                        'category' => $category,
+                        'priority' => $priority,
+                        'title' => $notifTitle,
+                        'message' => $notifMessage,
+                        'action_url' => $targetUrl,
+                        'action_text' => $isAnnouncement ? 'Buka Pengumuman' : 'Buka Diskusi',
+                        'team_name' => $project->team->name ?? $project->title,
+                        'details' => [
+                            'Proyek' => $project->title,
+                            'Pengirim' => $user->name,
+                            'Kategori' => $isAnnouncement ? 'Pengumuman Resmi' : 'Diskusi Tim',
+                        ],
+                        'created_at' => now()->toIso8601String(),
+                    ],
+                ]);
+                app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($recipient->id);
+            }
+        } catch (\Throwable $e) {
+            // Notification logged or failed gracefully without blocking post creation
+        }
+
         return back()->with('success', 'Postingan berhasil dibuat.');
     }
 
@@ -1963,6 +2014,46 @@ class ProjectWebController extends Controller
             'body'      => $data['body'],
             'pinned'    => false,
         ]);
+
+        // Send notifications to parent author, thread participants, and leader
+        try {
+            $participantIds = \App\Models\TeamPost::where('parent_id', $parent->id)
+                ->pluck('user_id')
+                ->push($parent->user_id)
+                ->push($project->team->leader_id)
+                ->unique()
+                ->filter(fn($id) => !empty($id) && (int) $id !== (int) $user->id)
+                ->values();
+
+            $replyRecipients = \App\Models\User::whereIn('id', $participantIds)->get();
+            $targetUrl = '/projects/' . ($project->slug ?: $project->id) . '?tab=discussion';
+
+            foreach ($replyRecipients as $recipient) {
+                $recipient->notifications()->create([
+                    'id' => \Illuminate\Support\Str::uuid()->toString(),
+                    'type' => 'App\Notifications\ApplicationStatusNotification',
+                    'data' => [
+                        'type' => 'team_discussion_reply',
+                        'notification_type' => 'team_discussion_reply',
+                        'category' => 'project_hub',
+                        'priority' => 'medium',
+                        'title' => 'Balasan Diskusi: ' . ($parent->title ?: $project->title),
+                        'message' => "{$user->name} membalas diskusi: " . \Illuminate\Support\Str::limit($data['body'], 140),
+                        'action_url' => $targetUrl,
+                        'action_text' => 'Lihat Balasan',
+                        'team_name' => $project->team->name ?? $project->title,
+                        'details' => [
+                            'Proyek' => $project->title,
+                            'Pengirim' => $user->name,
+                        ],
+                        'created_at' => now()->toIso8601String(),
+                    ],
+                ]);
+                app(\App\Contracts\Notifications\NotificationCounterInterface::class)->invalidateUnreadCountCache($recipient->id);
+            }
+        } catch (\Throwable $e) {
+            // Notification failed gracefully
+        }
 
         return back()->with('success', 'Balasan berhasil dikirim.');
     }

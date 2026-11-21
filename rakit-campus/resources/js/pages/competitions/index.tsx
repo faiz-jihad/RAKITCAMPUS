@@ -1617,7 +1617,7 @@ export default function CompetitionIndex({
                                                                     <span className="size-1.5 rounded-full bg-blue-500 shrink-0" />
                                                                     <span>{r.name}</span>
                                                                     {r.slots > 1 && (
-                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} slot)</span>
+                                                                        <span className="text-[10px] text-slate-400 font-normal">({r.slots} posisi)</span>
                                                                     )}
                                                                 </span>
                                                             ))}
@@ -1641,7 +1641,7 @@ export default function CompetitionIndex({
                                                         </span>
                                                         {emptySlots > 0 ? (
                                                             <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200/70">
-                                                                Sisa {emptySlots} Slot
+                                                                Sisa {emptySlots} Posisi
                                                             </span>
                                                         ) : (
                                                             <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
@@ -1662,7 +1662,7 @@ export default function CompetitionIndex({
                                                                             ? member
                                                                                 ? `${member.name} (${member.role})`
                                                                                 : `Personel #${idx + 1} (Terisi)`
-                                                                            : `Slot Personel #${idx + 1} (Terbuka)`
+                                                                            : `Posisi Personel #${idx + 1} (Terbuka)`
                                                                     }
                                                                     className={`size-7 rounded-lg flex items-center justify-center transition-all ${
                                                                         isFilled
@@ -1707,7 +1707,7 @@ export default function CompetitionIndex({
                                                         {emptySlots > 0 && (
                                                             <div
                                                                 className="size-7 rounded-full bg-slate-100 border border-dashed border-slate-300 text-slate-400 font-medium text-[9px] flex items-center justify-center ring-2 ring-white"
-                                                                title={`${emptySlots} slot terbuka`}
+                                                                title={`${emptySlots} posisi terbuka`}
                                                             >
                                                                 +{emptySlots}
                                                             </div>
@@ -2851,7 +2851,7 @@ export default function CompetitionIndex({
                                             {Math.max(0, (detailTeam.competition.max_team_size || 3) - detailTeam.team.members_count)}
                                         </span>
                                         <span className="text-xs text-slate-600 font-bold">
-                                            slot kosong
+                                            kuota terbuka
                                         </span>
                                     </div>
 

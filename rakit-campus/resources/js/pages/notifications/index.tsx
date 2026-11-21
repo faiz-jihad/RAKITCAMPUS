@@ -19,6 +19,7 @@ import {
     Info, 
     Lock, 
     Mail, 
+    Megaphone,
     MessageSquare,
     Settings, 
     ShieldAlert, 
@@ -391,6 +392,12 @@ export default function NotificationsIndex({
 
                                         <div className="space-y-1 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
+                                                {data.type === 'team_announcement' && (
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-amber-100 text-amber-800 border border-amber-300">
+                                                        <Megaphone className="h-3 w-3 text-amber-600" />
+                                                        Pengumuman
+                                                    </span>
+                                                )}
                                                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                                                     {data.title || 'Notifikasi'}
                                                 </h3>

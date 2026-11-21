@@ -459,7 +459,7 @@ class MatchingService
             return [
                 'allowed' => false,
                 'code' => 'ROLE_MONOPOLY',
-                'message' => "Aturan Anti-Ketimpangan: Tim Anda sudah memiliki 2 spesialis {$monopolyRoleName}. Untuk mencegah ketimpangan kelas, slot ini wajib diisi oleh rekan berkeahlian {$missingStr}!",
+                'message' => "Aturan Anti-Ketimpangan: Tim Anda sudah memiliki 2 spesialis {$monopolyRoleName}. Untuk mencegah ketimpangan kelas, posisi ini wajib diisi oleh rekan berkeahlian {$missingStr}!",
             ];
         }
 
@@ -478,7 +478,7 @@ class MatchingService
             'code' => 'OK',
             'is_complementary' => $isComplementary,
             'message' => $isComplementary 
-                ? 'Sangat Direkomendasikan: Rekan ini melengkapi slot peran kosong tim (' . implode(', ', $benefitedRoles) . ').'
+                ? 'Sangat Direkomendasikan: Rekan ini melengkapi posisi peran kosong tim (' . implode(', ', $benefitedRoles) . ').'
                 : 'Komposisi memenuhi standar diversitas tim kelas.',
         ];
     }
