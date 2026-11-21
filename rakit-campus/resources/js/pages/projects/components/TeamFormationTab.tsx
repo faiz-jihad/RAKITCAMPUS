@@ -43,7 +43,7 @@ export default function TeamFormationTab({
     livingProposal,
 }: Props) {
     const { errors: pageErrors } = usePage().props as any;
-    const isAcademic = Boolean(academicClass || project.academic_class_id || project.category === 'academic');
+    const isAcademic = Boolean(academicClass?.id || project.academic_class_id);
     const formationStatus = project.formation_status || 'draft';
     const formationApprover = project.formation_approver || project.formationApprover;
     const activeMembers = (project.team?.members || []).filter((m: any) => !m.status || m.status === 'active');
@@ -65,7 +65,7 @@ export default function TeamFormationTab({
         || project.problem_statement
     );
     const canSubmitToLecturer = isTeamFull && hasProposal;
-    const isWorkspaceUnlocked = Boolean(canAccessWorkspace || (!isAcademic && isTeamFull) || formationStatus === 'workspace_activated');
+    const isWorkspaceUnlocked = Boolean(canAccessWorkspace || !isAcademic || formationStatus === 'workspace_activated');
 
     const [processing, setProcessing] = useState(false);
     const [reviewNotes, setReviewNotes] = useState('');
@@ -499,33 +499,21 @@ export default function TeamFormationTab({
                             <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-2xs flex flex-col justify-between">
                                 <div>
                                     <div className="flex items-center justify-between">
-                                        <h4 className="text-sm font-bold text-slate-900">2. Aktivasi Workspace Mandiri</h4>
-                                        {isWorkspaceUnlocked ? (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
-                                                Aktif Otomatis
-                                            </span>
-                                        ) : (
-                                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                Menunggu Kuota Penuh
-                                            </span>
-                                        )}
+                                        <h4 className="text-sm font-bold text-slate-900">2. Workspace Proyek Mandiri</h4>
+                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                            Langsung Aktif
+                                        </span>
                                     </div>
 
                                     <div className="mt-3 p-3 rounded-xl bg-slate-50 border border-slate-200/70 space-y-2 text-xs">
-                                        <div className="flex items-center justify-between">
-                                            <span className="flex items-center gap-1.5 font-medium text-slate-700">
-                                                {isTeamFull ? <CheckCircle2 className="size-4 text-blue-600" /> : <Clock className="size-4 text-slate-400" />}
-                                                <span>Kapasitas Anggota: <strong>{activeMembers.length}/{targetCapacity} Orang</strong></span>
-                                            </span>
-                                            <span className={`text-[11px] font-bold ${isTeamFull ? 'text-blue-700' : 'text-slate-600'}`}>
-                                                {isTeamFull ? 'Terpenuhi' : `Kurang ${targetCapacity - activeMembers.length}`}
-                                            </span>
-                                        </div>
+                                        <p className="text-slate-600 leading-relaxed">
+                                            Proyek mandiri merupakan proyek personal/tim bebas dari administrasi dosen. Anggota tim dapat langsung mengakses Workspace kapan saja.
+                                        </p>
                                     </div>
                                 </div>
 
                                 <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end">
-                                    {isWorkspaceUnlocked && project.team?.id ? (
+                                    {project.team?.id && (
                                         <Link
                                             href={`/workspace/${project.team.id}`}
                                             className="px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-blue-600 text-white hover:bg-blue-700 shadow-xs cursor-pointer"
@@ -533,10 +521,6 @@ export default function TeamFormationTab({
                                             <FolderKanban className="size-3.5" />
                                             <span>Buka Workspace Tim</span>
                                         </Link>
-                                    ) : (
-                                        <span className="text-[11px] text-slate-500 font-medium">
-                                            Workspace aktif otomatis saat kuota penuh
-                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -575,10 +559,10 @@ export default function TeamFormationTab({
                                 {isWorkspaceUnlocked
                                     ? (isAcademic
                                         ? 'Kelompok proyek telah divalidasi dan disetujui dosen pengampu. Seluruh anggota dapat mengakses kanban, timeline milestone, dan kolaborasi living proposal.'
-                                        : 'Kuota anggota tim mandiri telah terpenuhi. Ruang kerja proyek, kanban, dan manajemen tugas aktif dan siap digunakan.')
+                                        : 'Proyek personal / tim mandiri bebas dari administrasi dosen. Ruang kerja proyek, kanban, dan manajemen tugas aktif dan siap digunakan kapan saja.')
                                     : (isAcademic
                                         ? 'Sesuai aturan akademik, Project Workspace hanya dapat diakses setelah susunan tim disetujui oleh Dosen Pengampu kelas.'
-                                        : 'Ruang kerja proyek mandiri akan terbuka secara otomatis segera setelah formasi kuota anggota terpenuhi.')}
+                                        : 'Ruang kerja proyek mandiri siap digunakan.')}
                             </p>
                         </div>
                     </div>

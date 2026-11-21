@@ -1550,7 +1550,7 @@ export default function CompetitionWorkspace({
 
                                     {capacity > membersCount && (
                                         <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200/80 flex items-center justify-between text-xs">
-                                            <span className="text-[11px] text-slate-500 font-medium">Tersedia {capacity - membersCount} slot anggota</span>
+                                            <span className="text-[11px] text-slate-500 font-medium">Tersedia {capacity - membersCount} kuota anggota</span>
                                             {isLeader && !participation.is_formation_locked && (
                                                 <button
                                                     type="button"
@@ -1705,7 +1705,7 @@ export default function CompetitionWorkspace({
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-800 mb-1">
-                                                Jumlah Slot <span className="text-blue-600">*</span>
+                                                Jumlah Posisi <span className="text-blue-600">*</span>
                                             </label>
                                             <input
                                                 type="number"
@@ -1770,7 +1770,7 @@ export default function CompetitionWorkspace({
                                                     <div className="min-w-0 flex-1">
                                                         <span className="text-xs font-bold text-slate-900 block truncate">{r.name}</span>
                                                         <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80 mt-1 shrink-0">
-                                                            {r.slots} Slot Terbuka
+                                                            {r.slots} Posisi Terbuka
                                                         </span>
                                                     </div>
                                                     {isLeader && !participation.is_formation_locked && (

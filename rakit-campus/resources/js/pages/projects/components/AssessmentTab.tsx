@@ -22,6 +22,7 @@ interface Props {
     project: any;
     period: any;
     submission?: any;
+    utsSubmission?: any;
     isMember: boolean;
     isLeader: boolean;
     isLecturer: boolean;
@@ -32,6 +33,7 @@ export default function AssessmentTab({
     project,
     period,
     submission,
+    utsSubmission,
     isMember,
     isLeader,
     isLecturer,
@@ -40,6 +42,17 @@ export default function AssessmentTab({
     const isUas = type === 'uas';
     const rubrics = period?.rubrics || [];
     const latestSnapshot = submission?.snapshots?.[0] || submission?.latest_snapshot;
+
+    const isUtsSubmitted = Boolean(
+        utsSubmission &&
+        utsSubmission.status &&
+        utsSubmission.status !== 'not_started' &&
+        utsSubmission.status !== 'draft'
+    );
+    const isUasLocked = isUas && !isUtsSubmitted;
+    const hasExistingReport = Boolean(
+        submission?.documents?.some((d: any) => d.document_type === 'report_pdf' || d.title?.toLowerCase().includes('laporan'))
+    );
 
     const [showSubmitModal, setShowSubmitModal] = useState(false);
     const [showReviewModal, setShowReviewModal] = useState(false);
@@ -101,6 +114,32 @@ export default function AssessmentTab({
 
     const handleStudentSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (isUasLocked) {
+            alert('Pengumpulan UAS belum dapat dilakukan karena kelompok Anda belum mengumpulkan berkas UTS.');
+            return;
+        }
+
+        if (!repoUrl.trim()) {
+            alert('Tautan repository (GitHub/GitLab) wajib diisi.');
+            return;
+        }
+
+        if (isUas && !demoUrl.trim()) {
+            alert('Tautan live demo produk wajib diisi untuk evaluasi UAS.');
+            return;
+        }
+
+        if (!notes.trim() || notes.trim().length < 10) {
+            alert('Catatan pengumpulan dan deskripsi hasil pengerjaan wajib diisi minimal 10 karakter.');
+            return;
+        }
+
+        if (!reportFile && !hasExistingReport) {
+            alert('Berkas Laporan Kemajuan / Akhir Proyek (PDF) wajib diunggah.');
+            return;
+        }
+
         setSubmitting(true);
 
         const formData = new FormData();
@@ -214,13 +253,25 @@ export default function AssessmentTab({
 
                 <div className="flex flex-wrap items-center gap-2">
                     {(isMember || isLeader) && (
-                        <button
-                            onClick={() => setShowSubmitModal(true)}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
-                        >
-                            <Upload className="size-4" />
-                            <span>{isSubmitted ? `Pembaruan / Resubmit ${type.toUpperCase()}` : `Kumpulkan Berkas ${type.toUpperCase()}`}</span>
-                        </button>
+                        isUasLocked ? (
+                            <button
+                                type="button"
+                                disabled
+                                title="Pengumpulan UAS terkunci karena evaluasi UTS belum diserahkan"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 text-slate-400 border border-slate-200 text-xs font-bold cursor-not-allowed"
+                            >
+                                <Lock className="size-4 text-slate-400" />
+                                <span>Pengumpulan UAS Terkunci (Perlu UTS)</span>
+                            </button>
+                        ) : (
+                            <button
+                                onClick={() => setShowSubmitModal(true)}
+                                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition shadow-xs cursor-pointer"
+                            >
+                                <Upload className="size-4" />
+                                <span>{isSubmitted ? `Pembaruan / Resubmit ${type.toUpperCase()}` : `Kumpulkan Berkas ${type.toUpperCase()}`}</span>
+                            </button>
+                        )
                     )}
 
                     {isLecturer && isSubmitted && (
@@ -234,6 +285,21 @@ export default function AssessmentTab({
                     )}
                 </div>
             </div>
+
+            {/* Warning banner if UAS is locked waiting for UTS */}
+            {isUasLocked && (
+                <div className="glass-card rounded-2xl p-5 border-amber-200 bg-amber-50/70 text-amber-900 text-xs flex items-start gap-3 shadow-xs">
+                    <AlertCircle className="size-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <p className="font-bold text-sm text-amber-950">
+                            Pengumpulan Evaluasi UAS Belum Dibuka
+                        </p>
+                        <p className="text-amber-800 text-xs leading-relaxed">
+                            Alur akademik mewajibkan kelompok proyek menyelesaikan dan menyerahkan pengumpulan <strong>Evaluasi Tengah Semester (UTS)</strong> terlebih dahulu sebelum dapat mengunggah berkas Evaluasi Akhir Semester (UAS).
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* If Graded: Score Summary Card */}
             {submission?.total_score && (
@@ -441,9 +507,12 @@ export default function AssessmentTab({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Link Repository (GitHub/GitLab)</label>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                                Link Repository (GitHub/GitLab) <span className="text-rose-500">*</span>
+                            </label>
                             <input
                                 type="url"
+                                required
                                 value={repoUrl}
                                 onChange={(e) => setRepoUrl(e.target.value)}
                                 placeholder="https://github.com/..."
@@ -452,9 +521,12 @@ export default function AssessmentTab({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Link Live Demo Produk</label>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                                Link Live Demo Produk {isUas && <span className="text-rose-500">*</span>}
+                            </label>
                             <input
                                 type="url"
+                                required={isUas}
                                 value={demoUrl}
                                 onChange={(e) => setDemoUrl(e.target.value)}
                                 placeholder="https://aplikasi.polindra.ac.id"
@@ -463,12 +535,16 @@ export default function AssessmentTab({
                         </div>
 
                         <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-1">Catatan Pengumpulan & Deskripsi Hasil</label>
+                            <label className="block text-xs font-bold text-slate-700 mb-1">
+                                Catatan Pengumpulan & Deskripsi Hasil <span className="text-rose-500">*</span>
+                            </label>
                             <textarea
+                                required
+                                minLength={10}
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
                                 rows={3}
-                                placeholder="Jelaskan ringkasan pencapaian fitur dan kelengkapan berkas..."
+                                placeholder="Jelaskan ringkasan pencapaian fitur dan kelengkapan berkas (minimal 10 karakter)..."
                                 className="w-full text-xs rounded-xl border border-slate-200 p-3 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                             />
                         </div>
@@ -498,13 +574,21 @@ export default function AssessmentTab({
                         {/* File Uploads */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 mb-1">Laporan Kemajuan / Akhir (PDF)</label>
+                                <label className="block text-xs font-bold text-slate-700 mb-1">
+                                    Laporan Kemajuan / Akhir (PDF) {!hasExistingReport && <span className="text-rose-500">*</span>}
+                                </label>
                                 <input
                                     type="file"
                                     accept=".pdf"
+                                    required={!hasExistingReport}
                                     onChange={(e) => setReportFile(e.target.files?.[0] || null)}
                                     className="w-full text-xs text-slate-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                 />
+                                {hasExistingReport && (
+                                    <span className="text-[10px] text-blue-600 block mt-1">
+                                        Sudah ada laporan terunggah. Unggah baru untuk mengganti.
+                                    </span>
+                                )}
                             </div>
 
                             <div>

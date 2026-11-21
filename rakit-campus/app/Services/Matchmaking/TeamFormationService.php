@@ -430,27 +430,25 @@ class TeamFormationService
         }
 
         $isMember = $project->team && $project->team->hasMember($user);
-        $isAcademic = !empty($project->academic_class_id) || $project->category === 'academic';
+        $isAcademic = !empty($project->academic_class_id);
 
         if (! $isAcademic) {
-            // Proyek Mandiri: Workspace otomatis aktif ketika kuota anggota terpenuhi
-            $isFull = $project->team && $project->team->isFull();
-            $isActivated = in_array($project->formation_status, ['workspace_activated', 'team_locked'], true) || $isFull;
-
-            if ($isFull && $project->formation_status !== 'workspace_activated') {
-                $project->update([
-                    'formation_status' => 'workspace_activated',
-                    'status' => ProjectStatus::InProgress,
-                ]);
-                if ($project->team) {
-                    $project->team->update(['status' => 'active']);
-                    $project->team->members()->update(['status' => 'active']);
-                    $project->team->recruitment?->update(['status' => RecruitmentStatus::Closed]);
-                    self::ensureStarterMilestones($project, $user);
+            // Proyek Mandiri: Proyek personal/tim sendiri, bebas dosen & akademik, workspace langsung aktif
+            if ($isMember) {
+                if ($project->formation_status !== 'workspace_activated') {
+                    $project->update([
+                        'formation_status' => 'workspace_activated',
+                        'status' => ProjectStatus::InProgress,
+                    ]);
+                    if ($project->team) {
+                        $project->team->update(['status' => 'active']);
+                        $project->team->members()->update(['status' => 'active']);
+                        self::ensureStarterMilestones($project, $user);
+                    }
                 }
+                return true;
             }
-
-            return $isMember && $isActivated;
+            return false;
         }
 
         $isActivated = in_array($project->formation_status, ['lecturer_approved', 'team_locked', 'workspace_activated'], true);

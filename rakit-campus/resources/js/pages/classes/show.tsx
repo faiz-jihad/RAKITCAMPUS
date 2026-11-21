@@ -1009,10 +1009,21 @@ export default function ClassShow({
 
                                                         {/* Project info if enrolled in a team */}
                                                         {st.project ? (
-                                                            <div className="mt-3 p-2.5 rounded-xl bg-slate-50/80 border border-slate-200/80 text-xs">
-                                                                <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
-                                                                    Proyek Tim Kelas:
-                                                                </span>
+                                                            <div className={`mt-3 p-2.5 rounded-xl border text-xs ${
+                                                                (myClassProject && myClassProject.id === st.project.id) || st.id === currentUserId
+                                                                    ? 'bg-blue-50/70 border-blue-200 text-blue-950'
+                                                                    : 'bg-slate-50/80 border-slate-200/80'
+                                                            }`}>
+                                                                <div className="flex items-center justify-between gap-1">
+                                                                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
+                                                                        Proyek Tim Kelas:
+                                                                    </span>
+                                                                    {((myClassProject && myClassProject.id === st.project.id) || st.id === currentUserId) && (
+                                                                        <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-blue-600 text-white shadow-2xs">
+                                                                            Tim Anda
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <Link
                                                                     href={`/projects/${st.project.slug || st.project.id}`}
                                                                     onClick={(e) => e.stopPropagation()}
@@ -1105,16 +1116,33 @@ export default function ClassShow({
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    {projects.map((proj) => (
+                                    {projects.map((proj) => {
+                                        const isLeaderOfThis = proj.leader?.id === currentUserId || (myClassProject?.id === proj.id && myClassProject?.is_leader);
+                                        const isMemberOfThis = proj.members?.some((m) => m.user_id === currentUserId);
+                                        const isMyTeam = Boolean(isLeaderOfThis || isMemberOfThis || (myClassProject && myClassProject.id === proj.id));
+
+                                        return (
                                         <div
                                             key={proj.id}
-                                            className="bg-white rounded-2xl border border-slate-200/80 p-6 flex flex-col justify-between gap-5 shadow-2xs hover:border-blue-400/80 transition-all"
+                                            className={`rounded-2xl border p-6 flex flex-col justify-between gap-5 transition-all ${
+                                                isMyTeam
+                                                    ? 'bg-blue-50/20 border-blue-400 ring-2 ring-blue-500/20 shadow-sm'
+                                                    : 'bg-white border-slate-200/80 shadow-2xs hover:border-blue-400/80'
+                                            }`}
                                         >
                                             <div>
                                                 <div className="flex items-start justify-between gap-2 mb-2">
-                                                    <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
-                                                        {proj.category}
-                                                    </span>
+                                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                                        <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-50 text-blue-700 border border-blue-200/80">
+                                                            {proj.category}
+                                                        </span>
+                                                        {isMyTeam && (
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-md bg-blue-600 text-white shadow-2xs">
+                                                                <Users className="size-3 text-white" />
+                                                                <span>Tim Anda {isLeaderOfThis ? '(Ketua)' : '(Anggota)'}</span>
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <span className="text-xs font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-200/80">
                                                         Progress: {proj.progress}%
                                                     </span>
@@ -1140,14 +1168,21 @@ export default function ClassShow({
                                                         </span>
                                                     </div>
                                                     <div className="flex flex-wrap gap-1.5">
-                                                        {proj.members.map((m, mIdx) => (
-                                                            <span
-                                                                key={mIdx}
-                                                                className="text-[11px] font-semibold bg-white border border-slate-200 text-slate-800 px-2.5 py-1 rounded-lg shadow-2xs"
-                                                            >
-                                                                {m.name} ({m.role_name})
-                                                            </span>
-                                                        ))}
+                                                        {proj.members.map((m, mIdx) => {
+                                                            const isMe = m.user_id === currentUserId;
+                                                            return (
+                                                                <span
+                                                                    key={mIdx}
+                                                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-2xs border ${
+                                                                        isMe
+                                                                            ? 'bg-blue-600 text-white border-blue-600 font-bold'
+                                                                            : 'bg-white border-slate-200 text-slate-800'
+                                                                    }`}
+                                                                >
+                                                                    {m.name} ({m.role_name}){isMe ? ' (Anda)' : ''}
+                                                                </span>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
 
@@ -1170,7 +1205,7 @@ export default function ClassShow({
                                                     href={`/projects/${proj.slug || proj.id}`}
                                                     className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline"
                                                 >
-                                                    <span>Lihat Workspace Proyek</span>
+                                                    <span>{isMyTeam ? 'Buka Workspace Tim Anda' : 'Lihat Detail Proyek'}</span>
                                                     <ArrowRight className="size-3.5" />
                                                 </Link>
 
@@ -1189,7 +1224,8 @@ export default function ClassShow({
                                                 )}
                                             </div>
                                         </div>
-                                    ))}
+                                    );
+                                    })}
                                 </div>
                             )}
                         </div>

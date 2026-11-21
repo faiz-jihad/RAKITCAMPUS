@@ -8,6 +8,8 @@ import {
     CheckCheck,
     FolderKanban,
     GraduationCap,
+    Megaphone,
+    MessageSquare,
     Trophy,
     Users,
 } from 'lucide-react';
@@ -136,6 +138,12 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
     };
 
     const getCategoryIcon = (category?: string, type?: string) => {
+        if (type === 'team_announcement' || type?.includes('announcement')) {
+            return <Megaphone className="size-3.5 text-amber-600" />;
+        }
+        if (type === 'team_discussion' || type === 'team_discussion_reply' || type?.includes('discussion')) {
+            return <MessageSquare className="size-3.5 text-blue-600" />;
+        }
         if (category === 'project_hub' || type?.includes('project') || type?.includes('application')) {
             return <FolderKanban className="size-3.5 text-blue-600" />;
         }
@@ -229,9 +237,16 @@ export function NotificationBell({ className, triggerClassName }: NotificationBe
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between gap-2">
-                                            <p className={`text-xs truncate ${isUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'}`}>
-                                                {title}
-                                            </p>
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                {item.data?.type === 'team_announcement' && (
+                                                    <span className="shrink-0 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">
+                                                        Pengumuman
+                                                    </span>
+                                                )}
+                                                <p className={`text-xs truncate ${isUnread ? 'font-bold text-slate-900' : 'font-semibold text-slate-800'}`}>
+                                                    {title}
+                                                </p>
+                                            </div>
                                             {item.created_at && (
                                                 <span className="text-[10px] text-slate-400 shrink-0">
                                                     {item.created_at}
